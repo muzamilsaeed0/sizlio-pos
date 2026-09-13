@@ -2913,7 +2913,7 @@ document.getElementById('total').textContent = money(total);
             const { total: finalTotalNow } = calcPricing(subtotalNow);
 
             const payload = {
-                table_no: orderType === 'delivery' ? 0 : table : 0,
+                table_no: orderType === 'dine_in' ? table : 0,
                 items: cart.map(x => ({
                     menu_item_id: Number(x.menu_item_id),
                     variant_id: x.variant_id === null || x.variant_id === undefined || x.variant_id === '' ? null :
@@ -3392,30 +3392,32 @@ document.getElementById('total').textContent = money(total);
                         <div class="deal-line">🎁 ${esc(d.deal_name)} × ${Number(d.quantity)}</div>
                         ${(d.items || []).map(di => `<div class="deal-sub">${esc(di.name)}${di.variant_label ? ' (' + esc(di.variant_label) + ')' : ''} × ${Number(di.quantity)}</div>`).join('')}
                     `).join('');
-                return `
-                        <div class="order-card">
-                            <h4>
-                                const typeLabel = o.order_type === 'delivery' 
+
+                    let typeLabel = o.order_type === 'delivery' 
     ? '• Delivery' 
     : (o.order_type === 'walk_in' ? '• Walk-in' : '• Table ' + esc(o.table_no));
 
-// Phir:
-<span>#${o.id} ${typeLabel}</span>
-                                <span class="status-chip st-${esc(statusValue)}">${esc(statusValue.replaceAll('_',' '))}</span>
-                            </h4>
-                            <div class="meta">
-                                Payment: <b>${esc(paymentStatus)}</b>
-                                ${o.customer_name ? `<br>Customer: ${esc(o.customer_name)}` : ''}
-                                ${delivery && o.delivery_phone ? `<br>Phone: ${esc(o.delivery_phone)}` : ''}
-                                ${delivery && o.delivery_address ? `<br>Address: ${esc(o.delivery_address)}` : ''}
-                            </div>
-                            <div class="items">${dealsHtml}${itemsHtml || (!dealsHtml ? 'No items' : '')}</div>
-                            <div class="order-total">Total: ${money(o.total_amount)}</div>
-                            ${delivery ? renderRiderAssignment(o) : ''}
-                            <div class="actions">${actions}</div>
-                            <div class="actions">${printRow}</div>
-                        </div>
-                    `;
+// ✅ 2. Ab return statement ke andar sahi tareeqe se use karein
+return `
+        <div class="order-card">
+            <h4>
+                <span>#${o.id} ${typeLabel}</span>
+                <span class="status-chip st-${esc(statusValue)}">${esc(statusValue.replaceAll('_',' '))}</span>
+            </h4>
+            <div class="meta">
+                Payment: <b>${esc(paymentStatus)}</b>
+                ${o.customer_name ? `<br>Customer: ${esc(o.customer_name)}` : ''}
+                ${delivery && o.delivery_phone ? `<br>Phone: ${esc(o.delivery_phone)}` : ''}
+                ${delivery && o.delivery_address ? `<br>Address: ${esc(o.delivery_address)}` : ''}
+            </div>
+            <div class="items">${dealsHtml}${itemsHtml || (!dealsHtml ? 'No items' : '')}</div>
+            <div class="order-total">Total: ${money(o.total_amount)}</div>
+            ${delivery ? renderRiderAssignment(o) : ''}
+            <div class="actions">${actions}</div>
+            <div class="actions">${printRow}</div>
+        </div>
+    `;
+               
             }).join('');
         }
 
@@ -3588,7 +3590,7 @@ document.getElementById('total').textContent = money(total);
                             <div class="restaurant-header">${restaurantBrand.address ? `<div class="restaurant-info">${esc(restaurantBrand.address)}</div>` : ''}${restaurantBrand.phone ? `<div class="restaurant-info">Tel: ${esc(restaurantBrand.phone)}</div>` : ''}<div class="receipt-title">${o.order_type === 'delivery' ? 'DELIVERY SLIP' : 'SALES RECEIPT'}</div></div>
                             <hr class="divider">
                             <div class="order-info"><div><strong>Order #</strong> ${esc(o.id)}</div>
-                            // Order info row mein:
+                            
                             <div>
                                 <strong>${o.order_type === 'delivery' ? 'Type' : (o.order_type === 'walk_in' ? 'Type' : 'Table')}</strong>
                                 ${o.order_type === 'delivery' ? 'Delivery' : (o.order_type === 'walk_in' ? 'Walk-in' : esc(o.table_no ?? '-'))}
