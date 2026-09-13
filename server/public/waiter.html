@@ -942,11 +942,9 @@ async function loadReadyOrders() {
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
             <div>
               <div style="font-weight:700; font-size:14px;">
-                Table ${escapeHtml(o.table_no)} · #${o.id}
+                ${locationLabel} · #${o.id}
               </div>
-              <div style="font-size:12px; color:#2FA37D; margin-top:3px;">
-                👤 ${escapeHtml(customerName)}
-              </div>
+              ${customerName ? `<div style="font-size:12px; color:#2FA37D; margin-top:3px;">👤 ${customerName}</div>` : ''}
             </div>
             <div style="font-weight:800; color:#2FA37D; font-size:14px; white-space:nowrap;">
               Rs ${total}
