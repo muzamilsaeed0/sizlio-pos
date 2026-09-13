@@ -1,27 +1,25 @@
-const nodemailer = require("nodemailer");
+cd ~/sizlio-pos/server
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT || 587),
-  secure: process.env.SMTP_SECURE === "true",
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
-  },
-  family: 4,                    
-  connectionTimeout: 15000,
-  greetingTimeout: 15000,
-  socketTimeout: 15000,
-  tls: {
-    rejectUnauthorized: false
-  }
-});
+cat > services/emailService.js << 'ENDOFFILE'
+const { Resend } = require("resend");
 
-/*
-=========================================================
-GET BASE URL
-=========================================================
-*/
+// =====================================================
+// RESEND CLIENT
+// =====================================================
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// =====================================================
+// FROM ADDRESS
+// =====================================================
+
+const FROM_ADDRESS =
+  process.env.EMAIL_FROM ||
+  "Sizlio POS <onboarding@resend.dev>";
+
+// =====================================================
+// GET BASE URL
+// =====================================================
 
 function getBaseUrl() {
   const url =
@@ -31,11 +29,9 @@ function getBaseUrl() {
   return url.replace(/\/+$/, "");
 }
 
-/*
-=========================================================
-ROLE LOGIN URL WITH RESTAURANT ID
-=========================================================
-*/
+// =====================================================
+// ROLE LOGIN URL WITH RESTAURANT ID
+// =====================================================
 
 function getLoginUrl(role, restaurantId) {
   const baseUrl = getBaseUrl();
@@ -56,7 +52,6 @@ function getLoginUrl(role, restaurantId) {
     throw new Error(`Unknown login role: ${role}`);
   }
 
-  // ✅ Add restaurant_id as query parameter
   const url = `${baseUrl}/${page}`;
   if (restaurantId) {
     return `${url}?restaurant=${restaurantId}`;
@@ -65,11 +60,9 @@ function getLoginUrl(role, restaurantId) {
   return url;
 }
 
-/*
-=========================================================
-SEND RESTAURANT CREDENTIALS
-=========================================================
-*/
+// =====================================================
+// SEND RESTAURANT CREDENTIALS
+// =====================================================
 
 const sendRestaurantCredentials = async ({
   restaurant,
@@ -77,7 +70,6 @@ const sendRestaurantCredentials = async ({
   staff
 }) => {
 
-  // ✅ Manager URL with restaurant ID
   const managerLoginUrl = getLoginUrl("manager", restaurant.id);
 
   const roleNames = {
@@ -101,7 +93,6 @@ const sendRestaurantCredentials = async ({
     const loginRole = (role === "rider" || role === "delivery_rider") ? "delivery" : role;
     const roleTitle = roleNames[role] || (role.charAt(0).toUpperCase() + role.slice(1));
 
-    // ✅ Staff URL with restaurant ID
     const loginUrl = getLoginUrl(loginRole, restaurant.id);
 
     staffSections.push(`
@@ -135,33 +126,26 @@ const sendRestaurantCredentials = async ({
     `);
   }
 
-  // =======================================================
-  // COMPLETE HTML EMAIL
-  // =======================================================
-
   const html = `
     <!DOCTYPE html>
     <html>
     <body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">
       <div style="max-width:720px;margin:30px auto;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
 
-        <!-- HEADER -->
         <div style="background:#111827;color:#ffffff;padding:25px;text-align:center;">
-          <h1 style="margin:0;font-size:24px;">Restaurant POS</h1>
+          <h1 style="margin:0;font-size:24px;">Sizlio POS</h1>
           <p style="margin:7px 0 0;color:#d1d5db;">Account Details</p>
         </div>
 
-        <!-- CONTENT -->
         <div style="padding:30px;">
           <h2 style="margin-top:0;color:#111827;">Restaurant Created Successfully</h2>
           <p style="line-height:1.6;">
-            Your Restaurant POS account has been created successfully.
+            Your Sizlio POS account has been created successfully.
             Below you will find all login details for your restaurant.
           </p>
 
           <hr style="border:none;border-top:1px solid #e5e7eb;margin:25px 0;">
 
-          <!-- RESTAURANT DETAILS -->
           <h3>Restaurant Details</h3>
           <table cellpadding="10" style="width:100%;border-collapse:collapse;">
             <tr>
@@ -178,7 +162,6 @@ const sendRestaurantCredentials = async ({
             </tr>
           </table>
 
-          <!-- MANAGER -->
           <div style="margin-top:30px;padding:22px;border:1px solid #e5e7eb;border-radius:12px;">
             <h3 style="margin-top:0;">Manager Account</h3>
 
@@ -205,10 +188,8 @@ const sendRestaurantCredentials = async ({
             </table>
           </div>
 
-          <!-- STAFF -->
           ${staffSections.join("")}
 
-          <!-- SECURITY -->
           <div style="margin-top:30px;padding:18px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;">
             <strong>Security Notice</strong>
             <p style="margin-bottom:0;line-height:1.5;">
@@ -220,7 +201,7 @@ const sendRestaurantCredentials = async ({
 
           <p>
             Regards,<br>
-            <strong>Restaurant POS</strong>
+            <strong>Sizlio POS</strong>
           </p>
 
           <p style="font-size:12px;color:#6b7280;">
@@ -233,23 +214,27 @@ const sendRestaurantCredentials = async ({
     </html>
   `;
 
-  // =======================================================
-  // SEND EMAIL
-  // =======================================================
+  // =====================================================
+  // SEND VIA RESEND
+  // =====================================================
 
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+  const result = await resend.emails.send({
+    from: FROM_ADDRESS,
     to: restaurant.email,
-    subject: `Restaurant POS - ${restaurant.name} Login Details`,
+    subject: `Sizlio POS - ${restaurant.name} Login Details`,
     html
   });
+
+  if (result.error) {
+    throw new Error(result.error.message || "Resend API error");
+  }
+
+  return result;
 };
 
-/*
-=========================================================
-ESCAPE HTML
-=========================================================
-*/
+// =====================================================
+// ESCAPE HELPERS
+// =====================================================
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -267,3 +252,4 @@ function escapeAttribute(value) {
 module.exports = {
   sendRestaurantCredentials
 };
+ENDOFFILE
