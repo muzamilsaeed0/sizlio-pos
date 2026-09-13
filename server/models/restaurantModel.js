@@ -2,9 +2,7 @@ const pool = require("../config/db");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 
-const {
-  sendRestaurantCredentials
-} = require("../services/emailService");
+ require("../services/emailService");
 
 // ======================================================
 // ALLOWED RESTAURANT FOOD TYPES
@@ -514,46 +512,7 @@ for (
 
     await client.query("COMMIT");
 
-// ======================================================
-// SEND RESTAURANT CREDENTIAL EMAIL
-// ======================================================
 
-const loginUrl =
-  `${process.env.APP_URL}/login`;
-
-try {
-
-  await sendRestaurantCredentials({
-
-    restaurant: {
-      ...restaurant,
-      plan: selectedPlan,
-      food_type: selectedFoodType
-    },
-
-    manager: {
-      username: manager_username,
-      password: manager_password
-    },
-
-    staff: generatedStaff,
-
-    loginUrl
-
-  });
-
-  console.log(
-    `Credential email sent to ${restaurant.email}`
-  );
-
-} catch (emailError) {
-
-  console.error(
-    "Restaurant created successfully, but credential email failed:",
-    emailError
-  );
-
-}
 
 // --------------------------------------------------
 // RETURN

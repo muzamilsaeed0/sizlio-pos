@@ -15,6 +15,9 @@ const {
   ALLOWED_FOOD_TYPES
 } = require('../models/restaurantModel');
 
+const {
+  sendRestaurantCredentials
+} = require('../services/emailService');
 
 // ======================================================
 // LIST RESTAURANTS
@@ -63,11 +66,9 @@ exports.addRestaurant = async (req, res) => {
       address,
       plan,
       expiry_date,
-
       manager_username,
       manager_password,
       manager_fullname,
-
       food_type
     } = req.body;
 
@@ -76,18 +77,11 @@ exports.addRestaurant = async (req, res) => {
     // REQUIRED FIELDS
     // --------------------------------------------------
 
-    if (
-      !name ||
-      !manager_username ||
-      !manager_password
-    ) {
-
+    if (!name || !manager_username || !manager_password) {
       return res.status(400).json({
         success: false,
-        message:
-          'Restaurant name, manager username and password are required'
+        message: 'Restaurant name, manager username and password are required'
       });
-
     }
 
 
@@ -95,61 +89,75 @@ exports.addRestaurant = async (req, res) => {
     // FOOD TYPE
     // --------------------------------------------------
 
-    const selectedFoodType =
-      food_type || 'Fast Food';
+    const selectedFoodType = food_type || 'Fast Food';
 
-
-    if (
-      !ALLOWED_FOOD_TYPES.includes(
-        selectedFoodType
-      )
-    ) {
-
+    if (!ALLOWED_FOOD_TYPES.includes(selectedFoodType)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid restaurant food type',
-        allowed_food_types:
-          ALLOWED_FOOD_TYPES
+        allowed_food_types: ALLOWED_FOOD_TYPES
       });
-
     }
 
 
     // --------------------------------------------------
-    // CREATE
+    // CREATE (DB ONLY — NO EMAIL YET)
     // --------------------------------------------------
 
-    const result =
-      await createRestaurant({
+    const result = await createRestaurant({
+      name,
+      owner_name,
+      phone,
+      email,
+      city,
+      address,
+      plan,
+      expiry_date,
+      manager_username,
+      manager_password,
+      manager_fullname,
+      food_type: selectedFoodType
+    });
 
-        name,
-        owner_name,
-        phone,
-        email,
-        city,
-        address,
 
-        plan,
-        expiry_date,
-
-        manager_username,
-        manager_password,
-        manager_fullname,
-
-        food_type:
-          selectedFoodType
-
-      });
-
+    // --------------------------------------------------
+    // ✅ INSTANT RESPONSE — Button will unlock immediately
+    // --------------------------------------------------
 
     res.status(201).json({
-
       success: true,
-
-      message:
-        'Restaurant created',
-
+      message: 'Restaurant created',
       data: result
+    });
+
+
+    // --------------------------------------------------
+    // ✅ EMAIL IN BACKGROUND (Non-blocking)
+    // --------------------------------------------------
+
+    setImmediate(async () => {
+
+      try {
+
+        await sendRestaurantCredentials({
+          restaurant: result.restaurant,
+          manager: {
+            username: manager_username,
+            password: manager_password
+          },
+          staff: result.staff || {}
+        });
+
+        console.log(`✅ Credential email sent to ${result.restaurant.email}`);
+
+      } catch (emailErr) {
+
+        console.error('⚠️ Background email failed:', emailErr.message);
+
+        // Email fail ho toh bhi restaurant create ho chuka hai
+        // Aap chaho toh yahan DB mein log kar sakte ho
+
+      }
 
     });
 
@@ -157,28 +165,17 @@ exports.addRestaurant = async (req, res) => {
   } catch (err) {
 
     if (err.code === '23505') {
-
       return res.status(409).json({
-
         success: false,
-
-        message:
-          'Manager username already taken'
-
+        message: 'Manager username already taken'
       });
-
     }
 
+    console.error('addRestaurant:', err);
 
-    console.error(err);
-
-
-    res.status(500).json({
-
+    return res.status(500).json({
       success: false,
-
       message: 'Server error'
-
     });
 
   }
