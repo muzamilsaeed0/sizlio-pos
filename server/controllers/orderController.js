@@ -1,3 +1,5 @@
+const pool = require('../config/db');
+
 const {
   createOrder,
   getAllOrders,
@@ -163,7 +165,9 @@ exports.placeOrder = async (
     order_source = 'MENU',
     payment_timing = 'PAY_LATER',
     paid_amount = 0,
-    deals = []
+    deals = [],
+     delivery_charge = 0,  
+     dine_charge = 0 
   } = req.body;
 
 
@@ -261,7 +265,7 @@ exports.placeOrder = async (
   // ----------------------------------------------------
 
   if (
-    !['dine_in', 'delivery']
+    !['dine_in', 'delivery','walk_in']
       .includes(order_type)
   ) {
 
@@ -270,7 +274,7 @@ exports.placeOrder = async (
       success: false,
 
       message:
-        'Order type must be dine_in or delivery'
+        'Order type must be dine_in, delivery or walk_in'
 
     });
 
@@ -285,20 +289,10 @@ exports.placeOrder = async (
     Number(table_no);
 
 
-  if (
-    order_type === 'delivery'
-  ) {
-
+  if (order_type === 'delivery' || order_type === 'walk_in') {
     tableNo = 0;
-
-  }
-
-  else {
-
-    if (
-      !Number.isInteger(tableNo) ||
-      tableNo <= 0
-    ) {
+} else {
+    if (!Number.isInteger(tableNo) || tableNo <= 0) {
 
       return res.status(400).json({
 
@@ -687,41 +681,22 @@ if (order_type === 'dine_in') {
 
        const newOrder =
       await createOrder(
-
         tableNo,
-
         normalizedItems,
-
         restaurantId,
-
-        customer_name
-          ? String(customer_name).trim()
-          : null,
-
+        customer_name ? String(customer_name).trim() : null,
         initialStatus,
-
         pricing,
-
         order_type,
-
-        order_type === 'delivery'
-          ? String(delivery_phone).trim()
-          : null,
-
-        order_type === 'delivery'
-          ? String(delivery_address).trim()
-          : null,
-
+        order_type === 'delivery' ? String(delivery_phone).trim() : null,
+        order_type === 'delivery' ? String(delivery_address).trim() : null,
         orderSource,
-
         paymentTiming,
-
         initialPaidAmount,
-
         normalizedDeals,
-
-        req.user?.id || null
-
+        req.user?.id || null,             
+        Number(delivery_charge || 0),    
+        Number(dine_charge || 0)         
       );
 
 
@@ -2665,7 +2640,9 @@ exports.updatePricing = async (
     discount_type = 'none',
     discount_value = 0,
     gst_percent = 0,
-    tax_percent = 0
+    tax_percent = 0,
+    delivery_charge = 0,
+    dine_charge = 0
   } = req.body;
 
 
@@ -2817,7 +2794,11 @@ exports.updatePricing = async (
           gst_percent:
             gstPercent,
           tax_percent:
-            taxPercent
+            taxPercent,
+          delivery_charge:
+            Number(delivery_charge),
+          dine_charge:
+            Number(dine_charge)
         }
 
       );
@@ -4609,35 +4590,40 @@ async function recalculateOrderPricing(orderId, restaurantId) {
 
     // Get discounts
     const orderResult = await client.query(
-      `SELECT discount_type, discount_value, gst_percent, tax_percent
-       FROM orders WHERE id = $1`,
-      [orderId]
-    );
-    const order = orderResult.rows[0];
+  `SELECT discount_type, discount_value, gst_percent, tax_percent,
+          delivery_charge, dine_charge
+   FROM orders WHERE id = $1`,
+  [orderId]
+);
+const order = orderResult.rows[0];
 
-    let discountAmount = 0;
-    if (order.discount_type === 'percent') {
-      discountAmount = subtotal * (order.discount_value / 100);
-    } else if (order.discount_type === 'fixed') {
-      discountAmount = order.discount_value;
-    }
-    discountAmount = Math.min(discountAmount, subtotal);
+let discountAmount = 0;
+if (order.discount_type === 'percent') {
+  discountAmount = subtotal * (order.discount_value / 100);
+} else if (order.discount_type === 'fixed') {
+  discountAmount = order.discount_value;
+}
+discountAmount = Math.min(discountAmount, subtotal);
 
-    const afterDiscount = subtotal - discountAmount;
-    const gstAmount = afterDiscount * (order.gst_percent / 100);
-    const taxAmount = afterDiscount * (order.tax_percent / 100);
-    const total = afterDiscount + gstAmount + taxAmount;
+const afterDiscount = subtotal - discountAmount;
+const gstAmount = afterDiscount * (order.gst_percent / 100);
+const taxAmount = afterDiscount * (order.tax_percent / 100);
 
-    await client.query(
-      `UPDATE orders SET
-        subtotal = $1,
-        discount_amount = $2,
-        gst_amount = $3,
-        tax_amount = $4,
-        total_amount = $5
-       WHERE id = $6`,
-      [subtotal, discountAmount, gstAmount, taxAmount, total, orderId]
-    );
+// ✅ Include delivery/dine charges
+const deliveryCharge = Number(order.delivery_charge || 0);
+const dineCharge = Number(order.dine_charge || 0);
+const total = afterDiscount + gstAmount + taxAmount + deliveryCharge + dineCharge;
+
+await client.query(
+  `UPDATE orders SET
+    subtotal = $1,
+    discount_amount = $2,
+    gst_amount = $3,
+    tax_amount = $4,
+    total_amount = $5
+   WHERE id = $6`,
+  [subtotal, discountAmount, gstAmount, taxAmount, total, orderId]
+);
 
     await client.query('COMMIT');
   } catch (err) {

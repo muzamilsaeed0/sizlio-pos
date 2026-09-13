@@ -1586,6 +1586,7 @@
                 <div class="shift-status" id="shiftStatus">Checking...</div>
                 <button class="shift-btn" id="shiftBtn" onclick="toggleShift()" disabled>...</button>
             </div>
+            <button class="side-menu-btn" onclick="openSettings()">⚙️ Settings</button>
             <button class="side-menu-btn" onclick="openShiftReports()">📊 Shift Reports</button>
             <button class="side-menu-btn" onclick="openRiderManagement()">🚚 Rider Management</button>
             <button class="side-menu-btn danger" onclick="logout()">🚪 Logout</button>
@@ -1613,7 +1614,11 @@
                 <div class="top">
                     <div>
                         <button class="type-btn active" id="dineBtn" onclick="setOrderType('dine_in')">Dine In</button>
+                        
                         <button class="type-btn" id="deliveryBtn" onclick="setOrderType('delivery')">Delivery</button>
+                        
+                         <button class="type-btn" id="walkinBtn" onclick="setOrderType('walk_in')">🛍️ Walk-in</button>
+
                     </div>
                     <div class="field" id="tableField">
                         <label>Table No</label>
@@ -1682,6 +1687,18 @@
                         <input id="deliveryAddress" placeholder="Full address" autocomplete="street-address" />
                     </div>
                 </div>
+
+                <!-- Delivery Charges (only for delivery) -->
+<div class="field" id="deliveryChargeField" style="display:none; margin-top:8px;">
+    <label>🛵 Delivery Charges (Rs)</label>
+    <input id="deliveryCharge" type="number" min="0" step="0.01" value="0" oninput="renderCart()" />
+</div>
+
+<!-- Dine-in Charges (only for dine-in) -->
+<div class="field" id="dineChargeField" style="display:none; margin-top:8px;">
+    <label>🍽️ Dine-in / Service Charges (Rs)</label>
+    <input id="dineCharge" type="number" min="0" step="0.01" value="0" oninput="renderCart()" />
+</div>
 
                 <div class="pricing-grid">
                     <div class="field">
@@ -1871,6 +1888,38 @@
         </div>
     </div>
 
+    <!-- SETTINGS MODAL -->
+<div class="modal" id="settingsModal">
+    <div class="modal-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <h3 style="margin:0;">⚙️ Default Settings</h3>
+            <button class="modal-close-x" onclick="closeSettings()" aria-label="Close">&times;</button>
+        </div>
+
+        <div class="field">
+            <label>Default GST %</label>
+            <input id="settingsGst" type="number" min="0" max="100" step="0.01" value="0" />
+        </div>
+        <div class="field" style="margin-top:10px">
+            <label>Default Other Tax %</label>
+            <input id="settingsTax" type="number" min="0" max="100" step="0.01" value="0" />
+        </div>
+        <div class="field" style="margin-top:10px">
+            <label>Default Delivery Charges (Rs)</label>
+            <input id="settingsDelivery" type="number" min="0" step="0.01" value="0" />
+        </div>
+        <div class="field" style="margin-top:10px">
+            <label>Default Dine-in Charges (Rs)</label>
+            <input id="settingsDine" type="number" min="0" step="0.01" value="0" />
+        </div>
+
+        <div class="modal-actions">
+            <button class="cancel" onclick="closeSettings()">Cancel</button>
+            <button class="confirm" onclick="saveSettings()">Save Settings</button>
+        </div>
+    </div>
+</div>
+
     <iframe id="printFrame" class="hidden"></iframe>
 
     <script src="/socket.io/socket.io.js">
@@ -2032,6 +2081,45 @@
             document.getElementById('loginPassword').value = '';
             document.getElementById('loginError').classList.add('hidden');
         }
+
+        // ── settings ──
+function openSettings() {
+    closeSideMenu();
+    document.getElementById('settingsGst').value = localStorage.getItem('counter_default_gst') || 0;
+    document.getElementById('settingsTax').value = localStorage.getItem('counter_default_tax') || 0;
+    document.getElementById('settingsDelivery').value = localStorage.getItem('counter_default_delivery') || 0;
+    document.getElementById('settingsDine').value = localStorage.getItem('counter_default_dine') || 0;
+    document.getElementById('settingsModal').classList.add('show');
+}
+
+function closeSettings() {
+    document.getElementById('settingsModal').classList.remove('show');
+}
+
+function saveSettings() {
+    const gst = Number(document.getElementById('settingsGst').value || 0);
+    const tax = Number(document.getElementById('settingsTax').value || 0);
+    const delivery = Number(document.getElementById('settingsDelivery').value || 0);
+    const dine = Number(document.getElementById('settingsDine').value || 0);
+
+    if (gst < 0 || tax < 0 || delivery < 0 || dine < 0) {
+        alert('Values cannot be negative');
+        return;
+    }
+
+    localStorage.setItem('counter_default_gst', gst);
+    localStorage.setItem('counter_default_tax', tax);
+    localStorage.setItem('counter_default_delivery', delivery);
+    localStorage.setItem('counter_default_dine', dine);
+
+    // Apply defaults to current inputs
+    document.getElementById('gstPercent').value = gst;
+    document.getElementById('taxPercent').value = tax;
+
+    alert('✅ Settings saved');
+    closeSettings();
+    renderCart();
+}
 
         // ── side menu & theme ──
         function toggleSideMenu() {
@@ -2382,13 +2470,45 @@
         }
 
         function setOrderType(type) {
-            orderType = type;
-            document.getElementById('dineBtn').classList.toggle('active', type === 'dine_in');
-            document.getElementById('deliveryBtn').classList.toggle('active', type === 'delivery');
-            document.getElementById('tableField').style.display = type === 'delivery' ? 'none' : 'flex';
-            document.getElementById('deliveryFields').classList.toggle('show', type === 'delivery');
-            document.getElementById('orderTypeDisplay').value = type === 'dine_in' ? 'Dine In' : 'Delivery';
+    orderType = type;
+    document.getElementById('dineBtn').classList.toggle('active', type === 'dine_in');
+    document.getElementById('deliveryBtn').classList.toggle('active', type === 'delivery');
+    document.getElementById('walkinBtn').classList.toggle('active', type === 'walk_in');
+
+    // Table field: only for dine_in
+    document.getElementById('tableField').style.display = (type === 'dine_in') ? 'flex' : 'none';
+
+    // Delivery fields: only for delivery
+    document.getElementById('deliveryFields').classList.toggle('show', type === 'delivery');
+
+    // Delivery charges: only for delivery
+    const delChargeField = document.getElementById('deliveryChargeField');
+    if (delChargeField) delChargeField.style.display = (type === 'delivery') ? 'flex' : 'none';
+
+    // Dine-in charges: only for dine_in
+    const dineChargeField = document.getElementById('dineChargeField');
+    if (dineChargeField) dineChargeField.style.display = (type === 'dine_in') ? 'flex' : 'none';
+
+    // Prefill default charges from localStorage
+    if (type === 'delivery') {
+        const delEl = document.getElementById('deliveryCharge');
+        if (delEl && Number(delEl.value) === 0) {
+            delEl.value = localStorage.getItem('counter_default_delivery') || 0;
         }
+    }
+    if (type === 'dine_in') {
+        const dineEl = document.getElementById('dineCharge');
+        if (dineEl && Number(dineEl.value) === 0) {
+            dineEl.value = localStorage.getItem('counter_default_dine') || 0;
+        }
+    }
+
+    // Display label
+    const labels = { dine_in: 'Dine In', delivery: 'Delivery', walk_in: 'Walk-in' };
+    document.getElementById('orderTypeDisplay').value = labels[type] || type;
+
+    renderCart();
+}
 
         function setPaymentTiming(isPayNow) {
             payNow = isPayNow;
@@ -2597,24 +2717,40 @@
         }
 
         // ── pricing ──
-        function calcPricing(subtotal) {
-            const discountType = document.getElementById('discountType').value;
-            const discountValue = Number(document.getElementById('discountValue').value || 0);
-            const gstPercent = Number(document.getElementById('gstPercent').value || 0);
-            const taxPercent = Number(document.getElementById('taxPercent').value || 0);
-            let discountAmount = 0;
-            if (discountType === 'percent') {
-                discountAmount = subtotal * (discountValue / 100);
-            } else if (discountType === 'fixed') {
-                discountAmount = discountValue;
-            }
-            discountAmount = Math.min(Math.max(discountAmount, 0), subtotal);
-            const afterDiscount = subtotal - discountAmount;
-            const gstAmount = afterDiscount * (gstPercent / 100);
-            const taxAmount = afterDiscount * (taxPercent / 100);
-            const total = afterDiscount + gstAmount + taxAmount;
-            return { discountAmount, gstAmount, taxAmount, total };
-        }
+       function calcPricing(subtotal) {
+    const discountType = document.getElementById('discountType').value;
+    const discountValue = Number(document.getElementById('discountValue').value || 0);
+    const gstPercent = Number(document.getElementById('gstPercent').value || 0);
+    const taxPercent = Number(document.getElementById('taxPercent').value || 0);
+    const deliveryCharge = Number(document.getElementById('deliveryCharge')?.value || 0);
+    const dineCharge = Number(document.getElementById('dineCharge')?.value || 0);
+
+    let discountAmount = 0;
+    if (discountType === 'percent') {
+        discountAmount = subtotal * (discountValue / 100);
+    } else if (discountType === 'fixed') {
+        discountAmount = discountValue;
+    }
+    discountAmount = Math.min(Math.max(discountAmount, 0), subtotal);
+
+    const afterDiscount = subtotal - discountAmount;
+    const gstAmount = afterDiscount * (gstPercent / 100);
+    const taxAmount = afterDiscount * (taxPercent / 100);
+
+    // ✅ Extra charges based on order type
+    const appliedDelivery = (orderType === 'delivery') ? deliveryCharge : 0;
+    const appliedDine = (orderType === 'dine_in') ? dineCharge : 0;
+    const extraCharges = appliedDelivery + appliedDine;
+
+    const total = afterDiscount + gstAmount + taxAmount + extraCharges;
+
+    return {
+        discountAmount, gstAmount, taxAmount,
+        deliveryCharge: appliedDelivery,
+        dineCharge: appliedDine,
+        extraCharges, total
+    };
+}
 
         function renderCart() {
             const box = document.getElementById('cart');
@@ -2654,20 +2790,32 @@
             box.innerHTML = (dealRows + itemRows) || '<div class="empty">No items selected.</div>';
             const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0) + dealCart.reduce((sum,
                 d) => sum + d.price * d.quantity, 0);
-            const { discountAmount, gstAmount, taxAmount, total } = calcPricing(subtotal);
-            document.getElementById('subtotal').textContent = money(subtotal);
-            document.getElementById('total').textContent = money(total);
-            const breakdown = document.getElementById('pricingBreakdown');
-            if (breakdown) {
-                const lines = [];
-                if (discountAmount > 0) lines.push(
-                    `<div class="summary-line"><span>Discount</span><span>- ${money(discountAmount)}</span></div>`);
-                if (gstAmount > 0) lines.push(
-                    `<div class="summary-line"><span>GST</span><span>${money(gstAmount)}</span></div>`);
-                if (taxAmount > 0) lines.push(
-                    `<div class="summary-line"><span>Other Tax</span><span>${money(taxAmount)}</span></div>`);
-                breakdown.innerHTML = lines.join('');
-            }
+           const pricingResult = calcPricing(subtotal);
+const { discountAmount, gstAmount, taxAmount, deliveryCharge, dineCharge, total } = pricingResult;
+
+document.getElementById('subtotal').textContent = money(subtotal);
+document.getElementById('total').textContent = money(total);
+
+                const breakdown = document.getElementById('pricingBreakdown');
+                if (breakdown) {
+                    const lines = [];
+                    if (discountAmount > 0) {
+                        lines.push(`<div class="summary-line"><span>Discount</span><span>- ${money(discountAmount)}</span></div>`);
+                    }
+                    if (gstAmount > 0) {
+                        lines.push(`<div class="summary-line"><span>GST</span><span>${money(gstAmount)}</span></div>`);
+                    }
+                    if (taxAmount > 0) {
+                        lines.push(`<div class="summary-line"><span>Other Tax</span><span>${money(taxAmount)}</span></div>`);
+                    }
+                    if (deliveryCharge > 0) {
+                        lines.push(`<div class="summary-line"><span>🛵 Delivery Charges</span><span>${money(deliveryCharge)}</span></div>`);
+                    }
+                    if (dineCharge > 0) {
+                        lines.push(`<div class="summary-line"><span>🍽️ Dine-in Charges</span><span>${money(dineCharge)}</span></div>`);
+                    }
+                    breakdown.innerHTML = lines.join('');
+                }
         }
 
         // ── customer lookup ──
@@ -2765,7 +2913,7 @@
             const { total: finalTotalNow } = calcPricing(subtotalNow);
 
             const payload = {
-                table_no: orderType === 'delivery' ? 0 : table,
+                table_no: orderType === 'delivery' ? 0 : table : 0,
                 items: cart.map(x => ({
                     menu_item_id: Number(x.menu_item_id),
                     variant_id: x.variant_id === null || x.variant_id === undefined || x.variant_id === '' ? null :
@@ -2793,6 +2941,8 @@
                 paid_amount: payNow ? finalTotalNow : 0,
                 payment_status: payNow ? 'paid' : 'unpaid',
                 subtotal: Number(subtotalNow || 0),
+                 delivery_charge: (orderType === 'delivery') ? Number(document.getElementById('deliveryCharge').value || 0) : 0, 
+    dine_charge: (orderType === 'dine_in') ? Number(document.getElementById('dineCharge').value || 0) : 0,    
                 total_amount: Number(finalTotalNow || 0),
                 created_at: new Date().toISOString(),
                 pricing
@@ -3245,7 +3395,12 @@
                 return `
                         <div class="order-card">
                             <h4>
-                                <span>#${o.id} ${delivery ? '• Delivery' : '• Table ' + esc(o.table_no)}</span>
+                                const typeLabel = o.order_type === 'delivery' 
+    ? '• Delivery' 
+    : (o.order_type === 'walk_in' ? '• Walk-in' : '• Table ' + esc(o.table_no));
+
+// Phir:
+<span>#${o.id} ${typeLabel}</span>
                                 <span class="status-chip st-${esc(statusValue)}">${esc(statusValue.replaceAll('_',' '))}</span>
                             </h4>
                             <div class="meta">
@@ -3432,7 +3587,13 @@
                             <div class="brand-header">${logoHtml}<div class="brand-name">${esc(restaurantName)}</div></div>
                             <div class="restaurant-header">${restaurantBrand.address ? `<div class="restaurant-info">${esc(restaurantBrand.address)}</div>` : ''}${restaurantBrand.phone ? `<div class="restaurant-info">Tel: ${esc(restaurantBrand.phone)}</div>` : ''}<div class="receipt-title">${o.order_type === 'delivery' ? 'DELIVERY SLIP' : 'SALES RECEIPT'}</div></div>
                             <hr class="divider">
-                            <div class="order-info"><div><strong>Order #</strong> ${esc(o.id)}</div><div><strong>${o.order_type === 'delivery' ? 'Type' : 'Table'}</strong> ${o.order_type === 'delivery' ? 'Delivery' : esc(o.table_no ?? '-')}</div><div><strong>Date</strong> ${dateStr}</div><div><strong>Time</strong> ${timeStr}</div></div>
+                            <div class="order-info"><div><strong>Order #</strong> ${esc(o.id)}</div>
+                            // Order info row mein:
+                            <div>
+                                <strong>${o.order_type === 'delivery' ? 'Type' : (o.order_type === 'walk_in' ? 'Type' : 'Table')}</strong>
+                                ${o.order_type === 'delivery' ? 'Delivery' : (o.order_type === 'walk_in' ? 'Walk-in' : esc(o.table_no ?? '-'))}
+                            </div>
+                            <div><strong>Date</strong> ${dateStr}</div><div><strong>Time</strong> ${timeStr}</div></div>
                             <hr class="divider">${deliveryInfo}
                             <table class="items"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead><tbody>${rows || '<tr><td colspan="4" style="text-align:center">No items</td></tr>'}</tbody></table>
                             <hr class="divider">
@@ -3742,6 +3903,13 @@
         // ── start ──
         async function startCounter() {
             setOrderType('dine_in');
+
+            // Apply saved default GST/Tax
+const defaultGst = Number(localStorage.getItem('counter_default_gst') || 0);
+const defaultTax = Number(localStorage.getItem('counter_default_tax') || 0);
+if (document.getElementById('gstPercent')) document.getElementById('gstPercent').value = defaultGst;
+if (document.getElementById('taxPercent')) document.getElementById('taxPercent').value = defaultTax;
+
             renderCart();
             await loadBranding();
             await loadMenu();
@@ -3915,6 +4083,9 @@
         window.printOfflineOrder = printOfflineOrder;
         window.updateSyncStatus = updateSyncStatus;
         window.cancelOrder = cancelOrder;
+        window.openSettings = openSettings;
+        window.closeSettings = closeSettings;
+        window.saveSettings = saveSettings;
     </script>
 </body>
 </html>
