@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Inventory Management</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --success: #16a34a;
+      --success-dark: #15803d;
+      --danger: #dc2626;
+      --danger-dark: #b91c1c;
+      --warning: #d97706;
+      --warning-bg: #fff7ed;
+      --blue-bg: #eff6ff;
+      --green-bg: #f0fdf4;
+      --red-bg: #fef2f2;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --white: #ffffff;
+      --shadow: 0 8px 30px rgba(15, 23, 42, 0.07);
+      --radius: 16px;
+
+      --page-bg: #f4f7fb;
+      --card-bg: #ffffff;
+      --text: var(--gray-800);
+      --text-strong: var(--gray-900);
+      --text-muted: var(--gray-500);
+      --border: var(--gray-200);
+      --panel: #1f262c;
+      --accent: #2563eb;
+    }
+
+    body.dark-theme {
+      --page-bg: #14181c;
+      --card-bg: #1f262c;
+      --text: #f6f3ec;
+      --text-strong: #ffffff;
+      --text-muted: #9ca3af;
+      --border: #2a3138;
+      --gray-50: #262d34;
+      --gray-100: #2a3138;
+      --panel: #1f262c;
+      --accent: #e3a23b;
+    }
+
+    body {
+      margin: 0;
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+      background: var(--page-bg);
+      color: var(--text);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .page {
+      width: min(1450px, 94%);
+      margin: 0 auto;
+      padding: 24px 0 60px;
+    }
+
+    /* =========================
+       HEADER
+    ========================= */
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+
+    .page-header-title {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: clamp(24px, 4vw, 34px);
+      font-weight: 800;
+      color: var(--text-strong);
+    }
+
+    .page-subtitle {
+      margin: 6px 0 0;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .back-manager-bar {
+      background: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .back-manager-bar:hover {
+      border-color: var(--accent);
+    }
+
+    .theme-toggle-btn {
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text);
+      padding: 11px 16px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .theme-toggle-btn:hover {
+      border-color: var(--accent);
+    }
+
+    /* =========================
+       VIEWS
+    ========================= */
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* =========================
+       CARDS
+    ========================= */
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 19px;
+      color: var(--text-strong);
+    }
+
+    /* =========================
+       DASHBOARD
+    ========================= */
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      color: var(--text-strong);
+      font-size: 23px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .dashboard-empty {
+      color: var(--text-muted);
+      background: var(--gray-50);
+      border: 1px dashed var(--border);
+      padding: 18px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .dashboard-low-item,
+    .dashboard-transaction {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dashboard-low-item:last-child,
+    .dashboard-transaction:last-child {
+      border-bottom: 0;
+    }
+
+    .dashboard-low-name,
+    .transaction-name {
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .dashboard-low-stock {
+      text-align: right;
+      font-weight: 800;
+      color: var(--danger);
+      white-space: nowrap;
+    }
+
+    .transaction-date {
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .transaction-in {
+      color: var(--success);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .transaction-out {
+      color: var(--danger);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    /* =========================
+       FORM
+    ========================= */
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+    }
+
+    .field {
+      min-width: 0;
+    }
+
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 7px;
+    }
+
+    .field input,
+    .field select,
+    .field textarea,
+    .search-box input,
+    .controls select {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--page-bg);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 11px 12px;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus,
+    .search-box input:focus,
+    .controls select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .form-actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 11px 15px;
+      font-weight: 700;
+      transition: 0.2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background: var(--gray-100);
+      color: var(--text);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    /* =========================
+       INVENTORY CONTROLS
+    ========================= */
+
+    .controls {
+      display: grid;
+      grid-template-columns: minmax(230px, 1fr) 180px repeat(4, auto);
+      gap: 9px;
+      align-items: center;
+      margin-bottom: 13px;
+    }
+
+    .filter-btn {
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text);
+      border-radius: 9px;
+      padding: 10px 12px;
+      font-weight: 700;
+    }
+
+    .filter-btn:hover {
+      background: var(--gray-50);
+    }
+
+    .filter-btn.active {
+      background: var(--text-strong);
+      border-color: var(--text-strong);
+      color: var(--card-bg);
+    }
+
+    .checkbox-wrap {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      white-space: nowrap;
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .checkbox-wrap input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary);
+    }
+
+    .result-count {
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    /* =========================
+       INVENTORY GRID
+    ========================= */
+
+    .inventory-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .inventory-card {
+      position: relative;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 17px;
+      box-shadow: 0 5px 20px rgba(15, 23, 42, 0.05);
+      overflow: hidden;
+    }
+
+    .inventory-card.low-stock {
+      border-color: #fecaca;
+    }
+
+    .inventory-card.inactive-item {
+      opacity: 0.85;
+    }
+
+    .inventory-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .item-name {
+      color: var(--text-strong);
+      font-size: 17px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .item-meta {
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .inventory-status {
+      flex: 0 0 auto;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .status-active {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-inactive {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .inventory-stock-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-radius: 12px;
+      padding: 13px;
+      margin-bottom: 13px;
+    }
+
+    .inventory-stock-good {
+      background: var(--green-bg);
+      border: 1px solid #bbf7d0;
+    }
+
+    .inventory-stock-low {
+      background: var(--red-bg);
+      border: 1px solid #fecaca;
+    }
+
+    .inventory-stock-label {
+      font-size: 11px;
+      color: var(--gray-500);
+      font-weight: 700;
+    }
+
+    .inventory-stock-value {
+      font-size: 20px;
+      font-weight: 900;
+      margin-top: 3px;
+      color: #111827;
+    }
+
+    .inventory-stock-side {
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+      color: #111827;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .row span:first-child {
+      color: var(--text-muted);
+    }
+
+    .row span:last-child {
+      color: var(--text);
+      font-weight: 700;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .actions button {
+      border: 0;
+      border-radius: 9px;
+      padding: 9px 8px;
+      font-size: 12px;
+      font-weight: 800;
+      transition: 0.2s;
+    }
+
+    .actions button:hover {
+      transform: translateY(-1px);
+    }
+
+    .edit-btn {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .stock-in-btn {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .stock-out-btn {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .history-btn {
+      background: #f3e8ff;
+      color: #7e22ce;
+    }
+
+    .delete-btn {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fecaca !important;
+    }
+
+    .activate-btn {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .inventory-state {
+      grid-column: 1 / -1;
+      background: var(--card-bg);
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+      padding: 45px 20px;
+      text-align: center;
+    }
+
+    .inventory-state-icon {
+      font-size: 36px;
+      margin-bottom: 9px;
+    }
+
+    .inventory-state-title {
+      color: var(--text-strong);
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .inventory-state-text {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-top: 6px;
+    }
+
+    .retry-btn {
+      margin-top: 14px;
+      border: 0;
+      background: var(--primary);
+      color: white;
+      border-radius: 9px;
+      padding: 10px 14px;
+      font-weight: 700;
+    }
+
+    /* =========================
+       MODALS
+    ========================= */
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 3000;
+      background: rgba(15, 23, 42, 0.56);
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .modal-content {
+      width: min(560px, 100%);
+      margin: 5vh auto;
+      background: var(--card-bg);
+      border-radius: 18px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      color: var(--text-strong);
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .close-btn {
+      border: 0;
+      background: var(--gray-100);
+      color: var(--text);
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      font-size: 23px;
+      line-height: 1;
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .stock-current {
+      display: inline-block;
+      background: var(--blue-bg);
+      color: #1d4ed8;
+      border-radius: 9px;
+      padding: 8px 11px;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 15px;
+    }
+
+    .error-box {
+      display: none;
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+      border-radius: 9px;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .history-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+
+    .history-in {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+
+    .history-out {
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+
+    .history-type {
+      font-weight: 800;
+      font-size: 13px;
+      color: #111827;
+    }
+
+    .history-quantity {
+      font-size: 18px;
+      font-weight: 900;
+      margin-top: 5px;
+      color: #111827;
+    }
+
+    .history-note,
+    .history-date {
+      color: #6b7280;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
+    .history-empty {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 25px;
+      background: var(--gray-50);
+      border-radius: 10px;
+    }
+
+    /* =========================
+       RESPONSIVE
+    ========================= */
+
+    @media (max-width: 1200px) {
+      .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .inventory-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .form-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .controls {
+        grid-template-columns: 1fr 180px repeat(4, auto);
+      }
+    }
+
+    @media (max-width: 850px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .controls {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .search-box {
+        grid-column: 1 / -1;
+      }
+
+      .inventory-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .page {
+        width: 94%;
+        padding-top: 16px;
+      }
+
+      .page-header {
+        align-items: flex-start;
+      }
+
+      .page-subtitle {
+        display: none;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .search-box {
+        grid-column: auto;
+      }
+
+      .filter-btn {
+        width: 100%;
+      }
+
+      .checkbox-wrap {
+        padding: 5px 0;
+      }
+
+      .inventory-stock-banner {
+        align-items: flex-start;
+      }
+
+      .actions {
+        grid-template-columns: 1fr;
+      }
+
+      .modal {
+        padding: 10px;
+      }
+
+      .modal-content {
+        margin: 2vh auto;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .page-title {
+        font-size: 24px;
+      }
+    }
+
+    .brand-header { display:flex; align-items:center; gap:10px; padding:12px 16px; background:var(--panel); border-bottom:1px solid #2A3138; }
+    .brand-header img { width:36px; height:36px; border-radius:8px; object-fit:cover; }
+    .brand-header .brand-name { font-weight:700; font-size:15px; color:white; }
+
+  </style>
+</head>
+
+<body>
+<div class="brand-header" id="brand-header" style="display:none;"></div>
+
+
+  <main class="page">
+
+    <!-- =========================
+         HEADER
+    ========================== -->
+
+    <header class="page-header">
+
+      <button onclick="backToManager()" class="back-manager-bar">
+        ← Back to Manager
+      </button>
+
+      <div class="page-header-title">
+        <h1 class="page-title">📦 Inventory Management</h1>
+        <p class="page-subtitle">
+          Manage stock, suppliers, transactions.
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <button
+          class="theme-toggle-btn"
+          type="button"
+          id="theme-toggle-btn"
+          onclick="toggleTheme()">
+          🌙 Dark Mode
+        </button>
+      </div>
+
+    </header>
+
+
+    <!-- =================================================
+         INVENTORY VIEW
+    ================================================== -->
+
+    <section id="inventory-view">
+
+
+      <!-- =========================
+           DASHBOARD STATS
+      ========================== -->
+
+      <div class="stats-grid">
+
+        <div class="stat-card">
+          <div class="stat-label">Total Items</div>
+          <div id="total-items" class="stat-value">0</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Stock Value</div>
+          <div id="stock-value" class="stat-value">Rs 0.00</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Low Stock</div>
+          <div id="low-stock-items" class="stat-value">0</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Healthy</div>
+          <div id="healthy-items" class="stat-value">0</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Today's Stock In</div>
+          <div id="today-stock-in" class="stat-value">0</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Today's Stock Out</div>
+          <div id="today-stock-out" class="stat-value">0</div>
+        </div>
+
+      </div>
+
+
+      <!-- =========================
+           DASHBOARD
+      ========================== -->
+
+      <div class="dashboard-grid">
+
+        <div class="card">
+
+          <div class="section-title">
+            <h2>⚠️ Low Stock Items</h2>
+          </div>
+
+          <div id="dashboard-low-stock"></div>
+
+        </div>
+
+
+        <div class="card">
+
+          <div class="section-title">
+            <h2>🕐 Recent Transactions</h2>
+          </div>
+
+          <div id="dashboard-transactions"></div>
+
+        </div>
+
+      </div>
+
+
+      <!-- =========================
+           INVENTORY FORM
+      ========================== -->
+
+      <div class="card">
+
+        <div class="section-title">
+
+          <h2 id="inventory-form-title">
+            ➕ Add Inventory Item
+          </h2>
+
+        </div>
+
+        <form
+          id="inventory-form"
+          onsubmit="event.preventDefault(); saveItem();">
+
+          <div class="form-grid">
+
+            <div class="field">
+              <label for="name">Item Name *</label>
+              <input
+                id="name"
+                type="text"
+                autocomplete="off"
+                required>
+            </div>
+
+            <div class="field">
+              <label for="category">Category *</label>
+              <input
+                id="category"
+                type="text"
+                autocomplete="off"
+                required>
+            </div>
+
+                        <div class="field">
+              <label for="unit">Unit *</label>
+              <select id="unit" required>
+                <option value="">Select unit</option>
+                <option value="g">Grams (g)</option>
+                <option value="ml">Milliliters (ml)</option>
+                <option value="pcs">Pieces (pcs)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="package_size">Package Size</label>
+              <input
+                id="package_size"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="e.g. 500">
+            </div>
+
+            <div class="field">
+              <label for="package_unit">Package Unit</label>
+              <select id="package_unit">
+                <option value="">No package size</option>
+                <option value="ml">Milliliters (ml)</option>
+                <option value="g">Grams (g)</option>
+                <option value="kg">Kilograms (kg)</option>
+                <option value="l">Liters (L)</option>
+                <option value="pcs">Pieces (pcs)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="stock_quantity">Stock Quantity *</label>
+              <input
+                id="stock_quantity"
+                type="number"
+                min="0"
+                step="0.01"
+                required>
+                <small style="color:var(--text-muted);font-size:11px;">Enter number only (e.g. 20, 500, 1000)</small>
+
+            </div>
+
+            <div class="field">
+              <label for="minimum_stock">Minimum Stock *</label>
+              <input
+                id="minimum_stock"
+                type="number"
+                min="0"
+                step="0.01"
+                required>
+            </div>
+
+            <div class="field">
+              <label for="purchase_price">Purchase Price *</label>
+              <input
+                id="purchase_price"
+                type="number"
+                min="0.01"
+                step="0.01"
+                required>
+            </div>
+
+            <div class="field" style="grid-column: span 2; background:var(--gray-50); border-radius:10px; padding:12px;">
+  <label>🧮 Bulk Purchase Helper (optional)</label>
+  <div style="display:flex; gap:8px; margin-top:6px;">
+    <input type="number" id="bulk-qty" placeholder="Qty (e.g. 20)" style="flex:1;">
+    <select id="bulk-unit" style="flex:1;">
+      <option value="1000">Kg / Liters</option>
+      <option value="1">Grams / ml / pcs (no conversion)</option>
+    </select>
+  </div>
+  <input type="number" id="bulk-total-price" placeholder="Total price paid (e.g. 18996)" style="margin-top:6px;">
+  <button type="button" onclick="applyBulkCalc()" style="margin-top:6px; width:100%;">Calculate & Fill</button>
+</div>
+
+            <div class="field">
+              <label for="supplier">Supplier</label>
+              <input
+                id="supplier"
+                type="text"
+                autocomplete="off">
+            </div>
+
+          </div>
+
+          <div class="form-actions">
+
+            <button
+              id="save-btn"
+              class="btn btn-primary"
+              type="submit">
+              💾 Save Item
+            </button>
+
+            <button
+              id="cancel-edit-btn"
+              class="btn btn-secondary"
+              type="button"
+              onclick="cancelEdit()"
+              style="display:none">
+              Cancel Edit
+            </button>
+
+          </div>
+
+        </form>
+
+      </div>
+
+
+      <!-- =========================
+           INVENTORY ITEMS
+      ========================== -->
+
+      <div class="card">
+
+        <div class="section-title">
+          <h2>📦 Inventory Items</h2>
+        </div>
+
+        <div
+          class="inventory-report-toolbar"
+          style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:10px;
+            flex-wrap:wrap;
+            margin-bottom:14px;
+          ">
+
+          <div
+            id="inventory-total-stock"
+            style="
+              font-size:15px;
+              font-weight:800;
+              color:#166534;
+              background:#f0fdf4;
+              border:1px solid #bbf7d0;
+              border-radius:10px;
+              padding:10px 14px;
+            ">
+            Loading stock...
+          </div>
+
+          <div
+            style="
+              display:flex;
+              gap:8px;
+              flex-wrap:wrap;
+            ">
+
+            <button
+              id="inventory-print-btn"
+              type="button"
+              class="btn btn-primary">
+              🖨️ Print Stock
+            </button>
+
+            <button
+              id="inventory-csv-btn"
+              type="button"
+              class="btn btn-secondary">
+              📥 Export CSV
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <div class="controls">
+
+          <div class="search-box">
+
+            <input
+              id="inventory-search"
+              type="search"
+              placeholder="Search name, category, supplier or unit...">
+
+          </div>
+
+          <select id="inventory-sort">
+
+            <option value="name-asc">
+              Name A-Z
+            </option>
+
+            <option value="name-desc">
+              Name Z-A
+            </option>
+
+            <option value="stock-desc">
+              Stock High-Low
+            </option>
+
+            <option value="stock-asc">
+              Stock Low-High
+            </option>
+
+            <option value="price-desc">
+              Price High-Low
+            </option>
+
+            <option value="price-asc">
+              Price Low-High
+            </option>
+
+            <option value="updated-desc">
+              Recently Updated
+            </option>
+
+          </select>
+<button
+            type="button"
+            class="filter-btn active"
+            data-filter="all">
+            All
+          </button>
+
+          <button
+            type="button"
+            class="filter-btn"
+            data-filter="low">
+            Low Stock
+          </button>
+
+          <button
+            type="button"
+            class="filter-btn"
+            data-filter="healthy">
+            Healthy
+          </button>
+
+          <button
+            type="button"
+            class="filter-btn"
+            data-filter="inactive">
+            Inactive
+          </button>
+
+        </div>
+
+        <div
+          id="inventory-result-count"
+          class="result-count">
+          Loading inventory...
+        </div>
+
+        <div
+          id="inventory-list"
+          class="inventory-grid">
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- =================================================
+       STOCK MODAL
+  ================================================== -->
+
+  <div
+    id="stock-modal"
+    class="modal">
+
+    <div class="modal-content">
+
+      <div class="modal-header">
+
+        <div>
+
+          <div
+            id="stock-modal-title"
+            class="modal-title">
+            Stock Transaction
+          </div>
+
+          <div
+            id="stock-modal-subtitle"
+            style="color:#6b7280;margin-top:4px">
+            Manage stock
+          </div>
+
+        </div>
+
+        <button
+          class="close-btn"
+          type="button"
+          onclick="closeStockModal()">
+          ×
+        </button>
+
+      </div>
+
+
+      <div class="modal-body">
+
+        <h3
+          id="stock-item-name"
+          style="margin:0 0 10px">
+        </h3>
+
+        <div
+          id="stock-current-value"
+          class="stock-current">
+        </div>
+
+        <div
+          id="stock-error"
+          class="error-box">
+        </div>
+
+        <div
+          class="field"
+          style="margin-bottom:14px">
+
+          <label for="stock-quantity">
+            Quantity
+          </label>
+
+          <input
+            id="stock-quantity"
+            type="number"
+            min="0.0001"
+            step="0.01">
+
+        </div>
+
+        <div class="field">
+
+          <label for="stock-note">
+            Note
+          </label>
+
+          <textarea
+            id="stock-note"
+            rows="3"
+            placeholder="Optional note">
+          </textarea>
+
+        </div>
+
+        <div class="form-actions">
+
+          <button
+            id="stock-confirm-btn"
+            class="btn btn-success"
+            type="button"
+            onclick="confirmStockTransaction()">
+            Confirm
+          </button>
+
+          <button
+            class="btn btn-secondary"
+            type="button"
+            onclick="closeStockModal()">
+            Cancel
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =================================================
+       HISTORY MODAL
+  ================================================== -->
+
+  <div
+    id="history-modal"
+    class="modal">
+
+    <div class="modal-content">
+
+      <div class="modal-header">
+
+        <div
+          id="history-title"
+          class="modal-title">
+          Stock History
+        </div>
+
+        <button
+          class="close-btn"
+          type="button"
+          onclick="closeHistory()">
+          ×
+        </button>
+
+      </div>
+
+      <div class="modal-body">
+
+        <div
+          class="form-actions"
+          style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap">
+
+          <button
+            id="history-print-btn"
+            class="btn btn-primary"
+            type="button">
+            🖨️ Print Audit
+          </button>
+
+          <button
+            id="history-csv-btn"
+            class="btn btn-secondary"
+            type="button">
+            📥 Export CSV
+          </button>
+
+        </div>
+
+        <div id="history-list"></div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <script src="inventory.js"></script>
+
+</body>
+</html>

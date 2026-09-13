@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manager</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #14181c;
+      --panel: #1f262c;
+      --text: #f6f3ec;
+      --muted: #9ca3af;
+      --border: #2a3138;
+      --accent: #e3a23b;
+      --success: #2fa37d;
+      --danger: #e15a4c;
+    }
+
+    body.light-theme {
+      --bg: #f4f1ea;
+      --panel: #fff;
+      --text: #1b1f22;
+      --muted: #6b7280;
+      --border: #ddd6c8;
+      --accent: #c97b2e;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    button, input, select { font-family: inherit; }
+    button { cursor: pointer; }
+
+    /* ========================= LOGIN ========================= */
+    #login-box {
+      max-width: 340px;
+      margin: 80px auto;
+      background: var(--panel);
+      padding: 32px 28px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px #0006;
+      text-align: center;
+    }
+
+    #login-box input, .pw-wrap { width: 100%; display: block; }
+    #login-box input {
+      padding: 12px 14px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+    }
+    #login-box input:focus { outline: none; border-color: var(--accent); }
+    #login-box button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 12px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #14181c;
+      font-weight: 700;
+    }
+    #login-error { min-height: 18px; color: var(--danger); font-size: 13px; }
+    .pw-wrap { position: relative; margin: 8px 0; }
+    .pw-wrap input { margin: 0 !important; padding-right: 40px !important; }
+    .pw-eye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; user-select: none; }
+
+    /* ========================= BRAND ========================= */
+    .brand-header {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      min-height: 60px;
+    }
+    .brand-header img { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; }
+    .brand-name { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .food-type-badge { display: inline-block; margin-top: 5px; padding: 4px 8px; border-radius: 6px; background: #2a3138; color: var(--accent); font-size: 11px; font-weight: 700; }
+
+    /* ========================= APP ========================= */
+    #app-box {
+      max-width: 1100px; /* Updated for full screen */
+      margin: auto;
+      padding: 0 16px 60px;
+    }
+    .topnav {
+      position: sticky;
+      top: 0;
+      z-index: 900;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      margin: 0 -16px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+    }
+    .menu-btn { background: none; border: 0; color: var(--text); font-size: 22px; cursor: pointer; }
+    .title { font-weight: 700; font-size: 15px; }
+    h2 { margin: 28px 0 14px; font-size: 17px; }
+
+    /* ========================= SUMMARY ========================= */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+    .stat { background: var(--panel); padding: 16px 18px; border-radius: 12px; cursor: pointer; border: 1px solid transparent; }
+    .stat:hover { border-color: var(--accent); }
+    .stat .label { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+    .stat .value { color: var(--accent); font-size: 22px; font-weight: 700; }
+
+    /* ========================= ROWS ========================= */
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: var(--panel);
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin: 8px 0;
+      border: 1px solid transparent;
+    }
+    .row-left { min-width: 0; }
+    .row-title { font-weight: 600; word-break: break-word; }
+    .row-sub { color: var(--muted); font-size: 11px; margin-top: 3px; }
+    .row-actions { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+    .btn-pay, .btn-success { background: var(--success); color: #fff; border: 0; border-radius: 6px; padding: 8px 14px; font-weight: 700; font-size: 12px; }
+    .btn-danger { background: var(--danger); color: #fff; border: 0; border-radius: 6px; padding: 7px 12px; font-weight: 700; font-size: 12px; }
+    .btn-edit, .btn-print { background: var(--accent); color: #14181c; border: 0; border-radius: 6px; padding: 7px 12px; font-weight: 700; font-size: 12px; }
+    .empty { padding: 24px 16px; text-align: center; color: var(--muted); font-size: 13px; border: 1px dashed var(--border); border-radius: 10px; }
+
+    /* ========================= MENU ========================= */
+    .add-form { display: flex; gap: 8px; margin-top: 10px; }
+    .add-form input, .add-form select, .qr-controls input { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel); color: var(--text); font-size: 13px; }
+    .add-form input#new-price { flex: 0 0 100px; }
+    .add-form button, .qr-controls button { background: var(--accent); color: #14181c; border: 0; border-radius: 8px; padding: 10px 16px; font-weight: 700; }
+    .category-title { color: var(--accent); font-size: 13px; font-weight: 700; margin-top: 12px; }
+    .menu-policy { padding: 10px 12px; border: 1px solid var(--border); border-radius: 9px; color: var(--muted); font-size: 12px; margin-bottom: 10px; }
+    .menu-policy strong { color: var(--text); }
+
+    /* ========================= QR ========================= */
+    #qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+    .qr-controls { display: flex; gap: 8px; margin-bottom: 14px; }
+
+    /* ========================= SIDE MENU ========================= */
+    .side-menu { position: fixed; top: 0; left: -260px; width: 240px; height: 100%; background: var(--panel); border-right: 1px solid var(--border); transition: left 0.2s; z-index: 1200; padding: 20px 0; }
+    .side-menu.open { left: 0; }
+    .menu-heading { padding: 10px 20px 18px; font-size: 16px; font-weight: 700; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+    .side-menu button { display: block; width: 100%; text-align: left; padding: 14px 20px; color: var(--text); background: none; border: 0; font-size: 14px; }
+    .side-menu button:hover { background: var(--bg); }
+    .menu-parent { display: flex !important; align-items: center; justify-content: space-between; }
+    .menu-parent span { font-size: 12px; transition: transform 0.2s; }
+    .menu-submenu { display: none; background: rgba(0, 0, 0, 0.08); border-bottom: 1px solid var(--border); }
+    .menu-submenu.open { display: block; }
+    .menu-submenu button { padding: 11px 20px 11px 42px !important; font-size: 13px !important; }
+    .menu-submenu button:hover { background: var(--bg); }
+    .side-overlay { display: none; position: fixed; inset: 0; background: #0008; z-index: 1100; }
+    .side-overlay.open { display: block; }
+
+    /* ========================= MODALS ========================= */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: #0009; z-index: 1500; align-items: center; justify-content: center; padding: 15px; }
+    .modal-overlay.open { display: flex; }
+    .modal-box { position: relative; background: var(--panel); padding: 24px; border-radius: 14px; max-width: 420px; width: 100%; max-height: 90vh; overflow: auto; }
+    .modal-box h3 { margin: 0 0 16px; padding-right: 30px; }
+    .modal-box input, .modal-box select { width: 100%; padding: 10px 12px; margin: 6px 0; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px; }
+    .modal-box .add-form { flex-wrap: wrap; }
+    .modal-box .add-form input, .modal-box .add-form select { width: auto; flex: 1 1 110px; margin: 0; }
+    .modal-box .add-form input#new-price { flex: 0 0 90px; }
+    .modal-box .add-form button { width: auto; flex: 1 1 100%; margin: 0; }
+    .modal-box .deal-picker-row input, .modal-box .deal-picker-row select { width: auto; margin: 0; }
+    .modal-box .deal-picker-row button { width: auto; }
+    .modal-box button { width: 100%; padding: 11px; margin-top: 10px; border-radius: 8px; border: 0; background: var(--accent); color: #14181c; font-weight: 700; }
+    .modal-close-x { position: absolute; top: 10px; right: 12px; width: 32px !important; height: 32px; margin: 0 !important; padding: 0 !important; background: transparent !important; color: var(--text) !important; border: 1px solid var(--border) !important; border-radius: 50% !important; font-size: 22px; font-weight: 400 !important; }
+    .modal-close-x:hover { background: var(--danger) !important; color: #fff !important; }
+    .staff-modal-box h3 { padding-right: 40px; }
+    .staff-close-btn { background: transparent !important; color: var(--text) !important; border: 1px solid var(--border) !important; }
+
+    /* ========================= THEME ========================= */
+    .theme-row { display: flex; justify-content: space-between; align-items: center; margin: 14px 0; }
+    .switch { position: relative; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; inset: 0; background: var(--border); border-radius: 24px; cursor: pointer; }
+    .slider::before { content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: 0.2s; }
+    .switch input:checked + .slider { background: var(--accent); }
+    .switch input:checked + .slider::before { transform: translateX(20px); }
+    /* ========================= SETTINGS: LOCATION CARD ========================= */ 
+    .card { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; } 
+    .section-title h2 { margin: 0; font-size: 15px; } 
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; } 
+    .form-grid .field:last-child { grid-column: 1 / -1; } 
+    .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .form-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    /* ========================= NOTIFICATIONS ========================= */
+    #notification-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+    .notification { background: var(--danger); color: #fff; padding: 15px 20px; border-radius: 10px; font-weight: 700; min-width: 250px; box-shadow: 0 4px 10px #0005; }
+
+    /* ========================= SUBSCRIPTION ========================= */
+    .subscription-badge { position: fixed; top: 18px; right: 22px; z-index: 9999; display: flex; align-items: center; gap: 8px; padding: 9px 14px; background: #1f262c; border: 1px solid #343b43; border-radius: 10px; color: #f6f3ec; font-size: 13px; font-weight: 600; box-shadow: 0 5px 18px #0004; }
+    .subscription-label { color: #9ca3af; font-weight: 500; }
+    #subscription-days { color: #22c55e; font-weight: 700; }
+    .subscription-badge.warning { border-color: #f59e0b; }
+    .subscription-badge.warning #subscription-days { color: #f59e0b; }
+    .subscription-badge.expired { border-color: #ef4444; }
+    .subscription-badge.expired #subscription-days { color: #ef4444; }
+
+    /* ========================= VARIANT QUICK ROW ========================= */
+    .variant-quick-row { display: flex; gap: 8px; margin: 6px 0; }
+    .variant-quick-row input { flex: 1 1 50%; min-width: 0; margin: 0 !important; }
+    #item-form-variants-list .row { padding: 8px 12px; }
+
+    /* ========================= DEAL PICKER ROW ========================= */
+    .deal-picker-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; align-items: center; }
+    .deal-picker-row select { flex: 1 1 140px; margin: 0; }
+    .deal-picker-row input { flex: 1 1 70px; margin: 0; }
+    .deal-picker-row button { flex: 1 1 100%; width: auto; margin: 0; padding: 10px 14px; }
+
+    /* ========================= FULL SCREEN & RESPONSIVE FIX ========================= */
+    @media (max-width: 600px) {
+      #app-box { padding-left: 12px; padding-right: 12px; }
+      .topnav { margin: 0 -12px; padding-left: 12px; padding-right: 12px; }
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+      .row { padding: 12px; }
+      .row-actions { width: 100%; justify-content: flex-start; gap: 6px; }
+      .modal-box { max-width: 100%; padding: 20px; margin: 10px; max-height: 85vh; }
+      .subscription-badge { top: 10px; right: 10px; }
+      .side-menu { width: 280px; }
+    }
+
+    @media (min-width: 601px) and (max-width: 900px) {
+      #app-box { max-width: 900px; }
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- BRAND HEADER -->
+  <div class="brand-header" id="brand-header"></div>
+
+  <!-- LOGIN -->
+  <div id="login-box">
+    <h2>Manager Login</h2>
+    <input id="username" placeholder="Username" autocomplete="username" onkeydown="if (event.key === 'Enter') login()">
+    <div class="pw-wrap">
+      <input id="password" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if (event.key === 'Enter') login()">
+      <span class="pw-eye" onmousedown="showPassword()" onmouseup="hidePassword()" onmouseleave="hidePassword()" title="Show password">👁</span>
+    </div>
+    <button onclick="login()">Login</button>
+    <p id="login-error"></p>
+  </div>
+
+  <!-- SUBSCRIPTION BADGE -->
+  <div id="subscription-badge" class="subscription-badge">
+    <span class="subscription-label">Subscription</span>
+    <span id="subscription-days">Checking...</span>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="app-box" style="display: none;">
+    <div class="topnav">
+      <button class="menu-btn" onclick="toggleMenu()" aria-label="Open menu">☰</button>
+      <div class="title">Manager</div>
+      <div></div>
+    </div>
+
+    <!-- SIDE MENU -->
+    <div class="side-overlay" id="side-overlay" onclick="closeMenu()"></div>
+    <div class="side-menu" id="side-menu">
+      <div class="menu-heading">Manager Menu</div>
+      <button onclick="openPage('sales.html?type=today')">📊 Sales</button>
+      <button onclick="openPage('inventory.html')">📦 Inventory</button>
+      <button onclick="openKitchenRequestsModal()">📥 Kitchen Requests</button>
+      <button class="menu-parent" onclick="toggleMenuSubmenu()">🍔 Menu <span>▾</span></button>
+      <div id="menu-submenu" class="menu-submenu">
+        <button onclick="openMenuItems()">🍽️ Items</button>
+        <button onclick="openMenuCategories()">🏷️ Categories</button>
+        <button onclick="openMenuDeals()">🎁 Deals / Combos</button>
+      </div>
+      <button onclick="openStaffModal()">👥 Staff</button>
+      <button onclick="openSettings()">⚙️ Settings</button>
+      <button onclick="logout()" style="color: var(--danger);">🚪 Logout</button>
+    </div>
+
+  
+    <!-- SETTINGS MODAL --> <div class="modal-overlay" id="settings-modal">
+       <div class="modal-box"> 
+        <button class="modal-close-x" onclick="closeSettings()" aria-label="Close">&times;</button>
+         <h3>Settings</h3> 
+         <input id="set-username" placeholder="New Username (optional)" autocomplete="username"> 
+         <input id="set-current-password" type="password" placeholder="Current Password" autocomplete="current-password">
+          <input id="set-new-password" type="password" placeholder="New Password (optional)" autocomplete="new-password"> 
+          <button onclick="saveSettings()">Save</button> 
+          <button style="background: transparent; color: var(--text); border: 1px solid var(--border);" onclick="closeSettings()">Cancel</button> 
+          <p id="settings-msg" style="font-size: 12px; text-align: center;"></p> 
+          <div class="theme-row">
+             <span>Dark / Light Theme</span>
+              <label class="switch">
+                 <input type="checkbox" id="theme-toggle" onchange="toggleTheme()"> 
+                 <span class="slider"></span>
+                 </label> 
+                </div>
+                 <div class="card" style="margin-top: 20px;"> 
+                  <div class="section-title">
+                     <h2>📍 Restaurant Location (GPS Lock)</h2>
+                     </div>
+                      <p style="color:var(--muted); font-size:13px; margin-bottom:14px;"> When the customer scans the QR code, the system will check whether they are inside the restaurant or not. Press "Get Current Location" — the manager must do this while sitting inside the restaurant.</p> 
+                      <div class="form-grid"> 
+                        <div class="field"> 
+                          <label>Latitude</label> 
+                          <input id="rest-lat" type="text" readonly placeholder="Click button below"> 
+                        </div>
+                         <div class="field">
+                           <label>Longitude</label>
+                            <input id="rest-lng" type="text" readonly placeholder="Click button below"> 
+                          </div> 
+                          <div class="field">
+                             <label>Allowed Radius (meters)</label> 
+                             <input id="rest-radius" type="number" value="100" min="20" max="500"> 
+                            </div> 
+                          </div>
+                           <div class="form-actions"> 
+                            <button style="background: var(--accent); color: #14181c; width: auto; flex: 1 1 160px; margin: 0;" onclick="getCurrentLocation()"> 📍 Get Current Location </button>
+                             <button style="background: var(--success); color: #fff; width: auto; flex: 1 1 160px; margin: 0;" onclick="saveLocation()"> 💾 Save Location </button> 
+                            </div> 
+                            <p id="location-msg" style="font-size:12px; text-align:center; margin-top:8px;"></p> 
+                                  </div> 
+                                </div>
+                                </div>
+
+    <!-- STAFF MODAL -->
+    <div class="modal-overlay" id="staff-modal">
+      <div class="modal-box staff-modal-box">
+        <button class="modal-close-x" onclick="closeStaffModal()" aria-label="Close">&times;</button>
+        <h3>Staff Management</h3>
+        <div id="staff-list" style="max-height: 220px; overflow-y: auto; margin-bottom: 14px;"></div>
+        <input id="staff-fullname" placeholder="Full Name">
+        <input id="staff-username" placeholder="Username" autocomplete="username">
+        <input id="staff-password" type="password" placeholder="Password (leave blank to keep same)" autocomplete="new-password">
+        <select id="staff-role">
+          <option value="waiter">Waiter</option>
+          <option value="kitchen">Kitchen</option>
+          <option value="counter">Counter</option>
+          <option value="delivery">Delivery</option>
+          <option value="display">Status Board (Display)</option>
+        </select>
+        <button id="staff-save-btn" onclick="saveStaff()">Add Staff</button>
+        <button class="staff-close-btn" onclick="closeStaffModal()">Close</button>
+        <p id="staff-msg" style="font-size: 12px; text-align: center;"></p>
+      </div>
+    </div>
+
+    <!-- MENU ITEMS MODAL -->
+    <div class="modal-overlay" id="items-modal">
+      <div class="modal-box" style="max-width: 480px;">
+        <button class="modal-close-x" onclick="closeItemsModal()" aria-label="Close">&times;</button>
+        <h3>🍽️ Menu Items</h3>
+        <div class="menu-policy" id="menu-policy">Loading restaurant menu policy...</div>
+        <div id="menu-list" style="max-height: 220px; overflow-y: auto;"></div>
+        <div style="border-top: 1px solid var(--border); margin-top: 14px; padding-top: 12px;">
+          <h4 id="item-form-heading" style="margin: 0 0 8px; font-size: 14px; color: var(--accent);">Add New Item</h4>
+          <div class="add-form">
+            <input id="new-name" list="menu-suggestions" placeholder="Item name" oninput="onItemNameInput()" autocomplete="off">
+            <datalist id="menu-suggestions"></datalist>
+            <select id="new-category"></select>
+            <input id="new-price" type="number" min="0" step="0.01" placeholder="Base Price">
+          </div>
+          <div id="item-form-variants-list"></div>
+          <div class="variant-quick-row">
+            <input id="new-size-label" placeholder="Size (e.g. Small)" autocomplete="off">
+            <input id="new-size-price" type="number" min="0" step="0.01" placeholder="Size price">
+          </div>
+          <div class="variant-quick-row">
+            <input id="new-ml-value" placeholder="ml (e.g. 250)" autocomplete="off">
+            <input id="new-ml-price" type="number" min="0" step="0.01" placeholder="ml price">
+          </div>
+          <div class="variant-quick-row">
+            <input id="new-pcs-value" placeholder="Pcs (e.g. 5)" autocomplete="off">
+            <input id="new-pcs-price" type="number" min="0" step="0.01" placeholder="Pcs price">
+          </div>
+          <button id="item-form-save-btn" onclick="saveMenuItemForm()">Add Item</button>
+          <button style="background: transparent; color: var(--text); border: 1px solid var(--border);" onclick="resetMenuItemForm()">Cancel / New Item</button>
+          <p id="item-form-msg" style="font-size: 12px; text-align: center;"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MENU CATEGORIES MODAL -->
+    <div class="modal-overlay" id="category-modal">
+      <div class="modal-box">
+        <button class="modal-close-x" onclick="closeCategoryModal()" aria-label="Close">&times;</button>
+        <h3>🏷️ Menu Categories</h3>
+        <div id="category-list" style="max-height: 220px; overflow-y: auto; margin-bottom: 14px;"></div>
+        <select id="new-category-select"></select>
+        <button id="add-category-btn" onclick="saveCategory()">Add Category</button>
+        <button style="background: transparent; color: var(--text); border: 1px solid var(--border);" onclick="resetCategoryForm(); populateCategoryAddSelect();">Cancel Rename</button>
+        <p id="category-msg" style="font-size: 12px; text-align: center;"></p>
+      </div>
+    </div>
+
+    <!-- DEALS / COMBOS MODAL -->
+    <div class="modal-overlay" id="deal-modal">
+      <div class="modal-box" style="max-width: 480px;">
+        <button class="modal-close-x" onclick="closeDealModal()" aria-label="Close">&times;</button>
+        <h3>🎁 Deals / Combos</h3>
+        <div id="deal-list" style="max-height: 180px; overflow-y: auto; margin-bottom: 14px;"></div>
+        <input id="deal-name" placeholder="Deal / Combo name">
+        <select id="deal-type"><option value="deal">Deal</option><option value="combo">Combo</option></select>
+        <select id="deal-category"></select>
+        <input id="deal-price" type="number" min="0" step="0.01" placeholder="Price">
+        <div class="deal-picker-row">
+          <select id="deal-item-select" onchange="populateDealItemVariantSelect()"></select>
+          <select id="deal-item-variant-select"><option value="">Base price</option></select>
+          <input id="deal-item-qty" type="number" min="1" value="1">
+          <button type="button" onclick="addDealItemRow()">Add Item</button>
+        </div>
+        <div id="deal-selected-items"></div>
+        <button id="deal-save-btn" onclick="saveDeal()">Add Deal</button>
+        <button style="background: transparent; color: var(--text); border: 1px solid var(--border);" onclick="resetDealForm()">Reset Form</button>
+        <p id="deal-msg" style="font-size: 12px; text-align: center;"></p>
+      </div>
+    </div>
+
+    <!-- PAYMENT MODAL -->
+    <div class="modal-overlay" id="payment-modal">
+      <div class="modal-box">
+        <button class="modal-close-x" onclick="closePaymentModal()" aria-label="Close">&times;</button>
+        <h3>💳 Mark Payment</h3>
+        <p id="payment-order-info" style="font-size: 13px; margin-bottom: 12px; color: var(--text);"></p>
+        <label for="payment-method" style="display: block; font-size: 13px; margin-bottom: 4px;">Payment Method</label>
+        <select id="payment-method"><option value="Cash">Cash</option><option value="Card">Card</option><option value="Bank">Bank</option><option value="Online">Online</option><option value="Other">Other</option></select>
+        <button onclick="confirmPayment()">Confirm Payment</button>
+        <button style="background: transparent; color: var(--text); border: 1px solid var(--border);" onclick="closePaymentModal()">Cancel</button>
+        <p id="payment-msg" style="font-size: 12px; text-align: center;"></p>
+      </div>
+    </div>
+
+    <!-- KITCHEN REQUESTS MODAL -->
+    <div class="modal-overlay" id="kitchen-requests-modal">
+      <div class="modal-box" style="max-width: 480px;">
+        <button class="modal-close-x" onclick="closeKitchenRequestsModal()" aria-label="Close">&times;</button>
+        <h3>📥 Kitchen Stock Requests</h3>
+        <div id="kitchen-requests-list" style="max-height: 420px; overflow-y: auto;"></div>
+      </div>
+    </div>
+
+    <!-- SALES SUMMARY -->
+    <h2>Sales Summary</h2>
+    <div class="stat-grid">
+      <div class="stat" onclick="openPage('sales.html?type=today')"><div class="label">Today's Orders</div><div class="value" id="today-count">-</div></div>
+      <div class="stat" onclick="openPage('sales.html?type=today')"><div class="label">Today's Sales</div><div class="value" id="today-sales">-</div></div>
+      <div class="stat" onclick="openPage('sales.html?type=month')"><div class="label">Month's Orders</div><div class="value" id="month-count">-</div></div>
+      <div class="stat" onclick="openPage('sales.html?type=month')"><div class="label">Month's Sales</div><div class="value" id="month-sales">-</div></div>
+    </div>
+
+    <!-- PENDING PAYMENTS -->
+    <h2>Payment Pending</h2>
+    <div id="pending-list"></div>
+
+    <!-- TABLE QR CODES -->
+    <h2>Table QR Codes</h2>
+    <div class="qr-controls">
+      <input id="qr-count" type="number" min="1" max="100" placeholder="How many tables?" value="10">
+      <button onclick="generateQRs()">Generate</button>
+    </div>
+    <div id="qr-grid"></div>
+  </div>
+
+  <!-- NOTIFICATIONS -->
+  <div id="notification-container"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    "use strict";
+
+    /* GLOBAL STATE */
+    let token = localStorage.getItem("token");
+    let restaurantId = localStorage.getItem("restaurant_id");
+    let restaurantInfo = null;
+    let restaurantCategories = [];
+    let editingStaffId = null;
+    let staffFilter = "all";
+    let staffCache = [];
+    let categoriesCache = [];
+    let editingCategoryId = null;
+    let dealsCache = [];
+    let editingDealId = null;
+    let dealSelectedItems = [];
+    let menuItemsFlat = [];
+    let editingMenuItemId = null;
+
+    /* MENU DATA */
+
+    const CATEGORY_GROUPS = {
+  fastFood: {
+    "Burgers": ["Zinger Burger", "Chicken Burger", 
+    "Beef Burger", "Double Patty Burger", 
+    "Crispy Chicken Burger", "Mushroom Swiss Burger", 
+    "Veggie Burger"],
+
+    "Pizza": 
+    ["Chicken Fajita Pizza", 
+    "Pepperoni Pizza", 
+    "BBQ Chicken Pizza",
+     "Cheese Lover Pizza",
+      "Veggie Pizza", 
+      "Spicy Chicken Pizza",
+       "Tandoori Pizza",
+        "Margherita Pizza"],
+
+    "Sandwiches & Wraps":
+     ["Chicken Shawarma", "Chicken Wrap", "Club Sandwich", "Grilled Sandwich", "Chicken Mayo Sandwich", "Turkey Sandwich"],
+    "Broast & Fried Chicken": 
+    ["Chicken Broast", 
+    "Fried Chicken", 
+    "Chicken Wings", 
+    "Chicken Nuggets", 
+    "Chicken Popcorn", 
+    "Hot Wings", 
+    "Chicken Tenders"],
+
+    "Fries":
+     ["French Fries", 
+     "Masala Fries", 
+     "Loaded Fries", 
+     "Cheese Fries", 
+     "Potato Wedges", 
+     "Sweet Potato Fries"],
+     
+    "Pasta": 
+    ["Alfredo Pasta", 
+    "Arrabbiata Pasta", 
+    "Chicken Pasta", 
+    "Creamy Pasta", 
+    "Red Sauce Pasta", 
+    "Garlic Butter Pasta"],
+
+    "Snacks": 
+    ["Chicken Samosa",
+     "Spin Rolls",
+      "Onion Rings", 
+      "Mozzarella Sticks", 
+      "Cheesy Fries",
+      "Chicken Rolls", 
+      "Potato Wedges", 
+      "Garlic Bread"],
+
+    "Drinks": 
+    ["Mineral Water", 
+    "Soft Drinks",
+     "Fresh Lime", 
+     "Mint Margarita", 
+     "Lemonade", 
+     "Tea", 
+     "Green Tea", 
+     "Coffee", 
+     "Sprite", 
+     "Coke", 
+     "Pepsi", 
+     "Milkshake (Chocolate)", 
+     "Milkshake (Strawberry)", 
+     "Milkshake (Vanilla)", 
+     "Orange Juice", 
+     "Apple Juice", 
+     "Mango Juice", 
+     "Strawberry Juice"]
+
+  },
+  desi: {
+    "Karahi": ["Chicken Karahi", "Mutton Karahi", "White Karahi", "Achari Karahi", "Mutton White Karahi", "Chicken Lahori Karahi", "Beef Karahi"],
+    "Handi": ["Chicken Handi", "Chicken Cheese Handi", "Chicken Malai Handi", "Mutton Handi", "Beef Handi"],
+    "BBQ": ["Chicken Tikka", "Chicken Boti", "Chicken Seekh Kabab", "Beef Seekh Kabab", "Malai Boti", "Reshmi Kabab", "Chapli Kabab", "Afghani Tikka", "Beef Bihari Kabab", "Mutton Tikka", "Shami Kabab"],
+    "Rice": ["Chicken Biryani", "Beef Biryani", "Chicken Pulao", "Plain Rice", "Mutton Biryani", "Fish Biryani", "Zarda (Sweet Rice)", "Vegetable Pulao"],
+    "Daal & Sabzi": ["Daal Mash", "Daal Chana", "Mix Sabzi", "Aloo Gosht", "Chana Masala", "Bhindi Gosht", "Palak Gosht", "Tarka Daal", "Daal Moong", "Aloo Matar"],
+    "Roti": ["Tandoori Roti", "Naan", "Garlic Naan", "Roghni Naan", "Paratha", "Butter Naan", "Aloo Paratha", "Plain Roti"],
+    "Salad & Raita": ["Green Salad", "Russian Salad", "Mint Raita", "Zeera Raita", "Cucumber Raita", "Fruit Salad"],
+    "Dessert": ["Kheer", "Gulab Jamun", "Gajar Halwa", "Ice Cream", "Firni", "Jalebi", "Rabri", "Fruit Chaat", "Barfi", "Halwa Puri"],
+    "Drinks": ["Mineral Water", "Soft Drinks", "Fresh Lime", "Mint Margarita", "Lemonade", "Tea", "Green Tea", "Coffee", "Pepsi", "Coke", "Sprite", "7Up", "Lassi (Sweet)", "Lassi (Salty)", "Chaach", "Mango Lassi"]
+  }
+};
+
+    const MASTER_MENU = Object.entries({ ...CATEGORY_GROUPS.desi, ...CATEGORY_GROUPS.fastFood }).flatMap(([category, names]) => names.map(name => ({ name, category })));
+
+    /* SOCKET.IO */
+    const socket = io({ autoConnect: false, reconnection: true, reconnectionAttempts: Infinity, reconnectionDelay: 1000, transports: ["websocket", "polling"], auth: { token } });
+
+    /* AUTH HELPERS */
+    function authHeaders() { return { "Content-Type": "application/json", "Authorization": "Bearer " + token }; }
+    function checkUnauthorized(res) { if (res.status === 401) { alert("Session expired. Please login again."); logout(); return true; } return false; }
+    function clearAuthStorage() { localStorage.removeItem("token"); localStorage.removeItem("restaurant_id"); token = null; restaurantId = null; }
+
+    /* PASSWORD */
+    function showPassword() { document.getElementById("password").type = "text"; }
+    function hidePassword() { document.getElementById("password").type = "password"; }
+
+    /* FOOD TYPE */
+    function normalizeFoodType(value) { return String(value || "").trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " "); }
+    function foodType() { const value = restaurantInfo?.food_type ?? restaurantInfo?.foodType ?? restaurantInfo?.food_type_name ?? ""; const normalized = normalizeFoodType(value); if (normalized.includes("fast") && normalized.includes("desi")) return "combo"; if (normalized.includes("fast")) return "fast"; if (normalized.includes("desi") || normalized.includes("pakistani")) return "desi"; return "custom"; }
+    function customCategories() { const raw = restaurantInfo?.enabled_categories ?? restaurantInfo?.enabled_menu_categories ?? restaurantInfo?.custom_categories ?? restaurantInfo?.menu_categories ?? []; if (Array.isArray(raw)) return raw.map(item => typeof item === "string" ? item : item?.category || item?.name).filter(Boolean); if (typeof raw === "string") return raw.split(",").map(item => item.trim()).filter(Boolean); return []; }
+    function allowedCategories() { const type = foodType(); if (type === "fast") return Object.keys(CATEGORY_GROUPS.fastFood); if (type === "desi") return Object.keys(CATEGORY_GROUPS.desi); if (type === "combo") return [...new Set([...Object.keys(CATEGORY_GROUPS.desi), ...Object.keys(CATEGORY_GROUPS.fastFood)])]; return customCategories(); }
+
+    /* MENU POLICY */
+    function setupMenuPolicy() { const type = foodType(); const labels = { fast: "Fast Food", desi: "Desi / Pakistani", combo: "Fast Food + Desi", custom: "Other / Custom" }; const label = labels[type]; const categories = allowedCategories(); const policy = document.getElementById("menu-policy"); policy.innerHTML = "<strong>Restaurant Food Type:</strong> " + escapeHtml(label) + "<br><span>Allowed categories: " + (categories.length ? categories.map(escapeHtml).join(", ") : "Super Admin enabled categories") + "</span>"; const select = document.getElementById("new-category"); if (!categories.length) { select.innerHTML = '<option value="">No category enabled</option>'; return; } select.innerHTML = categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join(""); }
+    function populateSuggestions() { const type = foodType(); let list = MASTER_MENU; if (type === "fast") { const categories = Object.keys(CATEGORY_GROUPS.fastFood); list = MASTER_MENU.filter(item => categories.includes(item.category)); } if (type === "desi") { const categories = Object.keys(CATEGORY_GROUPS.desi); list = MASTER_MENU.filter(item => categories.includes(item.category)); } const datalist = document.getElementById("menu-suggestions"); datalist.innerHTML = list.map(item => `<option value="${escapeHtml(item.name)}"></option>`).join(""); }
+    function onItemNameInput() { const typed = document.getElementById("new-name").value.trim().toLowerCase(); const match = MASTER_MENU.find(item => item.name.toLowerCase() === typed); if (match && allowedCategories().includes(match.category)) { document.getElementById("new-category").value = match.category; } }
+
+    /* LOGIN */
+    async function login() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+      const error = document.getElementById("login-error");
+      const params = new URLSearchParams(window.location.search);
+      const urlRestaurantId = params.get("restaurant");
+      error.innerText = "";
+      if (!username || !password) { error.innerText = "Username and Password required"; return; }
+      if (!urlRestaurantId) { error.innerText = "Restaurant ID is missing. Open page with ?restaurant=ID"; return; }
+      try {
+        const res = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password, restaurant_id: urlRestaurantId, role: "manager" }) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { error.innerText = data.message || "Login failed"; return; }
+        if (!data.user || data.user.role !== "manager") { error.innerText = "Manager account required"; return; }
+        token = data.token; restaurantId = data.user.restaurant_id;
+        localStorage.setItem("token", token); localStorage.setItem("restaurant_id", restaurantId);
+        socket.auth = { token };
+        if (!socket.connected) socket.connect();
+        document.getElementById("login-box").style.display = "none";
+        document.getElementById("app-box").style.display = "block";
+        loadAll();
+      } catch (errorObject) { console.error(errorObject); error.innerText = "Unable to connect server"; }
+    }
+
+    /* LOAD EVERYTHING */
+    async function loadAll() { await loadBranding(); 
+      await Promise.all([loadSummary(), loadPending()]); 
+    await loadLocation();
+    }
+    function toggleMenuSubmenu() { const submenu = document.getElementById("menu-submenu"); if (submenu) submenu.classList.toggle("open"); }
+
+    /* MENU ITEMS MODAL */
+    function openMenuItems() { closeMenu(); document.getElementById("items-modal").classList.add("open"); setupMenuPolicy(); populateSuggestions(); loadMenu(); }
+    function closeItemsModal() { document.getElementById("items-modal").classList.remove("open"); }
+
+    /* MENU CATEGORIES MODAL */
+    function openMenuCategories() { closeMenu(); document.getElementById("category-modal").classList.add("open"); resetCategoryForm(); loadCategories(); }
+    function closeCategoryModal() { document.getElementById("category-modal").classList.remove("open"); }
+
+    async function loadCategories() {
+      const list = document.getElementById("category-list");
+      list.innerHTML = '<div class="empty">Loading categories...</div>';
+      try {
+        const res = await fetch("/api/categories", { headers: authHeaders() });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) { list.innerHTML = `<div class="empty">${escapeHtml(data.message || "Unable to load categories")}</div>`; return; }
+        categoriesCache = Array.isArray(data.data) ? data.data : [];
+        renderCategories(); populateCategoryAddSelect();
+      } catch (error) { list.innerHTML = '<div class="empty">Server connection failed.</div>'; }
+    }
+
+function renderCategories() {
+  const list = document.getElementById("category-list");
+  if (!categoriesCache.length) { list.innerHTML = '<div class="empty">No categories added yet.</div>'; return; }
+  
+  // Get the current food type
+  const type = foodType();
+  // Get predefined categories for this food type (if any)
+  let predefinedCategories = [];
+  if (type === "fast") {
+    predefinedCategories = Object.keys(CATEGORY_GROUPS.fastFood);
+  } else if (type === "desi") {
+    predefinedCategories = Object.keys(CATEGORY_GROUPS.desi);
+  } else if (type === "combo") {
+    predefinedCategories = [...new Set([...Object.keys(CATEGORY_GROUPS.desi), ...Object.keys(CATEGORY_GROUPS.fastFood)])];
+  }
+  // For "custom" type, predefinedCategories remains empty -> all categories are editable
+  
+  list.innerHTML = categoriesCache.map(category => {
+    // Check if this category is locked (part of predefined set)
+    const isLocked = predefinedCategories.length > 0 && predefinedCategories.includes(category.name);
+    const lockIcon = isLocked ? ' 🔒' : '';
+    
+    return `
+      <div class="row">
+        <div class="row-left">
+          <div class="row-title">${escapeHtml(category.name)}${lockIcon}</div>
+          ${isLocked ? `<div class="row-sub" style="color: var(--muted);">System-defined category (cannot be renamed or removed)</div>` : ''}
+        </div>
+        <div class="row-actions">
+          ${!isLocked ? `<button class="btn-edit" onclick="editCategory(${Number(category.id)})">Rename</button>` : ''}
+          ${!isLocked ? `<button class="btn-danger" onclick="removeCategory(${Number(category.id)})">Remove</button>` : ''}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+    function populateCategoryAddSelect() {
+      const select = document.getElementById("new-category-select");
+      const existingNames = categoriesCache.map(category => normalizeFoodType(category.name));
+      const available = allowedCategories().filter(category => !existingNames.includes(normalizeFoodType(category)));
+      if (!available.length) { select.innerHTML = '<option value="">All allowed categories added</option>'; document.getElementById("add-category-btn").disabled = true; return; }
+      document.getElementById("add-category-btn").disabled = false;
+      select.innerHTML = available.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join("");
+    }
+
+    function editCategory(id) {
+  const category = categoriesCache.find(item => Number(item.id) === Number(id));
+  if (!category) return;
+  
+  // ✅ Prevent editing locked categories
+  const type = foodType();
+  let predefinedCategories = [];
+  if (type === "fast") predefinedCategories = Object.keys(CATEGORY_GROUPS.fastFood);
+  else if (type === "desi") predefinedCategories = Object.keys(CATEGORY_GROUPS.desi);
+  else if (type === "combo") predefinedCategories = [...new Set([...Object.keys(CATEGORY_GROUPS.desi), ...Object.keys(CATEGORY_GROUPS.fastFood)])];
+  if (predefinedCategories.includes(category.name)) {
+    document.getElementById("category-msg").style.color = "var(--danger)";
+    document.getElementById("category-msg").innerText = "This is a system-defined category and cannot be renamed.";
+    return;
+  }
+  
+      editingCategoryId = id;
+  
+
+      const currentName = normalizeFoodType(category.name);
+      const takenNames = categoriesCache.filter(item => Number(item.id) !== Number(id)).map(item => normalizeFoodType(item.name));
+      const choices = allowedCategories().filter(cat => normalizeFoodType(cat) === currentName || !takenNames.includes(normalizeFoodType(cat)));
+      const select = document.getElementById("new-category-select");
+      select.innerHTML = choices.map(cat => `<option value="${escapeHtml(cat)}" ${normalizeFoodType(cat) === currentName ? "selected" : ""}>${escapeHtml(cat)}</option>`).join("");
+      document.getElementById("add-category-btn").disabled = false;
+      document.getElementById("add-category-btn").innerText = "Save Rename";
+      document.getElementById("category-msg").style.color = "var(--text)";
+      document.getElementById("category-msg").innerText = "Renaming: " + category.name;
+    }
+
+    function resetCategoryForm() {
+      editingCategoryId = null;
+      document.getElementById("add-category-btn").innerText = "Add Category";
+      const msg = document.getElementById("category-msg");
+      if (msg) msg.innerText = "";
+    }
+
+    async function saveCategory() {
+      const select = document.getElementById("new-category-select");
+      const name = select.value;
+      const msg = document.getElementById("category-msg");
+      if (!name) { msg.style.color = "var(--danger)"; msg.innerText = "Select a category"; return; }
+      try {
+        let res;
+        if (editingCategoryId) res = await fetch(`/api/categories/${encodeURIComponent(editingCategoryId)}`, { method: "PUT", headers: authHeaders(), body: JSON.stringify({ name }) });
+        else res = await fetch("/api/categories", { method: "POST", headers: authHeaders(), body: JSON.stringify({ name }) });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { msg.style.color = "var(--danger)"; msg.innerText = data.message || "Operation failed"; return; }
+        msg.style.color = "var(--success)";
+        msg.innerText = editingCategoryId ? "Category updated." : "Category added.";
+        resetCategoryForm();
+        await loadCategories();
+      } catch (error) { msg.style.color = "var(--danger)"; msg.innerText = "Server connection failed"; }
+    }
+
+   async function removeCategory(id) {
+  const category = categoriesCache.find(item => Number(item.id) === Number(id));
+  if (!category) return;
+  
+  // ✅ Prevent removing locked categories
+  const type = foodType();
+  let predefinedCategories = [];
+  if (type === "fast") predefinedCategories = Object.keys(CATEGORY_GROUPS.fastFood);
+  else if (type === "desi") predefinedCategories = Object.keys(CATEGORY_GROUPS.desi);
+  else if (type === "combo") predefinedCategories = [...new Set([...Object.keys(CATEGORY_GROUPS.desi), ...Object.keys(CATEGORY_GROUPS.fastFood)])];
+  if (predefinedCategories.includes(category.name)) {
+    alert("This is a system-defined category and cannot be removed.");
+    return;
+  }
+  
+  if (!confirm("Remove this category?")) return;
+
+      try {
+        const res = await fetch(`/api/categories/${encodeURIComponent(id)}`, { method: "DELETE", headers: authHeaders() });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { alert(data.message || "Unable to remove category"); return; }
+        await loadCategories();
+      } catch (error) { alert("Server connection failed"); }
+    }
+
+    /* DEALS / COMBOS MODAL */
+    function openMenuDeals() { closeMenu(); document.getElementById("deal-modal").classList.add("open"); resetDealForm(); loadDeals(); loadMenuItemsForDeals(); }
+    function closeDealModal() { document.getElementById("deal-modal").classList.remove("open"); }
+    async function loadMenuItemsForDeals() {
+      try {
+        const res = await fetch("/api/menu", { headers: authHeaders() });
+        if (checkUnauthorized(res)) return;
+        const result = await res.json();
+        menuItemsFlat = Array.isArray(result.data) ? result.data : [];
+        populateDealItemSelect();
+      } catch (error) { console.error("loadMenuItemsForDeals:", error); }
+    }
+    function populateDealItemSelect() {
+      const select = document.getElementById("deal-item-select");
+      if (!menuItemsFlat.length) { select.innerHTML = '<option value="">No menu items available</option>'; return; }
+      select.innerHTML = menuItemsFlat.map(item => `<option value="${Number(item.id)}">${escapeHtml(item.name)} (Rs ${Number(item.price || 0).toLocaleString()})</option>`).join("");
+      populateDealItemVariantSelect();
+    }
+    function populateDealItemVariantSelect() {
+      const itemSelect = document.getElementById("deal-item-select");
+      const variantSelect = document.getElementById("deal-item-variant-select");
+      const itemId = Number(itemSelect.value);
+      const item = menuItemsFlat.find(menuItem => Number(menuItem.id) === itemId);
+      const variants = item && Array.isArray(item.variants) ? item.variants : [];
+      const baseLabel = item ? `Base price (Rs ${Number(item.price || 0).toLocaleString()})` : "Base price";
+      if (!variants.length) { variantSelect.innerHTML = `<option value="">${escapeHtml(baseLabel)}</option>`; return; }
+      variantSelect.innerHTML = `<option value="">${escapeHtml(baseLabel)}</option>` + variants.map(variant => `<option value="${Number(variant.id)}">${escapeHtml(variant.label)} (Rs ${Number(variant.price || 0).toLocaleString()})</option>`).join("");
+    }
+    function populateDealCategorySelect() {
+      const select = document.getElementById("deal-category");
+      const categories = allowedCategories();
+      select.innerHTML = categories.length ? categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join("") : '<option value="">No category enabled</option>';
+    }
+    function addDealItemRow() {
+      const select = document.getElementById("deal-item-select");
+      const variantSelect = document.getElementById("deal-item-variant-select");
+      const qtyInput = document.getElementById("deal-item-qty");
+      const id = Number(select.value);
+      const variantId = variantSelect.value ? Number(variantSelect.value) : null;
+      const qty = Number(qtyInput.value) || 1;
+      if (!id) { alert("Select a menu item"); return; }
+      const item = menuItemsFlat.find(menuItem => Number(menuItem.id) === id);
+      if (!item) return;
+      let variantLabel = null;
+      let effectivePrice = item.price;
+      if (variantId) { const variant = (item.variants || []).find(v => Number(v.id) === variantId); if (!variant) { alert("Selected size/pcs option not found"); return; } variantLabel = variant.label; effectivePrice = variant.price; }
+      const existing = dealSelectedItems.find(selected => selected.menu_item_id === id && selected.variant_id === variantId);
+      if (existing) existing.quantity += qty;
+      else dealSelectedItems.push({ menu_item_id: id, variant_id: variantId, quantity: qty, name: item.name, variant_label: variantLabel, price: effectivePrice });
+      qtyInput.value = "1";
+      renderDealItems();
+    }
+    function removeDealItemRow(index) { dealSelectedItems.splice(index, 1); renderDealItems(); }
+    function renderDealItems() {
+      const box = document.getElementById("deal-selected-items");
+      if (!dealSelectedItems.length) { box.innerHTML = '<div class="empty">No items added to this deal yet.</div>'; return; }
+      box.innerHTML = dealSelectedItems.map((item, index) => `
+        <div class="row">
+          <div class="row-left">
+            <div class="row-title">${escapeHtml(item.name)} ${item.variant_label ? `<span style="color: var(--accent); font-weight: 400;">(${escapeHtml(item.variant_label)})</span>` : ""}</div>
+            <div class="row-sub">Qty: ${Number(item.quantity)} · Rs ${Number(item.price || 0).toLocaleString()} each</div>
+          </div>
+          <div class="row-actions"><button class="btn-danger" onclick="removeDealItemRow(${index})">Remove</button></div>
+        </div>
+      `).join("");
+    }
+    async function loadDeals() {
+      const list = document.getElementById("deal-list");
+      list.innerHTML = '<div class="empty">Loading deals...</div>';
+      try {
+        const res = await fetch("/api/deals", { headers: authHeaders() });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) { list.innerHTML = `<div class="empty">${escapeHtml(data.message || "Unable to load deals")}</div>`; return; }
+        dealsCache = Array.isArray(data.data) ? data.data : [];
+        renderDeals();
+      } catch (error) { list.innerHTML = '<div class="empty">Server connection failed.</div>'; }
+    }
+    function renderDeals() {
+      const list = document.getElementById("deal-list");
+      if (!dealsCache.length) { list.innerHTML = '<div class="empty">No deals or combos yet.</div>'; return; }
+      list.innerHTML = dealsCache.map(deal => `
+        <div class="row">
+          <div class="row-left">
+            <div class="row-title">${escapeHtml(deal.name)} <span style="color: var(--muted); font-weight: 400;">(${escapeHtml(deal.type)})</span></div>
+            <div class="row-sub">Rs ${Number(deal.price || 0).toLocaleString()} · ${Array.isArray(deal.items) ? deal.items.length : 0} item(s)</div>
+          </div>
+          <div class="row-actions">
+            <button class="btn-edit" onclick="editDeal(${Number(deal.id)})">Edit</button>
+            <button class="btn-danger" onclick="removeDeal(${Number(deal.id)})">Remove</button>
+          </div>
+        </div>
+      `).join("");
+    }
+    function editDeal(id) {
+      const deal = dealsCache.find(item => Number(item.id) === Number(id));
+      if (!deal) return;
+      editingDealId = id;
+      document.getElementById("deal-name").value = deal.name || "";
+      document.getElementById("deal-price").value = Number(deal.price || 0);
+      document.getElementById("deal-type").value = deal.type || "deal";
+      populateDealCategorySelect();
+      if (deal.category) document.getElementById("deal-category").value = deal.category;
+      dealSelectedItems = Array.isArray(deal.items) ? deal.items.map(item => ({ menu_item_id: Number(item.menu_item_id), variant_id: item.variant_id === null || item.variant_id === undefined ? null : Number(item.variant_id), quantity: Number(item.quantity), name: item.name, variant_label: item.variant_label || null, price: item.price })) : [];
+      renderDealItems();
+      document.getElementById("deal-save-btn").innerText = "Update Deal";
+      document.getElementById("deal-msg").innerText = "Editing: " + deal.name;
+    }
+    function resetDealForm() { editingDealId = null; dealSelectedItems = []; document.getElementById("deal-name").value = ""; document.getElementById("deal-price").value = ""; document.getElementById("deal-type").value = "deal"; populateDealCategorySelect(); renderDealItems(); document.getElementById("deal-save-btn").innerText = "Add Deal"; const msg = document.getElementById("deal-msg"); if (msg) msg.innerText = ""; }
+    async function saveDeal() {
+      const name = document.getElementById("deal-name").value.trim();
+      const price = Number(document.getElementById("deal-price").value);
+      const type = document.getElementById("deal-type").value;
+      const category = document.getElementById("deal-category").value;
+      const msg = document.getElementById("deal-msg");
+      if (!name) { msg.style.color = "var(--danger)"; msg.innerText = "Deal name is required"; return; }
+      if (!Number.isFinite(price) || price <= 0) { msg.style.color = "var(--danger)"; msg.innerText = "Price must be greater than 0"; return; }
+      if (!dealSelectedItems.length) { msg.style.color = "var(--danger)"; msg.innerText = "Add at least one menu item to the deal"; return; }
+      const items = dealSelectedItems.map(item => ({ menu_item_id: item.menu_item_id, variant_id: item.variant_id || null, quantity: item.quantity }));
+      try {
+        let res;
+        const body = JSON.stringify({ name, price, type, category, items });
+        if (editingDealId) res = await fetch(`/api/deals/${encodeURIComponent(editingDealId)}`, { method: "PUT", headers: authHeaders(), body });
+        else res = await fetch("/api/deals", { method: "POST", headers: authHeaders(), body });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { msg.style.color = "var(--danger)"; msg.innerText = data.message || "Operation failed"; return; }
+        msg.style.color = "var(--success)";
+        msg.innerText = editingDealId ? "Deal updated successfully." : "Deal added successfully.";
+        resetDealForm();
+        await loadDeals();
+      } catch (error) { msg.style.color = "var(--danger)"; msg.innerText = "Server connection failed"; }
+    }
+    async function removeDeal(id) {
+      if (!confirm("Remove this deal?")) return;
+      try {
+        const res = await fetch(`/api/deals/${encodeURIComponent(id)}`, { method: "DELETE", headers: authHeaders() });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { alert(data.message || "Unable to remove deal"); return; }
+        await loadDeals();
+      } catch (error) { alert("Server connection failed"); }
+    }
+
+    /* SIDE MENU / PAGE NAV */
+    function toggleMenu() { document.getElementById("side-menu").classList.toggle("open"); document.getElementById("side-overlay").classList.toggle("open"); }
+    function closeMenu() { document.getElementById("side-menu").classList.remove("open"); document.getElementById("side-overlay").classList.remove("open"); const submenu = document.getElementById("menu-submenu"); if (submenu) submenu.classList.remove("open"); }
+    function openPage(url) { closeMenu(); window.location.href = url; }
+
+    /* SALES SUMMARY */
+    async function loadSummary() {
+      try {
+        const res = await fetch("/api/reports/summary", { headers: authHeaders() });
+        if (checkUnauthorized(res)) return;
+        const result = await res.json().catch(() => ({}));
+        if (!result.success || !result.data) return;
+        const today = result.data.today || {};
+        const month = result.data.month || {};
+        document.getElementById("today-count").innerText = today.orders_count ?? 0;
+        document.getElementById("today-sales").innerText = "Rs " + Number(today.total_sales || 0).toLocaleString();
+        document.getElementById("month-count").innerText = month.orders_count ?? 0;
+        document.getElementById("month-sales").innerText = "Rs " + Number(month.total_sales || 0).toLocaleString();
+      } catch (error) { console.error("loadSummary:", error); }
+    }
+
+    /* PENDING PAYMENTS */
+    async function loadPending() {
+      try {
+        const res = await fetch("/api/orders", { headers: authHeaders() });
+        if (checkUnauthorized(res)) return;
+        const result = await res.json();
+        const orders = Array.isArray(result.orders) ? result.orders : [];
+        const pending = orders.filter(order => order.status === "served" && order.payment_status !== "paid");
+        const list = document.getElementById("pending-list");
+        if (!pending.length) { list.innerHTML = '<div class="empty">No payments pending.</div>'; return; }
+        list.innerHTML = pending.map(order => `
+          <div class="row">
+            <div class="row-left">
+              <div class="row-title">Table ${escapeHtml(order.table_no)} · #${escapeHtml(order.id)}</div>
+            </div>
+            <div class="row-actions">
+              <button class="btn-edit" onclick="editBill(${Number(order.id)})">Edit Bill</button>
+              <button class="btn-print" onclick="printBill(${Number(order.id)})">Print Bill</button>
+              <button class="btn-pay" onclick="openPaymentModal(${Number(order.id)})">Mark Paid</button>
+            </div>
+          </div>
+        `).join("");
+      } catch (error) { console.error("loadPending:", error); }
+    }
+
+    async function markPaid(id, paymentMethod) {
+      try {
+        const res = await fetch(`/api/orders/${encodeURIComponent(id)}/pay`, { method: "PUT", headers: { ...authHeaders(), "Content-Type": "application/json" }, body: JSON.stringify({ payment_method: paymentMethod }) });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { alert(data.message || "Unable to mark payment"); return; }
+        await Promise.all([loadPending(), loadSummary()]);
+      } catch (error) { alert("Server connection failed"); }
+    }
+
+    function openPaymentModal(id) {
+      const modal = document.getElementById("payment-modal");
+      const method = document.getElementById("payment-method");
+      const msg = document.getElementById("payment-msg");
+      const info = document.getElementById("payment-order-info");
+      if (!modal || !method || !msg || !info) return;
+      method.value = "Cash"; msg.innerText = ""; info.innerText = "Order #" + id;
+      modal.dataset.orderId = String(id);
+      modal.classList.add("open");
+    }
+    function closePaymentModal() {
+      const modal = document.getElementById("payment-modal");
+      if (!modal) return;
+      modal.classList.remove("open");
+      modal.dataset.orderId = "";
+      const msg = document.getElementById("payment-msg");
+      if (msg) msg.innerText = "";
+    }
+    async function confirmPayment() {
+      const modal = document.getElementById("payment-modal");
+      const method = document.getElementById("payment-method");
+      const msg = document.getElementById("payment-msg");
+      if (!modal || !method || !msg) return;
+      const id = Number(modal.dataset.orderId);
+      const paymentMethod = method.value;
+      if (!Number.isInteger(id) || id <= 0) { msg.style.color = "var(--danger)"; msg.innerText = "Invalid order."; return; }
+      if (!paymentMethod) { msg.style.color = "var(--danger)"; msg.innerText = "Please select payment method."; return; }
+      msg.style.color = "var(--text)"; msg.innerText = "Processing payment...";
+      try { await markPaid(id, paymentMethod); closePaymentModal(); } catch (error) { console.error("confirmPayment:", error); msg.style.color = "var(--danger)"; msg.innerText = "Payment failed."; }
+    }
+    function editBill(id) { window.location.href = "bill.html?id=" + encodeURIComponent(id) + "&edit=1"; }
+    function printBill(id) { window.location.href = "bill.html?id=" + encodeURIComponent(id); }
+
+    /* MENU MANAGEMENT */
+    async function loadMenu() {
+      try {
+        const res = await fetch("/api/menu", { headers: authHeaders() });
+        if (checkUnauthorized(res)) return;
+        const result = await res.json();
+        const items = Array.isArray(result.data) ? result.data : [];
+        menuItemsCache = items;
+        const list = document.getElementById("menu-list");
+        if (!items.length) { list.innerHTML = '<div class="empty">No menu items yet.</div>'; return; }
+        const categories = allowedCategories();
+        let filtered = items;
+        if (foodType() === "custom" && categories.length) filtered = items.filter(item => categories.includes(item.category));
+        const grouped = {};
+        filtered.forEach(item => { const category = item.category || "Other"; if (!grouped[category]) grouped[category] = []; grouped[category].push(item); });
+        if (!Object.keys(grouped).length) { list.innerHTML = '<div class="empty">No menu items are enabled for this restaurant.</div>'; return; }
+        list.innerHTML = Object.entries(grouped).map(([category, categoryItems]) => `
+          <div style="margin-bottom: 14px;">
+            <div class="category-title">${escapeHtml(category)}</div>
+            ${categoryItems.map(item => `
+              <div class="row">
+                <div class="row-left">
+                  <div class="row-title">${escapeHtml(item.name)}</div>
+                  <div class="row-sub">Rs ${Number(item.price || 0).toLocaleString()} ${Array.isArray(item.variants) && item.variants.length ? " · " + item.variants.length + " size/pcs option(s): " + item.variants.map(v => escapeHtml(v.label)).join(", ") : ""}</div>
+                </div>
+                <div class="row-actions">
+                  <button class="btn-edit" onclick="openMenuItemForEdit(${Number(item.id)})">Edit</button>
+                  <button class="btn-danger" onclick="removeMenuItem(${Number(item.id)})">Remove</button>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        `).join("");
+      } catch (error) { console.error("loadMenu:", error); }
+    }
+
+    let menuItemsCache = [];
+    function buildQuickVariantLines() {
+      const lines = [];
+      const sizeLabel = document.getElementById("new-size-label").value.trim();
+      const sizePrice = Number(document.getElementById("new-size-price").value);
+      if (sizeLabel) { if (!Number.isFinite(sizePrice) || sizePrice <= 0) return { error: "Size price must be greater than 0" }; lines.push({ label: sizeLabel, price: sizePrice }); }
+      const mlValue = document.getElementById("new-ml-value").value.trim();
+      const mlPrice = Number(document.getElementById("new-ml-price").value);
+      if (mlValue) { if (!Number.isFinite(mlPrice) || mlPrice <= 0) return { error: "ml price must be greater than 0" }; lines.push({ label: /ml/i.test(mlValue) ? mlValue : mlValue + "ml", price: mlPrice }); }
+      const pcsValue = document.getElementById("new-pcs-value").value.trim();
+      const pcsPrice = Number(document.getElementById("new-pcs-price").value);
+      if (pcsValue) { if (!Number.isFinite(pcsPrice) || pcsPrice <= 0) return { error: "Pcs price must be greater than 0" }; lines.push({ label: /pcs/i.test(pcsValue) ? pcsValue : pcsValue + " pcs", price: pcsPrice }); }
+      return { lines };
+    }
+    function clearQuickVariantInputs() { ["new-size-label", "new-size-price", "new-ml-value", "new-ml-price", "new-pcs-value", "new-pcs-price"].forEach(id => { document.getElementById(id).value = ""; }); }
+    function renderItemFormVariants(variants) {
+      const box = document.getElementById("item-form-variants-list");
+      if (!Array.isArray(variants) || !variants.length) { box.innerHTML = ""; return; }
+      box.innerHTML = variants.map(variant => `
+        <div class="row">
+          <div class="row-left"><div class="row-title">${escapeHtml(variant.label)}</div><div class="row-sub">Rs ${Number(variant.price || 0).toLocaleString()}</div></div>
+          <div class="row-actions"><button class="btn-danger" onclick="removeMenuItemVariantInline(${Number(variant.id)})">Remove</button></div>
+        </div>
+      `).join("");
+    }
+    function resetMenuItemForm() { editingMenuItemId = null; document.getElementById("new-name").value = ""; document.getElementById("new-price").value = ""; document.getElementById("new-category").selectedIndex = 0; clearQuickVariantInputs(); renderItemFormVariants([]); document.getElementById("item-form-heading").innerText = "Add New Item"; document.getElementById("item-form-save-btn").innerText = "Add Item"; const msg = document.getElementById("item-form-msg"); if (msg) msg.innerText = ""; }
+    function openMenuItemForEdit(id) {
+      const item = menuItemsCache.find(menuItem => Number(menuItem.id) === Number(id));
+      if (!item) { alert("Item not found"); return; }
+      editingMenuItemId = id;
+      document.getElementById("new-name").value = item.name || "";
+      document.getElementById("new-price").value = Number(item.price || 0);
+      const categorySelect = document.getElementById("new-category");
+      const options = Array.from(categorySelect.options).map(option => option.value);
+      if (options.includes(item.category)) categorySelect.value = item.category;
+      clearQuickVariantInputs();
+      renderItemFormVariants(Array.isArray(item.variants) ? item.variants : []);
+      document.getElementById("item-form-heading").innerText = "Editing: " + item.name;
+      document.getElementById("item-form-save-btn").innerText = "Update Item";
+      const msg = document.getElementById("item-form-msg");
+      if (msg) msg.innerText = "";
+      document.getElementById("new-name").scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    async function removeMenuItemVariantInline(variantId) {
+      if (!confirm("Remove this size/pieces option?")) return;
+      try {
+        const res = await fetch(`/api/menu-variants/${encodeURIComponent(variantId)}`, { method: "DELETE", headers: authHeaders() });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { alert(data.message || "Unable to remove option"); return; }
+        await loadMenu();
+        if (editingMenuItemId) { const refreshed = menuItemsCache.find(item => Number(item.id) === Number(editingMenuItemId)); renderItemFormVariants(refreshed && Array.isArray(refreshed.variants) ? refreshed.variants : []); }
+      } catch (error) { alert("Server connection failed"); }
+    }
+    async function saveMenuItemForm() {
+      const name = document.getElementById("new-name").value.trim();
+      const category = document.getElementById("new-category").value;
+      const price = Number(document.getElementById("new-price").value);
+      const msg = document.getElementById("item-form-msg");
+      if (!name) { msg.style.color = "var(--danger)"; msg.innerText = "Enter item name"; return; }
+      if (!category) { msg.style.color = "var(--danger)"; msg.innerText = "No menu category is enabled for this restaurant."; return; }
+      if (!Number.isFinite(price) || price <= 0) { msg.style.color = "var(--danger)"; msg.innerText = "Price must be greater than 0"; return; }
+      if (foodType() !== "custom" && !allowedCategories().includes(category)) { msg.style.color = "var(--danger)"; msg.innerText = "This category is not allowed for this restaurant."; return; }
+      const quickVariants = buildQuickVariantLines();
+      if (quickVariants.error) { msg.style.color = "var(--danger)"; msg.innerText = quickVariants.error; return; }
+      try {
+        let itemId = editingMenuItemId;
+        if (editingMenuItemId) {
+          const res = await fetch(`/api/menu/${encodeURIComponent(editingMenuItemId)}`, { method: "PUT", headers: authHeaders(), body: JSON.stringify({ name, price, category }) });
+          if (checkUnauthorized(res)) return;
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) { msg.style.color = "var(--danger)"; msg.innerText = data.message || "Unable to update menu item"; return; }
+        } else {
+          const formData = new FormData();
+          formData.append("name", name);
+          formData.append("price", String(price));
+          formData.append("category", category);
+          const res = await fetch("/api/menu", { method: "POST", headers: { Authorization: "Bearer " + token }, body: formData });
+          if (checkUnauthorized(res)) return;
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) { msg.style.color = "var(--danger)"; msg.innerText = data.message || "Unable to add menu item"; return; }
+          itemId = data?.data?.id;
+        }
+        if (itemId && quickVariants.lines.length) {
+          for (const variant of quickVariants.lines) {
+            try { await fetch(`/api/menu-variants/item/${encodeURIComponent(itemId)}`, { method: "POST", headers: authHeaders(), body: JSON.stringify(variant) }); } catch (variantError) { console.error("add variant:", variantError); }
+          }
+        }
+        msg.style.color = "var(--success)";
+        msg.innerText = editingMenuItemId ? "Item updated successfully." : "Item added successfully.";
+        resetMenuItemForm();
+        await loadMenu();
+      } catch (error) { msg.style.color = "var(--danger)"; msg.innerText = "Server connection failed"; }
+    }
+    async function removeMenuItem(id) {
+      if (!confirm("Remove this menu item?")) return;
+      try {
+        const res = await fetch(`/api/menu/${encodeURIComponent(id)}`, { method: "DELETE", headers: authHeaders() });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { alert(data.message || "Unable to remove item"); return; }
+        await loadMenu();
+      } catch (error) { alert("Server connection failed"); }
+    }
+
+    /* QR CODE GENERATION */
+    function printTableQR(table, url) {
+      const qrUrl = "https://api.qrserver.com/v1/create-qr-code/" + "?size=500x500&data=" + encodeURIComponent(url);
+      const printWindow = window.open("", "_blank", "width=700,height=800");
+      if (!printWindow) { alert("Please allow pop-ups to print the QR code."); return; }
+      printWindow.document.write(`<!DOCTYPE html><html><head><title>Table ${table} QR Code</title><style>@page{size:A4;margin:20mm}body{font-family:Arial,sans-serif;text-align:center;color:#111;padding-top:30px}h1{margin-bottom:10px}img{width:500px;max-width:90vw}.url{margin-top:15px;font-size:12px;color:#555;word-break:break-all}</style></head><body><h1>Table ${table}</h1><img src="${qrUrl}" alt="QR Code for Table ${table}" onload="window.print()"><div class="url">Scan to order — Table ${table}</div></body></html>`);
+      printWindow.document.close();
+    }
+    function generateQRs() {
+      if (!restaurantId) { alert("Restaurant ID not found. Please login again."); return; }
+      let count = Number(document.getElementById("qr-count").value);
+      if (!Number.isFinite(count)) count = 1;
+      count = Math.min(100, Math.max(1, Math.floor(count)));
+      document.getElementById("qr-count").value = count;
+      const base = window.location.origin + "/customer.html?r=" + encodeURIComponent(restaurantId) + "&t=";
+      const grid = document.getElementById("qr-grid");
+      grid.innerHTML = "";
+      for (let table = 1; table <= count; table++) {
+        const url = base + table;
+        const card = document.createElement("div");
+        card.style.cssText = "background: #f6f3ec; border-radius: 12px; padding: 14px; text-align: center;";
+        const img = document.createElement("img");
+        img.src = "https://api.qrserver.com/v1/create-qr-code/" + "?size=220x220&data=" + encodeURIComponent(url);
+        img.alt = `QR Code for Table ${table}`;
+        img.style.width = "100%";
+        img.onerror = function () { this.alt = "QR code unavailable"; };
+        card.appendChild(img);
+        const title = document.createElement("div");
+        title.innerText = "Table " + table;
+        title.style.cssText = "color: #14181c; font-weight: 700; margin-top: 8px;";
+        card.appendChild(title);
+        const printBtn = document.createElement("button");
+        printBtn.innerText = "🖨️ Print";
+        printBtn.type = "button";
+        printBtn.style.cssText = "margin-top: 10px; width: 100%; padding: 9px 12px; border: 0; border-radius: 8px; background: #14181c; color: #ffffff; font-weight: 700; cursor: pointer;";
+        printBtn.onclick = function () { printTableQR(table, url); };
+        card.appendChild(printBtn);
+        grid.appendChild(card);
+      }
+    }
+
+    /* SETTINGS */
+    function openSettings() { closeMenu();
+       document.getElementById("settings-modal").classList.add("open"); 
+       document.getElementById("settings-msg").innerText = ""; 
+      loadLocation();
+      }
+    function closeSettings() { document.getElementById("settings-modal").classList.remove("open"); ["set-username", "set-current-password", "set-new-password"].forEach(id => { document.getElementById(id).value = ""; }); }
+    async function saveSettings() {
+      const username = document.getElementById("set-username").value.trim();
+      const current_password = document.getElementById("set-current-password").value;
+      const new_password = document.getElementById("set-new-password").value;
+      const msg = document.getElementById("settings-msg");
+      if (!current_password) { msg.style.color = "var(--danger)"; msg.innerText = "Current password is required"; return; }
+      try {
+        const res = await fetch("/api/auth/settings", { method: "PUT", headers: authHeaders(), body: JSON.stringify({ username, current_password, new_password }) });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        msg.style.color = res.ok ? "var(--success)" : "var(--danger)";
+        msg.innerText = res.ok ? "Updated successfully." : (data.message || "Update failed");
+        if (res.ok) setTimeout(closeSettings, 1200);
+      } catch (error) { msg.style.color = "var(--danger)"; msg.innerText = "Server connection failed"; }
+    }
+
+    /* THEME (Fixed to use manager_theme) */
+    function toggleTheme() {
+      const light = document.getElementById("theme-toggle").checked;
+      document.body.classList.toggle("light-theme", light);
+      localStorage.setItem("manager_theme", light ? "light" : "dark");
+    }
+    function initializeTheme() {
+      const light = localStorage.getItem("manager_theme") === "light";
+      document.body.classList.toggle("light-theme", light);
+      const toggle = document.getElementById("theme-toggle");
+      if (toggle) toggle.checked = light;
+    }
+
+    /* STAFF MANAGEMENT */
+    function openStaffModal() { closeMenu(); document.getElementById("staff-modal").classList.add("open"); resetStaffForm(); loadStaff(); }
+    function closeStaffModal() { document.getElementById("staff-modal").classList.remove("open"); resetStaffForm(); }
+    function resetStaffForm() { editingStaffId = null; ["staff-fullname", "staff-username", "staff-password"].forEach(id => { document.getElementById(id).value = ""; }); document.getElementById("staff-role").value = "waiter"; document.getElementById("staff-save-btn").innerText = "Add Staff"; document.getElementById("staff-msg").innerText = ""; }
+    async function loadStaff() {
+      const list = document.getElementById("staff-list");
+      list.innerHTML = '<div class="empty">Loading staff...</div>';
+      try {
+        const res = await fetch("/api/users", { headers: authHeaders() });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { list.innerHTML = `<div class="empty">${escapeHtml(data.message || "Unable to load staff")}</div>`; return; }
+        staffCache = Array.isArray(data.data) ? data.data : [];
+        renderStaff();
+      } catch (error) { list.innerHTML = '<div class="empty">Server connection failed.</div>'; }
+    }
+    function renderStaff() {
+      let staff = staffCache;
+      if (staffFilter === "active") staff = staff.filter(item => !!item.is_active);
+      if (staffFilter === "inactive") staff = staff.filter(item => !item.is_active);
+      const list = document.getElementById("staff-list");
+      if (!staff.length) { list.innerHTML = '<div class="empty">No staff found.</div>'; return; }
+      list.innerHTML = staff.map(staffMember => {
+        const active = !!staffMember.is_active;
+        return `
+          <div class="row">
+            <div class="row-left">
+              <div class="row-title">${escapeHtml(staffMember.full_name || "")} (${escapeHtml(staffMember.username || "")})</div>
+              <div class="row-sub" style="color: ${active ? "var(--success)" : "var(--danger)"};">${escapeHtml(staffMember.role || "")} · ${active ? "Active" : "Inactive"}</div>
+            </div>
+            <div class="row-actions">
+              <button class="btn-edit" onclick="editStaff(${Number(staffMember.id)})">Edit</button>
+              <button class="btn-danger" onclick="toggleStaffActive(${Number(staffMember.id)}, ${!active})">${active ? "Deactivate" : "Activate"}</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+    function editStaff(id) {
+      const staffMember = staffCache.find(item => Number(item.id) === Number(id));
+      if (!staffMember) { alert("Staff record not found."); return; }
+      editingStaffId = staffMember.id;
+      document.getElementById("staff-fullname").value = staffMember.full_name || "";
+      document.getElementById("staff-username").value = staffMember.username || "";
+      document.getElementById("staff-role").value = staffMember.role || "waiter";
+      document.getElementById("staff-save-btn").innerText = "Update Staff";
+      document.getElementById("staff-msg").innerText = "Editing: " + (staffMember.full_name || staffMember.username || "");
+    }
+    async function saveStaff() {
+      const full_name = document.getElementById("staff-fullname").value.trim();
+      const username = document.getElementById("staff-username").value.trim();
+      const password = document.getElementById("staff-password").value;
+      const role = document.getElementById("staff-role").value;
+      const msg = document.getElementById("staff-msg");
+      if (!full_name || !username) { msg.style.color = "var(--danger)"; msg.innerText = "Full name and username are required"; return; }
+      try {
+        let res;
+        if (editingStaffId) {
+          const body = { full_name, username };
+          if (password) body.password = password;
+          res = await fetch(`/api/users/${encodeURIComponent(editingStaffId)}`, { method: "PUT", headers: authHeaders(), body: JSON.stringify(body) });
+        } else {
+          if (!password) { msg.style.color = "var(--danger)"; msg.innerText = "Password is required for new staff"; return; }
+          res = await fetch("/api/users", { method: "POST", headers: authHeaders(), body: JSON.stringify({ full_name, username, password, role }) });
+        }
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { msg.style.color = "var(--danger)"; msg.innerText = data.message || "Operation failed"; return; }
+        msg.style.color = "var(--success)";
+        msg.innerText = editingStaffId ? "Staff updated successfully." : "Staff added successfully.";
+        resetStaffForm();
+        await loadStaff();
+      } catch (error) { msg.style.color = "var(--danger)"; msg.innerText = "Server connection failed"; }
+    }
+    async function toggleStaffActive(id, activate) {
+      const question = activate ? "Activate this staff member?" : "Deactivate this staff member?";
+      if (!confirm(question)) return;
+      try {
+        const action = activate ? "activate" : "deactivate";
+        const res = await fetch(`/api/users/${encodeURIComponent(id)}/${action}`, { method: "PATCH", headers: authHeaders() });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { alert(data.message || "Unable to update staff"); return; }
+        await loadStaff();
+      } catch (error) { alert("Server connection failed"); }
+    }
+
+    /* KITCHEN INVENTORY REQUESTS */
+    function openKitchenRequestsModal() { closeMenu(); document.getElementById("kitchen-requests-modal").classList.add("open"); loadKitchenRequests(); }
+    function closeKitchenRequestsModal() { document.getElementById("kitchen-requests-modal").classList.remove("open"); }
+    async function loadKitchenRequests() {
+      const list = document.getElementById("kitchen-requests-list");
+      list.innerHTML = '<div class="empty">Loading requests...</div>';
+      try {
+        const res = await fetch("/api/kitchen-inventory/requests", { headers: authHeaders() });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) { list.innerHTML = `<div class="empty">${escapeHtml(data.message || "Unable to load requests")}</div>`; return; }
+        const requests = Array.isArray(data.data) ? data.data : [];
+        if (!requests.length) { list.innerHTML = '<div class="empty">No kitchen requests yet.</div>'; return; }
+        const statusColor = { pending: "var(--accent)", approved: "var(--success)", rejected: "var(--danger)" };
+        list.innerHTML = requests.map(reqItem => `
+          <div class="row">
+            <div class="row-left">
+              <div class="row-title">${escapeHtml(reqItem.inventory_name)} — ${Number(reqItem.requested_quantity)} ${escapeHtml(reqItem.unit || "")}</div>
+              <div class="row-sub" style="color: ${statusColor[reqItem.status] || "var(--muted)"};">${escapeHtml(String(reqItem.status || "").toUpperCase())} ${reqItem.approved_by_name ? " · by " + escapeHtml(reqItem.approved_by_name) : reqItem.requested_by_name ? " · by " + escapeHtml(reqItem.requested_by_name) : ""} · Warehouse stock: ${Number(reqItem.warehouse_stock || 0)}</div>
+              ${reqItem.note ? `<div class="row-sub">Note: ${escapeHtml(reqItem.note)}</div>` : ""}
+              ${reqItem.status === "rejected" && reqItem.rejection_reason ? `<div class="row-sub">Reason: ${escapeHtml(reqItem.rejection_reason)}</div>` : ""}
+            </div>
+            ${reqItem.status === "pending" ? `<div class="row-actions"><button class="btn-success" onclick="approveKitchenRequest(${Number(reqItem.id)})">Approve</button><button class="btn-danger" onclick="rejectKitchenRequest(${Number(reqItem.id)})">Reject</button></div>` : ""}
+          </div>
+        `).join("");
+      } catch (error) { list.innerHTML = '<div class="empty">Server connection failed.</div>'; }
+    }
+    async function approveKitchenRequest(id) {
+      if (!confirm("Approve this request? Stock will move from warehouse to kitchen.")) return;
+      try {
+        const res = await fetch(`/api/kitchen-inventory/requests/${encodeURIComponent(id)}/approve`, { method: "PUT", headers: authHeaders() });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { alert(data.message || "Unable to approve request"); return; }
+        await loadKitchenRequests();
+      } catch (error) { alert("Server connection failed"); }
+    }
+    async function rejectKitchenRequest(id) {
+      const reason = prompt("Reason for rejecting (optional):", "") || "";
+      try {
+        const res = await fetch(`/api/kitchen-inventory/requests/${encodeURIComponent(id)}/reject`, { method: "PUT", headers: authHeaders(), body: JSON.stringify({ reason }) });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { alert(data.message || "Unable to reject request"); return; }
+        await loadKitchenRequests();
+      } catch (error) { alert("Server connection failed"); }
+    }
+
+    /* BRANDING + SUBSCRIPTION */
+    function normalizeLogoUrl(value) { if (!value) return ""; let url = String(value).trim(); if (/^https?:\/\//i.test(url) || url.startsWith("//") || url.startsWith("/")) return url; return "/" + url; }
+    async function loadBranding() {
+      if (!token) return;
+      try {
+        const res = await fetch("/api/restaurants/me", { headers: { Authorization: "Bearer " + token, "Cache-Control": "no-cache" }, cache: "no-store" });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success || !data.data) return;
+        restaurantInfo = data.data;
+        const header = document.getElementById("brand-header");
+        header.style.display = "flex";
+        const logo = restaurantInfo.logo_url ? normalizeLogoUrl(restaurantInfo.logo_url) : "";
+        const typeLabels = { fast: "Fast Food", desi: "Desi / Pakistani", combo: "Fast Food + Desi", custom: "Other / Custom" };
+        const logoHtml = logo ? `<img src="${escapeHtml(logo)}" alt="Restaurant logo" onerror="this.style.display='none'">` : "";
+        header.innerHTML = `${logoHtml}<div><div class="brand-name">${escapeHtml(restaurantInfo.name || "Restaurant")}</div><span class="food-type-badge">${escapeHtml(typeLabels[foodType()])}</span></div>`;
+        updateSubscriptionBadge();
+      } catch (error) { console.error("loadBranding:", error); }
+    }
+    function updateSubscriptionBadge() {
+      const badge = document.getElementById("subscription-badge");
+      const daysElement = document.getElementById("subscription-days");
+      badge.classList.remove("warning", "expired");
+      let remainingDays = Number(restaurantInfo?.remaining_days);
+      if (!Number.isFinite(remainingDays) && restaurantInfo?.expiry_date) {
+        const expiry = new Date(restaurantInfo.expiry_date);
+        const now = new Date();
+        expiry.setHours(0, 0, 0, 0);
+        now.setHours(0, 0, 0, 0);
+        remainingDays = Math.ceil((expiry.getTime() - now.getTime()) / 86400000);
+      }
+      if (!Number.isFinite(remainingDays)) { daysElement.innerText = "No expiry"; return; }
+      remainingDays = Math.max(0, Math.floor(remainingDays));
+      if (remainingDays === 0) { badge.classList.add("expired"); daysElement.innerText = "Expires today"; return; }
+      if (remainingDays <= 7) badge.classList.add("warning");
+      daysElement.innerText = remainingDays + " day" + (remainingDays === 1 ? "" : "s") + " remaining";
+    }
+
+
+    function getCurrentLocation() {
+  const msg = document.getElementById('location-msg');
+  msg.style.color = 'var(--muted)';
+  msg.innerText = 'Getting location...';
+  
+  if (!navigator.geolocation) {
+    msg.style.color = 'var(--danger)';
+    msg.innerText = 'GPS is not supported on this device.';
+    return;
+  }
+  
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      document.getElementById('rest-lat').value = position.coords.latitude.toFixed(8);
+      document.getElementById('rest-lng').value = position.coords.longitude.toFixed(8);
+      msg.style.color = 'var(--success)';
+      msg.innerText = `✓ Location captured (Accuracy: ${Math.round(position.coords.accuracy)}m)`;
+    },
+    (error) => {
+      msg.style.color = 'var(--danger)';
+      msg.innerText = 'Unable to get location. Please allow GPS permission.';
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
+
+async function saveLocation() {
+  const lat = document.getElementById('rest-lat').value;
+  const lng = document.getElementById('rest-lng').value;
+  const radius = document.getElementById('rest-radius').value;
+  const msg = document.getElementById('location-msg');
+  
+  if (!lat || !lng) {
+    msg.style.color = 'var(--danger)';
+    msg.innerText = 'Please capture location first.';
+    return;
+  }
+  
+  try {
+    const res = await fetch(`/api/restaurants/${restaurantId}/location`, {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        latitude: Number(lat),
+        longitude: Number(lng),
+        gps_radius_meters: Number(radius)
+      })
+    });
+    
+    const data = await res.json();
+    msg.style.color = data.success ? 'var(--success)' : 'var(--danger)';
+    msg.innerText = data.message || (data.success ? '✓ Location saved!' : 'Failed');
+  } catch (err) {
+    msg.style.color = 'var(--danger)';
+    msg.innerText = 'Server error';
+  }
+}
+
+// Load existing location on page load
+async function loadLocation() {
+  try {
+    const res = await fetch('/api/restaurants/me', { headers: authHeaders() });
+    const data = await res.json();
+    if (data.success && data.data) {
+      document.getElementById('rest-lat').value = data.data.latitude || '';
+      document.getElementById('rest-lng').value = data.data.longitude || '';
+      document.getElementById('rest-radius').value = data.data.gps_radius_meters || 100;
+    }
+  } catch (err) {}
+}
+
+    /* LOGOUT */
+    function logout() {
+      clearAuthStorage();
+      restaurantInfo = null;
+      if (socket.connected) socket.disconnect();
+      document.getElementById("app-box").style.display = "none";
+      document.getElementById("brand-header").style.display = "none";
+      document.getElementById("login-box").style.display = "block";
+      document.getElementById("qr-grid").innerHTML = "";
+      document.getElementById("username").value = "";
+      document.getElementById("password").value = "";
+      document.getElementById("login-error").innerText = "";
+      closeMenu();
+    }
+
+    /* SOCKET EVENTS */
+    socket.on("order_created", () => { if (!token) return; loadPending(); loadSummary(); });
+    socket.on("order_updated", () => { if (!token) return; loadPending(); loadSummary(); });
+    socket.on("kitchen_inventory_updated", () => { if (!token) return; const modal = document.getElementById("kitchen-requests-modal"); if (modal && modal.classList.contains("open")) loadKitchenRequests(); });
+    socket.on("waiter_call", data => { if (!data) return; const notification = document.createElement("div"); notification.className = "notification"; notification.innerText = "📞 Table " + (data.table_no ?? "?") + " called waiter"; document.getElementById("notification-container").appendChild(notification); setTimeout(() => { notification.remove(); }, 10000); });
+    socket.on("connect", () => { if (token) loadAll(); });
+    socket.on("connect_error", error => { console.error("Socket connection error:", error); });
+
+    /* HTML ESCAPING */
+    function escapeHtml(value) { return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;"); }
+
+    /* MODAL CLICK OUTSIDE */
+    document.getElementById("settings-modal").addEventListener("click", event => { if (event.target.id === "settings-modal") closeSettings(); });
+    document.getElementById("staff-modal").addEventListener("click", event => { if (event.target.id === "staff-modal") closeStaffModal(); });
+    document.getElementById("items-modal").addEventListener("click", event => { if (event.target.id === "items-modal") closeItemsModal(); });
+    document.getElementById("category-modal").addEventListener("click", event => { if (event.target.id === "category-modal") closeCategoryModal(); });
+    document.getElementById("deal-modal").addEventListener("click", event => { if (event.target.id === "deal-modal") closeDealModal(); });
+    document.getElementById("payment-modal").addEventListener("click", event => { if (event.target.id === "payment-modal") closePaymentModal(); });
+    document.getElementById("kitchen-requests-modal").addEventListener("click", event => { if (event.target.id === "kitchen-requests-modal") closeKitchenRequestsModal(); });
+
+    /* INITIALIZATION */
+    window.addEventListener("load", async () => {
+      initializeTheme();
+      if (token) {
+        socket.auth = { token };
+        document.getElementById("login-box").style.display = "none";
+        document.getElementById("app-box").style.display = "block";
+        if (!socket.connected) socket.connect();
+        await loadAll();
+      }
+    });
+    window.addEventListener("pageshow", () => { if (token) loadAll(); });
+  </script>
+</body>
+</html>

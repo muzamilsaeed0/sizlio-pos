@@ -1,0 +1,33 @@
+# Node modules
+node_modules/
+**/node_modules/
+
+# Environment files
+.env
+.env.local
+**/.env
+**/.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Uploads
+server/public/uploads/
+server/uploads/
+
+# Temp
+temp/
+tmp/
+
+# VSCode
+.vscode/
+
+# DB backups
+*_backup.sql
+*.backup
+*.sql.backup

@@ -1,0 +1,2005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kitchen</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#14181C;
+  --panel:#1F262C;
+  --text:#F6F3EC;
+  --muted:#8a8478;
+  --border:#2A3138;
+  --accent:#E3A23B;
+  --success:#2FA37D;
+  --danger:#E15A4C;
+}
+body.light-theme{
+  --bg:#f4f1ea;
+  --panel:#fff;
+  --text:#1b1f22;
+  --muted:#6b7280;
+  --border:#ddd6c8;
+  --accent:#c97b2e;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);margin:0}
+
+#login-box{max-width:340px;margin:80px auto;background:var(--panel);padding:32px 28px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.4);text-align:center}
+#login-box h2{margin:0 0 24px;font-size:20px}
+#login-box input,.pw-wrap{width:100%;display:block;box-sizing:border-box}
+#login-box input{padding:12px 14px;margin:8px 0;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px}
+#login-box input:focus{outline:none;border-color:var(--accent)}
+#login-box button{width:100%;padding:12px;margin-top:12px;border-radius:8px;border:none;background:var(--accent);color:#14181C;font-weight:700;font-size:14px;cursor:pointer}
+#login-box button:disabled{opacity:.6;cursor:not-allowed}
+#login-error{min-height:18px;font-size:13px;color:var(--danger)}
+.pw-wrap{position:relative;margin:8px 0}
+.pw-wrap input{margin:0;width:100%;padding-right:40px}
+.pw-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:15px;user-select:none}
+
+#app-box{max-width:900px;margin:0 auto;padding:20px 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;align-items:stretch}
+
+.ticket{background:#F6F3EC;color:#1B1F22;border-radius:4px 4px 12px 12px;overflow:hidden;display:flex;flex-direction:column;min-height:320px;box-shadow:0 8px 20px rgba(0,0,0,.35)}
+.ticket.new-order{border:3px solid #E3A23B;animation:blink 1s infinite}
+@keyframes blink{50%{box-shadow:0 0 20px #E3A23B}}
+.ticket .perf{height:6px;background:repeating-linear-gradient(90deg,transparent,transparent 6px,#14181C 6px,#14181C 8px)}
+.ticket .body{padding:14px 16px;display:flex;flex-direction:column;flex:1}
+.ticket .head{display:flex;justify-content:space-between;align-items:center}
+.table-num{font-size:26px;font-weight:bold}
+.order-id{font-size:11px;color:#8a8478}
+.ticket .items{margin:10px 0;flex:1}
+.ticket .items div{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed #ddd}
+.meta{font-size:12px;color:#8a8478;margin-bottom:10px}
+.ticket .row{display:flex;gap:6px;margin-top:auto}
+.ticket input{width:60px;padding:8px;border-radius:8px;border:1px solid #ddd}
+.btn-confirm{flex:1;padding:9px;border:none;border-radius:8px;background:#E3A23B;font-weight:bold;cursor:pointer}
+.btn-ready{width:100%;padding:9px;border:none;border-radius:8px;background:#2FA37D;color:white;font-weight:bold;cursor:pointer}
+.btn-confirm:disabled,.btn-ready:disabled{opacity:.6;cursor:not-allowed}
+.empty{padding:30px;text-align:center;color:#777}
+
+.brand-header{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--panel);border-bottom:1px solid var(--border)}
+.brand-header img{width:36px;height:36px;border-radius:8px;object-fit:cover}
+.brand-header .brand-name{font-weight:700;font-size:15px}
+
+.topnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.menu-btn{background:none;border:0;color:var(--text);font-size:24px;cursor:pointer;padding:4px 8px}
+.topnav .title{font-weight:700;font-size:16px}
+
+.side-menu{position:fixed;top:0;left:-260px;width:240px;height:100%;background:var(--panel);border-right:1px solid var(--border);transition:left .2s;z-index:1200;padding:20px 0}
+.side-menu.open{left:0}
+.menu-heading{padding:10px 20px 18px;font-size:16px;font-weight:700;border-bottom:1px solid var(--border);margin-bottom:8px}
+.side-menu button{display:block;width:100%;text-align:left;padding:14px 20px;color:var(--text);background:none;border:0;font-size:14px;cursor:pointer}
+.side-menu button:hover{background:var(--bg)}
+.side-overlay{display:none;position:fixed;inset:0;background:#0008;z-index:1100}
+.side-overlay.open{display:block}
+
+.theme-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
+.switch{position:relative;width:44px;height:24px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;background:var(--border);border-radius:24px;cursor:pointer}
+.slider::before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.switch input:checked+.slider{background:var(--accent)}
+.switch input:checked+.slider::before{transform:translateX(20px)}
+
+.side-panel{display:none;position:fixed;top:0;right:0;width:320px;max-width:92vw;height:100%;background:var(--panel);box-shadow:-4px 0 20px rgba(0,0,0,.5);padding:24px 20px;z-index:999;overflow-y:auto}
+.side-panel h3{margin-top:0}
+.side-panel h4{margin:16px 0 8px;font-size:13px;color:var(--accent)}
+.side-panel input,.side-panel select{width:100%;padding:10px 12px;margin:6px 0;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px}
+.side-panel button.primary-btn{width:100%;margin-top:10px;padding:10px;background:var(--accent);border:none;border-radius:8px;font-weight:bold;cursor:pointer;color:#14181C}
+.side-panel button.close-btn{width:100%;margin-top:20px;padding:10px;background:transparent;border:1px solid var(--border);border-radius:8px;font-weight:bold;cursor:pointer;color:var(--text)}
+.panel-row{background:var(--bg);border-radius:8px;padding:10px 12px;margin:8px 0}
+.panel-row-title{font-weight:600;font-size:13px}
+.panel-row-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.panel-row-actions{display:flex;gap:6px;margin-top:8px}
+.panel-row-actions button{flex:1;border:none;border-radius:6px;padding:7px 10px;font-weight:700;font-size:12px;cursor:pointer}
+.btn-mini-danger{background:var(--danger);color:#fff}
+.status-pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.status-pending{background:#3a2f18;color:var(--accent)}
+.status-approved{background:#173328;color:var(--success)}
+.status-rejected{background:#3a1f1c;color:var(--danger)}
+.panel-msg{font-size:12px;text-align:center;min-height:16px}
+.restaurant-info{font-size:11px;color:var(--muted);text-align:center;margin:-8px 0 14px}
+.screen-error{padding:30px;text-align:center;color:var(--danger);grid-column:1 / -1}
+.status-chip.offline{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid #ef444455}
+.status-chip{display:inline-block;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase}
+.status-pill{display:inline-block;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700}
+.status-pending{background:rgba(234,179,8,.15);color:#eab308}
+.status-approved{background:rgba(34,197,94,.15);color:#22c55e}
+.status-rejected{background:rgba(239,68,68,.15);color:#ef4444}
+.status-pending_sync{background:rgba(239,68,68,.15);color:#ef4444;border:1px dashed #ef444455}
+
+.shift-box{padding:14px 20px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:8px 0}
+.shift-title{color:green;letter-spacing:.04em;margin-bottom:6px;padding:10px 20px 18px;font-size:16px;font-weight:700;border-bottom:1px solid var(--border)}
+.shift-status{font-size:13px;font-weight:600;margin-bottom:10px}
+.shift-btn{width:100%;padding:10px;border:none;border-radius:8px;background:var(--accent);color:#14181C;font-weight:700;font-size:13px;cursor:pointer}
+.shift-btn:disabled{opacity:.6;cursor:not-allowed}
+.shift-btn.on{background:var(--danger);color:#fff}
+.side-menu-btn{display:block;width:100%;text-align:left;padding:14px 20px;color:var(--text);background:none;border:0;font-size:14px;cursor:pointer}
+.side-menu-btn:hover{background:var(--bg)}
+
+.shift-filter-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px}
+.shift-filter-row .field{flex:1;min-width:140px}
+.field label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
+.field input{width:100%;padding:9px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px}
+.action-btn{border:none;border-radius:8px;padding:9px 14px;font-weight:700;font-size:13px;cursor:pointer;background:var(--accent);color:#14181C}
+
+.pricing-grid{display:grid;gap:10px}
+.status{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:13px;line-height:1.7}
+
+.report-table{width:100%;border-collapse:collapse;font-size:12px}
+.report-table th,.report-table td{border:1px solid var(--border);padding:8px;text-align:left}
+.report-table th{background:var(--bg);color:var(--muted);font-weight:700}
+.report-row{cursor:pointer}
+.report-row:hover{background:rgba(255,255,255,.04)}
+.report-detail-row td{background:var(--bg)}
+.report-detail{margin:6px 0}
+.report-detail table{width:100%;border-collapse:collapse;font-size:12px}
+.report-detail th,.report-detail td{border:1px solid var(--border);padding:6px 8px;text-align:left}
+.report-detail th{background:var(--panel)}
+
+.status-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase}
+.status-badge.active{background:rgba(34,197,94,.15);color:#22c55e}
+.status-badge.closed,.status-badge.ended{background:rgba(148,163,184,.15);color:#94a3b8}
+
+.modal-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.modal-box .confirm{background:var(--accent);color:#14181C;border:none;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}
+
+.modal{display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.62);padding:20px;overflow-y:auto}
+.modal.show{display:flex;align-items:center;justify-content:center}
+.modal-box{position:relative;width:min(620px,100%);max-height:calc(100vh - 40px);overflow-y:auto;background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 25px 70px rgba(0,0,0,.55)}
+.modal-close-x{position:absolute;top:10px;right:10px;background:transparent;border:none;color:var(--text);font-size:22px;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.modal-close-x:hover{background:var(--danger);color:#fff}
+.modal-box .action-btn,.modal-box .cancel{border:none;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}
+.modal-box .action-btn{background:var(--accent);color:#14181C}
+.modal-box .action-btn.accept{background:var(--success);color:#fff}
+.modal-box .cancel{background:transparent;color:var(--text);border:1px solid var(--border)}
+#kitchenHistoryList{display:flex;flex-direction:column;gap:10px}
+.kitchen-history-item{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px}
+.kitchen-history-item .history-top{display:flex;justify-content:space-between;gap:10px;font-weight:700}
+.kitchen-history-item .history-meta{margin-top:6px;color:var(--muted);font-size:12px}
+@media(max-width:600px){.modal{padding:10px;align-items:flex-end}.modal.show{display:flex;align-items:flex-end}.modal-box{width:100%;max-height:88vh;border-radius:16px 16px 10px 10px;padding:16px}}
+</style>
+</head>
+<body>
+
+<!-- BRAND -->
+<div class="brand-header" id="brand-header" style="display:none;"></div>
+
+<!-- LOGIN -->
+<div id="login-box">
+  <h2>Kitchen Login</h2>
+  <input id="username" placeholder="Username" autocomplete="username" onkeydown="if(event.key==='Enter') login()">
+  <div class="pw-wrap">
+    <input id="password" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter') login()">
+    <span class="pw-eye" onmousedown="showPassword()" onmouseup="hidePassword()" onmouseleave="hidePassword()" ontouchstart="showPassword()" ontouchend="hidePassword()">👁</span>
+  </div>
+  <button id="login-btn" onclick="login()">Login</button>
+  <p id="login-error"></p>
+</div>
+
+<!-- APP -->
+<div id="app-box" style="display:none;">
+  <div class="topnav">
+    <button class="menu-btn" onclick="toggleMenu()" aria-label="Open menu">☰</button>
+    <div class="title">Kitchen</div>
+    <div></div>
+  </div>
+
+  <div class="restaurant-info" id="restaurant-info"></div>
+
+  <div class="side-overlay" id="side-overlay" onclick="closeMenu()"></div>
+  <div class="side-menu" id="side-menu">
+    <div class="menu-heading">Kitchen Menu</div>
+    <button onclick="closeMenu(); toggleStockPanel();">📦 My Stock</button>
+    <button onclick="closeMenu(); toggleRequestPanel();">📥 Request Stock</button>
+    <button onclick="closeMenu(); toggleRecipePanel();">🍳 Recipes</button>
+    <div class="shift-box">
+      <div class="shift-title">Shift</div>
+      <div class="shift-status" id="shiftStatus">Checking...</div>
+      <button class="shift-btn" id="shiftBtn" onclick="toggleShift()" disabled>...</button>
+    </div>
+    <button class="side-menu-btn" onclick="openShiftReports()">📊 Shift Reports</button>
+    <button onclick="closeMenu(); toggleSettings();">⚙️ Settings</button>
+    <button onclick="logout()" style="color:var(--danger);">🚪 Logout</button>
+  </div>
+
+  <h2>Kitchen Queue</h2>
+  <div id="orders-list" class="grid"></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="settings-panel" class="side-panel">
+  <h3>⚙️ Settings</h3>
+  <div class="theme-row">
+    <span>Auto Print Orders</span>
+    <label class="switch">
+      <input type="checkbox" id="printToggle" onchange="localStorage.setItem('autoPrintEnabled', this.checked)">
+      <span class="slider"></span>
+    </label>
+  </div>
+  <div class="theme-row">
+    <span>Dark / Light Theme</span>
+    <label class="switch">
+      <input type="checkbox" id="theme-toggle" onchange="toggleTheme()">
+      <span class="slider"></span>
+    </label>
+  </div>
+  <div class="theme-row" style="border-bottom:none;flex-direction:column;align-items:flex-start;gap:6px;">
+    <span>Printer Width</span>
+    <select id="printerWidthSelect" onchange="localStorage.setItem('printerWidth', this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;">
+      <option value="auto">Auto (recommended — matches printer driver)</option>
+      <option value="58mm">58mm thermal roll</option>
+      <option value="80mm">80mm thermal roll</option>
+    </select>
+    <span style="font-size:11px;color:var(--muted);">Leave on Auto unless the receipt prints with wrong margins on this device.</span>
+  </div>
+  <button class="close-btn" onclick="toggleSettings()">Close</button>
+</div>
+
+<!-- STOCK -->
+<div id="stock-panel" class="side-panel">
+  <h3>📦 My Kitchen Stock</h3>
+  <div id="kitchen-stock-list"></div>
+  <button class="close-btn" onclick="toggleStockPanel()">Close</button>
+</div>
+
+<!-- REQUEST STOCK -->
+<div id="request-panel" class="side-panel">
+  <h3>📥 Request Stock</h3>
+  <select id="request-item-select"></select>
+  <input id="request-qty" type="number" min="0.01" step="0.01" placeholder="Quantity needed">
+  <input id="request-note" placeholder="Note (optional)">
+  <button class="primary-btn" onclick="submitStockRequest()">Send Request</button>
+  <p id="request-msg" class="panel-msg"></p>
+  <h4>My Requests</h4>
+  <div id="my-requests-list"></div>
+  <button class="close-btn" onclick="toggleRequestPanel()">Close</button>
+</div>
+
+<!-- RECIPES -->
+<div id="recipe-panel" class="side-panel">
+  <h3>🍳 Recipe Ingredients</h3>
+  <select id="recipe-menu-item-select" onchange="handleMenuItemChange()"></select>
+  <div id="recipe-variant-wrap" style="display:none; margin-top:10px;">
+  <label>Size / Variant</label>
+  <select id="recipe-variant-select" onchange="loadRecipeForSelectedItem()"></select>
+</div>
+  <div id="recipe-ingredients-list"></div>
+  <h4>Add Ingredient</h4>
+  <select id="recipe-inventory-select"></select>
+  <input id="recipe-qty" type="number" min="0.001" step="0.001" placeholder="Qty used per item sold">
+  <button class="primary-btn" onclick="addRecipeIngredient()">Add Ingredient</button>
+  <p id="recipe-msg" class="panel-msg"></p>
+  <button class="close-btn" onclick="toggleRecipePanel()">Close</button>
+</div>
+
+<audio id="new-order-sound"><source src="/sounds/order.mp3" type="audio/mpeg"></audio>
+
+<!-- Hidden iframe used by shift-report print -->
+<iframe id="printFrame" style="display:none;"></iframe>
+
+<!-- SHIFT SUMMARY MODAL -->
+<div class="modal" id="shiftSummaryModal">
+  <div class="modal-box" style="max-width:620px;">
+    <h3>Shift Summary</h3>
+    <div id="shiftSummaryContent"></div>
+    <div class="modal-actions">
+      <button class="cancel" onclick="printShiftSummary()">Print</button>
+      <button class="confirm" onclick="closeShiftSummary()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHIFT REPORTS MODAL -->
+<div class="modal" id="shiftReportsModal">
+  <div class="modal-box" style="max-width:720px;max-height:85vh;overflow:auto;">
+    <button class="modal-close-x" onclick="closeShiftReports()" aria-label="Close">×</button>
+    <h3>Shift Reports</h3>
+    <div class="shift-filter-row">
+      <div class="field"><label>Date</label><input type="date" id="reportDate" onchange="loadShiftReports()"></div>
+      <div class="field"><label>Username</label><input id="reportUsername" placeholder="e.g. kitchen1" oninput="loadShiftReports()"></div>
+      <button class="action-btn" style="align-self:flex-end;" onclick="clearShiftReportFilters()">Clear Filters</button>
+    </div>
+    <div id="shiftReportsList"></div>
+    <div class="modal-actions">
+      <button class="cancel" onclick="closeShiftReports()">Close</button>
+      <button class="confirm" onclick="printShiftReports()">Print This List</button>
+    </div>
+  </div>
+</div>
+
+<!-- KITCHEN STOCK HISTORY MODAL -->
+<div class="modal" id="kitchenHistoryModal">
+  <div class="modal-box" style="max-width:560px;max-height:80vh;overflow:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;">
+      <h3 id="kitchenHistoryTitle" style="margin:0;">📋 Stock History</h3>
+      <button class="close-btn" onclick="closeKitchenHistory()" style="background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;">×</button>
+    </div>
+    <div id="kitchenHistoryList">
+      <div class="empty">Loading...</div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="action-btn accept" onclick="printKitchenHistory()">🖨️ Print</button>
+      <button class="action-btn" onclick="exportKitchenHistoryCSV()">📥 Export CSV</button>
+      <button class="cancel" onclick="closeKitchenHistory()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+/* =====================================================
+   GLOBALS
+===================================================== */
+let token = localStorage.getItem('kitchen_token');
+let socket = null;
+let printedOrderIds = null;
+let loadingOrders = false;
+let restaurantBrand = { name: '' };
+
+const urlParams = new URLSearchParams(window.location.search);
+let restaurantId = urlParams.get('restaurant');
+if(restaurantId !== null && restaurantId !== '' && Number.isInteger(Number(restaurantId)) && Number(restaurantId) > 0){
+  restaurantId = Number(restaurantId);
+}else{
+  restaurantId = null;
+}
+
+if(localStorage.getItem('autoPrintEnabled') === null){
+  localStorage.setItem('autoPrintEnabled', 'true');
+}
+if(localStorage.getItem('printerWidth') === null){
+  localStorage.setItem('printerWidth', 'auto');
+}
+
+const API_BASE = '/api';
+const money = v => `RS ${Number(v || 0).toFixed(2)}`;
+const esc = v => String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
+
+// 🔊 Audio context for unlocking
+let audioContext = null;
+function unlockAudioContext() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioContext.state === 'suspended') {
+        audioContext.resume().then(() => {
+            console.log('✅ Audio context resumed');
+        }).catch((err) => {
+            console.warn('Audio context resume failed:', err);
+        });
+    }
+}
+
+/* Helper to format item name with package info */
+function formatItemName(item) {
+  let name = item.name || 'Unknown';
+  if (item.package_size && item.package_unit) {
+    name += ` (${item.package_size}${item.package_unit})`;
+  }
+  return name;
+}
+
+/* Cache for warehouse inventory (to get package info for kitchen stock) */
+let warehouseInventoryMap = null;
+async function getWarehouseInventoryMap() {
+  if (warehouseInventoryMap) return warehouseInventoryMap;
+  try {
+    const res = await fetch('/api/inventory?status=active', { headers: { Authorization: 'Bearer ' + token } });
+    if (!res.ok) return {};
+    const data = await res.json().catch(() => ({}));
+    const items = Array.isArray(data.data) ? data.data : [];
+    warehouseInventoryMap = {};
+    items.forEach(item => {
+      warehouseInventoryMap[item.id] = item;
+    });
+    return warehouseInventoryMap;
+  } catch (err) {
+    console.error('getWarehouseInventoryMap error:', err);
+    return {};
+  }
+}
+
+/* Helper to get full display name for a kitchen inventory item (enriched with package info) */
+async function getKitchenItemDisplayName(kitchenItem) {
+  const invMap = await getWarehouseInventoryMap();
+  const warehouseItem = invMap[kitchenItem.inventory_id];
+  if (warehouseItem) {
+    return formatItemName(warehouseItem);
+  }
+  return kitchenItem.name || 'Unknown';
+}
+
+/* =====================================================
+   PASSWORD
+===================================================== */
+function showPassword(){
+  const input = document.getElementById('password');
+  if(input) input.type = 'text';
+}
+function hidePassword(){
+  const input = document.getElementById('password');
+  if(input) input.type = 'password';
+}
+
+/* =====================================================
+   THEME
+===================================================== */
+function toggleTheme(){
+  const light = document.getElementById('theme-toggle').checked;
+  document.body.classList.toggle('light-theme', light);
+  localStorage.setItem('theme', light ? 'light' : 'dark');
+}
+function initializeTheme(){
+  const light = localStorage.getItem('theme') === 'light';
+  document.body.classList.toggle('light-theme', light);
+}
+
+/* =====================================================
+   SETTINGS
+===================================================== */
+function toggleSettings(){
+  const panel = document.getElementById('settings-panel');
+  const isOpen = panel.style.display === 'block';
+  panel.style.display = isOpen ? 'none' : 'block';
+  const printToggle = document.getElementById('printToggle');
+  const themeToggle = document.getElementById('theme-toggle');
+  const printerWidthSelect = document.getElementById('printerWidthSelect');
+  if(printToggle) printToggle.checked = localStorage.getItem('autoPrintEnabled') === 'true';
+  if(themeToggle) themeToggle.checked = localStorage.getItem('theme') === 'light';
+  if(printerWidthSelect) printerWidthSelect.value = localStorage.getItem('printerWidth') || 'auto';
+}
+
+/* =====================================================
+   MENU
+===================================================== */
+function toggleMenu(){
+  document.getElementById('side-menu').classList.toggle('open');
+  document.getElementById('side-overlay').classList.toggle('open');
+}
+function closeMenu(){
+  document.getElementById('side-menu').classList.remove('open');
+  document.getElementById('side-overlay').classList.remove('open');
+}
+
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+function escapeHtml(value){
+  return String(value ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
+}
+
+// ======================================================
+// DEDUPLICATION + DEAL NEW ITEM CHECK
+// ======================================================
+
+// Track recently printed order IDs to avoid duplicate prints
+const recentlyPrinted = new Set();
+
+function printOrderWithDedup(order) {
+  if (!order || !order.id) return;
+  const key = order.id;
+  if (recentlyPrinted.has(key)) {
+    console.log('Skipping duplicate print for order:', key);
+    return;
+  }
+  recentlyPrinted.add(key);
+  printOrderReceipt(order);
+  // Remove after 2 seconds to allow future prints
+  setTimeout(() => {
+    recentlyPrinted.delete(key);
+  }, 2000);
+}
+
+function hasNewItems(order) {
+  if (!order) return false;
+  // Check regular items
+  if (order.items && order.items.some(item => Number(item.new_quantity || 0) > 0)) {
+    return true;
+  }
+  // Check deal items
+  if (order.deals) {
+    for (const deal of order.deals) {
+      if (deal.items && deal.items.some(item => Number(item.new_quantity || 0) > 0)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// ======================================================
+// SOCKET EVENTS
+// ======================================================
+
+function createSocket(){
+  if(socket){
+    try{ socket.removeAllListeners(); socket.disconnect(); }catch(error){ console.warn('Old socket cleanup:', error); }
+  }
+  socket = io({
+    autoConnect:false,
+    reconnection:true,
+    reconnectionAttempts:Infinity,
+    reconnectionDelay:1000,
+    transports:['websocket','polling'],
+    auth:{ token:token, restaurant_id:restaurantId }
+  });
+  socket.on('connect', () => { console.log('Kitchen Socket Connected', socket.id, 'Restaurant:', restaurantId); });
+  socket.on('disconnect', reason => { console.log('Kitchen Socket Disconnected:', reason); });
+  socket.on('connect_error', err => { console.log('Kitchen Socket Error:', err?.message || err); });
+  
+  socket.on('order_created', kitchenNewOrderAlert);
+  socket.on('order_accepted', kitchenNewOrderAlert);
+  
+  // ✅ order_items_added with dedup + deal check
+  socket.on('order_items_added', (order) => {
+    kitchenNewOrderAlert();
+    if (order && hasNewItems(order)) {
+      printOrderWithDedup(order);
+    }
+    loadOrders();
+  });
+  
+  // ✅ order_updated with dedup + deal check (fallback)
+  socket.on('order_updated', (order) => {
+    if(!token) return;
+    if (hasNewItems(order)) {
+      kitchenNewOrderAlert();
+      printOrderWithDedup(order);
+    }
+    loadOrders();
+  });
+  
+  socket.on('orders_refresh', () => { if(!token) return; loadOrders(); });
+  socket.on('kitchen_inventory_updated', () => {
+    if(!token) return;
+    const stockPanel = document.getElementById('stock-panel');
+    if(stockPanel && stockPanel.style.display === 'block') loadKitchenStock();
+    const requestPanel = document.getElementById('request-panel');
+    if(requestPanel && requestPanel.style.display === 'block') loadMyRequests();
+  });
+}
+/* =====================================================
+   AUTH ERROR
+===================================================== */
+function checkUnauthorized(res){
+  if(res.status === 401){ alert('Session expired. Please login again.'); logout(); return true; }
+  return false;
+}
+
+async function apiFetch(url, options = {}){
+  const response = await fetch(url, {
+    ...options,
+    headers:{ 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token, ...(options.headers || {}) }
+  });
+  if(response.status === 401){ logout(); throw new Error('Session expired. Please login again.'); }
+  const data = await response.json().catch(() => ({}));
+  if(!response.ok){ throw new Error(data.message || 'Request failed'); }
+  return data;
+}
+
+/* =====================================================
+   LOGIN
+===================================================== */
+async function login(){
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const errorBox = document.getElementById('login-error');
+  errorBox.innerText = '';
+  if(!username || !password){ errorBox.innerText = 'Username and Password required'; return; }
+  const urlParams = new URLSearchParams(window.location.search);
+  const restaurantId = Number(urlParams.get('restaurant') || urlParams.get('restaurant_id'));
+  if(!restaurantId){ errorBox.innerText = 'Restaurant ID missing. Open kitchen page with ?restaurant=ID'; return; }
+  try{
+    const res = await fetch('/api/auth/login', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body:JSON.stringify({ username, password, restaurant_id: restaurantId, role: 'kitchen' })
+    });
+    const data = await res.json().catch(() => ({}));
+    console.log('Kitchen login response:', data);
+    if(!res.ok){ errorBox.innerText = data.message || 'Invalid username or password'; return; }
+    if(!data.token || !data.user || data.user.role !== 'kitchen'){ errorBox.innerText = 'Invalid kitchen login'; localStorage.removeItem('token'); token = null; return; }
+    token = data.token;
+    localStorage.setItem('kitchen_token', token);
+    localStorage.setItem('restaurant_id', String(data.user.restaurant_id || restaurantId));
+    localStorage.setItem('kitchenRestaurantId', String(data.user.restaurant_id || restaurantId));
+    createSocket();
+    if(socket && !socket.connected) socket.connect();
+    showApp();
+    unlockAudioContext();
+    await loadShiftStatus();
+    await loadOrders();
+  }catch(err){ console.error('Kitchen login error:', err); errorBox.innerText = 'Server connection failed'; }
+}
+
+/* =====================================================
+   SHOW APP
+===================================================== */
+function showApp(){
+  document.getElementById('login-box').style.display = 'none';
+  document.getElementById('app-box').style.display = 'block';
+  const info = document.getElementById('restaurant-info');
+  if(info) info.innerText = restaurantId ? `Restaurant #${restaurantId}` : '';
+  loadBranding();
+}
+
+/* =====================================================
+   LOAD ORDERS
+===================================================== */
+async function loadOrders() {
+  if (!token) return;
+  if (loadingOrders) return;
+  loadingOrders = true;
+  const list = document.getElementById('orders-list');
+  if (list) list.innerHTML = '<div class="empty">Loading orders...</div>';
+  try {
+    let ordersUrl = '/api/orders';
+    if (restaurantId) ordersUrl += '?restaurant=' + encodeURIComponent(restaurantId);
+    const res = await fetch(ordersUrl, { headers: { Authorization: 'Bearer ' + token } });
+    if (checkUnauthorized(res)) return;
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(result.message || 'Unable to load orders');
+    let orders = Array.isArray(result.orders) ? result.orders : [];
+    if (restaurantId) {
+      orders = orders.filter(order => {
+        const orderRestaurantId = order.restaurant_id ?? order.restaurantId ?? order.restaurant?.id ?? null;
+        if (orderRestaurantId === null || orderRestaurantId === undefined) return true;
+        return Number(orderRestaurantId) === Number(restaurantId);
+      });
+    }
+    const activeOrders = orders.filter(order =>
+      ['placed', 'accepted', 'confirmed', 'preparing'].includes(String(order.status || '').toLowerCase())
+    );
+    if (printedOrderIds === null) {
+      printedOrderIds = new Set(activeOrders.map(order => order.id));
+    } else {
+      activeOrders.forEach(order => {
+        if (!printedOrderIds.has(order.id)) {
+          printedOrderIds.add(order.id);
+          printOrderReceipt(order);
+        }
+      });
+    }
+    renderOrders(activeOrders);
+  } catch (error) {
+    console.error('loadOrders:', error);
+    if (list) {
+      list.innerHTML = `<div class="screen-error">Unable to load orders.<br><br>${escapeHtml(error.message || 'Server connection failed')}<br><br><button onclick="loadOrders()" style="padding:10px 18px;border:0;border-radius:7px;cursor:pointer;font-weight:bold;">Retry</button></div>`;
+    }
+  } finally { loadingOrders = false; }
+}
+
+
+function handleMenuItemChange() {
+  loadVariantsForSelectedItem(); 
+  loadRecipeForSelectedItem();   
+}
+
+/* =====================================================
+   LOAD BRANDING
+===================================================== */
+async function loadBranding(){
+  if(!token) return;
+  try{
+    const res = await fetch('/api/restaurants/me', { headers:{ Authorization: 'Bearer ' + token } });
+    if(checkUnauthorized(res)) return;
+    const data = await res.json().catch(() => ({}));
+    if(!res.ok || !data.success) return;
+    const restaurant = data.data || {};
+    const backendRestaurantId = restaurant.id ?? restaurant.restaurant_id ?? null;
+    if(restaurantId && backendRestaurantId && Number(backendRestaurantId) !== Number(restaurantId)){
+      console.warn('Restaurant branding mismatch:', { requested:restaurantId, received:backendRestaurantId });
+    }
+    const header = document.getElementById('brand-header');
+    if(!header) return;
+    const name = restaurant.name || `Restaurant #${restaurantId || ''}`;
+    restaurantBrand.name = name;
+    const logoUrl = restaurant.logo_url || restaurant.logo || '';
+    header.style.display = 'flex';
+    header.innerHTML = (logoUrl ? `<img src="${escapeHtml(logoUrl)}" alt="Restaurant Logo" onerror="this.style.display='none';">` : '') + `<span class="brand-name">${escapeHtml(name)}</span>`;
+    const info = document.getElementById('restaurant-info');
+    if(info) info.innerText = restaurantId ? `${name} · Restaurant #${restaurantId}` : name;
+  }catch(error){ console.error('Branding load failed:', error); }
+}
+
+/* =====================================================
+   PRINT ORDER
+===================================================== */
+function printOrderReceipt(order){
+  if(localStorage.getItem('autoPrintEnabled') !== 'true') return;
+
+  // Safely extract items and deals, fallback to empty arrays
+  const plainItems = Array.isArray(order?.items) ? order.items : [];
+  const dealGroups = Array.isArray(order?.deals) ? order.deals : [];
+
+  // Build HTML for regular items
+  let itemsHtml = plainItems.map(item => {
+    const isNew = Number(item.new_quantity || 0) > 0;
+    const newBadge = isNew ? ' <span style="color:#E15A4C;font-weight:bold;">🆕 NEW</span>' : '';
+    return `<tr><td>${escapeHtml(item.quantity)}x</td><td>${escapeHtml(item.name)}${item.variant_label ? ' (' + escapeHtml(item.variant_label) + ')' : ''}${newBadge}</td></tr>`;
+  }).join('');
+
+  // Build HTML for deals – NEW badge only on the deal name, not per item
+  itemsHtml += dealGroups.map(deal => {
+    const dealItems = Array.isArray(deal.items) ? deal.items : [];
+    const hasNew = dealItems.some(item => Number(item.new_quantity || 0) > 0);
+    const newBadge = hasNew ? ' <span style="color:#E15A4C;font-weight:bold;">🆕 NEW</span>' : '';
+    const dealItemsHtml = dealItems.map(item =>
+      `<tr><td>${escapeHtml(item.quantity)}x</td><td style="padding-left:14px;">↳ ${escapeHtml(item.name)}${item.variant_label ? ' (' + escapeHtml(item.variant_label) + ')' : ''}</td></tr>`
+    ).join('');
+    return `<tr><td colspan="2" style="font-weight:bold;padding-top:6px;">🎁 ${escapeHtml(deal.deal_name)} ×${escapeHtml(deal.quantity)}${newBadge}</td></tr>${dealItemsHtml}`;
+  }).join('');
+
+  // Fallback if nothing was printed
+  if (!itemsHtml) itemsHtml = '<tr><td colspan="2">No items</td></tr>';
+
+  const tableLabel = order.order_type === 'delivery' ? 'Delivery' :
+                     (order.table_no != null && order.table_no !== '') ? `Table ${escapeHtml(order.table_no)}` : 'Order';
+
+  const printerWidth = localStorage.getItem('printerWidth') || 'auto';
+  const pageSizeRule = printerWidth === 'auto' ? 'auto' : (printerWidth + ' auto');
+  const bodyWidthRule = printerWidth === 'auto' ? '100%' : printerWidth;
+
+  let iframe = document.getElementById('printFrame');
+  if(!iframe){
+    iframe = document.createElement('iframe');
+    iframe.id = 'printFrame';
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+  }
+
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(`<html><head><style>
+    @page{ size:${pageSizeRule}; margin:0; }
+    *{ box-sizing:border-box; }
+    body{
+      font-family:'Courier New',monospace;
+      font-size:13px;
+      line-height:1.4;
+      padding:6px 8px;
+      margin:0;
+      width:${bodyWidthRule};
+      word-wrap:break-word;
+    }
+    h2{text-align:center;margin:4px 0;font-size:16px;}
+    table{width:100%;border-collapse:collapse;}
+    td{padding:3px 0;vertical-align:top;}
+    .line{border-top:1px dashed #000;margin:8px 0;}
+    .new-badge{color:#E15A4C;font-weight:bold;}
+  </style></head><body>
+    <h2>${tableLabel}</h2>
+    <div class="line"></div>
+    <div>Order #${escapeHtml(order.id)} — ${new Date().toLocaleTimeString()}</div>
+    <div class="line"></div>
+    <table>${itemsHtml}</table>
+    <div class="line"></div>
+  </body></html>`);
+  doc.close();
+  setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); }, 200);
+}
+
+/* =====================================================
+   CONFIRM ORDER
+===================================================== */
+async function confirmOrder(id) {
+  const button = document.querySelector(`button[onclick="confirmOrder(${id})"]`);
+  const input = document.getElementById('prep-' + id);
+  const prep_minutes = Number(input?.value);
+  if (!Number.isInteger(prep_minutes) || prep_minutes <= 0) { alert('Enter a valid preparation time.'); return; }
+  if (button) { button.disabled = true; button.innerText = 'Confirming...'; }
+  try {
+    const res = await fetch(`/api/orders/${id}/confirm`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ prep_minutes })
+    });
+    if (checkUnauthorized(res)) return;
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { alert(data.message || 'Confirm failed'); if (button) { button.disabled = false; button.innerText = 'Confirm'; } return; }
+    await loadOrders();
+  } catch (error) { console.error('confirmOrder:', error); alert('Server error'); if (button) { button.disabled = false; button.innerText = 'Confirm'; } }
+}
+
+/* =====================================================
+   RENDER ORDERS
+===================================================== */
+function renderOrders(orders){
+  const list = document.getElementById('orders-list');
+  if(!list) return;
+  if(!Array.isArray(orders) || !orders.length){ list.innerHTML = '<div class="empty">No active orders</div>'; return; }
+  list.innerHTML = orders.map(order => {
+    const o = order || {};
+    const status = String(o.status || '').toLowerCase();
+    const plainItems = Array.isArray(o.items) ? o.items : [];
+    const dealItemGroups = Array.isArray(o.deals) ? o.deals : [];
+    let items = plainItems.map(item => {
+      const newQty = Number(item.new_quantity || 0);
+      return `<div class="order-item"><span>${escapeHtml(item.name)}${item.variant_label ? ' (' + escapeHtml(item.variant_label) + ')' : ''}</span><b>×${escapeHtml(item.quantity)}</b>${newQty > 0 ? `<span class="new-item-badge" style="color:#b45309;font-size:11px;font-weight:bold;">🆕 New +${newQty}</span>` : ''}</div>`;
+    }).join('');
+    items += dealItemGroups.map(deal => {
+  const dealItems = Array.isArray(deal.items) ? deal.items : [];
+  const hasNew = dealItems.some(item => Number(item.new_quantity || 0) > 0);
+  const newBadge = hasNew ? ' <span class="new-item-badge" style="color:#b45309;font-size:11px;font-weight:bold;">🆕 NEW</span>' : '';
+  const dealItemsHtml = dealItems.map(item => `<div class="order-item"><span>${escapeHtml(item.name)}${item.variant_label ? ' (' + escapeHtml(item.variant_label) + ')' : ''}</span><b>×${escapeHtml(item.quantity)}</b></div>`).join('');
+  return `<div class="order-item" style="font-weight:bold;border-top:1px dashed #999;padding-top:6px;margin-top:4px;"><span>🎁 ${escapeHtml(deal.deal_name)} ×${escapeHtml(deal.quantity)}${newBadge}</span><b></b></div>${dealItemsHtml}`;
+}).join('');
+    let tableLabel;
+    if(String(o.order_type || '').toLowerCase() === 'delivery'){ tableLabel = 'Delivery'; }
+    else if(o.table_no !== null && o.table_no !== undefined && String(o.table_no).trim() !== ''){ tableLabel = `T${escapeHtml(o.table_no)}`; }
+    else{ tableLabel = 'Order'; }
+    let action = '';
+    if(status === 'placed' || status === 'accepted' || status === 'confirmed'){
+      action = `<div class="row"><input id="prep-${Number(o.id)}" value="15" type="number" min="1" step="1" aria-label="Preparation minutes"><button class="btn-confirm" onclick="confirmOrder(${Number(o.id)})">Confirm</button></div>`;
+    } else if(status === 'preparing'){
+      action = `<div class="meta">Est ${escapeHtml(o.prep_minutes || 0)} min</div><button class="btn-ready" onclick="readyOrder(${Number(o.id)})">Mark Ready</button>`;
+    }
+    return `<div class="ticket ${o.is_new ? 'new-order' : ''}"><div class="perf"></div><div class="body"><div class="head"><div class="table-num">${tableLabel}</div><div class="order-id">#${escapeHtml(o.id)}</div></div><div class="items">${items || `<div class="order-item"><span style="color:#b91c1c">No items found on this order</span></div>`}</div>${action}</div></div>`;
+  }).join('');
+}
+
+/* =====================================================
+   MARK READY
+===================================================== */
+async function readyOrder(id) {
+  const button = document.querySelector(`button[onclick="readyOrder(${id})"]`);
+  if (button) { button.disabled = true; button.innerText = 'Preparing...'; }
+  try {
+    const res = await fetch(`/api/orders/${id}/ready`, { method: 'PUT', headers: { Authorization: 'Bearer ' + token } });
+    if (checkUnauthorized(res)) return;
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { alert(data.message || 'Unable to mark ready'); if (button) { button.disabled = false; button.innerText = 'Mark Ready'; } return; }
+    await loadOrders();
+  } catch (error) { console.error('readyOrder:', error); alert('Server error'); if (button) { button.disabled = false; button.innerText = 'Mark Ready'; } }
+}
+
+/* =====================================================
+   KITCHEN STOCK
+===================================================== */
+function toggleStockPanel(){
+  const panel = document.getElementById('stock-panel');
+  const isOpen = panel.style.display === 'block';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if(!isOpen) loadKitchenStock();
+}
+async function loadKitchenStock() {
+  const list = document.getElementById('kitchen-stock-list');
+  list.innerHTML = '<div class="empty">Loading stock...</div>';
+
+  try {
+    const res = await fetch('/api/kitchen-inventory', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    if (checkUnauthorized(res)) return;
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) {
+      list.innerHTML = `<div class="empty">${escapeHtml(data.message || 'Unable to load stock')}</div>`;
+      return;
+    }
+
+    const stock = Array.isArray(data.data) ? data.data : [];
+    if (!stock.length) {
+      list.innerHTML = '<div class="empty">No stock in kitchen yet.</div>';
+      return;
+    }
+
+    // Enrich with display names (including package info)
+    const enrichedStock = await Promise.all(stock.map(async (item) => {
+      const displayName = await getKitchenItemDisplayName(item);
+      return { ...item, displayName };
+    }));
+
+    list.innerHTML = enrichedStock.map(item => {
+      const stockQty = Number(item.quantity || 0);
+      return `
+        <div class="panel-row" style="position:relative;">
+          <div class="panel-row-title">
+            ${escapeHtml(item.displayName)}
+            <span style="font-size:11px;color:var(--muted);font-weight:400;">
+              (${escapeHtml(item.unit || 'pcs')})
+            </span>
+          </div>
+          <div class="panel-row-sub">
+            ${stockQty} ${escapeHtml(item.unit || 'pcs')}
+          </div>
+          <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+            <button 
+              class="btn-mini" 
+              onclick="openKitchenStockHistory(${Number(item.inventory_id)}, '${escapeHtml(item.displayName)}')"
+              style="
+                padding:4px 12px;
+                border:1px solid var(--border);
+                border-radius:6px;
+                background:var(--bg);
+                color:var(--text);
+                font-size:11px;
+                cursor:pointer;
+              ">
+              📋 History
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (error) {
+    list.innerHTML = '<div class="empty">Server connection failed.</div>';
+  }
+}
+
+/* =====================================================
+   REQUEST STOCK
+===================================================== */
+let warehouseItemsCache = [];
+function toggleRequestPanel(){
+  const panel = document.getElementById('request-panel');
+  const isOpen = panel.style.display === 'block';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if(!isOpen){ loadWarehouseItemsForRequest(); loadMyRequests(); }
+}
+function describeWarehouseItem(item){
+  let name = escapeHtml(item.name);
+  if (item.package_size && item.package_unit) {
+    name += ` (${item.package_size}${item.package_unit})`;
+  }
+  return name + ` (${escapeHtml(item.unit || '')})`;
+}
+async function loadWarehouseItemsForRequest(){
+  const select = document.getElementById('request-item-select');
+  try{
+    const res = await fetch('/api/inventory?status=active', { headers:{ Authorization: 'Bearer ' + token } });
+    if(checkUnauthorized(res)) return;
+    const data = await res.json().catch(() => ({}));
+    warehouseItemsCache = Array.isArray(data.data) ? data.data : [];
+    select.innerHTML = warehouseItemsCache.length ? warehouseItemsCache.map(item => `<option value="${Number(item.id)}">${describeWarehouseItem(item)} — ${Number(item.stock_quantity)} in stock</option>`).join('') : '<option value="">No warehouse items available</option>';
+  }catch(error){ select.innerHTML = '<option value="">Unable to load items</option>'; }
+}
+async function submitStockRequest(){
+  const msg = document.getElementById('request-msg');
+  const itemId = Number(document.getElementById('request-item-select').value);
+  const qty = Number(document.getElementById('request-qty').value);
+  const note = document.getElementById('request-note').value.trim();
+  if(!itemId){ msg.style.color = '#E15A4C'; msg.innerText = 'Select an item'; return; }
+  if(!Number.isFinite(qty) || qty <= 0){ msg.style.color = '#E15A4C'; msg.innerText = 'Enter a valid quantity'; return; }
+  try{
+    const res = await fetch('/api/kitchen-inventory/requests', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', Authorization: 'Bearer ' + token },
+      body:JSON.stringify({ inventory_id: itemId, requested_quantity: qty, note: note || null })
+    });
+    if(checkUnauthorized(res)) return;
+    const data = await res.json().catch(() => ({}));
+    if(!res.ok){ msg.style.color = '#E15A4C'; msg.innerText = data.message || 'Unable to send request'; return; }
+    msg.style.color = '#2FA37D'; msg.innerText = 'Request sent to manager.';
+    document.getElementById('request-qty').value = '';
+    document.getElementById('request-note').value = '';
+    await loadMyRequests();
+  }catch(error){ msg.style.color = '#E15A4C'; msg.innerText = 'Server connection failed'; }
+}
+async function loadMyRequests(){
+  const list = document.getElementById('my-requests-list');
+  list.innerHTML = '<div class="empty">Loading...</div>';
+  try{
+    const res = await fetch('/api/kitchen-inventory/requests', { headers:{ Authorization: 'Bearer ' + token } });
+    if(checkUnauthorized(res)) return;
+    const data = await res.json().catch(() => ({}));
+    if(!res.ok || !data.success){ list.innerHTML = `<div class="empty">${escapeHtml(data.message || 'Unable to load requests')}</div>`; return; }
+    const requests = Array.isArray(data.data) ? data.data : [];
+    if(!requests.length){ list.innerHTML = '<div class="empty">No requests yet.</div>'; return; }
+    list.innerHTML = requests.map(request => {
+      const isOffline = request.synced === 0 || request.status === 'pending_sync';
+      return `<div class="panel-row"><div class="panel-row-title">${escapeHtml(request.inventory_name)} — ${Number(request.requested_quantity)} ${escapeHtml(request.unit || '')}</div><div class="panel-row-sub"><span class="status-pill status-${escapeHtml(request.status)}">${escapeHtml(String(request.status).toUpperCase())}${isOffline ? ' 🔴 OFFLINE' : ''}</span>${request.status === 'rejected' && request.rejection_reason ? `<div style="color:#ef4444;font-size:11px;margin-top:4px;">⚠️ ${escapeHtml(request.rejection_reason)}</div>` : ''}${isOffline && request.status !== 'pending_sync' ? `<div style="color:#eab308;font-size:10px;margin-top:2px;">⏳ Waiting to sync</div>` : ''}</div></div>`;
+    }).join('');
+  }catch(error){ list.innerHTML = '<div class="empty">Server connection failed.</div>'; }
+}
+
+// ======================================================
+// SHIFT MANAGEMENT
+// ======================================================
+
+let currentShift = null;
+
+function formatShiftTime(dateStr){
+  if(!dateStr) return '-';
+  return new Date(dateStr).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+function renderShiftUI(){
+  const statusBox = document.getElementById('shiftStatus');
+  const btn = document.getElementById('shiftBtn');
+
+  btn.disabled = false;
+
+  if(currentShift && currentShift.status === 'active'){
+    statusBox.textContent = 'Active since ' + formatShiftTime(currentShift.started_at);
+    btn.textContent = 'End Shift';
+    btn.classList.add('on');
+  }else{
+    statusBox.textContent = 'No active shift';
+    btn.textContent = 'Start Shift';
+    btn.classList.remove('on');
+  }
+}
+
+async function loadShiftStatus(){
+  try{
+    const data = await apiFetch(`${API_BASE}/shifts/current`);
+    currentShift = data.data || null;
+    renderShiftUI();
+  }catch(err){
+    console.error('loadShiftStatus:', err);
+    document.getElementById('shiftStatus').textContent = 'Unable to load shift status';
+    document.getElementById('shiftBtn').disabled = false;
+  }
+}
+
+let lastShiftSummary = null;
+
+async function toggleShift() {
+  const btn = document.getElementById('shiftBtn');
+  btn.disabled = true;
+  try {
+    if (currentShift && currentShift.status === 'active') {
+      if (!confirm('End your current shift?')) { btn.disabled = false; return; }
+      const data = await apiFetch(`${API_BASE}/shifts/${currentShift.id}/end`, { method:'PUT' });
+      const endedShift = data.data;
+      currentShift = null;
+      renderShiftUI();
+      await openShiftSummary(endedShift, endedShift);
+    } else {
+      const data = await apiFetch(`${API_BASE}/shifts/start`, { method:'POST' });
+      currentShift = data.data;
+      renderShiftUI();
+    }
+  } catch(err) {
+    alert(err.message);
+    btn.disabled = false;
+  }
+}
+
+// ======================================================
+// SHIFT SUMMARY MODAL (FIXED: orders + ingredients with prices)
+// ======================================================
+
+/**
+ * Fetch orders placed during the shift time range.
+ */
+async function fetchOrdersForShift(shiftData) {
+  if (!shiftData) return [];
+  try {
+    const startTime = new Date(shiftData.started_at);
+    const endTime = shiftData.ended_at ? new Date(shiftData.ended_at) : new Date();
+
+    let url = '/api/orders';
+    if (restaurantId) url += '?restaurant=' + encodeURIComponent(restaurantId);
+    const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+    if (!res.ok) return [];
+    const result = await res.json().catch(() => ({}));
+    let orders = Array.isArray(result.orders) ? result.orders : [];
+
+    return orders.filter(order => {
+      const createdAt = new Date(order.created_at);
+      return createdAt >= startTime && createdAt <= endTime;
+    });
+  } catch (err) {
+    console.error('fetchOrdersForShift:', err);
+    return [];
+  }
+}
+
+/**
+ * Get a map of inventory_id -> { unit_price, unit } from kitchen inventory.
+ * This replaces the broken /api/inventory/{id} call.
+ */
+let kitchenInventoryMap = null;
+async function getKitchenInventoryMap() {
+  if (kitchenInventoryMap) return kitchenInventoryMap;
+  try {
+    const res = await fetch('/api/inventory', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    if (!res.ok) return {};
+    const data = await res.json().catch(() => ({}));
+    const items = Array.isArray(data.data) ? data.data : [];
+    kitchenInventoryMap = {};
+    items.forEach(item => {
+      kitchenInventoryMap[item.id] = {
+        unit_price: Number(item.purchase_price || 0), // ✅ Purchase price yahan se milega
+        unit: item.unit || 'pcs'
+      };
+    });
+    return kitchenInventoryMap;
+  } catch (err) {
+    console.error('getKitchenInventoryMap error:', err);
+    return {};
+  }
+}
+
+/**
+ * Fetch recipe ingredients for a menu item, including unit price from kitchen inventory.
+ */
+async function fetchRecipeIngredients(menuItemId, variantId = null) {
+  if (!menuItemId) return [];
+  try {
+  
+    let url = `/api/inventory/recipe/${encodeURIComponent(menuItemId)}`;
+    if (variantId) url += `?variant_id=${variantId}`;
+
+    const res = await fetch(url, {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+
+    if (!res.ok) return [];
+    const data = await res.json().catch(() => ({}));
+    const ingredients = Array.isArray(data.data) ? data.data : [];
+    // Get price map
+    const invMap = await getKitchenInventoryMap();
+    const enriched = ingredients.map(ing => {
+      const price = invMap[ing.inventory_id]?.unit_price || 0;
+      return {
+        ...ing,
+        price: price,
+        total_price: price * Number(ing.quantity || 0)
+      };
+    });
+    return enriched;
+  } catch (err) {
+    console.error('fetchRecipeIngredients error:', err);
+    return [];
+  }
+}
+
+/**
+ * Get menu items map (name -> id) as a fallback if order item lacks menu_item_id.
+ */
+let menuItemsMap = null;
+async function getMenuItemsMap() {
+  if (menuItemsMap) return menuItemsMap;
+  try {
+    const res = await fetch('/api/menu', { headers: { Authorization: 'Bearer ' + token } });
+    if (!res.ok) return {};
+    const data = await res.json().catch(() => ({}));
+    const items = Array.isArray(data.data) ? data.data : [];
+    menuItemsMap = {};
+    items.forEach(item => {
+      menuItemsMap[item.name.toLowerCase().trim()] = item.id;
+    });
+    return menuItemsMap;
+  } catch (err) {
+    console.error('getMenuItemsMap:', err);
+    return {};
+  }
+}
+
+/**
+ * Calculate total ingredient consumption across all orders.
+ * Uses menu_item_id if available; falls back to name matching.
+ */
+async function calculateIngredientConsumption(orders) {
+  const recipeCache = {};
+  const ingredientMap = {};
+  const menuMap = await getMenuItemsMap();
+
+  for (const order of orders) {
+    const plainItems = Array.isArray(order.items) ? order.items : [];
+    const dealGroups = Array.isArray(order.deals) ? order.deals : [];
+
+    // Process regular items
+    for (const item of plainItems) {
+      let menuItemId = item.menu_item_id;
+      let variantId = item.variant_id || null;
+      if (!menuItemId && item.name) {
+        menuItemId = menuMap[item.name.toLowerCase().trim()];
+      }
+      if (!menuItemId) continue;
+
+      // Cache mein variant ID bhi use karein
+      const cacheKey = `${menuItemId}-${variantId || 'base'}`;
+      let recipe = recipeCache[cacheKey];
+      if (!recipe) {
+        recipe = await fetchRecipeIngredients(menuItemId, variantId);
+        recipeCache[cacheKey] = recipe;
+      }
+      for (const ing of recipe) {
+        const key = ing.inventory_name || 'Unknown';
+        if (!ingredientMap[key]) {
+          ingredientMap[key] = {
+            name: ing.inventory_name || 'Unknown',
+            unit: ing.unit || 'pcs',
+            price: ing.price || 0,
+            total_quantity: 0,
+            total_cost: 0
+          };
+        }
+        const qty = Number(ing.quantity || 0) * Number(item.quantity || 1);
+        ingredientMap[key].total_quantity += qty;
+        ingredientMap[key].total_cost += qty * (ing.price || 0);
+      }
+    }
+
+    // Process deal items
+    for (const deal of dealGroups) {
+      const dealItems = Array.isArray(deal.items) ? deal.items : [];
+      for (const item of dealItems) {
+        let menuItemId = item.menu_item_id;
+        let variantId = item.variant_id || null;
+        if (!menuItemId && item.name) {
+          menuItemId = menuMap[item.name.toLowerCase().trim()];
+        }
+        if (!menuItemId) continue;
+
+        // Cache mein variant ID bhi use karein
+        const cacheKey = `${menuItemId}-${variantId || 'base'}`;
+        let recipe = recipeCache[cacheKey];
+        if (!recipe) {
+          recipe = await fetchRecipeIngredients(menuItemId, variantId);
+          recipeCache[cacheKey] = recipe;
+        }
+        for (const ing of recipe) {
+          const key = ing.inventory_name || 'Unknown';
+          if (!ingredientMap[key]) {
+            ingredientMap[key] = {
+              name: ing.inventory_name || 'Unknown',
+              unit: ing.unit || 'pcs',
+              price: ing.price || 0,
+              total_quantity: 0,
+              total_cost: 0
+            };
+          }
+          const qty = Number(ing.quantity || 0) * Number(item.quantity || 1) * Number(deal.quantity || 1);
+          ingredientMap[key].total_quantity += qty;
+          ingredientMap[key].total_cost += qty * (ing.price || 0);
+        }
+      }
+    }
+  }
+
+  return Object.values(ingredientMap);
+}
+
+/**
+ * Renders orders with item details and ingredient summary.
+ */
+function renderShiftOrdersWithIngredients(ordersList, ingredientSummary) {
+  if (!ordersList || !ordersList.length) {
+    return '<div class="empty">No orders in this shift.</div>';
+  }
+
+  let ordersHtml = ordersList.map(o => {
+    const plainItems = Array.isArray(o.items) ? o.items : [];
+    const dealGroups = Array.isArray(o.deals) ? o.deals : [];
+
+    let itemsHtml = '';
+    if (plainItems.length) {
+      itemsHtml += plainItems.map(item => `
+        <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:13px;border-bottom:1px dashed var(--border);">
+          <span>${esc(item.name)}${item.variant_label ? ' (' + esc(item.variant_label) + ')' : ''}</span>
+          <span style="font-weight:600;">×${esc(item.quantity)}</span>
+        </div>
+      `).join('');
+    }
+
+    if (dealGroups.length) {
+      itemsHtml += dealGroups.map(deal => {
+        const dealItems = Array.isArray(deal.items) ? deal.items : [];
+        const dealItemsHtml = dealItems.map(item => `
+          <div style="display:flex;justify-content:space-between;padding:2px 0 2px 18px;font-size:12px;border-bottom:1px dashed var(--border);">
+            <span style="color:var(--muted);">↳ ${esc(item.name)}${item.variant_label ? ' (' + esc(item.variant_label) + ')' : ''}</span>
+            <span>×${esc(item.quantity)}</span>
+          </div>
+        `).join('');
+        return `
+          <div style="font-weight:700;padding:6px 0 2px;font-size:13px;border-top:1px solid var(--border);margin-top:2px;">
+            🎁 ${esc(deal.deal_name)} ×${esc(deal.quantity)}
+          </div>
+          ${dealItemsHtml}
+        `;
+      }).join('');
+    }
+
+    const tableLabel = o.order_type === 'delivery'
+      ? 'Delivery'
+      : (o.table_no !== null && o.table_no !== undefined)
+        ? `Table ${esc(o.table_no)}`
+        : 'Order';
+
+    return `
+      <div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:var(--bg);">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:15px;margin-bottom:4px;">
+          <span>#${o.id} — ${tableLabel}</span>
+          <span style="color:var(--accent);">${money(o.total_amount)}</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">
+          ${new Date(o.created_at).toLocaleString()}
+          · ${esc(o.payment_status)}${o.payment_method ? ' (' + esc(o.payment_method) + ')' : ''}
+        </div>
+        <div style="margin-top:4px;padding-left:10px;border-left:3px solid var(--accent);">
+          ${itemsHtml || '<div style="font-size:12px;color:var(--muted);padding:4px 0;">No items recorded</div>'}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Build ingredient summary HTML
+  let ingredientHtml = '';
+  if (ingredientSummary && ingredientSummary.length) {
+    ingredientHtml = `
+      <div style="margin-top:16px;border-top:2px solid var(--border);padding-top:12px;">
+        <h4 style="margin:0 0 8px;color:var(--accent);">🧾 Ingredients Used (Kitchen Consumption)</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;">
+          ${ingredientSummary.map(ing => `
+            <div style="display:flex;justify-content:space-between;padding:4px 8px;background:var(--panel);border-radius:4px;border:1px solid var(--border);">
+              <span>${esc(ing.name)}</span>
+              <span style="font-weight:600;">
+                ${ing.total_quantity.toFixed(3)} ${esc(ing.unit)}
+                <span style="color:var(--muted);font-weight:400;margin-left:4px;">(${money(ing.total_cost)})</span>
+              </span>
+            </div>
+          `).join('')}
+        </div>
+        <div style="margin-top:8px;font-size:12px;color:var(--muted);text-align:right;">
+          Total Ingredient Cost: <strong style="color:var(--accent);">${money(ingredientSummary.reduce((sum, i) => sum + i.total_cost, 0))}</strong>
+        </div>
+      </div>
+    `;
+  } else {
+    ingredientHtml = `
+      <div style="margin-top:16px;border-top:2px solid var(--border);padding-top:12px;">
+        <h4 style="margin:0 0 8px;color:var(--muted);">🧾 Ingredients Used</h4>
+        <div class="empty" style="padding:12px;font-size:13px;color:var(--muted);">
+          No recipe ingredients linked to the menu items in these orders.
+          Please add recipes in the <strong>Recipes</strong> panel.
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div style="max-height:400px;overflow-y:auto;padding-right:4px;">
+      ${ordersHtml}
+      ${ingredientHtml}
+    </div>
+  `;
+}
+
+async function openShiftSummary(summary, shiftData) {
+  let orders = Array.isArray(summary.orders) ? summary.orders : [];
+  let ingredientSummary = [];
+
+  if (!orders.length && shiftData) {
+    orders = await fetchOrdersForShift(shiftData);
+  }
+
+  if (!orders.length && summary.orders) {
+    orders = Array.isArray(summary.orders) ? summary.orders : [];
+  }
+
+  if (orders.length) {
+    ingredientSummary = await calculateIngredientConsumption(orders);
+  }
+
+  lastShiftSummary = summary;
+  const staffName = summary.full_name || summary.username || 'You';
+
+  const content = document.getElementById('shiftSummaryContent');
+  content.innerHTML = `
+    <div class="status" style="margin-top:0;">
+      <div><strong>Staff:</strong> ${esc(staffName)}</div>
+      <div><strong>Started:</strong> ${new Date(summary.started_at).toLocaleString()}</div>
+      <div><strong>Ended:</strong> ${summary.ended_at ? new Date(summary.ended_at).toLocaleString() : '-'}</div>
+    </div>
+    <div class="pricing-grid" style="grid-template-columns:1fr;margin-top:12px;">
+      <div class="field"><label>Orders</label><div style="font-size:18px;font-weight:800;">${orders.length || summary.orders_count || 0}</div></div>
+    </div>
+    <h4 style="margin:16px 0 8px;">📋 Orders Prepared in this Shift</h4>
+    ${renderShiftOrdersWithIngredients(orders, ingredientSummary)}
+  `;
+  document.getElementById('shiftSummaryModal').classList.add('show');
+}
+
+function closeShiftSummary(){
+  document.getElementById('shiftSummaryModal').classList.remove('show');
+}
+
+function printShiftSummary(){
+  if(!lastShiftSummary) return;
+  const content = document.getElementById('shiftSummaryContent');
+  const html = `
+    <html>
+    <head>
+    <style>
+      *{box-sizing:border-box}
+      body{font-family:Arial,Helvetica,sans-serif;padding:20px;color:#111;background:#fff}
+      h2{margin:0 0 4px}
+      .sub{color:#555;font-size:12px;margin-bottom:16px}
+      .status{background:#f5f5f5;padding:12px;border-radius:8px;margin-bottom:12px}
+      .pricing-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:12px 0}
+      .pricing-grid .field{background:#f5f5f5;padding:10px;border-radius:6px;text-align:center}
+      .pricing-grid .field label{font-size:11px;color:#666}
+      .pricing-grid .field div{font-size:18px;font-weight:800}
+      .order-card{border:1px solid #ddd;border-radius:8px;padding:10px 12px;margin-bottom:10px;background:#fafafa}
+      .order-header{display:flex;justify-content:space-between;font-weight:700;font-size:15px}
+      .order-meta{font-size:12px;color:#666;margin-bottom:6px}
+      .order-items{padding-left:10px;border-left:3px solid #c97b2e}
+      .order-item{display:flex;justify-content:space-between;padding:3px 0;font-size:13px;border-bottom:1px dashed #ddd}
+      .deal-header{font-weight:700;padding:6px 0 2px;font-size:13px;border-top:1px solid #ddd;margin-top:2px}
+      .deal-item{padding:2px 0 2px 18px;font-size:12px;border-bottom:1px dashed #ddd}
+      .ingredient-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px}
+      .ingredient-item{display:flex;justify-content:space-between;padding:4px 8px;background:#f0f0f0;border-radius:4px;border:1px solid #ddd}
+      .total-ingredient{text-align:right;font-size:12px;color:#666;margin-top:8px}
+      .total-ingredient strong{color:#c97b2e}
+    </style>
+    </head>
+    <body>
+      <h2>Shift Summary</h2>
+      <div class="sub">Printed ${new Date().toLocaleString()}</div>
+      ${content.innerHTML}
+    </body>
+    </html>
+  `;
+  const frame = document.getElementById('printFrame');
+  const doc = frame.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
+  setTimeout(() => { frame.contentWindow.focus(); frame.contentWindow.print(); }, 300);
+}
+
+// ======================================================
+// SHIFT REPORTS
+// ======================================================
+
+let shiftReportsData = [];
+
+function openShiftReports(){
+  closeMenu();
+  document.getElementById('shiftReportsModal').classList.add('show');
+  loadShiftReports();
+}
+
+function closeShiftReports(){
+  document.getElementById('shiftReportsModal').classList.remove('show');
+}
+
+function clearShiftReportFilters(){
+  document.getElementById('reportDate').value = '';
+  document.getElementById('reportUsername').value = '';
+  loadShiftReports();
+}
+
+async function loadShiftReports(){
+  const list = document.getElementById('shiftReportsList');
+  list.innerHTML = '<div class="empty">Loading...</div>';
+
+  const date = document.getElementById('reportDate').value;
+  const username = document.getElementById('reportUsername').value.trim();
+
+  const params = new URLSearchParams();
+  if(date) params.set('date', date);
+  if(username) params.set('username', username);
+
+  try{
+    const data = await apiFetch(`${API_BASE}/shifts?${params.toString()}`);
+    shiftReportsData = Array.isArray(data.data) ? data.data : [];
+    
+    // Har shift ka data fetch karo
+    for (let i = 0; i < shiftReportsData.length; i++) {
+      const shift = shiftReportsData[i];
+      let shiftIngredients = [];
+      let totalCost = 0;
+
+      try {
+        const sumRes = await apiFetch(`${API_BASE}/shifts/${shift.id}/summary`);
+        let orders = Array.isArray(sumRes.data.orders) ? sumRes.data.orders : [];
+        
+        // ✅ FALLBACK: Agar summary mein orders nahi hain, toh date range se fetch karo
+        if (!orders.length) {
+          orders = await fetchOrdersForShift(shift);
+        }
+
+        // ✅ YAHAN FIX HAI: Orders count ko update karo
+        shift.orders_count = orders.length;
+
+        shiftIngredients = await calculateIngredientConsumption(orders);
+        totalCost = shiftIngredients.reduce((sum, ing) => sum + ing.total_cost, 0);
+      } catch (e) {
+        // Ignore individual shift errors
+      }
+
+      shift.ingredients = shiftIngredients;
+      shift.total_ingredient_cost = totalCost;
+      
+      // Table mein dikhane ke liye ingredients ki summary banayein
+      shift.ingredient_summary = shiftIngredients.map(ing => `${ing.name}: ${ing.total_quantity.toFixed(2)} ${ing.unit}`).join(', ') || 'No ingredients';
+    }
+
+    renderShiftReportsTable();
+  }catch(err){
+    list.innerHTML = `<div class="empty">${esc(err.message)}</div>`;
+  }
+}
+
+function renderShiftReportsTable(){
+  const list = document.getElementById('shiftReportsList');
+  if(!shiftReportsData.length){
+    list.innerHTML = '<div class="empty">No shifts found.</div>';
+    return;
+  }
+
+  const rows = shiftReportsData.map(s => `
+    <tr class="report-row" onclick="toggleShiftDetail(${s.id}, this)">
+      <td>${new Date(s.started_at).toLocaleDateString()}</td>
+      <td>${esc(s.full_name || s.username || 'Unknown')}</td>
+      <td>${new Date(s.started_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</td>
+      <td>${s.ended_at ? new Date(s.ended_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '-'}</td>
+      <td><span class="status-badge ${s.status}">${esc(s.status)}</span></td>
+      <td>${s.orders_count || 0}</td>
+      <td style="max-width:250px; word-break:break-word;">${esc(s.ingredient_summary || 'No ingredients')}</td>
+      <td>${money(s.total_ingredient_cost || 0)}</td>
+    </tr>
+    <tr class="report-detail-row" id="detail-${s.id}" style="display:none;">
+      <td colspan="8" id="detail-content-${s.id}"></td>
+    </tr>
+  `).join('');
+
+  list.innerHTML = `
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th>Date</th><th>Staff</th><th>Start</th><th>End</th>
+          <th>Status</th><th>Orders</th><th>Ingredients Used</th><th>Total Cost</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+async function toggleShiftDetail(shiftId, rowEl){
+  const detailRow = document.getElementById(`detail-${shiftId}`);
+  const detailContent = document.getElementById(`detail-content-${shiftId}`);
+  const isOpen = detailRow.style.display !== 'none';
+  if(isOpen){ detailRow.style.display = 'none'; return; }
+  if(!detailContent.dataset.loaded){
+    detailContent.innerHTML = 'Loading orders...';
+    try{
+      const data = await apiFetch(`${API_BASE}/shifts/${shiftId}/summary`);
+      let orders = Array.isArray(data.data.orders) ? data.data.orders : [];
+      if (!orders.length) {
+        const shiftData = shiftReportsData.find(s => s.id === shiftId);
+        if (shiftData) {
+          orders = await fetchOrdersForShift(shiftData);
+        }
+      }
+      
+      // ✅ Ingredients calculate karo (Cost ke saath)
+      const ingredients = await calculateIngredientConsumption(orders);
+
+      // ✅ Shift ka data
+      const shiftDetails = data.data || {};
+      const staffName = shiftDetails.full_name || shiftDetails.username || 'You';
+
+      // ✅ EXACTLY Shift End wala structure (Sales/Collected ke bina)
+      detailContent.innerHTML = `
+        <div class="status" style="margin-top:0;">
+          <div><strong>Staff:</strong> ${esc(staffName)}</div>
+          <div><strong>Started:</strong> ${new Date(shiftDetails.started_at).toLocaleString()}</div>
+          <div><strong>Ended:</strong> ${shiftDetails.ended_at ? new Date(shiftDetails.ended_at).toLocaleString() : '-'}</div>
+        </div>
+        <div class="pricing-grid" style="grid-template-columns:1fr;margin-top:12px;">
+          <div class="field"><label>Orders</label><div style="font-size:18px;font-weight:800;">${orders.length || shiftDetails.orders_count || 0}</div></div>
+        </div>
+        <h4 style="margin:16px 0 8px;">📋 Orders Prepared in this Shift</h4>
+        ${renderShiftOrdersWithIngredients(orders, ingredients)}
+      `;
+      
+      detailContent.dataset.loaded = '1';
+    }catch(err){
+      detailContent.innerHTML = esc(err.message);
+    }
+  }
+  detailRow.style.display = 'table-row';
+}
+function printShiftReports(){
+  if(!shiftReportsData.length) return;
+  printShiftReportHtml(shiftReportsData, 'Shift Reports');
+}
+
+function printShiftReportHtml(shifts, title){
+  const rows = shifts.map(s => `
+    <tr>
+      <td>${new Date(s.started_at).toLocaleDateString()}</td>
+      <td>${esc(s.full_name || s.username || 'Unknown')}</td>
+      <td>${new Date(s.started_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</td>
+      <td>${s.ended_at ? new Date(s.ended_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '-'}</td>
+      <td>${esc(s.status)}</td>
+      <td style="text-align:right">${s.orders_count || 0}</td>
+      <td style="text-align:left">${esc(s.ingredient_summary || '')}</td>
+      <td style="text-align:right">${money(s.total_ingredient_cost || 0)}</td>
+    </tr>
+  `).join('');
+
+  const restaurantName = (restaurantBrand && restaurantBrand.name) || 'Your Restaurant';
+  const html = `
+    <html>
+    <head>
+    <style>
+      *{box-sizing:border-box}
+      body{font-family:Arial,Helvetica,sans-serif;padding:20px;color:#111}
+      h2{margin:0 0 4px}
+      .sub{color:#555;font-size:12px;margin-bottom:16px}
+      table{width:100%;border-collapse:collapse;font-size:12px}
+      th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}
+      th{background:#f0f0f0}
+    </style>
+    </head>
+    <body onload="window.print();">
+      <h2>${esc(restaurantName)}</h2>
+      <div class="sub">${esc(title)} — printed ${new Date().toLocaleString()}</div>
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Staff</th><th>Start</th><th>End</th><th>Status</th><th>Orders</th><th>Ingredients Used</th><th>Total Cost</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </body>
+    </html>
+  `;
+  const frame = document.getElementById('printFrame');
+  const doc = frame.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
+}
+
+/* =====================================================
+   RECIPES
+===================================================== */
+let recipeMenuItemsCache = [];
+function toggleRecipePanel(){
+  const panel = document.getElementById('recipe-panel');
+  const isOpen = panel.style.display === 'block';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if(!isOpen){ loadMenuItemsForRecipe(); loadWarehouseItemsForRecipeSelect(); }
+}
+async function loadMenuItemsForRecipe(){
+  const select = document.getElementById('recipe-menu-item-select');
+  try{
+    const res = await fetch('/api/menu', { headers:{ Authorization: 'Bearer ' + token } });
+    if(checkUnauthorized(res)) return;
+    const data = await res.json().catch(() => ({}));
+    recipeMenuItemsCache = Array.isArray(data.data) ? data.data : [];
+    select.innerHTML = recipeMenuItemsCache.length ? recipeMenuItemsCache.map(item => `<option value="${Number(item.id)}">${escapeHtml(item.name)}</option>`).join('') : '<option value="">No menu items</option>';
+    
+    
+    if(recipeMenuItemsCache.length) {
+      loadRecipeForSelectedItem();
+      loadVariantsForSelectedItem();
+    }
+  }catch(error){ select.innerHTML = '<option value="">Unable to load menu</option>'; }
+}
+async function loadWarehouseItemsForRecipeSelect(){
+  const select = document.getElementById('recipe-inventory-select');
+  try{
+    const res = await fetch('/api/inventory?status=active', { headers:{ Authorization: 'Bearer ' + token } });
+    if(checkUnauthorized(res)) return;
+    const data = await res.json().catch(() => ({}));
+    const items = Array.isArray(data.data) ? data.data : [];
+    select.innerHTML = items.length ? items.map(item => `<option value="${Number(item.id)}">${describeWarehouseItem(item)}</option>`).join('') : '<option value="">No warehouse items</option>';
+  }catch(error){ select.innerHTML = '<option value="">Unable to load items</option>'; }
+}
+async function loadRecipeForSelectedItem(){
+  const menuItemId = Number(document.getElementById('recipe-menu-item-select').value);
+  
+  const variantId = Number(document.getElementById('recipe-variant-select').value) || null;
+  const list = document.getElementById('recipe-ingredients-list');
+  if(!menuItemId){ list.innerHTML = ''; return; }
+  list.innerHTML = '<div class="empty">Loading recipe...</div>';
+  try{
+    let url = `/api/inventory/recipe/${encodeURIComponent(menuItemId)}`;
+    if (variantId) url += `?variant_id=${variantId}`;
+    const res = await fetch(url, { headers:{ Authorization: 'Bearer ' + token } });
+    
+    if(checkUnauthorized(res)) return;
+    const data = await res.json().catch(() => ({}));
+    const ingredients = Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+    if(!ingredients.length){ list.innerHTML = '<div class="empty">No ingredients linked yet.</div>'; return; }
+    // Show ingredient names with package info
+    const invMap = await getWarehouseInventoryMap();
+    const ingredientItems = ingredients.map(ing => {
+      const warehouseItem = invMap[ing.inventory_id];
+      let displayName = ing.inventory_name || 'Unknown';
+      if (warehouseItem) {
+        displayName = formatItemName(warehouseItem);
+      }
+      return {
+        id: ing.id,
+        name: displayName,
+        quantity: ing.quantity,
+        unit: ing.unit || 'pcs'
+      };
+    });
+    list.innerHTML = ingredientItems.map(ing => `
+      <div class="panel-row"><div class="panel-row-title">${escapeHtml(ing.name)}</div><div class="panel-row-sub">${Number(ing.quantity)} ${escapeHtml(ing.unit)} per item sold</div><div class="panel-row-actions"><button class="btn-mini-danger" onclick="deleteRecipeIngredientRow(${Number(ing.id)})">Remove</button></div></div>
+    `).join('');
+  }catch(error){ list.innerHTML = '<div class="empty">Server connection failed.</div>'; }
+}
+async function addRecipeIngredient(){
+  const msg = document.getElementById('recipe-msg');
+  const menuItemId = Number(document.getElementById('recipe-menu-item-select').value);
+  const inventoryId = Number(document.getElementById('recipe-inventory-select').value);
+  const qty = Number(document.getElementById('recipe-qty').value);
+  const variantId = Number(document.getElementById('recipe-variant-select').value) || null;
+  if(!menuItemId){ msg.style.color = '#E15A4C'; msg.innerText = 'Select a menu item first'; return; }
+  if(!inventoryId){ msg.style.color = '#E15A4C'; msg.innerText = 'Select an ingredient'; return; }
+  if(!Number.isFinite(qty) || qty <= 0){ msg.style.color = '#E15A4C'; msg.innerText = 'Enter a valid quantity'; return; }
+  try{
+    const res = await fetch(`/api/inventory/recipe/${encodeURIComponent(menuItemId)}`, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', Authorization: 'Bearer ' + token },
+      body:JSON.stringify({ inventory_id: inventoryId, quantity: qty, variant_id: variantId})
+    });
+    if(checkUnauthorized(res)) return;
+    const data = await res.json().catch(() => ({}));
+    if(!res.ok){ msg.style.color = '#E15A4C'; msg.innerText = data.message || 'Unable to add ingredient'; return; }
+    msg.style.color = '#2FA37D'; msg.innerText = 'Ingredient added.';
+    document.getElementById('recipe-qty').value = '';
+    await loadRecipeForSelectedItem();
+  }catch(error){ msg.style.color = '#E15A4C'; msg.innerText = 'Server connection failed'; }
+}
+async function deleteRecipeIngredientRow(id){
+  if(!confirm('Remove this ingredient from the recipe?')) return;
+  try{
+    const res = await fetch(`/api/inventory/recipe/ingredient/${encodeURIComponent(id)}`, { method:'DELETE', headers:{ Authorization: 'Bearer ' + token } });
+    if(checkUnauthorized(res)) return;
+    const data = await res.json().catch(() => ({}));
+    if(!res.ok){ alert(data.message || 'Unable to remove ingredient'); return; }
+    await loadRecipeForSelectedItem();
+  }catch(error){ alert('Server connection failed'); }
+}
+
+/* =====================================================
+   NEW ORDER ALERT
+===================================================== */
+function kitchenNewOrderAlert(){
+  if(!token) return;
+  console.log("🔊 Playing sound");
+  const sound = document.getElementById('new-order-sound');
+  if(sound){ sound.currentTime = 0; sound.play().catch(() => {}); }
+  // Don't call loadOrders here - let the handler do it
+}
+
+/* =====================================================
+   LOGOUT
+===================================================== */
+function logout(){
+  document.getElementById('kitchenHistoryModal').classList.remove('show');
+  localStorage.removeItem('kitchen_token');
+  token = null;
+  printedOrderIds = null;
+  if(socket){ try{ socket.disconnect(); }catch(error){ console.warn('Socket logout error:', error); } }
+  location.reload();
+}
+
+/* =====================================================
+   START
+===================================================== */
+window.addEventListener('load', () => {
+  initializeTheme();
+  if(!restaurantId){
+    const savedRestaurant = localStorage.getItem('kitchenRestaurantId');
+    if(savedRestaurant && Number.isInteger(Number(savedRestaurant)) && Number(savedRestaurant) > 0){
+      restaurantId = Number(savedRestaurant);
+    }
+  }
+  if(!token) return;
+  createSocket();
+  if(socket && !socket.connected) socket.connect();
+  showApp();
+  loadShiftStatus();
+  loadOrders();
+});
+
+// ======================================================
+// KITCHEN STOCK HISTORY
+// ======================================================
+
+let kitchenHistoryData = [];
+let kitchenHistoryItemName = '';
+
+async function openKitchenStockHistory(inventoryId, itemName) {
+  const token = localStorage.getItem('kitchen_token');
+  if (!token) {
+    document.getElementById('kitchenHistoryTitle').textContent = '📋 Login Required';
+    document.getElementById('kitchenHistoryList').innerHTML =
+      '<div class="empty" style="color:var(--danger);">🔒 Please login to view stock history.</div>';
+    document.getElementById('kitchenHistoryModal').classList.add('show');
+    return;
+  }
+
+  kitchenHistoryItemName = itemName || 'Item';
+  document.getElementById('kitchenHistoryTitle').textContent = `📋 ${kitchenHistoryItemName} - Stock History`;
+  document.getElementById('kitchenHistoryList').innerHTML = '<div class="empty">Loading...</div>';
+  document.getElementById('kitchenHistoryModal').classList.add('show');
+
+  try {
+    const res = await fetch(`/api/kitchen-inventory/${inventoryId}/transactions`, {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+
+    if (res.status === 401) {
+      document.getElementById('kitchenHistoryList').innerHTML =
+        '<div class="empty" style="color:var(--danger);">🔒 Session expired. Please login again.</div>';
+      return;
+    }
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) {
+      document.getElementById('kitchenHistoryList').innerHTML =
+        `<div class="empty">${escapeHtml(data.message || 'Unable to load history')}</div>`;
+      return;
+    }
+
+    kitchenHistoryData = Array.isArray(data.data) ? data.data : [];
+    renderKitchenHistory(kitchenHistoryData);
+
+  } catch (error) {
+    console.error('openKitchenStockHistory:', error);
+    document.getElementById('kitchenHistoryList').innerHTML =
+      '<div class="empty">Server connection failed.</div>';
+  }
+}
+
+function renderKitchenHistory(transactions) {
+  const list = document.getElementById('kitchenHistoryList');
+  if (!transactions.length) {
+    list.innerHTML = '<div class="empty">No transactions found.</div>';
+    return;
+  }
+
+  list.innerHTML = transactions.map(t => {
+    const isIn = String(t.type || '').toUpperCase() === 'IN';
+    const date = t.created_at ? new Date(t.created_at).toLocaleString() : '-';
+    const qty = Number(t.quantity || 0);
+
+    return `
+      <div style="
+        border:1px solid var(--border);
+        border-radius:10px;
+        padding:12px 14px;
+        margin-bottom:8px;
+        background:${isIn ? 'rgba(47,163,125,0.08)' : 'rgba(225,90,76,0.08)'};
+        border-left:4px solid ${isIn ? 'var(--success)' : 'var(--danger)'};
+      ">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div>
+            <span style="font-weight:700;font-size:14px;color:${isIn ? 'var(--success)' : 'var(--danger)'};">
+              ${isIn ? '📥 Stock In' : '📤 Stock Out'}
+            </span>
+            <span style="font-size:13px;margin-left:10px;">
+              ${isIn ? '+' : '-'} ${qty} ${escapeHtml(t.unit || 'pcs')}
+            </span>
+          </div>
+          <span style="font-size:11px;color:var(--muted);">${escapeHtml(date)}</span>
+        </div>
+        ${t.note ? `<div style="font-size:12px;color:var(--muted);margin-top:4px;">Note: ${escapeHtml(t.note)}</div>` : ''}
+        ${t.order_id ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;">Order #${t.order_id}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function closeKitchenHistory() {
+  document.getElementById('kitchenHistoryModal').classList.remove('show');
+  kitchenHistoryData = [];
+}
+
+function printKitchenHistory() {
+  if (!kitchenHistoryData.length) {
+    alert('No history to print.');
+    return;
+  }
+
+  const rows = kitchenHistoryData.map(t => {
+    const isIn = String(t.type || '').toUpperCase() === 'IN';
+    const date = t.created_at ? new Date(t.created_at).toLocaleString() : '-';
+    return `
+      <tr>
+        <td>${escapeHtml(date)}</td>
+        <td>${isIn ? 'IN' : 'OUT'}</td>
+        <td>${isIn ? '+' : '-'} ${Number(t.quantity || 0)} ${escapeHtml(t.unit || 'pcs')}</td>
+        <td>${escapeHtml(t.note || '-')}</td>
+        <td>${t.order_id || '-'}</td>
+      </tr>
+    `;
+  }).join('');
+
+  const printWindow = window.open('', '_blank', 'width=800,height=600');
+  if (!printWindow) {
+    alert('Please allow popups to print.');
+    return;
+  }
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${escapeHtml(kitchenHistoryItemName)} - Kitchen Stock History</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 20px; color: #111; }
+        h1 { margin: 0 0 5px; }
+        .meta { color: #666; font-size: 13px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #f5f5f5; }
+        @media print { body { padding: 10px; } }
+      </style>
+    </head>
+    <body>
+      <h1>${escapeHtml(kitchenHistoryItemName)}</h1>
+      <div class="meta">Kitchen Stock History — printed ${new Date().toLocaleString()}</div>
+      <table>
+        <thead><tr><th>Date</th><th>Type</th><th>Quantity</th><th>Note</th><th>Order</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="5">No transactions</td></tr>'}</tbody>
+      </table>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => printWindow.print(), 300);
+}
+
+
+
+function loadVariantsForSelectedItem(){
+  const menuItemId = Number(document.getElementById('recipe-menu-item-select').value);
+  const variantSelect = document.getElementById('recipe-variant-select');
+  const variantWrap = document.getElementById('recipe-variant-wrap');
+  const item = recipeMenuItemsCache.find(i => Number(i.id) === menuItemId);
+
+  if(!item || !Array.isArray(item.variants) || item.variants.length === 0){
+    variantWrap.style.display = 'none';
+    variantSelect.innerHTML = '';
+    return;
+  }
+
+  variantWrap.style.display = 'block';
+  variantSelect.innerHTML = '<option value="">Base (No Variant)</option>' + 
+    item.variants.map(v => `<option value="${Number(v.id)}">${escapeHtml(v.label)}</option>`).join('');
+}
+
+function exportKitchenHistoryCSV() {
+  if (!kitchenHistoryData.length) {
+    alert('No history to export.');
+    return;
+  }
+
+  const headers = ['Date', 'Type', 'Quantity', 'Unit', 'Note', 'Order ID'];
+  const rows = kitchenHistoryData.map(t => [
+    t.created_at ? new Date(t.created_at).toLocaleString() : '',
+    String(t.type || '').toUpperCase(),
+    Number(t.quantity || 0),
+    t.unit || 'pcs',
+    t.note || '',
+    t.order_id || ''
+  ]);
+
+  const csvRows = [headers, ...rows];
+  const csv = csvRows.map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${kitchenHistoryItemName}-kitchen-history.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>

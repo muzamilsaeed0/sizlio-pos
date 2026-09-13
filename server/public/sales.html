@@ -1,0 +1,2797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Sales Dashboard</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+}
+
+:root{
+    --bg:#14181C;
+    --panel:#1F262C;
+    --text:#F6F3EC;
+    --muted:#9CA3AF;
+    --border:#333;
+    --accent:#E3A23B;
+    --green:#2FA37D;
+    --blue:#3B82F6;
+    --danger:#E15A4C;
+}
+
+html,
+body{
+    margin:0;
+    padding:0;
+}
+
+body{
+    padding:20px;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Segoe UI',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+}
+
+/* =========================
+   TOP BAR
+========================= */
+
+.topbar{
+    max-width:1100px;
+    margin:0 auto 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+}
+
+.topbar h1{
+    margin:0;
+    color:var(--accent);
+    font-size:25px;
+}
+
+.back-manager-btn{
+    background:var(--accent);
+    color:#14181C;
+    border:none;
+    border-radius:8px;
+    padding:10px 15px;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+.back-manager-btn:hover{
+    opacity:.9;
+}
+
+/* =========================
+   MAIN
+========================= */
+
+.container{
+    max-width:1100px;
+    margin:0 auto;
+}
+
+/* =========================
+   SUMMARY CARDS
+========================= */
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:15px;
+    margin-bottom:25px;
+}
+
+.card{
+    background:var(--panel);
+    padding:20px;
+    border-radius:14px;
+    border:1px solid transparent;
+    transition:.2s;
+}
+
+.card:hover{
+    transform:translateY(-2px);
+    border-color:var(--accent);
+    box-shadow:0 8px 20px #0006;
+}
+
+.card span{
+    display:block;
+    color:var(--muted);
+    font-size:14px;
+    margin-bottom:8px;
+}
+
+.card b{
+    font-size:27px;
+    color:var(--accent);
+    white-space:nowrap;
+}
+
+/* =========================
+   BOXES
+========================= */
+
+.top-items-box{
+    background:var(--panel);
+    padding:20px;
+    border-radius:15px;
+    margin-bottom:25px;
+}
+
+.top-items-box h2{
+    margin:0 0 15px;
+    font-size:18px;
+}
+
+/* =========================
+   FILTERS
+========================= */
+
+.filters{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:15px;
+}
+
+.filters input,
+.filters button{
+    flex:1;
+    min-width:130px;
+}
+
+input,
+button{
+    background:var(--panel);
+    color:white;
+    border:1px solid var(--border);
+    padding:11px 12px;
+    border-radius:8px;
+    font-family:inherit;
+}
+
+input:focus{
+    outline:none;
+    border-color:var(--accent);
+}
+
+button{
+    cursor:pointer;
+}
+
+button.active{
+    background:var(--accent);
+    color:#14181C;
+    font-weight:bold;
+}
+
+.reset-btn{
+    background:#333;
+    background-color:blue;
+    font-weight:bold;
+    color:white;
+}
+
+/* =========================
+   RANGE
+========================= */
+
+.range{
+    color:var(--muted);
+    margin-bottom:15px;
+    font-size:13px;
+}
+
+/* =========================
+   ACTIONS
+========================= */
+
+.actions{
+    display:flex;
+    gap:10px;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+}
+
+.actions button{
+    flex:none;
+}
+
+.print-btn{
+    background:var(--blue);
+    font-weight:bold;
+}
+
+.export-btn{
+    background:var(--green);
+    font-weight:bold;
+}
+
+/* =========================
+   ORDERS
+========================= */
+
+.order{
+    background:var(--panel);
+    padding:20px;
+    border-radius:15px;
+    margin-bottom:15px;
+    border:1px solid transparent;
+    transition:.2s;
+}
+
+.order:hover{
+    transform:translateY(-2px);
+    border-color:var(--accent);
+    box-shadow:0 8px 20px #0006;
+}
+
+.order hr{
+    border:0;
+    border-top:1px solid var(--border);
+    margin:10px 0;
+}
+
+.top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.order-id{
+    font-size:19px;
+    font-weight:bold;
+}
+
+.time{
+    color:var(--muted);
+    font-size:13px;
+}
+
+.order-info{
+    margin-top:8px;
+    color:#D1D5DB;
+    line-height:1.7;
+}
+
+.type-badge{
+    display:inline-block;
+    padding:4px 9px;
+    border-radius:6px;
+    font-size:11px;
+    font-weight:bold;
+    margin-left:6px;
+    background:rgba(227,162,59,.18);
+    color:var(--accent);
+}
+
+.delivery-info{
+    margin-top:10px;
+    padding:10px 12px;
+    border-radius:8px;
+    background:rgba(59,130,246,.10);
+    border:1px solid rgba(59,130,246,.25);
+    color:#D1D5DB;
+    line-height:1.7;
+}
+
+.item{
+    padding:8px 0;
+    color:#D1D5DB;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+}
+
+.item-name{
+    flex:1;
+}
+
+.item-total{
+    white-space:nowrap;
+    color:#F6F3EC;
+    font-variant-numeric:tabular-nums;
+}
+
+.deal-item{
+    padding:10px 0;
+}
+
+.deal-title{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    font-weight:700;
+    color:#F6F3EC;
+}
+
+.deal-subitem{
+    padding:3px 0 3px 22px;
+    color:#999;
+    font-size:13px;
+}
+
+.total{
+    margin-top:15px;
+    padding-top:12px;
+    border-top:1px solid var(--border);
+    color:var(--green);
+    font-size:20px;
+    font-weight:bold;
+    text-align:right;
+}
+
+/* =========================
+   TOP ITEMS
+========================= */
+
+.top-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    padding:12px 0;
+    border-bottom:1px solid var(--border);
+}
+
+.top-item:last-child{
+    border-bottom:none;
+}
+
+.rank{
+    color:var(--accent);
+    font-weight:bold;
+    margin-right:6px;
+}
+
+.top-item-right{
+    text-align:right;
+    min-width:110px;
+}
+
+.top-item-sales{
+    color:var(--green);
+    font-variant-numeric:tabular-nums;
+}
+
+/* =========================
+   PAYMENT
+========================= */
+
+.payment-status{
+    text-transform:capitalize;
+}
+
+/* =========================
+   EMPTY / LOADING
+========================= */
+
+.empty{
+    text-align:center;
+    color:var(--muted);
+    padding:40px;
+    background:var(--panel);
+    border-radius:12px;
+}
+
+#loading{
+    margin-bottom:20px;
+}
+
+/* =========================
+   BRANDING
+========================= */
+
+.brand-header{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    padding:10px 0;
+    margin-bottom:8px;
+}
+
+.brand-header img{
+    width:42px;
+    height:42px;
+    border-radius:8px;
+    object-fit:contain;
+    background:#fff;
+}
+
+.brand-header .brand-name{
+    font-weight:700;
+    font-size:18px;
+}
+
+/* =========================
+   PRINT
+========================= */
+
+.print-header{
+    display:none;
+}
+
+@media print{
+
+    @page{
+        margin:12mm;
+        size:auto;
+    }
+
+    html,
+    body{
+        width:100%;
+        background:white !important;
+        color:black !important;
+    }
+
+    body{
+        padding:0;
+        font-family:Arial,Helvetica,sans-serif;
+    }
+
+    .topbar,
+    .filters,
+    .actions,
+    #loading,
+    .top-items-box,
+    .back-manager-btn{
+        display:none !important;
+    }
+
+    .print-header{
+        display:block;
+        text-align:center;
+        margin-bottom:20px;
+        color:black;
+    }
+
+    .print-header h1{
+        color:black;
+        margin:0 0 8px;
+        font-size:22px;
+    }
+
+    .print-header .brand-header{
+        display:flex !important;
+        color:black;
+        background:white;
+        border:0;
+    }
+
+    .print-header .brand-header img{
+        width:45px;
+        height:45px;
+        border:1px solid #ddd;
+    }
+
+    .print-header .brand-name{
+        color:black;
+    }
+
+    #print-range,
+    #print-time{
+        color:#333;
+        font-size:12px;
+    }
+
+    .container{
+        max-width:none;
+        width:100%;
+    }
+
+    .cards{
+        display:grid !important;
+        grid-template-columns:repeat(4,1fr);
+        gap:10px;
+        margin-bottom:18px;
+    }
+
+    .card{
+        background:white !important;
+        color:black !important;
+        border:1px solid #ccc;
+        box-shadow:none;
+        transform:none;
+        padding:12px;
+    }
+
+    .card span{
+        color:#555 !important;
+        font-size:11px;
+    }
+
+    .card b{
+        color:black !important;
+        font-size:17px;
+    }
+
+    .order{
+        background:white !important;
+        color:black !important;
+        border:1px solid #ccc;
+        box-shadow:none;
+        transform:none;
+        page-break-inside:avoid;
+    }
+
+    .order-id{
+        color:black;
+    }
+
+    .item,
+    .time,
+    .order-info,
+    .delivery-info{
+        color:#333 !important;
+    }
+
+    .item-total,
+    .deal-title{
+        color:#111 !important;
+    }
+
+    .deal-subitem{
+        color:#555 !important;
+    }
+
+    .total{
+        color:black !important;
+    }
+
+    .order hr{
+        border-top:1px solid #ddd;
+    }
+
+    .type-badge{
+        color:#111 !important;
+        background:#eee !important;
+        border:1px solid #ccc;
+    }
+
+    .delivery-info{
+        background:#f7f7f7 !important;
+        border:1px solid #ccc;
+    }
+
+    #sales-list{
+        width:100%;
+    }
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:600px){
+
+    body{
+        padding:12px;
+    }
+
+    .topbar{
+        align-items:flex-start;
+    }
+
+    .topbar h1{
+        font-size:21px;
+    }
+
+    .back-manager-btn{
+        font-size:12px;
+        padding:9px 11px;
+    }
+
+    .card{
+        padding:16px;
+    }
+
+    .card b{
+        font-size:23px;
+    }
+
+    .order{
+        padding:16px;
+    }
+
+    .item{
+        font-size:13px;
+    }
+
+    .filters{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+    }
+
+    .filters input,
+    .filters button{
+        width:100%;
+        min-width:0;
+    }
+
+    .search-btn,
+    .reset-btn{
+        grid-column:span 2;
+    }
+
+    .brand-header{
+        flex-wrap:wrap;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- =========================
+     PRINT HEADER
+========================= -->
+
+<div class="print-header">
+
+    <h1>🧾 Sales Report</h1>
+
+    <div
+        class="brand-header"
+        id="brand-header"
+        style="display:none;"
+    ></div>
+
+    <div id="print-range"></div>
+
+    <div>
+        Generated:
+        <span id="print-time"></span>
+    </div>
+
+</div>
+
+
+<!-- =========================
+     TOP BAR
+========================= -->
+
+<div class="topbar">
+
+    <h1>Sales Dashboard</h1>
+
+    <button
+        class="back-manager-btn"
+        onclick="backToManager()"
+    >
+        ← Back to Manager
+    </button>
+
+</div>
+
+
+<div class="container">
+
+<!-- =========================
+     SUMMARY CARDS
+========================= -->
+
+<div class="cards">
+
+    <div class="card">
+        <span>Total Orders</span>
+        <b id="order-count">0</b>
+    </div>
+
+    <div class="card">
+        <span>Total Sales</span>
+        <b id="total-sales">Rs 0</b>
+    </div>
+
+    <div class="card">
+        <span>Average Bill</span>
+        <b id="avg-bill">Rs 0</b>
+    </div>
+
+    <div class="card">
+        <span>Items Sold</span>
+        <b id="items-count">0</b>
+    </div>
+
+</div>
+
+
+<!-- =========================
+     TOP ITEMS
+========================= -->
+
+<div class="top-items-box">
+
+    <h2>🏆 Top Selling Items</h2>
+
+    <div id="top-items">
+
+        <div class="empty">
+            No data
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     PAYMENT SUMMARY
+========================= -->
+
+<div class="top-items-box">
+
+    <h2>💳 Payment Summary</h2>
+
+    <div id="payment-summary">
+
+        <div class="empty">
+            No payment data
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     FILTERS
+========================= -->
+
+<div class="filters">
+
+    <button
+        id="today-btn"
+        onclick="changeType('today')"
+    >
+        Today
+    </button>
+
+    <button
+        id="month-btn"
+        onclick="changeType('month')"
+    >
+        Month
+    </button>
+
+    <input
+        type="date"
+        id="from"
+        onchange="applyDateFilter()"
+    >
+
+    <input
+        type="date"
+        id="to"
+        onchange="applyDateFilter()"
+    >
+
+    <input
+        id="search"
+        placeholder="🔍 Search Order, Table, Customer, Phone, Item..."
+        oninput="render()"
+    >
+
+    <button
+        class="reset-btn"
+        onclick="resetFilter()"
+    >
+        Reset
+    </button>
+
+</div>
+
+
+<div
+    class="range"
+    id="range-text"
+></div>
+
+
+<!-- =========================
+     ACTIONS
+========================= -->
+
+<div class="actions">
+
+    <button
+        class="print-btn"
+        onclick="printReport()"
+    >
+        🖨 Print Report
+    </button>
+
+    <button
+        class="export-btn"
+        onclick="exportCSV()"
+    >
+        ⬇ Export CSV
+    </button>
+
+</div>
+
+
+<!-- =========================
+     LOADING
+========================= -->
+
+<div
+    id="loading"
+    class="empty"
+    style="display:none;"
+>
+    ⏳ Loading sales...
+</div>
+
+
+<!-- =========================
+     SALES LIST
+========================= -->
+
+<div id="sales-list"></div>
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   GLOBAL VARIABLES
+===================================================== */
+
+let token = localStorage.getItem('token');
+
+let orders = [];
+
+let timer = null;
+
+
+/* =====================================================
+   AUTH
+===================================================== */
+
+function authHeaders(){
+
+    return {
+        'Content-Type':'application/json',
+        'Authorization':'Bearer ' + token
+    };
+
+}
+
+
+/* =====================================================
+   UNAUTHORIZED
+===================================================== */
+
+function checkUnauthorized(res){
+
+    if(res.status === 401){
+
+        alert(
+            'Session expired. Please login again.'
+        );
+
+        localStorage.removeItem('token');
+
+        window.location.href =
+            'manager.html';
+
+        return true;
+
+    }
+
+    return false;
+
+}
+
+
+/* =====================================================
+   TODAY DATE
+===================================================== */
+
+function todayDate(){
+
+    const d = new Date();
+
+    const year =
+        d.getFullYear();
+
+    const month =
+        String(
+            d.getMonth() + 1
+        ).padStart(2,'0');
+
+    const day =
+        String(
+            d.getDate()
+        ).padStart(2,'0');
+
+    return `${year}-${month}-${day}`;
+
+}
+
+
+/* =====================================================
+   MONEY FORMAT
+===================================================== */
+
+function money(value){
+
+    const amount =
+        Number(value || 0);
+
+    return 'Rs ' +
+        amount.toLocaleString(
+            'en-PK',
+            {
+                minimumFractionDigits:0,
+                maximumFractionDigits:2
+            }
+        );
+
+}
+
+
+/* =====================================================
+   HTML ESCAPE
+===================================================== */
+
+function escapeHtml(value){
+
+    return String(value ?? '')
+
+        .replace(/&/g,'&amp;')
+
+        .replace(/</g,'&lt;')
+
+        .replace(/>/g,'&gt;')
+
+        .replace(/"/g,'&quot;')
+
+        .replace(/'/g,'&#039;');
+
+}
+
+
+/* =====================================================
+   NUMBER
+===================================================== */
+
+function num(value){
+
+    const n =
+        Number(value);
+
+    return Number.isFinite(n)
+        ? n
+        : 0;
+
+}
+
+
+/* =====================================================
+   ORDER ITEMS
+===================================================== */
+
+function getItems(order){
+
+    if(Array.isArray(order.items)){
+        return order.items;
+    }
+
+    if(Array.isArray(order.order_items)){
+        return order.order_items;
+    }
+
+    return [];
+
+}
+
+
+/* =====================================================
+   DEALS
+===================================================== */
+
+function getDeals(order){
+
+    return Array.isArray(order.deals)
+        ? order.deals
+        : [];
+
+}
+
+
+/* =====================================================
+   ITEM NAME
+===================================================== */
+
+function getItemName(item){
+
+    return (
+        item.name ||
+        item.item_name ||
+        item.product_name ||
+        'Item'
+    );
+
+}
+
+
+/* =====================================================
+   ITEM QUANTITY
+===================================================== */
+
+function getItemQty(item){
+
+    return num(
+        item.qty ??
+        item.quantity ??
+        0
+    );
+
+}
+
+
+/* =====================================================
+   ITEM PRICE
+===================================================== */
+
+function getItemPrice(item){
+
+    return num(
+        item.price ??
+        item.unit_price ??
+        item.selling_price ??
+        0
+    );
+
+}
+
+
+/* =====================================================
+   DEAL QUANTITY
+===================================================== */
+
+function getDealQty(deal){
+
+    return num(
+        deal.qty ??
+        deal.quantity ??
+        0
+    );
+
+}
+
+
+/* =====================================================
+   DEAL UNIT PRICE
+===================================================== */
+
+function getDealPrice(deal){
+
+    return num(
+        deal.price ??
+        deal.deal_price ??
+        deal.unit_price ??
+        0
+    );
+
+}
+
+
+/* =====================================================
+   DEAL TOTAL
+   IMPORTANT:
+   Prefer saved deal total.
+   Otherwise calculate deal price × quantity.
+===================================================== */
+
+function getDealTotal(deal){
+
+    const savedTotal =
+        deal.total ??
+        deal.deal_total ??
+        deal.total_amount;
+
+    if(
+        savedTotal !== undefined &&
+        savedTotal !== null &&
+        savedTotal !== ''
+    ){
+
+        return num(savedTotal);
+
+    }
+
+    return (
+        getDealPrice(deal) *
+        getDealQty(deal)
+    );
+
+}
+
+
+/* =====================================================
+   ORDER TOTAL
+   IMPORTANT:
+   Final saved order total is authoritative.
+===================================================== */
+
+function getOrderTotal(order){
+
+    const value =
+        order.total_amount ??
+        order.grand_total ??
+        order.total ??
+        order.final_total;
+
+    return num(value);
+
+}
+
+
+/* =====================================================
+   ORDER TYPE
+===================================================== */
+
+function getOrderType(order){
+
+    const type =
+        String(
+            order.order_type ||
+            order.type ||
+            ''
+        ).toLowerCase();
+
+    if(type === 'delivery'){
+        return 'delivery';
+    }
+
+    if(
+        type === 'dine_in' ||
+        type === 'dine-in' ||
+        type === 'dinein'
+    ){
+        return 'dine_in';
+    }
+
+    return type || 'dine_in';
+
+}
+
+
+/* =====================================================
+   LOAD BRANDING
+===================================================== */
+
+async function loadBranding(){
+
+    try{
+
+        if(!token){
+            return;
+        }
+
+        const res =
+            await fetch(
+                '/api/restaurants/me',
+                {
+                    headers:{
+                        'Authorization':
+                            'Bearer ' + token
+                    }
+                }
+            );
+
+        if(res.status === 401){
+            return;
+        }
+
+        const data =
+            await res.json();
+
+        if(
+            !data ||
+            !data.success ||
+            !data.data
+        ){
+            return;
+        }
+
+        const brand =
+            data.data;
+
+        const header =
+            document.getElementById(
+                'brand-header'
+            );
+
+        if(!header){
+            return;
+        }
+
+        const name =
+            brand.name ||
+            'Restaurant';
+
+        const logo =
+            brand.logo_url ||
+            brand.logo ||
+            '';
+
+        header.style.display =
+            'flex';
+
+        header.innerHTML =
+
+            logo
+
+            ?
+
+            `
+                <img
+                    src="${escapeHtml(logo)}"
+                    alt="Restaurant Logo"
+                    onerror="this.style.display='none'"
+                >
+
+                <span class="brand-name">
+                    ${escapeHtml(name)}
+                </span>
+            `
+
+            :
+
+            `
+                <span class="brand-name">
+                    ${escapeHtml(name)}
+                </span>
+            `;
+
+    }
+    catch(error){
+
+        console.error(
+            'Branding load failed:',
+            error
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   SET DATE RANGE
+===================================================== */
+
+function setDates(type){
+
+    const now =
+        new Date();
+
+    if(type === 'today'){
+
+        const d =
+            todayDate();
+
+        document.getElementById(
+            'from'
+        ).value = d;
+
+        document.getElementById(
+            'to'
+        ).value = d;
+
+    }
+
+    if(type === 'month'){
+
+        const year =
+            now.getFullYear();
+
+        const month =
+            String(
+                now.getMonth() + 1
+            ).padStart(2,'0');
+
+        const first =
+            `${year}-${month}-01`;
+
+        document.getElementById(
+            'from'
+        ).value = first;
+
+        document.getElementById(
+            'to'
+        ).value =
+            todayDate();
+
+    }
+
+}
+
+/* =====================================================
+   RESTAURANT ID FROM URL
+===================================================== */
+
+function getRestaurantIdFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('restaurant') || params.get('restaurant_id');
+    return id ? Number(id) : null;
+}
+
+const RESTAURANT_ID_FROM_URL = getRestaurantIdFromUrl();
+
+
+
+if (RESTAURANT_ID_FROM_URL) {
+    localStorage.setItem('restaurant_id', RESTAURANT_ID_FROM_URL);
+}
+
+
+/* =====================================================
+   LOAD SALES
+===================================================== */
+
+async function loadSales(){
+
+    const loading =
+        document.getElementById(
+            'loading'
+        );
+
+    loading.style.display =
+        'block';
+
+    try{
+
+        const from =
+            document.getElementById(
+                'from'
+            ).value;
+
+        const to =
+            document.getElementById(
+                'to'
+            ).value;
+
+        let url =
+            '/api/reports/sales';
+
+        if(from && to){
+
+            url +=
+                `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+
+        }
+
+        const res =
+            await fetch(
+                url,
+                {
+                    headers:
+                        authHeaders()
+                }
+            );
+
+        if(checkUnauthorized(res)){
+            return;
+        }
+
+        const result =
+            await res.json();
+
+        if(!res.ok){
+
+            throw new Error(
+                result.message ||
+                'Failed to load sales'
+            );
+
+        }
+
+        orders =
+            Array.isArray(result.data)
+            ? result.data
+            : [];
+
+        document.getElementById(
+            'range-text'
+        ).innerText =
+
+            from && to
+
+            ?
+
+            `Showing sales: ${from} → ${to}`
+
+            :
+
+            'All Sales';
+
+        updateSummary();
+
+        render();
+
+        await Promise.all([
+            loadTopItems(),
+            loadPaymentSummary()
+        ]);
+
+    }
+    catch(err){
+
+        console.error(
+            'SALES ERROR:',
+            err
+        );
+
+        orders = [];
+
+        document.getElementById(
+            'sales-list'
+        ).innerHTML = `
+
+            <div class="empty">
+
+                ❌ Unable to load sales.
+
+                <br><br>
+
+                ${escapeHtml(
+                    err.message
+                )}
+
+            </div>
+
+        `;
+
+    }
+    finally{
+
+        loading.style.display =
+            'none';
+
+    }
+
+}
+
+
+/* =====================================================
+   SUMMARY
+===================================================== */
+
+function updateSummary(){
+
+    let total = 0;
+
+    let items = 0;
+
+    orders.forEach(order => {
+
+        /*
+         * IMPORTANT:
+         * Summary uses final saved order total.
+         * It does NOT recalculate deals/items.
+         */
+
+        total +=
+            getOrderTotal(order);
+
+        const orderItems =
+            getItems(order);
+
+        orderItems.forEach(item => {
+
+            /*
+             * Deal rows are not counted as normal items
+             * if backend sends them inside items.
+             */
+
+            if(
+                item.type === 'deal' ||
+                item.is_deal === true
+            ){
+                return;
+            }
+
+            items +=
+                getItemQty(item);
+
+        });
+
+        /*
+         * If backend sends deals separately,
+         * count deal quantity as sold units.
+         */
+
+        getDeals(order).forEach(deal => {
+
+            items +=
+                getDealQty(deal);
+
+        });
+
+    });
+
+    document.getElementById(
+        'order-count'
+    ).innerText =
+        orders.length;
+
+    document.getElementById(
+        'total-sales'
+    ).innerText =
+        money(total);
+
+    document.getElementById(
+        'avg-bill'
+    ).innerText =
+        money(
+            orders.length
+            ? total / orders.length
+            : 0
+        );
+
+    document.getElementById(
+        'items-count'
+    ).innerText =
+        items;
+
+}
+
+
+/* =====================================================
+   RENDER ORDERS
+===================================================== */
+
+function render(){
+
+    const searchInput =
+        document.getElementById(
+            'search'
+        );
+
+    const q =
+        searchInput
+        ? searchInput.value
+            .trim()
+            .toLowerCase()
+        : '';
+
+    const filtered =
+        orders.filter(order => {
+
+            const orderItems =
+                getItems(order);
+
+            const deals =
+                getDeals(order);
+
+            const itemNames =
+                orderItems
+                .map(
+                    item =>
+                        getItemName(item)
+                )
+                .join(' ');
+
+            const dealNames =
+                deals
+                .map(
+                    deal =>
+                        deal.name ||
+                        deal.deal_name ||
+                        'Deal'
+                )
+                .join(' ');
+
+            const orderType =
+                getOrderType(order);
+
+            const searchText = `
+
+                ${order.id || ''}
+
+                ${order.table_no || ''}
+
+                ${order.table_number || ''}
+
+                ${order.customer_name || ''}
+
+                ${order.delivery_phone || ''}
+
+                ${order.delivery_address || ''}
+
+                ${getOrderTotal(order)}
+
+                ${itemNames}
+
+                ${dealNames}
+
+                ${orderType}
+
+            `.toLowerCase();
+
+            return searchText.includes(q);
+
+        });
+
+
+    const list =
+        document.getElementById(
+            'sales-list'
+        );
+
+
+    if(!filtered.length){
+
+        list.innerHTML = `
+
+            <div class="empty">
+
+                No sales found for
+                the selected period.
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    list.innerHTML =
+
+        filtered
+        .map(order => {
+
+            const orderItems =
+                getItems(order)
+                .filter(item =>
+                    item.type !== 'deal' &&
+                    item.is_deal !== true
+                );
+
+            const deals =
+                getDeals(order);
+
+
+            /* =========================
+               NORMAL ITEMS
+            ========================= */
+
+            const itemsHtml =
+
+                orderItems
+                .map(item => {
+
+                    const qty =
+                        getItemQty(item);
+
+                    const price =
+                        getItemPrice(item);
+
+                    const subtotal =
+                        price * qty;
+
+                    return `
+
+                        <div class="item">
+
+                            <div class="item-name">
+
+                                ${escapeHtml(
+                                    getItemName(item)
+                                )}
+
+                                × ${qty}
+
+                                <span style="color:#888;">
+                                    @ ${money(price)}
+                                </span>
+
+                            </div>
+
+                            <div class="item-total">
+
+                                ${money(
+                                    subtotal
+                                )}
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                })
+                .join('');
+
+
+            /* =========================
+               DEALS
+            ========================= */
+
+            const dealsHtml =
+
+                deals
+                .map(deal => {
+
+                    const qty =
+                        getDealQty(deal);
+
+                    const price =
+                        getDealPrice(deal);
+
+                    const total =
+                        getDealTotal(deal);
+
+                    const dealItems =
+                        Array.isArray(
+                            deal.items
+                        )
+                        ? deal.items
+                        : [];
+
+                    const dealItemsHtml =
+                        dealItems
+                        .map(item => {
+
+                            const itemQty =
+                                num(
+                                    item.quantity ??
+                                    item.qty ??
+                                    0
+                                );
+
+                            const variant =
+                                item.variant_label
+                                ? ` — ${escapeHtml(
+                                    item.variant_label
+                                )}`
+                                : '';
+
+                            return `
+
+                                <div class="deal-subitem">
+
+                                    • ${escapeHtml(
+                                        item.name ||
+                                        item.item_name ||
+                                        'Item'
+                                    )}
+
+                                    × ${itemQty}
+
+                                    ${variant}
+
+                                </div>
+
+                            `;
+
+                        })
+                        .join('');
+
+
+                    return `
+
+                        <div class="deal-item">
+
+                            <div class="deal-title">
+
+                                <div>
+
+                                    🎁
+                                    ${escapeHtml(
+                                        deal.name ||
+                                        deal.deal_name ||
+                                        'Deal'
+                                    )}
+
+                                    × ${qty}
+
+                                    <div
+                                        style="
+                                            font-size:12px;
+                                            color:#999;
+                                            font-weight:400;
+                                            margin-top:3px;
+                                        "
+                                    >
+
+                                        Deal Price:
+                                        ${money(price)}
+                                        × ${qty}
+
+                                    </div>
+
+                                </div>
+
+                                <div class="item-total">
+
+                                    ${money(total)}
+
+                                </div>
+
+                            </div>
+
+                            ${dealItemsHtml}
+
+                        </div>
+
+                    `;
+
+                })
+                .join('');
+
+
+            /* =========================
+               DATE
+            ========================= */
+
+            const paidDate =
+                order.paid_at
+
+                ?
+
+                new Date(
+                    order.paid_at
+                ).toLocaleString(
+                    'en-PK',
+                    {
+                        dateStyle:'medium',
+                        timeStyle:'short'
+                    }
+                )
+
+                :
+
+                (
+
+                    order.created_at
+
+                    ?
+
+                    new Date(
+                        order.created_at
+                    ).toLocaleString(
+                        'en-PK',
+                        {
+                            dateStyle:'medium',
+                            timeStyle:'short'
+                        }
+                    )
+
+                    :
+
+                    'Date unavailable'
+
+                );
+
+
+            /* =========================
+               TYPE
+            ========================= */
+
+            const orderType =
+                getOrderType(order);
+
+            const typeLabel =
+                orderType === 'delivery'
+                ? 'Delivery'
+                : 'Dine In';
+
+
+            /* =========================
+               TABLE
+            ========================= */
+
+            const table =
+                order.table_no ??
+                order.table_number ??
+                '-';
+
+
+            /* =========================
+               DELIVERY INFO
+            ========================= */
+
+            const deliveryHtml =
+
+                orderType === 'delivery'
+
+                ?
+
+                `
+
+                    <div class="delivery-info">
+
+                        ${
+                            order.customer_name
+                            ?
+
+                            `<div>
+                                <strong>Customer:</strong>
+                                ${escapeHtml(
+                                    order.customer_name
+                                )}
+                            </div>`
+
+                            :
+
+                            ''
+                        }
+
+                        ${
+                            order.delivery_phone
+                            ?
+
+                            `<div>
+                                <strong>Phone:</strong>
+                                ${escapeHtml(
+                                    order.delivery_phone
+                                )}
+                            </div>`
+
+                            :
+
+                            ''
+                        }
+
+                        ${
+                            order.delivery_address
+                            ?
+
+                            `<div>
+                                <strong>Address:</strong>
+                                ${escapeHtml(
+                                    order.delivery_address
+                                )}
+                            </div>`
+
+                            :
+
+                            ''
+                        }
+
+                    </div>
+
+                `
+
+                :
+
+                '';
+
+
+            /* =========================
+               ORDER CONTENT
+            ========================= */
+
+            const contentHtml =
+
+                itemsHtml ||
+                dealsHtml
+
+                ?
+
+                `
+
+                    ${itemsHtml}
+
+                    ${dealsHtml}
+
+                `
+
+                :
+
+                `
+
+                    <div
+                        class="item"
+                        style="justify-content:center;"
+                    >
+                        No items
+                    </div>
+
+                `;
+
+
+            /* =========================
+               FINAL ORDER
+            ========================= */
+
+            return `
+
+                <div class="order">
+
+                    <div class="top">
+
+                        <div class="order-id">
+
+                            🧾 Order #${escapeHtml(
+                                order.id
+                            )}
+
+                            <span class="type-badge">
+
+                                ${typeLabel}
+
+                            </span>
+
+                        </div>
+
+                        <div class="time">
+
+                            ${escapeHtml(
+                                paidDate
+                            )}
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="order-info">
+
+                        ${
+                            orderType === 'delivery'
+
+                            ?
+
+                            '🚚 Delivery Order'
+
+                            :
+
+                            `🍽 Table ${escapeHtml(
+                                String(table)
+                            )}`
+
+                        }
+
+                    </div>
+
+
+                    ${deliveryHtml}
+
+
+                    <hr>
+
+
+                    ${contentHtml}
+
+
+                    <div class="total">
+
+                        Total:
+                        ${money(
+                            getOrderTotal(order)
+                        )}
+
+                    </div>
+
+                </div>
+
+            `;
+
+        })
+
+        .join('');
+
+}
+
+
+/* =====================================================
+   TOP ITEMS
+===================================================== */
+
+async function loadTopItems(){
+
+    try{
+
+        const from =
+            document.getElementById(
+                'from'
+            ).value;
+
+        const to =
+            document.getElementById(
+                'to'
+            ).value;
+
+        let url =
+            '/api/reports/top-items';
+
+        if(from && to){
+
+            url +=
+                `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+
+        }
+
+        const res =
+            await fetch(
+                url,
+                {
+                    headers:
+                        authHeaders()
+                }
+            );
+
+        if(checkUnauthorized(res)){
+            return;
+        }
+
+        const result =
+            await res.json();
+
+        const list =
+            document.getElementById(
+                'top-items'
+            );
+
+        if(
+            !result.success ||
+            !Array.isArray(result.data) ||
+            !result.data.length
+        ){
+
+            list.innerHTML =
+                '<div class="empty">No data</div>';
+
+            return;
+
+        }
+
+        list.innerHTML =
+
+            result.data
+            .map(
+                (item,index) => `
+
+                    <div class="top-item">
+
+                        <div>
+
+                            <span class="rank">
+                                #${index + 1}
+                            </span>
+
+                            ${escapeHtml(
+                                item.name ||
+                                item.item_name ||
+                                'Item'
+                            )}
+
+                        </div>
+
+                        <div class="top-item-right">
+
+                            <span>
+
+                                ${num(
+                                    item.qty ??
+                                    item.quantity ??
+                                    0
+                                )}
+
+                                sold
+
+                            </span>
+
+                            <br>
+
+                            <span class="top-item-sales">
+
+                                ${money(
+                                    item.sales ??
+                                    item.total_sales ??
+                                    0
+                                )}
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                `
+            )
+            .join('');
+
+    }
+    catch(err){
+
+        console.error(
+            'TOP ITEMS ERROR:',
+            err
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   PAYMENT SUMMARY
+===================================================== */
+
+async function loadPaymentSummary(){
+
+    try{
+
+        const from =
+            document.getElementById(
+                'from'
+            ).value;
+
+        const to =
+            document.getElementById(
+                'to'
+            ).value;
+
+        let url =
+            '/api/reports/payment-summary';
+
+        if(from && to){
+
+            url +=
+                `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+
+        }
+
+        const res =
+            await fetch(
+                url,
+                {
+                    headers:
+                        authHeaders()
+                }
+            );
+
+        if(checkUnauthorized(res)){
+            return;
+        }
+
+        const result =
+            await res.json();
+
+        const box =
+            document.getElementById(
+                'payment-summary'
+            );
+
+        if(
+            !result.success ||
+            !Array.isArray(result.data) ||
+            !result.data.length
+        ){
+
+            box.innerHTML =
+                '<div class="empty">No payment data</div>';
+
+            return;
+
+        }
+
+        box.innerHTML =
+
+            result.data
+            .map(
+                payment => `
+
+                    <div class="top-item">
+
+                        <div class="payment-status">
+
+                            💳
+
+                            ${escapeHtml(
+                                payment.payment_status ||
+                                payment.payment_method ||
+                                'Unknown'
+                            )}
+
+                        </div>
+
+                        <div>
+
+                            ${num(
+                                payment.orders ??
+                                payment.order_count ??
+                                0
+                            )}
+
+                            Orders
+
+                        </div>
+
+                    </div>
+
+                `
+            )
+            .join('');
+
+    }
+    catch(err){
+
+        console.error(
+            'PAYMENT SUMMARY ERROR:',
+            err
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   DATE FILTER
+===================================================== */
+
+function applyDateFilter(){
+
+    const from =
+        document.getElementById(
+            'from'
+        ).value;
+
+    const to =
+        document.getElementById(
+            'to'
+        ).value;
+
+    if(from && !to){
+
+        alert(
+            'Please select To date'
+        );
+
+        return;
+
+    }
+
+    if(to && !from){
+
+        alert(
+            'Please select From date'
+        );
+
+        return;
+
+    }
+
+    if(
+        from &&
+        to &&
+        from > to
+    ){
+
+        alert(
+            'From date cannot be after To date'
+        );
+
+        return;
+
+    }
+
+    clearTimeout(timer);
+
+    timer =
+        setTimeout(
+            () => {
+                loadSales();
+            },
+            300
+        );
+
+}
+
+
+/* =====================================================
+   TYPE CHANGE
+===================================================== */
+
+function changeType(type){
+
+    activeButton(type);
+
+    setDates(type);
+
+    loadSales();
+
+}
+
+
+/* =====================================================
+   ACTIVE BUTTON
+===================================================== */
+
+function activeButton(type){
+
+    const todayBtn =
+        document.getElementById(
+            'today-btn'
+        );
+
+    const monthBtn =
+        document.getElementById(
+            'month-btn'
+        );
+
+    if(todayBtn){
+
+        todayBtn.classList.remove(
+            'active'
+        );
+
+    }
+
+    if(monthBtn){
+
+        monthBtn.classList.remove(
+            'active'
+        );
+
+    }
+
+    const active =
+        document.getElementById(
+            type + '-btn'
+        );
+
+    if(active){
+
+        active.classList.add(
+            'active'
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   RESET
+===================================================== */
+
+function resetFilter(){
+
+    const search =
+        document.getElementById(
+            'search'
+        );
+
+    if(search){
+
+        search.value = '';
+
+    }
+
+    activeButton('today');
+
+    setDates('today');
+
+    loadSales();
+
+}
+
+
+/* =====================================================
+   PRINT INFO
+===================================================== */
+
+function setPrintInfo(){
+
+    const from =
+        document.getElementById(
+            'from'
+        ).value;
+
+    const to =
+        document.getElementById(
+            'to'
+        ).value;
+
+    document.getElementById(
+        'print-range'
+    ).innerText =
+
+        from && to
+
+        ?
+
+        `Report Period: ${from} → ${to}`
+
+        :
+
+        'Complete Sales Report';
+
+    document.getElementById(
+        'print-time'
+    ).innerText =
+
+        new Date().toLocaleString(
+            'en-PK',
+            {
+                dateStyle:'medium',
+                timeStyle:'short'
+            }
+        );
+
+}
+
+
+/* =====================================================
+   PRINT REPORT
+===================================================== */
+
+function printReport(){
+
+    if(!orders.length){
+
+        alert(
+            'No sales available to print.'
+        );
+
+        return;
+
+    }
+
+    setPrintInfo();
+
+    window.print();
+
+}
+
+
+/* =====================================================
+   CSV ESCAPE
+===================================================== */
+
+function csvEscape(value){
+
+    return `"${String(
+        value ?? ''
+    ).replace(
+        /"/g,
+        '""'
+    )}"`;
+
+}
+
+
+/* =====================================================
+   EXPORT CSV
+===================================================== */
+
+function exportCSV(){
+
+    if(!orders.length){
+
+        alert(
+            'No sales available to export.'
+        );
+
+        return;
+
+    }
+
+    let csv =
+        'Order,Type,Table,Customer,Phone,Address,Date,Items,Deals,Total\n';
+
+
+    orders.forEach(order => {
+
+        const orderType =
+            getOrderType(order) === 'delivery'
+            ? 'Delivery'
+            : 'Dine In';
+
+
+        const items =
+            getItems(order)
+            .filter(item =>
+                item.type !== 'deal' &&
+                item.is_deal !== true
+            )
+            .map(item => {
+
+                const qty =
+                    getItemQty(item);
+
+                return `${getItemName(item)} x${qty}`;
+
+            })
+            .join(' | ');
+
+
+        const deals =
+            getDeals(order)
+            .map(deal => {
+
+                const qty =
+                    getDealQty(deal);
+
+                const price =
+                    getDealPrice(deal);
+
+                return `${deal.name || deal.deal_name || 'Deal'} x${qty} @ ${price}`;
+
+            })
+            .join(' | ');
+
+
+        const dateValue =
+            order.paid_at ||
+            order.created_at ||
+            order.createdAt ||
+            '';
+
+
+        const date =
+            dateValue
+
+            ?
+
+            new Date(
+                dateValue
+            ).toLocaleString(
+                'en-PK'
+            )
+
+            :
+
+            '';
+
+
+        const table =
+            orderType === 'Delivery'
+            ? ''
+            :
+            (
+                order.table_no ??
+                order.table_number ??
+                ''
+            );
+
+
+        const row = [
+
+            order.id || '',
+
+            csvEscape(orderType),
+
+            csvEscape(table),
+
+            csvEscape(
+                order.customer_name || ''
+            ),
+
+            csvEscape(
+                order.delivery_phone || ''
+            ),
+
+            csvEscape(
+                order.delivery_address || ''
+            ),
+
+            csvEscape(date),
+
+            csvEscape(items),
+
+            csvEscape(deals),
+
+            getOrderTotal(order)
+
+        ];
+
+
+        csv +=
+            row.join(',') +
+            '\n';
+
+    });
+
+
+    const blob =
+        new Blob(
+            [csv],
+            {
+                type:
+                    'text/csv;charset=utf-8;'
+            }
+        );
+
+
+    const url =
+        URL.createObjectURL(blob);
+
+
+    const a =
+        document.createElement(
+            'a'
+        );
+
+
+    a.href = url;
+
+    a.download =
+        'sales-report.csv';
+
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    a.remove();
+
+    URL.revokeObjectURL(url);
+
+}
+
+
+/* =====================================================
+   BACK TO MANAGER
+===================================================== */
+
+function backToManager() {
+    const restaurantId = RESTAURANT_ID_FROM_URL || localStorage.getItem('restaurant_id');
+    if (restaurantId) {
+        window.location.href = `manager.html?restaurant=${restaurantId}`;
+    } else {
+        window.location.href = 'manager.html';
+    }
+}
+
+/* =====================================================
+   INITIAL LOAD
+===================================================== */
+
+window.onload = function(){
+
+    if(!token){
+
+        window.location.href =
+            'manager.html';
+
+        return;
+
+    }
+
+    loadBranding();
+
+    setDates('today');
+
+    activeButton('today');
+
+    loadSales();
+
+};
+
+</script>
+
+</body>
+</html>
+

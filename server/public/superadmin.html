@@ -1,0 +1,4348 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Super Admin</title>
+
+<style>
+  * { box-sizing: border-box; }
+
+  :root {
+    --bg: #0F1216;
+    --panel: #1A2027;
+    --text: #F6F3EC;
+    --border: #2A3138;
+    --accent: #7C5CFF;
+  }
+
+  body.light-theme {
+    --bg: #F4F1EA;
+    --panel: #FFFFFF;
+    --text: #1B1F22;
+    --border: #DDD6C8;
+    --accent: #6A4FE0;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+  }
+
+  /* ================= LOGIN ================= */
+
+  #login-box {
+    max-width: 340px;
+    margin: 80px auto;
+    background: var(--panel);
+    padding: 32px 28px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.4);
+    text-align: center;
+  }
+
+  #login-box h2 {
+    margin: 0 0 24px;
+  }
+
+  #login-box input {
+    width: 100%;
+    padding: 12px 14px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  #login-box button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 12px;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  #login-error {
+    color: #E15A4C;
+    font-size: 13px;
+    min-height: 18px;
+  }
+
+  /* ================= TOP NAV ================= */
+
+  .topnav {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 16px;
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+    position:sticky;
+    top:0;
+    z-index:500;
+  }
+
+  .topnav .menu-btn {
+    background:none;
+    border:none;
+    color:var(--text);
+    font-size:22px;
+    cursor:pointer;
+  }
+
+  .topnav .title {
+    font-weight:700;
+    font-size:15px;
+  }
+
+  /* ================= SIDE MENU ================= */
+
+  .side-overlay {
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.5);
+    z-index:999;
+  }
+
+  .side-overlay.open {
+    display:block;
+  }
+
+  .side-menu {
+    position:fixed;
+    top:0;
+    left:-260px;
+    width:240px;
+    height:100%;
+    background:var(--panel);
+    border-right:1px solid var(--border);
+    transition:left .2s;
+    z-index:1000;
+    padding:20px 0;
+  }
+
+  .side-menu.open {
+    left:0;
+  }
+
+  .side-menu button {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    width:100%;
+    text-align:left;
+    padding:14px 20px;
+    color:var(--text);
+    background:none;
+    border:none;
+    font-size:14px;
+    cursor:pointer;
+  }
+
+  .side-menu button:hover {
+    background:var(--bg);
+  }
+
+  .side-menu button.active-nav {
+    color:var(--accent);
+    font-weight:700;
+  }
+
+  /* ================= APP ================= */
+
+  #app-box {
+    max-width:900px;
+    margin:0 auto;
+    padding:20px 16px 100px;
+  }
+
+  h2 {
+    font-size:17px;
+    margin:4px 0 14px;
+  }
+
+  .row {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:var(--panel);
+    padding:14px 18px;
+    border-radius:10px;
+    margin:8px 0;
+    flex-wrap:wrap;
+    gap:8px;
+    cursor:pointer;
+    border:1px solid var(--border);
+    transition:border-color .15s, transform .1s;
+  }
+
+  .row:hover {
+    border-color:var(--accent);
+  }
+
+  .row .info b {
+    font-size:14px;
+  }
+
+  .row .info span {
+    font-size:12px;
+    color:#9CA3AF;
+    display:block;
+    margin-top:2px;
+  }
+
+  .badge {
+    padding:3px 10px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:700;
+  }
+
+  .badge.active {
+    background:#2FA37D33;
+    color:#2FA37D;
+  }
+
+  .badge.suspended {
+    background:#E15A4C33;
+    color:#E15A4C;
+  }
+
+  .empty {
+    padding:24px;
+    text-align:center;
+    color:#6B7280;
+    border:1px dashed var(--border);
+    border-radius:10px;
+  }
+
+  /* ================= FAB ================= */
+
+  .fab {
+    position:fixed;
+    bottom:24px;
+    right:24px;
+    width:56px;
+    height:56px;
+    border-radius:50%;
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    font-size:28px;
+    cursor:pointer;
+    box-shadow:0 8px 20px rgba(0,0,0,.4);
+    z-index:800;
+  }
+
+  /* ================= MODALS ================= */
+
+  .modal-overlay {
+    display:none;
+    position:fixed;
+    inset:0;
+    background:var(--bg);
+    z-index:1100;
+    overflow-y:auto;
+  }
+
+  .modal-overlay.open {
+    display:block;
+  }
+
+  .modal-topbar {
+    position:sticky;
+    top:0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:14px 16px;
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+    z-index:1150;
+  }
+
+  .modal-topbar .back-btn {
+    background:none;
+    border:none;
+    color:var(--text);
+    font-size:20px;
+    cursor:pointer;
+    width:34px;
+    height:34px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:8px;
+  }
+
+  .modal-topbar .back-btn:hover {
+    background:var(--bg);
+  }
+
+  .modal-topbar .modal-title {
+    font-weight:700;
+    font-size:15px;
+  }
+
+  .modal-box {
+    background:var(--bg);
+    padding:20px 20px 100px;
+    max-width:640px;
+    width:100%;
+    margin:0 auto;
+    min-height:calc(100vh - 62px);
+  }
+
+  .modal-box h3 {
+    display:none;
+  }
+
+  .modal-box input,
+  .modal-box select {
+    width:100%;
+    padding:12px 14px;
+    margin:6px 0;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--panel);
+    color:var(--text);
+    font-size:14px;
+  }
+
+  .modal-box button.primary {
+    width:100%;
+    padding:13px;
+    margin-top:10px;
+    border-radius:8px;
+    border:none;
+    background:var(--accent);
+    color:#fff;
+    font-weight:700;
+    cursor:pointer;
+    font-size:14px;
+  }
+
+  .modal-box button.secondary {
+    width:100%;
+    padding:13px;
+    margin-top:8px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--panel);
+    color:var(--text);
+    cursor:pointer;
+    font-size:14px;
+  }
+
+  .modal-box button.danger {
+    width:100%;
+    padding:13px;
+    margin-top:8px;
+    border-radius:8px;
+    border:none;
+    background:#E15A4C;
+    color:#fff;
+    font-weight:700;
+    cursor:pointer;
+    font-size:14px;
+  }
+
+  .grid2 {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
+  .detail-line {
+    display:flex;
+    justify-content:space-between;
+    padding:10px 0;
+    border-bottom:1px solid var(--border);
+    font-size:13px;
+    gap:15px;
+  }
+
+  .detail-line b {
+    color:#9CA3AF;
+    font-weight:500;
+  }
+
+  .cred-box {
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px 14px;
+    margin:8px 0;
+    font-size:12px;
+    font-family:monospace;
+  }
+
+  .theme-row {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin:14px 0;
+  }
+
+  .switch {
+    position:relative;
+    width:44px;
+    height:24px;
+  }
+
+  .switch input {
+    opacity:0;
+    width:0;
+    height:0;
+  }
+
+  .slider {
+    position:absolute;
+    inset:0;
+    background:var(--border);
+    border-radius:24px;
+    cursor:pointer;
+    transition:.2s;
+  }
+
+  .slider:before {
+    content:"";
+    position:absolute;
+    width:18px;
+    height:18px;
+    left:3px;
+    top:3px;
+    background:#fff;
+    border-radius:50%;
+    transition:.2s;
+  }
+
+  input:checked + .slider {
+    background:var(--accent);
+  }
+
+  input:checked + .slider:before {
+    transform:translateX(20px);
+  }
+
+  .msg {
+    font-size:12px;
+    text-align:center;
+    margin-top:8px;
+    min-height:16px;
+  }
+
+  .section-title {
+    font-size:14px;
+    font-weight:700;
+    margin:22px 0 10px;
+    color:#9CA3AF;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+
+  .plan-limit-box {
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px 14px;
+    margin-top:10px;
+    font-size:12px;
+    line-height:1.7;
+  }
+
+  .plan-limit-box strong {
+    color:var(--accent);
+  }
+
+  .superadmin-note {
+    background:#7C5CFF18;
+    border:1px solid #7C5CFF55;
+    color:#B9AEFF;
+    padding:10px 12px;
+    border-radius:8px;
+    font-size:12px;
+    line-height:1.5;
+    margin:10px 0;
+  }
+
+  .modal-close {
+    display:none;
+  }
+
+  @media(max-width:600px) {
+    .grid2 {
+      grid-template-columns:1fr;
+      gap:0;
+    }
+
+    .modal-box {
+      padding-left:16px;
+      padding-right:16px;
+    }
+  }
+
+
+/* Add to your existing CSS */
+.staff-password {
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(124, 92, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  letter-spacing: 0.5px;
+}
+
+.cred-box .staff-password {
+  display: inline-block;
+  margin: 0 2px;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- ================= LOGIN ================= -->
+
+<div id="login-box">
+  <h2>Super Admin</h2>
+
+  <input
+    id="username"
+    placeholder="Username"
+    onkeydown="if(event.key==='Enter') login()"
+  >
+
+  <input
+    id="password"
+    type="password"
+    placeholder="Password"
+    onkeydown="if(event.key==='Enter') login()"
+  >
+
+  <button onclick="login()">Login</button>
+
+  <p id="login-error"></p>
+</div>
+
+
+<!-- ================= APP ================= -->
+
+<div id="app-box" style="display:none;">
+
+  <div class="topnav">
+    <button class="menu-btn" onclick="toggleMenu()">☰</button>
+
+    <div class="title" id="view-title">
+      Active Restaurants
+    </div>
+
+    <div></div>
+  </div>
+
+
+  <!-- SIDE MENU -->
+
+  <div
+    class="side-overlay"
+    id="side-overlay"
+    onclick="toggleMenu()">
+  </div>
+
+  <div class="side-menu" id="side-menu">
+
+    <button
+      id="nav-active"
+      onclick="setView('active')">
+      🟢 Active Restaurants
+    </button>
+
+    <button
+      id="nav-inactive"
+      onclick="setView('inactive')">
+      🔴 Suspended Restaurants
+    </button>
+
+    <button onclick="openSettings()">
+      ⚙️ Settings
+    </button>
+
+    <button
+      onclick="logout()"
+      style="color:#E15A4C;">
+      🚪 Logout
+    </button>
+
+  </div>
+
+
+  <div style="max-width:600px;margin:0 auto;padding:16px;">
+
+    <h2 id="content-title">
+      Active Restaurants
+    </h2>
+
+    <div id="restaurant-list"></div>
+
+  </div>
+
+
+  <button
+    class="fab"
+    onclick="openAddModal()"
+    title="Add Restaurant">
+    +
+  </button>
+
+</div>
+
+
+<!-- ================= ADD RESTAURANT ================= -->
+
+<div class="modal-overlay" id="add-modal">
+
+  <div class="modal-topbar">
+
+    <button
+      class="back-btn"
+      onclick="closeModal('add-modal')">
+      ←
+    </button>
+
+    <div class="modal-title">
+      Add New Restaurant
+    </div>
+
+  </div>
+
+
+  <div class="modal-box">
+
+    <input
+      id="r-name"
+      placeholder="Restaurant Name"
+    >
+
+    <div class="grid2">
+
+      <input
+        id="r-owner"
+        placeholder="Owner Name"
+      >
+
+      <input
+        id="r-city"
+        placeholder="City"
+      >
+
+    </div>
+
+
+    <div class="grid2">
+
+      <input
+        id="r-phone"
+        placeholder="Phone"
+      >
+
+      <input
+        id="r-email"
+        placeholder="Email"
+      >
+
+    </div>
+
+
+    <input
+      id="r-address"
+      placeholder="Address"
+    >
+
+
+    <select id="r-plan">
+
+      <option value="Basic">
+        Basic
+      </option>
+
+      <option value="Standard">
+        Standard
+      </option>
+
+      <option value="Premium">
+        Premium
+      </option>
+
+    </select>
+
+
+    <div id="create-plan-limits" class="plan-limit-box">
+      <strong>Basic Plan Limits</strong><br>
+      Waiter: 2 · Counter: 1 · Display: 1 ·
+      Manager: 1 · Kitchen: 1 · Rider: 2
+    </div>
+
+
+    <select id="r-food-type">
+
+      <option value="Fast Food">
+        Fast Food
+      </option>
+
+      <option value="Desi / Pakistani">
+        Desi / Pakistani
+      </option>
+
+      <option value="Fast Food + Desi">
+        Fast Food + Desi
+      </option>
+
+      <option value="Other / Custom">
+        Other / Custom
+      </option>
+
+    </select>
+
+
+    <input
+      id="r-expiry"
+      type="date"
+    >
+
+
+    <div class="section-title">
+      Manager Login
+    </div>
+
+
+    <input
+      id="r-manager-name"
+      placeholder="Manager Full Name"
+    >
+
+    <input
+      id="r-manager-username"
+      placeholder="Manager Username"
+    >
+
+    <input
+      id="r-manager-password"
+      type="password"
+      placeholder="Manager Password"
+    >
+
+
+    <button
+      class="primary"
+      onclick="addRestaurant()">
+      Create Restaurant
+    </button>
+
+
+    <button
+      class="secondary"
+      onclick="closeModal('add-modal')">
+      Cancel
+    </button>
+
+
+    <p
+      id="add-msg"
+      class="msg">
+    </p>
+
+  </div>
+
+</div>
+
+
+<!-- ================= RESTAURANT DETAIL ================= -->
+
+<div class="modal-overlay" id="detail-modal">
+
+  <div class="modal-topbar">
+
+    <button
+      class="back-btn"
+      onclick="closeModal('detail-modal')">
+      ←
+    </button>
+
+    <div
+      class="modal-title"
+      id="detail-topbar-title">
+      Restaurant
+    </div>
+
+  </div>
+
+
+  <div
+    class="modal-box"
+    id="detail-content">
+  </div>
+
+</div>
+
+
+<!-- ================= FOOD TYPE ================= -->
+
+<div class="modal-overlay" id="food-type-modal">
+
+  <div class="modal-topbar">
+
+    <button
+      class="back-btn"
+      onclick="closeModal('food-type-modal')">
+      ←
+    </button>
+
+    <div class="modal-title">
+      Edit Food Type
+    </div>
+
+  </div>
+
+
+  <div class="modal-box">
+
+    <select id="food-type-select">
+
+      <option value="Fast Food">
+        Fast Food
+      </option>
+
+      <option value="Desi / Pakistani">
+        Desi / Pakistani
+      </option>
+
+      <option value="Fast Food + Desi">
+        Fast Food + Desi
+      </option>
+
+      <option value="Other / Custom">
+        Other / Custom
+      </option>
+
+    </select>
+
+
+    <p style="font-size:12px;color:#9CA3AF;margin:6px 0 0;">
+      Menu categories are controlled by Super Admin.
+    </p>
+
+
+    <button
+      class="primary"
+      onclick="saveFoodType()">
+      Save Food Type
+    </button>
+
+
+    <button
+      class="secondary"
+      onclick="closeModal('food-type-modal')">
+      Cancel
+    </button>
+
+
+    <p
+      id="food-type-msg"
+      class="msg">
+    </p>
+
+  </div>
+
+</div>
+
+
+<!-- ================= SUBSCRIPTION ================= -->
+
+<div class="modal-overlay" id="sub-modal">
+
+  <div class="modal-topbar">
+
+    <button
+      class="back-btn"
+      onclick="closeModal('sub-modal')">
+      ←
+    </button>
+
+    <div class="modal-title">
+      Edit Subscription
+    </div>
+
+  </div>
+
+
+  <div class="modal-box">
+
+    <select id="sub-plan">
+
+      <option value="Basic">
+        Basic
+      </option>
+
+      <option value="Standard">
+        Standard
+      </option>
+
+      <option value="Premium">
+        Premium
+      </option>
+
+    </select>
+
+
+    <div
+      id="subscription-plan-limits"
+      class="plan-limit-box">
+    </div>
+
+
+    <input
+      id="sub-expiry"
+      type="date"
+    >
+
+
+    <button
+      class="primary"
+      onclick="saveSubscription()">
+      Save
+    </button>
+
+
+    <button
+      class="secondary"
+      onclick="closeModal('sub-modal')">
+      Cancel
+    </button>
+
+
+    <p
+      id="sub-msg"
+      class="msg">
+    </p>
+
+  </div>
+
+</div>
+
+
+<!-- ================= RESET MANAGER PASSWORD ================= -->
+
+<div class="modal-overlay" id="reset-modal">
+
+  <div class="modal-topbar">
+
+    <button
+      class="back-btn"
+      onclick="closeModal('reset-modal')">
+      ←
+    </button>
+
+    <div class="modal-title">
+      Reset Manager Password
+    </div>
+
+  </div>
+
+
+  <div class="modal-box">
+
+    <input
+      id="reset-new-password"
+      type="password"
+      placeholder="New password"
+    >
+
+
+    <button
+      class="primary"
+      onclick="saveResetPassword()">
+      Update Password
+    </button>
+
+
+    <button
+      class="secondary"
+      onclick="closeModal('reset-modal')">
+      Cancel
+    </button>
+
+
+    <p
+      id="reset-msg"
+      class="msg">
+    </p>
+
+  </div>
+
+</div>
+
+
+<!-- ================= DELETE ================= -->
+
+<div class="modal-overlay" id="delete-modal">
+
+  <div class="modal-topbar">
+
+    <button
+      class="back-btn"
+      onclick="closeModal('delete-modal')">
+      ←
+    </button>
+
+    <div class="modal-title">
+      Delete Restaurant?
+    </div>
+
+  </div>
+
+
+  <div class="modal-box">
+
+    <p style="font-size:13px;color:#9CA3AF;">
+      Yeh permanent hai — is restaurant ke sab users,
+      orders, menu bhi delete ho jayenge.
+      Wapis nahi ho sakta.
+    </p>
+
+
+    <button
+      class="danger"
+      onclick="confirmDelete()">
+      Yes, Delete Permanently
+    </button>
+
+
+    <button
+      class="secondary"
+      onclick="closeModal('delete-modal')">
+      Cancel
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- ================= STAFF LIST ================= -->
+
+<div class="modal-overlay" id="staff-list-modal">
+
+  <div class="modal-topbar">
+
+    <button
+      class="back-btn"
+      onclick="closeModal('staff-list-modal')">
+      ←
+    </button>
+
+    <div
+      class="modal-title"
+      id="staff-list-title">
+      Staff
+    </div>
+
+  </div>
+
+
+  <div class="modal-box">
+
+    <div id="staff-list-content"></div>
+
+
+    <button
+      class="secondary"
+      onclick="closeModal('staff-list-modal')">
+      Close
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- ================= ADD MEMBER ================= -->
+
+<div class="modal-overlay" id="add-member-modal">
+
+  <div class="modal-topbar">
+
+    <button
+      class="back-btn"
+      onclick="closeModal('add-member-modal')">
+      ←
+    </button>
+
+    <div
+      class="modal-title"
+      id="add-member-title">
+      Add Member
+    </div>
+
+  </div>
+
+
+  <div class="modal-box">
+
+    <div class="superadmin-note">
+      🔐 <b>Super Admin Privilege:</b>
+      Aap plan ki limit ke baad bhi members add kar sakte hain.
+      Plan limit Super Admin ko block nahi karegi.
+    </div>
+
+
+    <div class="section-title">
+      Member Information
+    </div>
+
+
+    <input
+      id="member-full-name"
+      placeholder="Full Name"
+    >
+
+
+    <input
+      id="member-username"
+      placeholder="Username"
+    >
+
+
+    <input
+      id="member-password"
+      type="password"
+      placeholder="Password"
+    >
+
+
+    <select id="member-role">
+
+      <option value="waiter">
+        Waiter
+      </option>
+
+      <option value="counter">
+        Counter
+      </option>
+
+      <option value="display">
+        Display
+      </option>
+
+      <option value="kitchen">
+        Kitchen
+      </option>
+
+      <option value="rider">
+        Delivery Rider
+      </option>
+
+    </select>
+
+
+    <div
+      id="member-plan-info"
+      class="plan-limit-box">
+    </div>
+
+
+    <button
+      class="primary"
+      onclick="addMember()">
+      Create Member
+    </button>
+
+
+    <button
+      class="secondary"
+      onclick="closeModal('add-member-modal')">
+      Cancel
+    </button>
+
+
+    <p
+      id="add-member-msg"
+      class="msg">
+    </p>
+
+  </div>
+
+</div>
+
+
+<!-- ================= STAFF RESET ================= -->
+
+<div class="modal-overlay" id="staff-reset-modal">
+
+  <div class="modal-topbar">
+
+    <button
+      class="back-btn"
+      onclick="closeModal('staff-reset-modal')">
+      ←
+    </button>
+
+    <div
+      class="modal-title"
+      id="staff-reset-title">
+      Reset Password
+    </div>
+
+  </div>
+
+
+  <div class="modal-box">
+
+    <input
+      id="staff-reset-password"
+      type="password"
+      placeholder="New password"
+    >
+
+
+    <button
+      class="primary"
+      onclick="saveStaffReset()">
+      Update Password
+    </button>
+
+
+    <button
+      class="secondary"
+      onclick="closeModal('staff-reset-modal')">
+      Cancel
+    </button>
+
+
+    <p
+      id="staff-reset-msg"
+      class="msg">
+    </p>
+
+  </div>
+
+</div>
+
+
+<!-- ================= SETTINGS ================= -->
+
+<div class="modal-overlay" id="settings-modal">
+
+  <div class="modal-topbar">
+
+    <button
+      class="back-btn"
+      onclick="closeModal('settings-modal')">
+      ←
+    </button>
+
+    <div class="modal-title">
+      Settings
+    </div>
+
+  </div>
+
+
+  <div class="modal-box">
+
+    <input
+      id="set-username"
+      placeholder="New Username (optional)"
+    >
+
+
+    <input
+      id="set-current-password"
+      type="password"
+      placeholder="Current Password"
+    >
+
+
+    <input
+      id="set-new-password"
+      type="password"
+      placeholder="New Password (optional)"
+    >
+
+
+    <div class="theme-row">
+
+      <span>
+        Dark / Light Theme
+      </span>
+
+      <label class="switch">
+
+        <input
+          type="checkbox"
+          id="theme-toggle"
+          onchange="toggleTheme()"
+        >
+
+        <span class="slider"></span>
+
+      </label>
+
+    </div>
+
+
+    <button
+      class="primary"
+      onclick="saveSettings()">
+      Save
+    </button>
+
+
+    <button
+      class="secondary"
+      onclick="closeModal('settings-modal')">
+      Cancel
+    </button>
+
+
+    <p
+      id="settings-msg"
+      class="msg">
+    </p>
+
+  </div>
+
+</div>
+
+<!-- ================= EDIT RESTAURANT ================= -->
+<div class="modal-overlay" id="edit-restaurant-modal">
+  <div class="modal-topbar">
+    <button class="back-btn" onclick="closeModal('edit-restaurant-modal')">←</button>
+    <div class="modal-title">Edit Restaurant Details</div>
+  </div>
+
+  <div class="modal-box">
+    <input id="edit-r-name" placeholder="Restaurant Name">
+    <input id="edit-r-owner" placeholder="Owner Name">
+
+    <div class="grid2">
+      <input id="edit-r-phone" placeholder="Phone">
+      <input id="edit-r-email" placeholder="Email">
+    </div>
+
+    <div class="grid2">
+      <input id="edit-r-city" placeholder="City">
+      <input id="edit-r-address" placeholder="Address">
+    </div>
+
+    <button class="primary" onclick="saveEditRestaurant()">Save Changes</button>
+    <button class="secondary" onclick="closeModal('edit-restaurant-modal')">Cancel</button>
+    <p id="edit-restaurant-msg" class="msg"></p>
+  </div>
+</div>
+
+
+<script>
+
+  /* =========================================================
+     GLOBAL VARIABLES
+  ========================================================= */
+
+  let token = localStorage.getItem('sa_token');
+
+  let allRestaurants = [];
+
+  let currentView = 'active';
+
+  let activeRestaurantId = null;
+
+  let activeRestaurant = null;
+
+  let currentStaffRole = null;
+
+  let staffResetUserId = null;
+
+  let creatingRestaurant = false;
+
+  
+
+
+  /* =========================================================
+     PLAN LIMITS
+     
+     IMPORTANT:
+     These are DEFAULT PLAN LIMITS.
+     
+     Super Admin Add Member DOES NOT BLOCK after limit.
+  ========================================================= */
+
+  const PLAN_LIMITS = {
+
+    Basic: {
+      waiter: 2,
+      counter: 1,
+      display: 1,
+      manager: 1,
+      kitchen: 1,
+      rider: 2
+    },
+
+    Standard: {
+      waiter: 3,
+      counter: 1,
+      display: 1,
+      manager: 1,
+      kitchen: 1,
+      rider: 3
+    },
+
+    Premium: {
+      waiter: 4,
+      counter: 2,
+      display: 2,
+      manager: 1,
+      kitchen: 2,
+      rider: 4
+    }
+
+  };
+
+
+  /* =========================================================
+     AUTH
+  ========================================================= */
+
+  function authHeaders() {
+
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    };
+
+  }
+
+
+  /* =========================================================
+     MODALS
+  ========================================================= */
+
+  function closeModal(id) {
+
+    document
+      .getElementById(id)
+      .classList
+      .remove('open');
+
+  }
+
+
+  function openModal(id) {
+
+    document
+      .getElementById(id)
+      .classList
+      .add('open');
+
+    window.scrollTo(0, 0);
+
+  }
+
+
+  /* =========================================================
+     LOGIN
+  ========================================================= */
+
+  async function login() {
+
+    const username =
+      document.getElementById('username').value.trim();
+
+    const password =
+      document.getElementById('password').value;
+
+
+    if (!username || !password) {
+
+      document.getElementById('login-error').innerText =
+        'Username and password required';
+
+      return;
+
+    }
+
+
+    try {
+
+      const res = await fetch('/api/auth/login', {
+
+        method: 'POST',
+
+        headers: {
+          'Content-Type': 'application/json'
+        },
+
+        body: JSON.stringify({
+          username,
+          password
+        })
+
+      });
+
+
+      const data = await res.json();
+
+
+      if (
+        data.token &&
+        data.user &&
+        data.user.role === 'super_admin'
+      ) {
+
+        token = data.token;
+
+        localStorage.setItem(
+          'sa_token',
+          token
+        );
+
+        showApp();
+
+      }
+
+      else if (data.token) {
+
+        document.getElementById('login-error').innerText =
+          'This login is for Super Admin only.';
+
+      }
+
+      else {
+
+        document.getElementById('login-error').innerText =
+          data.message || 'Login failed';
+
+      }
+
+    }
+
+    catch (err) {
+
+      console.error(err);
+
+      document.getElementById('login-error').innerText =
+        'Server connection failed';
+
+    }
+
+  }
+
+
+  /* =========================================================
+     LOGOUT
+  ========================================================= */
+
+  function logout() {
+
+    localStorage.removeItem('sa_token');
+
+    location.reload();
+
+  }
+
+
+  /* =========================================================
+     SHOW APP
+  ========================================================= */
+
+  function showApp() {
+
+    document.getElementById('login-box').style.display =
+      'none';
+
+    document.getElementById('app-box').style.display =
+      'block';
+
+
+    if (
+      localStorage.getItem('sa_theme') === 'light'
+    ) {
+
+      document.body.classList.add(
+        'light-theme'
+      );
+
+    }
+
+
+    loadRestaurants();
+
+  }
+
+
+  /* =========================================================
+     SIDE MENU
+  ========================================================= */
+
+  function toggleMenu() {
+
+    document
+      .getElementById('side-menu')
+      .classList
+      .toggle('open');
+
+    document
+      .getElementById('side-overlay')
+      .classList
+      .toggle('open');
+
+  }
+
+
+  function setView(view) {
+
+    currentView = view;
+
+    document
+      .getElementById('side-menu')
+      .classList
+      .remove('open');
+
+    document
+      .getElementById('side-overlay')
+      .classList
+      .remove('open');
+
+
+    document
+      .getElementById('nav-active')
+      .classList
+      .toggle(
+        'active-nav',
+        view === 'active'
+      );
+
+
+    document
+      .getElementById('nav-inactive')
+      .classList
+      .toggle(
+        'active-nav',
+        view === 'inactive'
+      );
+
+
+    const title =
+      view === 'active'
+        ? 'Active Restaurants'
+        : 'Suspended Restaurants';
+
+
+    document.getElementById(
+      'view-title'
+    ).innerText = title;
+
+
+    document.getElementById(
+      'content-title'
+    ).innerText = title;
+
+
+    renderList();
+
+  }
+
+
+  /* =========================================================
+     LOAD RESTAURANTS
+  ========================================================= */
+
+  async function loadRestaurants() {
+
+  try {
+
+    const res = await fetch(
+      '/api/restaurants?t=' + Date.now(),
+      {
+        headers: authHeaders()
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+
+      console.error(data);
+
+      return;
+
+    }
+
+    allRestaurants =
+      data.data || [];
+
+    setView(currentView);
+
+  } catch (err) {
+
+    console.error(
+      'Load restaurants error:',
+      err
+    );
+
+  }
+
+}
+
+
+  /* =========================================================
+     RENDER RESTAURANT LIST
+  ========================================================= */
+
+  function renderList() {
+
+    const list =
+      document.getElementById(
+        'restaurant-list'
+      );
+
+
+    const filtered =
+      allRestaurants.filter(r =>
+
+        currentView === 'active'
+          ? r.status === 'Active'
+          : r.status !== 'Active'
+
+      );
+
+
+    if (!filtered.length) {
+
+      list.innerHTML =
+        `<div class="empty">
+          No ${currentView} restaurants.
+        </div>`;
+
+      return;
+
+    }
+
+
+    list.innerHTML =
+      filtered.map(r => `
+
+        <div
+          class="row"
+          onclick="openDetail(${r.id})">
+
+          <div class="info">
+
+            <b>#${r.id} — ${escapeHtml(r.name)}</b>
+
+            <span
+              class="badge ${
+                r.status === 'Active'
+                  ? 'active'
+                  : 'suspended'
+              }">
+
+              ${escapeHtml(r.status)}
+
+            </span>
+
+            <span>
+
+              ${escapeHtml(r.city || '-')}
+              · ${escapeHtml(r.plan)}
+
+              · Waiters: ${r.waiter_count || 0}
+
+              · Kitchen: ${r.kitchen_count || 0}
+
+              · Counter: ${r.counter_count || 0}
+
+              · Display: ${r.display_count || 0}
+
+              · Riders: ${r.delivery_rider_count || 0}
+
+            </span>
+
+          </div>
+
+        </div>
+
+      `).join('');
+
+  }
+
+
+  /* =========================================================
+     OPEN RESTAURANT DETAIL
+  ========================================================= */
+
+  async function openDetail(id) {
+
+    activeRestaurantId = id;
+
+
+    try {
+
+      const res = await fetch(
+        `/api/restaurants/${id}`,
+        {
+          headers: authHeaders()
+        }
+      );
+
+
+      const data = await res.json();
+
+
+      if (!res.ok) {
+
+        alert(
+          data.message ||
+          'Failed to load restaurant'
+        );
+
+        return;
+
+      }
+
+
+      const r = data.data;
+
+      activeRestaurant = r;
+
+
+      const expiry =
+        r.expiry_date
+          ? r.expiry_date.split('T')[0]
+          : 'N/A';
+
+
+      document.getElementById(
+        'detail-topbar-title'
+      ).innerText = r.name;
+
+
+      const managerCount =
+        r.manager_username ? 1 : 0;
+
+
+      document.getElementById(
+        'detail-content'
+      ).innerHTML = `
+
+        <div
+          style="text-align:center;margin-bottom:14px;">
+
+          ${
+            r.logo_url
+
+            ? `
+              <img
+                src="${escapeAttribute(r.logo_url)}"
+                style="
+                  width:80px;
+                  height:80px;
+                  border-radius:12px;
+                  object-fit:cover;
+                "
+              >
+            `
+
+            : `
+              <div
+                style="
+                  width:80px;
+                  height:80px;
+                  border-radius:12px;
+                  background:var(--panel);
+                  border:1px solid var(--border);
+                  display:flex;
+                  align-items:center;
+                  justify-content:center;
+                  margin:0 auto;
+                  color:#6B7280;
+                  font-size:11px;
+                ">
+
+                No Logo
+
+              </div>
+            `
+          }
+
+
+          <input
+            type="file"
+            id="logo-file"
+            accept="image/*"
+            style="display:none;"
+            onchange="uploadLogo(${r.id})"
+          >
+
+
+          <button
+            class="secondary"
+            style="
+              width:auto;
+              padding:6px 14px;
+              margin-top:8px;
+              font-size:12px;
+            "
+            onclick="
+              document
+                .getElementById('logo-file')
+                .click()
+            ">
+
+            Upload Logo
+
+          </button>
+
+        </div>
+
+
+        <div class="detail-line">
+          <b>Status</b>
+
+          <span
+            class="badge ${
+              r.status === 'Active'
+                ? 'active'
+                : 'suspended'
+            }">
+
+            ${escapeHtml(r.status)}
+
+          </span>
+
+        </div>
+
+
+        <div class="detail-line">
+          <b>Owner</b>
+          <span>${escapeHtml(r.owner_name || '-')}</span>
+        </div>
+
+
+        <div class="detail-line">
+          <b>Phone</b>
+          <span>${escapeHtml(r.phone || '-')}</span>
+        </div>
+
+
+        <div class="detail-line">
+          <b>Email</b>
+          <span>${escapeHtml(r.email || '-')}</span>
+        </div>
+
+
+        <div class="detail-line">
+          <b>City</b>
+          <span>${escapeHtml(r.city || '-')}</span>
+        </div>
+
+
+        <div class="detail-line">
+          <b>Address</b>
+          <span>${escapeHtml(r.address || '-')}</span>
+        </div>
+
+
+        <div class="detail-line">
+          <b>Plan</b>
+          <span>${escapeHtml(r.plan || 'Basic')}</span>
+        </div>
+
+
+        <div class="detail-line">
+
+          <b>Food Type</b>
+
+          <span
+            data-food-type="${escapeAttribute(
+              r.food_type || 'Fast Food'
+            )}">
+
+            ${escapeHtml(
+              r.food_type || 'Fast Food'
+            )}
+
+          </span>
+
+        </div>
+
+
+        <div class="detail-line">
+          <b>Expiry</b>
+          <span>${escapeHtml(expiry)}</span>
+        </div>
+
+
+        <div class="section-title">Staff Accounts</div>
+
+<div class="row" style="cursor:pointer;" onclick="openStaffList(${r.id}, 'manager')">
+  <span>👤 Manager</span>
+  <b>${r.manager_username ? 1 : 0}</b>
+</div>
+
+<div class="row" style="cursor:pointer;" onclick="openStaffList(${r.id}, 'waiter')">
+  <span>🧑‍🍳 Waiter</span>
+  <b>${r.waiter_count}</b>
+</div>
+
+<div class="row" style="cursor:pointer;" onclick="openStaffList(${r.id}, 'kitchen')">
+  <span>🍳 Kitchen</span>
+  <b>${r.kitchen_count}</b>
+</div>
+
+<div class="row" style="cursor:pointer;" onclick="openStaffList(${r.id}, 'counter')">
+  <span>🧾 Counter</span>
+  <b>${r.counter_count}</b>
+</div>
+
+<div class="row" style="cursor:pointer;" onclick="openStaffList(${r.id}, 'display')">
+  <span>🖥️ Display</span>
+  <b>${r.display_count || 0}</b>
+</div>
+
+<div class="row" style="cursor:pointer;" onclick="openStaffList(${r.id}, 'rider')">
+  <span>🏍️ Delivery Rider</span>
+  <b>${r.delivery_rider_count || 0}</b>
+</div>
+
+
+<!-- ADD MEMBER IS ABOVE CLOSE -->
+
+        <button
+          class="primary"
+          onclick="
+            openAddMemberModal()
+          ">
+
+          + Add Member
+
+        </button>
+
+
+        <div class="section-title">Actions</div>
+
+        <!-- Edit Restaurant Button -->
+        <button
+          class="primary"
+          onclick="openEditRestaurantModal()">
+
+          ✏️ Edit Details
+
+        </button>
+
+        <button
+          class="primary"
+          onclick="openSubModal()">
+
+          Edit Subscription
+
+        </button>
+
+
+        <button
+          class="secondary"
+          onclick="openFoodTypeModal()">
+
+          Edit Food Type
+
+        </button>
+
+
+        <button
+          class="secondary"
+          onclick="openResetModal()">
+
+          Reset Manager Password
+
+        </button>
+
+
+        ${
+          r.status === 'Active'
+
+          ? `
+            <button
+              class="secondary"
+              style="
+                color:#E15A4C;
+                border-color:#E15A4C;
+              "
+              onclick="
+                setStatus('Suspended')
+              ">
+
+              Suspend Restaurant
+
+            </button>
+          `
+
+          : `
+
+            <button
+              class="secondary"
+              style="
+                color:#2FA37D;
+                border-color:#2FA37D;
+              "
+              onclick="
+                setStatus('Active')
+              ">
+
+              Activate Restaurant
+
+            </button>
+
+          `
+        }
+
+
+        <button
+          class="danger"
+          onclick="
+            openModal('delete-modal')
+          ">
+
+          Delete Restaurant
+
+        </button>
+
+
+        
+
+
+        <button
+          class="secondary"
+          onclick="
+            closeModal('detail-modal')
+          ">
+
+          Close
+
+        </button>
+
+      `;
+
+
+      openModal('detail-modal');
+
+    }
+
+    catch (err) {
+
+      console.error(err);
+
+      alert(
+        'Failed to load restaurant'
+      );
+
+    }
+
+  }
+
+
+  /* =========================================================
+     STATUS
+  ========================================================= */
+
+  async function setStatus(status) {
+
+    const res = await fetch(
+      `/api/restaurants/${activeRestaurantId}/status`,
+      {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          status
+        })
+      }
+    );
+
+
+    const data =
+      await res.json().catch(() => ({}));
+
+
+    if (!res.ok) {
+
+      alert(
+        data.message ||
+        'Status update failed'
+      );
+
+      return;
+
+    }
+
+
+    closeModal('detail-modal');
+
+    loadRestaurants();
+
+  }
+
+
+  /* =========================================================
+     FOOD TYPE
+  ========================================================= */
+
+  function openFoodTypeModal() {
+
+    const select =
+      document.getElementById(
+        'food-type-select'
+      );
+
+
+    const current =
+      document.querySelector(
+        '#detail-content [data-food-type]'
+      );
+
+
+    select.value =
+      current
+        ? current.getAttribute(
+            'data-food-type'
+          )
+        : 'Fast Food';
+
+
+    document.getElementById(
+      'food-type-msg'
+    ).innerText = '';
+
+
+    openModal(
+      'food-type-modal'
+    );
+
+  }
+
+
+  async function saveFoodType() {
+
+    const food_type =
+      document.getElementById(
+        'food-type-select'
+      ).value;
+
+
+    const msg =
+      document.getElementById(
+        'food-type-msg'
+      );
+
+
+    const res = await fetch(
+      `/api/restaurants/${activeRestaurantId}/food-type`,
+      {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          food_type
+        })
+      }
+    );
+
+
+    const data =
+      await res.json().catch(() => ({}));
+
+
+    msg.style.color =
+      res.ok
+        ? '#2FA37D'
+        : '#E15A4C';
+
+
+    msg.innerText =
+      data.message ||
+      (
+        res.ok
+          ? 'Food type updated'
+          : 'Failed'
+      );
+
+
+    if (res.ok) {
+
+      setTimeout(
+        async () => {
+
+          closeModal(
+            'food-type-modal'
+          );
+
+          closeModal(
+            'detail-modal'
+          );
+
+          await loadRestaurants();
+
+        },
+        800
+      );
+
+    }
+
+  }
+
+
+  /* =========================================================
+     SUBSCRIPTION
+  ========================================================= */
+
+  function openSubModal() {
+
+    if (activeRestaurant) {
+
+      document.getElementById(
+        'sub-plan'
+      ).value =
+        activeRestaurant.plan ||
+        'Basic';
+
+
+      document.getElementById(
+        'sub-expiry'
+      ).value =
+        activeRestaurant.expiry_date
+          ? activeRestaurant.expiry_date
+              .split('T')[0]
+          : '';
+
+    }
+
+
+    updateSubscriptionPlanInfo();
+
+
+    document.getElementById(
+      'sub-msg'
+    ).innerText = '';
+
+
+    openModal('sub-modal');
+
+  }
+  
+    /* =========================================================
+     EDIT RESTAURANT DETAILS
+  ========================================================= */
+
+  function openEditRestaurantModal() {
+
+    if (!activeRestaurant) {
+      alert('Restaurant data not loaded.');
+      return;
+    }
+
+    document.getElementById('edit-r-name').value = activeRestaurant.name || '';
+    document.getElementById('edit-r-owner').value = activeRestaurant.owner_name || '';
+    document.getElementById('edit-r-phone').value = activeRestaurant.phone || '';
+    document.getElementById('edit-r-email').value = activeRestaurant.email || '';
+    document.getElementById('edit-r-city').value = activeRestaurant.city || '';
+    document.getElementById('edit-r-address').value = activeRestaurant.address || '';
+
+    document.getElementById('edit-restaurant-msg').innerText = '';
+
+    openModal('edit-restaurant-modal');
+  }
+
+  async function saveEditRestaurant() {
+
+    const name = document.getElementById('edit-r-name').value.trim();
+    const owner_name = document.getElementById('edit-r-owner').value.trim();
+    const phone = document.getElementById('edit-r-phone').value.trim();
+    const email = document.getElementById('edit-r-email').value.trim();
+    const city = document.getElementById('edit-r-city').value.trim();
+    const address = document.getElementById('edit-r-address').value.trim();
+
+    const msg = document.getElementById('edit-restaurant-msg');
+
+    if (!name) {
+      msg.style.color = '#E15A4C';
+      msg.innerText = 'Restaurant name is required';
+      return;
+    }
+
+    try {
+
+      const res = await fetch(
+        `/api/restaurants/${activeRestaurantId}`,
+        {
+          method: 'PUT', // Agar backend PATCH use karta hai, toh yeh change karein
+          headers: authHeaders(),
+          body: JSON.stringify({
+            name,
+            owner_name,
+            phone,
+            email,
+            city,
+            address
+          })
+        }
+      );
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        msg.style.color = '#E15A4C';
+        msg.innerText = data.message || 'Failed to update restaurant';
+        return;
+      }
+
+      msg.style.color = '#2FA37D';
+      msg.innerText = 'Restaurant updated successfully!';
+
+      setTimeout(async () => {
+
+        closeModal('edit-restaurant-modal');
+        
+        // Fresh data load karein
+        await refreshActiveRestaurant();
+        await openDetail(activeRestaurantId);
+        await loadRestaurants();
+
+      }, 1000);
+
+    } catch (err) {
+
+      console.error('Edit restaurant error:', err);
+
+      msg.style.color = '#E15A4C';
+      msg.innerText = 'Server connection failed';
+
+    }
+
+  }
+
+  function updateSubscriptionPlanInfo() {
+
+    const plan =
+      document.getElementById(
+        'sub-plan'
+      ).value;
+
+
+    const limits =
+      PLAN_LIMITS[plan] ||
+      PLAN_LIMITS.Basic;
+
+
+    document.getElementById(
+      'subscription-plan-limits'
+    ).innerHTML = `
+
+      <strong>${plan} Plan Limits</strong><br>
+
+      Waiter: ${limits.waiter}
+      · Counter: ${limits.counter}
+      · Display: ${limits.display}
+      · Manager: ${limits.manager}
+      · Kitchen: ${limits.kitchen}
+      · Rider: ${limits.rider}
+
+      <br><br>
+
+      <span style="color:#9CA3AF;">
+        Existing members are not automatically deleted
+        when changing plan.
+      </span>
+
+    `;
+
+  }
+
+
+  document.getElementById(
+    'sub-plan'
+  ).addEventListener(
+    'change',
+    updateSubscriptionPlanInfo
+  );
+
+
+  async function saveSubscription() {
+
+    const plan =
+      document.getElementById(
+        'sub-plan'
+      ).value;
+
+
+    const expiry_date =
+      document.getElementById(
+        'sub-expiry'
+      ).value;
+
+
+    const msg =
+      document.getElementById(
+        'sub-msg'
+      );
+
+
+    if (!expiry_date) {
+
+      msg.style.color =
+        '#E15A4C';
+
+      msg.innerText =
+        'Pick an expiry date';
+
+      return;
+
+    }
+
+
+    const res = await fetch(
+      `/api/restaurants/${activeRestaurantId}/subscription`,
+      {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          plan,
+          expiry_date
+        })
+      }
+    );
+
+
+    const data =
+      await res.json().catch(() => ({}));
+
+
+    if (!res.ok) {
+
+      msg.style.color =
+        '#E15A4C';
+
+      msg.innerText =
+        data.message ||
+        'Subscription update failed';
+
+      return;
+
+    }
+
+
+    msg.style.color =
+      '#2FA37D';
+
+    msg.innerText =
+      data.message ||
+      'Subscription updated';
+
+
+    setTimeout(
+      async () => {
+
+        closeModal(
+          'sub-modal'
+        );
+
+        closeModal(
+          'detail-modal'
+        );
+
+        await loadRestaurants();
+
+      },
+      800
+    );
+
+  }
+
+
+  /* =========================================================
+     MANAGER PASSWORD RESET
+  ========================================================= */
+
+  function openResetModal() {
+
+    document.getElementById(
+      'reset-new-password'
+    ).value = '';
+
+
+    document.getElementById(
+      'reset-msg'
+    ).innerText = '';
+
+
+    openModal(
+      'reset-modal'
+    );
+
+  }
+
+
+  async function saveResetPassword() {
+
+    const new_password =
+      document.getElementById(
+        'reset-new-password'
+      ).value;
+
+
+    const msg =
+      document.getElementById(
+        'reset-msg'
+      );
+
+
+    if (
+      !new_password ||
+      new_password.length < 4
+    ) {
+
+      msg.style.color =
+        '#E15A4C';
+
+      msg.innerText =
+        'Password must be at least 4 characters';
+
+      return;
+
+    }
+
+
+    const res = await fetch(
+      `/api/restaurants/${activeRestaurantId}/reset-password`,
+      {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          new_password
+        })
+      }
+    );
+
+
+    const data =
+      await res.json().catch(() => ({}));
+
+
+    msg.style.color =
+      res.ok
+        ? '#2FA37D'
+        : '#E15A4C';
+
+
+    msg.innerText =
+      data.message ||
+      (
+        res.ok
+          ? 'Password updated'
+          : 'Failed'
+      );
+
+
+    if (res.ok) {
+
+      setTimeout(
+        () => {
+
+          closeModal(
+            'reset-modal'
+          );
+
+          document.getElementById(
+            'reset-new-password'
+          ).value = '';
+
+        },
+        1200
+      );
+
+    }
+
+  }
+
+
+  /* =========================================================
+     DELETE RESTAURANT
+  ========================================================= */
+
+  async function confirmDelete() {
+
+    const res = await fetch(
+      `/api/restaurants/${activeRestaurantId}`,
+      {
+        method: 'DELETE',
+        headers: authHeaders()
+      }
+    );
+
+
+    const data =
+      await res.json().catch(() => ({}));
+
+
+    if (!res.ok) {
+
+      alert(
+        data.message ||
+        'Delete failed'
+      );
+
+      return;
+
+    }
+
+
+    closeModal(
+      'delete-modal'
+    );
+
+    closeModal(
+      'detail-modal'
+    );
+
+
+    loadRestaurants();
+
+  }
+
+
+  /* =========================================================
+     ADD RESTAURANT
+     
+     Restaurant creation follows plan.
+     
+     IMPORTANT:
+     The Add Member function below is different.
+     Super Admin can add unlimited members later.
+  ========================================================= */
+
+  function openAddModal() {
+
+    updateCreatePlanLimits();
+
+    openModal(
+      'add-modal'
+    );
+
+  }
+
+
+  function updateCreatePlanLimits() {
+
+    const plan =
+      document.getElementById(
+        'r-plan'
+      ).value;
+
+
+    const limits =
+      PLAN_LIMITS[plan] ||
+      PLAN_LIMITS.Basic;
+
+
+    document.getElementById(
+      'create-plan-limits'
+    ).innerHTML = `
+
+      <strong>${plan} Plan Limits</strong><br>
+
+      Waiter: ${limits.waiter}
+      · Counter: ${limits.counter}
+      · Display: ${limits.display}
+      · Manager: ${limits.manager}
+      · Kitchen: ${limits.kitchen}
+      · Rider: ${limits.rider}
+
+      <br><br>
+
+      <span style="color:#9CA3AF;">
+        These are the default limits for this plan.
+      </span>
+
+    `;
+
+  }
+
+
+  document.getElementById(
+    'r-plan'
+  ).addEventListener(
+    'change',
+    updateCreatePlanLimits
+  );
+
+
+
+
+
+
+
+async function addRestaurant() {
+  if (creatingRestaurant) {
+    return;
+  }
+  creatingRestaurant = true;
+
+
+  const addBtn = document.querySelector('button.primary[onclick="addRestaurant()"]');
+  if (addBtn) {
+    addBtn.disabled = true;
+    addBtn.innerText = 'Creating...';
+  }
+
+  const msg = document.getElementById('add-msg');
+  try {
+    const body = {
+      name: document.getElementById('r-name').value.trim(),
+      owner_name: document.getElementById('r-owner').value.trim(),
+      city: document.getElementById('r-city').value.trim(),
+      phone: document.getElementById('r-phone').value.trim(),
+      email: document.getElementById('r-email').value.trim(),
+      address: document.getElementById('r-address').value.trim(),
+      plan: document.getElementById('r-plan').value,
+      food_type: document.getElementById('r-food-type').value,
+      expiry_date: document.getElementById('r-expiry').value,
+      manager_fullname: document.getElementById('r-manager-name').value.trim(),
+      manager_username: document.getElementById('r-manager-username').value.trim(),
+      manager_password: document.getElementById('r-manager-password').value
+    };
+
+    if (!body.name || !body.manager_username || !body.manager_password) {
+      msg.style.color = '#E15A4C';
+      msg.innerText = 'Restaurant name, manager username & password required';
+      
+      creatingRestaurant = false;
+      if (addBtn) { addBtn.disabled = false; addBtn.innerText = 'Create Restaurant'; }
+      return;
+    }
+
+    const res = await fetch('/api/restaurants', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify(body)
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      msg.style.color = '#E15A4C';
+      msg.innerText = data.message || 'Failed';
+      
+      creatingRestaurant = false;
+      if (addBtn) { addBtn.disabled = false; addBtn.innerText = 'Create Restaurant'; }
+      return;
+    }
+
+    msg.style.color = '#2FA37D';
+    msg.innerText = 'Restaurant created successfully!';
+
+    
+    document.getElementById('r-name').value = '';
+    document.getElementById('r-owner').value = '';
+    document.getElementById('r-city').value = '';
+    document.getElementById('r-phone').value = '';
+    document.getElementById('r-email').value = '';
+    document.getElementById('r-address').value = '';
+    document.getElementById('r-manager-name').value = '';
+    document.getElementById('r-manager-username').value = '';
+    document.getElementById('r-manager-password').value = '';
+    document.getElementById('r-expiry').value = '';
+    document.getElementById('r-plan').value = 'Basic';
+    document.getElementById('r-food-type').value = 'Fast Food';
+    updateCreatePlanLimits(); 
+
+    await loadRestaurants();
+
+    
+    creatingRestaurant = false;
+    if (addBtn) { addBtn.disabled = false; addBtn.innerText = 'Create Restaurant'; }
+
+    
+    setTimeout(() => {
+      closeModal('add-modal');
+    }, 800);
+
+  } catch (err) {
+    console.error(err);
+    msg.style.color = '#E15A4C';
+    msg.innerText = 'Server connection failed';
+
+    creatingRestaurant = false;
+    if (addBtn) { addBtn.disabled = false; addBtn.innerText = 'Create Restaurant'; }
+  }
+}
+
+  /* =========================================================
+     OPEN ADD MEMBER
+     
+     SUPER ADMIN = NO PLAN LIMIT BLOCK.
+  ========================================================= */
+
+  async function openAddMemberModal() {
+
+    if (!activeRestaurantId) {
+
+      alert(
+        'Please select a restaurant first.'
+      );
+
+      return;
+
+    }
+
+
+    document.getElementById(
+      'member-full-name'
+    ).value = '';
+
+
+    document.getElementById(
+      'member-username'
+    ).value = '';
+
+
+    document.getElementById(
+      'member-password'
+    ).value = '';
+
+
+    document.getElementById(
+      'member-role'
+    ).value = 'waiter';
+
+
+    document.getElementById(
+      'add-member-msg'
+    ).innerText = '';
+
+
+    updateMemberPlanInfo();
+
+
+    openModal(
+      'add-member-modal'
+    );
+
+  }
+
+
+  /* =========================================================
+     MEMBER PLAN INFORMATION
+     
+     DISPLAY ONLY.
+     
+     It NEVER blocks Super Admin.
+  ========================================================= */
+
+  function updateMemberPlanInfo() {
+
+    const plan =
+      activeRestaurant &&
+      activeRestaurant.plan
+        ? activeRestaurant.plan
+        : 'Basic';
+
+
+    const limits =
+      PLAN_LIMITS[plan] ||
+      PLAN_LIMITS.Basic;
+
+
+    const role =
+      document.getElementById(
+        'member-role'
+      ).value;
+
+
+    const roleNames = {
+
+      waiter: 'Waiter',
+
+      counter: 'Counter',
+
+      display: 'Display',
+
+      kitchen: 'Kitchen',
+
+      rider: 'Delivery Rider'
+
+    };
+
+
+    const currentCount =
+      getCurrentRoleCount(
+        role
+      );
+
+
+    document.getElementById(
+      'member-plan-info'
+    ).innerHTML = `
+
+      <strong>${plan} Plan</strong><br>
+
+      Current ${roleNames[role]} accounts:
+      <b>${currentCount}</b>
+
+      <br>
+
+      Normal ${plan} plan limit:
+      <b>${limits[role] || 0}</b>
+
+      <br><br>
+
+      <span style="color:#9CA3AF;">
+        ⚡ Super Admin privilege:
+        You can add more than the plan limit.
+        There is NO BLOCK here.
+      </span>
+
+    `;
+
+  }
+
+
+  document.getElementById(
+    'member-role'
+  ).addEventListener(
+    'change',
+    updateMemberPlanInfo
+  );
+
+
+  /* =========================================================
+     CURRENT ROLE COUNT
+  ========================================================= */
+
+  function getCurrentRoleCount(role) {
+
+    if (!activeRestaurant) {
+      return 0;
+    }
+
+
+    if (role === 'waiter') {
+
+      return Number(
+        activeRestaurant.waiter_count || 0
+      );
+
+    }
+
+
+    if (role === 'counter') {
+
+      return Number(
+        activeRestaurant.counter_count || 0
+      );
+
+    }
+
+
+    if (role === 'display') {
+
+      return Number(
+        activeRestaurant.display_count || 0
+      );
+
+    }
+
+
+    if (role === 'kitchen') {
+
+      return Number(
+        activeRestaurant.kitchen_count || 0
+      );
+
+    }
+
+
+    if (role === 'rider') {
+
+      return Number(
+        activeRestaurant.delivery_rider_count || 0
+      );
+
+    }
+
+
+    return 0;
+
+  }
+
+
+  /* =========================================================
+     ADD MEMBER
+     
+     IMPORTANT:
+     NO PLAN LIMIT CHECK HERE.
+     
+     Super Admin can add:
+     Basic -> 5 Waiters
+     Basic -> 10 Riders
+     Basic -> etc.
+     
+     The plan limit is only informational here.
+  ========================================================= */
+
+ async function addMember() {
+
+  const full_name =
+    document.getElementById(
+      'member-full-name'
+    ).value.trim();
+
+  const username =
+    document.getElementById(
+      'member-username'
+    ).value.trim();
+
+  const password =
+    document.getElementById(
+      'member-password'
+    ).value;
+
+  const role =
+    document.getElementById(
+      'member-role'
+    ).value;
+
+  const msg =
+    document.getElementById(
+      'add-member-msg'
+    );
+
+
+  // ======================================================
+  // VALIDATION
+  // ======================================================
+
+  if (!full_name) {
+
+    msg.style.color = '#E15A4C';
+
+    msg.innerText =
+      'Full name is required';
+
+    return;
+  }
+
+
+  if (!username) {
+
+    msg.style.color = '#E15A4C';
+
+    msg.innerText =
+      'Username is required';
+
+    return;
+  }
+
+
+  if (!password || password.length < 4) {
+
+    msg.style.color = '#E15A4C';
+
+    msg.innerText =
+      'Password must be at least 4 characters';
+
+    return;
+  }
+
+
+  if (!role) {
+
+    msg.style.color = '#E15A4C';
+
+    msg.innerText =
+      'Staff role is required';
+
+    return;
+  }
+
+
+  // ======================================================
+  // SUPER ADMIN:
+  // NO PLAN LIMIT CHECK HERE
+  // ======================================================
+
+  try {
+
+    const res = await fetch(
+      `/api/restaurants/${activeRestaurantId}/staff`,
+      {
+        method: 'POST',
+
+        headers: {
+          ...authHeaders(),
+          'Content-Type': 'application/json'
+        },
+
+        body: JSON.stringify({
+
+          full_name,
+          username,
+          password,
+          role
+
+        })
+
+      }
+    );
+
+
+    const data =
+      await res.json().catch(
+        () => ({})
+      );
+
+
+    // ====================================================
+    // ERROR
+    // ====================================================
+
+    if (!res.ok) {
+
+      msg.style.color =
+        '#E15A4C';
+
+      msg.innerText =
+        data.message ||
+        'Failed to create member';
+
+      return;
+
+    }
+
+
+    // ====================================================
+    // SUCCESS
+    // ====================================================
+
+    msg.style.color =
+      '#2FA37D';
+
+    msg.innerText =
+      data.message ||
+      'Member created successfully';
+
+
+    // ====================================================
+    // REFRESH RESTAURANT DATA
+    // ====================================================
+
+    await refreshActiveRestaurant();
+
+
+    // ====================================================
+    // CLOSE + REFRESH DETAIL
+    // ====================================================
+
+    setTimeout(
+      async () => {
+
+        closeModal(
+          'add-member-modal'
+        );
+
+        await openDetail(
+          activeRestaurantId
+        );
+
+      },
+      1000
+    );
+
+
+  } catch (err) {
+
+    console.error(
+      'Add member error:',
+      err
+    );
+
+
+    msg.style.color =
+      '#E15A4C';
+
+    msg.innerText =
+      'Server connection failed';
+
+  }
+
+}
+
+  /* =========================================================
+     REFRESH ACTIVE RESTAURANT
+  ========================================================= */
+
+  async function refreshActiveRestaurant() {
+
+  if (!activeRestaurantId) {
+    return;
+  }
+
+  try {
+
+    const res = await fetch(
+      `/api/restaurants/${activeRestaurantId}?t=${Date.now()}`,
+      {
+        headers: authHeaders()
+      }
+    );
+
+    const data =
+      await res.json();
+
+    if (res.ok) {
+
+      activeRestaurant =
+        data.data;
+
+    }
+
+    await loadRestaurants();
+
+  } catch (err) {
+
+    console.error(
+      'Refresh active restaurant error:',
+      err
+    );
+
+  }
+
+}
+
+
+
+
+  /* =========================================================
+     OPEN STAFF LIST - FIXED
+     Now fetches latest data with passwords
+  ========================================================= */
+
+async function openStaffList(
+  restaurantId,
+  role
+) {
+
+  activeRestaurantId =
+    restaurantId;
+
+  currentStaffRole =
+    role;
+
+  try {
+
+    // Force fresh fetch with cache busting
+    const res = await fetch(
+      `/api/restaurants/${restaurantId}/staff?t=${Date.now()}`,
+      {
+        headers: authHeaders()
+      }
+    );
+
+    const data =
+      await res.json();
+
+    if (!res.ok) {
+
+      alert(
+        data.message ||
+        'Failed to load staff'
+      );
+
+      return;
+
+    }
+
+    // Store staff data globally for refresh
+    window._staffData = data.data || [];
+
+    const staff =
+      (data.data || []).filter(
+        s =>
+
+          role === 'rider'
+
+            ? (
+                s.role === 'rider' ||
+                s.role === 'delivery_rider' ||
+                s.role === 'delivery'
+              )
+
+            : s.role === role
+      );
+
+    const roleDisplayNames = {
+      manager: 'Manager',
+      waiter: 'Waiter',
+      kitchen: 'Kitchen',
+      counter: 'Counter',
+      display: 'Display',
+      rider: 'Delivery Rider'
+    };
+
+    document.getElementById(
+      'staff-list-title'
+    ).innerText =
+      roleDisplayNames[role] || role + ' Accounts';
+
+    const content =
+      document.getElementById(
+        'staff-list-content'
+      );
+
+    if (!staff.length) {
+
+      content.innerHTML =
+        '<div class="empty">No accounts found.</div>';
+
+    } else {
+
+      content.innerHTML =
+        staff.map(
+          s => `
+
+            <div class="cred-box" data-user-id="${s.id}">
+
+              <div style="margin-bottom:8px;">
+
+                <b>
+                  ${escapeHtml(
+                    s.full_name || '-'
+                  )}
+                </b>
+
+                (
+                ${escapeHtml(
+                  s.username || '-'
+                )}
+                )
+
+                <br>
+
+                ${
+                  s.password
+
+                  ? `
+                    🔑 Password:
+                    <span class="staff-password" style="font-weight:700;color:var(--accent);">
+                      ${escapeHtml(s.password)}
+                    </span>
+                  `
+
+                  : `
+                    🔑 Password:
+                    <span style="color:#9CA3AF;">not set</span>
+                  `
+                }
+
+                ${
+                  !s.is_active
+
+                  ? `
+                    <br>
+                    <span style="color:#E15A4C;">
+                      ⚠️ Inactive
+                    </span>
+                  `
+
+                  : ''
+                }
+
+              </div>
+
+              <div
+                style="
+                  display:flex;
+                  gap:8px;
+                  flex-wrap:wrap;
+                ">
+
+                <button
+                  class="secondary"
+                  style="
+                    width:auto;
+                    padding:6px 12px;
+                    font-size:11px;
+                    margin:0;
+                  "
+                  onclick="
+                    openStaffReset(
+                      ${s.id},
+                      '${escapeJs(
+                        s.username
+                      )}'
+                    )
+                  ">
+
+                  🔑 Reset Password
+
+                </button>
+
+                ${
+                  s.role !== 'manager'
+
+                  ? `
+
+                    <button
+                      class="danger"
+                      style="
+                        width:auto;
+                        padding:6px 12px;
+                        font-size:11px;
+                        margin:0;
+                      "
+                      onclick="
+                        deleteStaffMember(
+                          ${s.id},
+                          '${escapeJs(
+                            s.username
+                          )}'
+                        )
+                      ">
+
+                      🗑️ Delete
+
+                    </button>
+
+                  `
+
+                  : ''
+                }
+
+              </div>
+
+            </div>
+
+          `
+        ).join('');
+
+    }
+
+    openModal(
+      'staff-list-modal'
+    );
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert(
+      'Failed to load staff'
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+     STAFF RESET - FIXED with refresh
+  ========================================================= */
+
+function openStaffReset(
+  userId,
+  username
+) {
+
+  staffResetUserId = userId;
+
+  document.getElementById(
+    'staff-reset-title'
+  ).innerText =
+    'Reset Password — ' + username;
+
+  document.getElementById(
+    'staff-reset-password'
+  ).value = '';
+
+  document.getElementById(
+    'staff-reset-msg'
+  ).innerText = '';
+
+  openModal(
+    'staff-reset-modal'
+  );
+
+}
+
+
+async function saveStaffReset() {
+
+  const new_password =
+    document.getElementById(
+      'staff-reset-password'
+    ).value;
+
+  const msg =
+    document.getElementById(
+      'staff-reset-msg'
+    );
+
+  if (
+    !new_password ||
+    new_password.length < 4
+  ) {
+
+    msg.style.color =
+      '#E15A4C';
+
+    msg.innerText =
+      'Password must be at least 4 characters';
+
+    return;
+
+  }
+
+  try {
+
+    const res = await fetch(
+
+      `/api/restaurants/${activeRestaurantId}/staff/${staffResetUserId}/reset-password`,
+
+      {
+        method: 'PATCH',
+
+        headers: authHeaders(),
+
+        body: JSON.stringify({
+          new_password
+        })
+
+      }
+
+    );
+
+    const data =
+      await res.json().catch(
+        () => ({})
+      );
+
+    if (!res.ok) {
+
+      msg.style.color = '#E15A4C';
+      msg.innerText = data.message || 'Failed';
+
+      return;
+
+    }
+
+    msg.style.color = '#2FA37D';
+
+    // ✅ FIX: Use the password we set, or from backend
+    const newPass = data.new_password || new_password;
+    msg.innerText = `✅ Password updated successfully! New password: ${newPass}`;
+
+    // ✅ FIX: Immediately update the UI without waiting for refresh
+    updateStaffPasswordInUI(staffResetUserId, newPass);
+
+    // ✅ FIX: Also update the staff list with fresh data from backend
+    // Wait a moment for backend to save, then refresh
+    setTimeout(async () => {
+
+      // Force refresh staff list with cache busting
+      await refreshStaffList();
+
+      // Also refresh active restaurant data
+      await refreshActiveRestaurant();
+
+      closeModal('staff-reset-modal');
+
+    }, 800);
+
+  } catch (err) {
+
+    console.error('Save staff reset error:', err);
+
+    msg.style.color = '#E15A4C';
+    msg.innerText = 'Server connection failed';
+
+  }
+
+}
+
+
+/* =========================================================
+     UPDATE STAFF PASSWORD IN UI - NEW HELPER
+  ========================================================= */
+
+function updateStaffPasswordInUI(userId, newPassword) {
+
+  // Find all staff cards in the current staff list
+  const staffCards = document.querySelectorAll('#staff-list-content .cred-box');
+
+  staffCards.forEach(card => {
+
+    const cardUserId = card.dataset.userId;
+
+    if (cardUserId && Number(cardUserId) === Number(userId)) {
+
+      // Find or create password element
+      let passwordSpan = card.querySelector('.staff-password');
+
+      const container = card.querySelector('div:first-child');
+
+      if (!container) return;
+
+      if (passwordSpan) {
+
+        // Update existing password
+        passwordSpan.textContent = newPassword;
+
+      } else {
+
+        // Insert new password element
+        const html = container.innerHTML;
+
+        // Check if password field already exists but without class
+        if (html.includes('🔑 Password:')) {
+
+          // Update existing password text
+          const updatedHtml = html.replace(
+            /🔑 Password:.*?(<br|$)/,
+            `🔑 Password: <span class="staff-password" style="font-weight:700;color:var(--accent);">${escapeHtml(newPassword)}</span>$1`
+          );
+
+          container.innerHTML = updatedHtml;
+
+        } else {
+
+          // Insert password after username
+          const usernameMatch = html.match(/\(([^)]+)\)/);
+
+          if (usernameMatch) {
+
+            const usernameEnd = html.indexOf('</b>', html.indexOf(usernameMatch[1]));
+
+            if (usernameEnd !== -1) {
+
+              container.innerHTML =
+                html.slice(0, usernameEnd + 4) +
+                `<br>🔑 Password: <span class="staff-password" style="font-weight:700;color:var(--accent);">${escapeHtml(newPassword)}</span>` +
+                html.slice(usernameEnd + 4);
+
+            }
+
+          }
+
+        }
+
+      }
+
+    }
+
+  });
+
+}
+
+
+/* =========================================================
+     REFRESH STAFF LIST - NEW HELPER
+  ========================================================= */
+
+async function refreshStaffList() {
+
+  if (!activeRestaurantId || !currentStaffRole) {
+    return;
+  }
+
+  try {
+
+    // Force fresh fetch with cache busting
+    const res = await fetch(
+      `/api/restaurants/${activeRestaurantId}/staff?t=${Date.now()}`,
+      {
+        headers: authHeaders()
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error('Failed to refresh staff list:', data.message);
+      return;
+    }
+
+    // Update the staff list content
+    const staff = (data.data || []).filter(s => {
+
+      if (currentStaffRole === 'rider') {
+        return s.role === 'rider' ||
+               s.role === 'delivery_rider' ||
+               s.role === 'delivery';
+      }
+
+      return s.role === currentStaffRole;
+    });
+
+    const content = document.getElementById('staff-list-content');
+
+    if (!staff.length) {
+
+      content.innerHTML = '<div class="empty">No accounts found.</div>';
+
+    } else {
+
+      const roleDisplayNames = {
+        manager: 'Manager',
+        waiter: 'Waiter',
+        kitchen: 'Kitchen',
+        counter: 'Counter',
+        display: 'Display',
+        rider: 'Delivery Rider'
+      };
+
+      document.getElementById('staff-list-title').innerText =
+        roleDisplayNames[currentStaffRole] || currentStaffRole + ' Accounts';
+
+      content.innerHTML = staff.map(s => `
+
+        <div class="cred-box" data-user-id="${s.id}">
+
+          <div style="margin-bottom:8px;">
+
+            <b>${escapeHtml(s.full_name || '-')}</b>
+
+            (${escapeHtml(s.username || '-')})
+
+            <br>
+
+            ${
+              s.password
+
+              ? `
+                🔑 Password:
+                <span class="staff-password" style="font-weight:700;color:var(--accent);">
+                  ${escapeHtml(s.password)}
+                </span>
+              `
+
+              : `
+                🔑 Password:
+                <span style="color:#9CA3AF;">not set</span>
+              `
+            }
+
+            ${
+              !s.is_active
+
+              ? `
+                <br>
+                <span style="color:#E15A4C;">
+                  ⚠️ Inactive
+                </span>
+              `
+
+              : ''
+            }
+
+          </div>
+
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+
+            <button
+              class="secondary"
+              style="width:auto; padding:6px 12px; font-size:11px; margin:0;"
+              onclick="openStaffReset(${s.id}, '${escapeJs(s.username)}')">
+
+              🔑 Reset Password
+
+            </button>
+
+            ${
+              s.role !== 'manager'
+
+              ? `
+
+                <button
+                  class="danger"
+                  style="width:auto; padding:6px 12px; font-size:11px; margin:0;"
+                  onclick="deleteStaffMember(${s.id}, '${escapeJs(s.username)}')">
+
+                  🗑️ Delete
+
+                </button>
+
+              `
+
+              : ''
+            }
+
+          </div>
+
+        </div>
+
+      `).join('');
+
+    }
+
+  } catch (err) {
+
+    console.error('Refresh staff list error:', err);
+
+  }
+
+}
+
+
+/* =========================================================
+     DELETE STAFF - IMPROVED
+  ========================================================= */
+
+async function deleteStaffMember(
+  userId,
+  username
+) {
+
+  if (
+    !confirm(
+      `Delete "${username}" permanently?`
+    )
+  ) {
+
+    return;
+
+  }
+
+  try {
+
+    const res = await fetch(
+
+      `/api/restaurants/${activeRestaurantId}/staff/${userId}`,
+
+      {
+        method: 'DELETE',
+
+        headers: authHeaders()
+
+      }
+
+    );
+
+    const data =
+      await res.json().catch(
+        () => ({})
+      );
+
+    if (!res.ok) {
+
+      alert(
+        data.message ||
+        'Delete failed'
+      );
+
+      return;
+
+    }
+
+    await refreshActiveRestaurant();
+
+    // Refresh staff list
+    await refreshStaffList();
+
+    // Also refresh restaurant detail if open
+    if (activeRestaurantId) {
+      await openDetail(activeRestaurantId);
+    }
+
+  } catch (err) {
+
+    console.error('Delete staff error:', err);
+    alert('Failed to delete staff member');
+
+  }
+
+}
+
+
+/* =========================================================
+     DELETE STAFF - FIXED with refresh
+  ========================================================= */
+
+async function deleteStaffMember(
+  userId,
+  username
+) {
+
+  if (
+    !confirm(
+      `Delete "${username}" permanently?`
+    )
+  ) {
+
+    return;
+
+  }
+
+  try {
+
+    const res = await fetch(
+
+      `/api/restaurants/${activeRestaurantId}/staff/${userId}`,
+
+      {
+        method: 'DELETE',
+
+        headers: authHeaders()
+
+      }
+
+    );
+
+    const data =
+      await res.json().catch(
+        () => ({})
+      );
+
+    if (!res.ok) {
+
+      alert(
+        data.message ||
+        'Delete failed'
+      );
+
+      return;
+
+    }
+
+    await refreshActiveRestaurant();
+
+    // Refresh staff list
+    if (activeRestaurantId && currentStaffRole) {
+      await openStaffList(
+        activeRestaurantId,
+        currentStaffRole
+      );
+    }
+
+    // Also refresh restaurant detail if open
+    if (activeRestaurantId) {
+      await openDetail(activeRestaurantId);
+    }
+
+  } catch (err) {
+
+    console.error('Delete staff error:', err);
+    alert('Failed to delete staff member');
+
+  }
+
+}
+
+
+  /* =========================================================
+     LOGO UPLOAD
+  ========================================================= */
+
+  async function uploadLogo(id) {
+
+    const fileInput =
+      document.getElementById(
+        'logo-file'
+      );
+
+
+    const file =
+      fileInput.files[0];
+
+
+    if (!file) {
+      return;
+    }
+
+
+    const formData =
+      new FormData();
+
+
+    formData.append(
+      'logo',
+      file
+    );
+
+
+    const res = await fetch(
+
+      `/api/restaurants/${id}/logo`,
+
+      {
+        method: 'POST',
+
+        headers: {
+          'Authorization':
+            'Bearer ' + token
+        },
+
+        body: formData
+      }
+
+    );
+
+
+    if (res.ok) {
+
+      await openDetail(id);
+
+    }
+
+    else {
+
+      const data =
+        await res.json().catch(
+          () => ({})
+        );
+
+
+      alert(
+        data.message ||
+        'Upload failed'
+      );
+
+    }
+
+  }
+
+
+  /* =========================================================
+     SETTINGS
+  ========================================================= */
+
+  function openSettings() {
+
+    document
+      .getElementById('side-menu')
+      .classList
+      .remove('open');
+
+    document
+      .getElementById('side-overlay')
+      .classList
+      .remove('open');
+
+
+    openModal(
+      'settings-modal'
+    );
+
+    // ✅ FIX: Form ko hamesha fresh kholein
+    document.getElementById('set-username').value = '';
+    document.getElementById('set-current-password').value = '';
+    document.getElementById('set-new-password').value = '';
+
+    document.getElementById(
+      'settings-msg'
+    ).innerText = '';
+
+
+    document.getElementById(
+      'theme-toggle'
+    ).checked =
+      localStorage.getItem(
+        'sa_theme'
+      ) === 'light';
+
+  }
+
+
+  async function saveSettings() {
+
+    const username =
+      document.getElementById(
+        'set-username'
+      ).value.trim();
+
+
+    const current_password =
+      document.getElementById(
+        'set-current-password'
+      ).value;
+
+
+    const new_password =
+      document.getElementById(
+        'set-new-password'
+      ).value;
+
+
+    const msg =
+      document.getElementById(
+        'settings-msg'
+      );
+
+
+    if (!current_password) {
+
+      msg.style.color =
+        '#E15A4C';
+
+      msg.innerText =
+        'Current password is required';
+
+      return;
+
+    }
+
+
+    const res = await fetch(
+      '/api/auth/settings',
+      {
+        method: 'PUT',
+
+        headers: authHeaders(),
+
+        body: JSON.stringify({
+
+          username,
+
+          current_password,
+
+          new_password
+
+        })
+
+      }
+    );
+
+
+    const data =
+      await res.json().catch(
+        () => ({})
+      );
+
+
+    msg.style.color =
+      res.ok
+        ? '#2FA37D'
+        : '#E15A4C';
+
+
+    msg.innerText =
+      data.message ||
+      (
+        res.ok
+          ? 'Updated'
+          : 'Failed'
+      );
+
+
+    if (res.ok) {
+
+      setTimeout(
+        () => {
+
+          closeModal(
+            'settings-modal'
+          );
+
+        },
+        1200
+      );
+
+    }
+
+  }
+
+
+  /* =========================================================
+     THEME
+  ========================================================= */
+
+  function toggleTheme() {
+
+    const isLight =
+      document.getElementById(
+        'theme-toggle'
+      ).checked;
+
+
+    document.body.classList.toggle(
+      'light-theme',
+      isLight
+    );
+
+
+    localStorage.setItem(
+      'sa_theme',
+      isLight
+        ? 'light'
+        : 'dark'
+    );
+
+  }
+
+
+  /* =========================================================
+     SECURITY / HTML HELPERS
+  ========================================================= */
+
+  function escapeHtml(value) {
+
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+
+  }
+
+
+  function escapeAttribute(value) {
+
+    return escapeHtml(value);
+
+  }
+
+
+  function escapeJs(value) {
+
+    return String(value ?? '')
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'")
+      .replace(/"/g, '\\"')
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '\\r');
+
+  }
+
+
+  /* =========================================================
+     PAGE LOAD
+  ========================================================= */
+
+  window.onload = () => {
+
+    if (token) {
+
+      showApp();
+
+    }
+
+  };
+
+</script>
+
+</body>
+</html>

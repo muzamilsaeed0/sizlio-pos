@@ -1,0 +1,2864 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Restaurant Bill</title>
+
+
+<style>
+
+*{
+    box-sizing:border-box;
+}
+
+
+html,
+body{
+    margin:0;
+    padding:0;
+    background:#f3f4f6;
+    color:#111;
+    font-family:Arial,Helvetica,sans-serif;
+}
+
+
+.receipt{
+
+    width:320px;
+    max-width:100%;
+
+    margin:20px auto;
+
+    padding:18px 16px;
+
+    background:#fff;
+
+    box-shadow:0 2px 12px rgba(0,0,0,.12);
+
+}
+
+
+/* =====================================================
+   BRAND / LOGO
+===================================================== */
+
+.brand-header{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    text-align:center;
+
+    margin-bottom:8px;
+
+}
+
+
+.brand-logo{
+
+    display:block;
+
+    width:72px;
+
+    height:72px;
+
+    object-fit:contain;
+
+    margin:0 auto 7px auto;
+
+}
+
+
+.brand-name{
+
+    margin:0;
+
+    font-size:22px;
+
+    font-weight:700;
+
+    line-height:1.2;
+
+    letter-spacing:.3px;
+
+}
+
+
+/* =====================================================
+   RESTAURANT HEADER
+===================================================== */
+
+.restaurant-header{
+
+    text-align:center;
+
+}
+
+
+.restaurant-name{
+
+    margin:0;
+
+    font-size:22px;
+
+    font-weight:700;
+
+    letter-spacing:.3px;
+
+}
+
+
+.restaurant-info{
+
+    margin-top:5px;
+
+    font-size:11px;
+
+    line-height:1.5;
+
+    color:#333;
+
+}
+
+
+.receipt-title{
+
+    margin-top:10px;
+
+    font-size:12px;
+
+    font-weight:bold;
+
+    letter-spacing:1px;
+
+}
+
+
+/* =====================================================
+   DIVIDER
+===================================================== */
+
+.divider{
+
+    border:0;
+
+    border-top:1px dashed #222;
+
+    margin:10px 0;
+
+}
+
+
+/* =====================================================
+   ORDER INFO
+===================================================== */
+
+.order-info{
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:5px 10px;
+
+    font-size:11px;
+
+}
+
+
+.order-info div:nth-child(even){
+
+    text-align:right;
+
+}
+
+
+.order-info strong{
+
+    font-weight:700;
+
+}
+
+
+/* =====================================================
+   ITEMS
+===================================================== */
+
+.items{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+    table-layout:fixed;
+
+    margin-top:5px;
+
+}
+
+
+.items th{
+
+    padding:5px 0;
+
+    border-bottom:1px dashed #222;
+
+    font-size:11px;
+
+    font-weight:700;
+
+}
+
+
+.items td{
+
+    padding:6px 0;
+
+    font-size:11px;
+
+    vertical-align:top;
+
+}
+
+
+.items th:nth-child(1),
+.items td:nth-child(1){
+
+    width:48%;
+
+    text-align:left;
+
+    padding-right:4px;
+
+    word-wrap:break-word;
+
+}
+
+
+.items th:nth-child(2),
+.items td:nth-child(2){
+
+    width:12%;
+
+    text-align:center;
+
+}
+
+
+.items th:nth-child(3),
+.items td:nth-child(3){
+
+    width:20%;
+
+    text-align:right;
+
+    padding-right:4px;
+
+}
+
+
+.items th:nth-child(4),
+.items td:nth-child(4){
+
+    width:20%;
+
+    text-align:right;
+
+}
+
+
+.item-name{
+
+    font-weight:600;
+
+}
+
+
+/* =====================================================
+   SUMMARY
+===================================================== */
+
+.summary{
+
+    margin-top:5px;
+
+}
+
+
+.summary-row{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    font-size:12px;
+
+    margin:6px 0;
+
+}
+
+
+.summary-row span:last-child{
+
+    white-space:nowrap;
+
+    font-variant-numeric:tabular-nums;
+
+}
+
+
+.discount{
+
+    color:#16805b;
+
+}
+
+
+.tax{
+
+    color:#333;
+
+}
+
+
+.service{
+
+    color:#333;
+
+}
+
+
+.grand-total{
+
+    border-top:1px dashed #222;
+
+    border-bottom:1px dashed #222;
+
+    margin-top:9px;
+
+    padding:9px 0;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    font-size:16px;
+
+    font-weight:700;
+
+}
+
+
+/* =====================================================
+   PAYMENT
+===================================================== */
+
+.payment-section{
+
+    margin-top:10px;
+
+}
+
+
+.payment-row{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    font-size:11px;
+
+    margin:5px 0;
+
+}
+
+
+.payment-row span:last-child{
+
+    font-weight:600;
+
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.thank-you{
+
+    text-align:center;
+
+    margin-top:15px;
+
+    font-size:12px;
+
+    font-weight:bold;
+
+}
+
+
+.footer-text{
+
+    text-align:center;
+
+    margin-top:5px;
+
+    font-size:10px;
+
+    color:#555;
+
+    line-height:1.5;
+
+}
+
+
+/* =====================================================
+   BUTTONS
+===================================================== */
+
+.print-actions{
+
+    text-align:center;
+
+    margin-top:18px;
+
+}
+
+
+.print-btn{
+
+    border:none;
+
+    background:#111827;
+
+    color:white;
+
+    padding:10px 18px;
+
+    border-radius:7px;
+
+    cursor:pointer;
+
+    font-size:13px;
+
+    font-weight:bold;
+
+}
+
+
+.print-btn:hover{
+
+    background:#000;
+
+}
+
+
+.edit-btn{
+
+    border:none;
+
+    background:#c97b2e;
+
+    color:#fff;
+
+    padding:10px 14px;
+
+    border-radius:7px;
+
+    cursor:pointer;
+
+    font-size:13px;
+
+    font-weight:bold;
+
+    margin-right:6px;
+
+}
+
+
+/* =====================================================
+   EDIT PANEL
+===================================================== */
+
+.edit-panel{
+
+    margin-top:14px;
+
+    padding:12px;
+
+    border:1px solid #d1d5db;
+
+    border-radius:8px;
+
+    background:#f9fafb;
+
+}
+
+
+.edit-panel h3{
+
+    margin:0 0 10px;
+
+    font-size:13px;
+
+}
+
+
+.edit-item{
+
+    display:grid;
+
+    grid-template-columns:1fr 70px 28px;
+
+    gap:6px;
+
+    align-items:center;
+
+    margin:6px 0;
+
+}
+
+
+.edit-item input{
+
+    width:100%;
+
+    padding:7px;
+
+    border:1px solid #d1d5db;
+
+    border-radius:5px;
+
+    font-size:12px;
+
+}
+
+
+.edit-remove{
+
+    width:28px;
+
+    height:28px;
+
+    border:0;
+
+    border-radius:5px;
+
+    background:#dc2626;
+
+    color:#fff;
+
+    cursor:pointer;
+
+    font-weight:bold;
+
+}
+
+
+.edit-pricing{
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:7px;
+
+    margin-top:10px;
+
+}
+
+
+.edit-pricing label{
+
+    font-size:10px;
+
+    color:#374151;
+
+}
+
+
+.edit-pricing input,
+.edit-pricing select{
+
+    width:100%;
+
+    margin-top:3px;
+
+    padding:7px;
+
+    border:1px solid #d1d5db;
+
+    border-radius:5px;
+
+    background:#fff;
+
+    font-size:12px;
+
+}
+
+
+.edit-save-btn,
+.edit-cancel-btn{
+
+    border:0;
+
+    padding:9px 12px;
+
+    border-radius:6px;
+
+    cursor:pointer;
+
+    font-weight:bold;
+
+    font-size:12px;
+
+    margin-top:9px;
+
+}
+
+
+.edit-save-btn{
+
+    background:#16805b;
+
+    color:#fff;
+
+}
+
+
+.edit-cancel-btn{
+
+    background:#e5e7eb;
+
+    color:#111;
+
+    margin-left:5px;
+
+}
+
+
+/* =====================================================
+   ERROR / LOADING
+===================================================== */
+
+.error{
+
+    text-align:center;
+
+    padding:30px 10px;
+
+    font-size:13px;
+
+    color:#b91c1c;
+
+}
+
+
+.loading{
+
+    text-align:center;
+
+    padding:30px 10px;
+
+    font-size:13px;
+
+    color:#555;
+
+}
+
+
+/* =====================================================
+   PRINT
+===================================================== */
+
+@media print{
+
+    .edit-panel,
+    .edit-btn,
+    .print-actions{
+
+        display:none !important;
+
+    }
+
+
+    @page{
+
+        size:80mm auto;
+
+        margin:0;
+
+    }
+
+
+    html,
+    body{
+
+        width:80mm;
+
+        margin:0;
+
+        padding:0;
+
+        background:#fff;
+
+    }
+
+
+    .receipt{
+
+        width:80mm;
+
+        max-width:none;
+
+        margin:0;
+
+        padding:5mm 4mm 4mm 4mm;
+
+        box-shadow:none;
+
+    }
+
+
+    .brand-logo{
+
+        width:20mm;
+
+        height:20mm;
+
+        margin-bottom:2mm;
+
+    }
+
+
+    .brand-name{
+
+        font-size:20px;
+
+    }
+
+}
+
+
+/* =====================================================
+   SMALL SCREEN
+===================================================== */
+
+@media(max-width:360px){
+
+    .receipt{
+
+        width:100%;
+
+        margin:0;
+
+        box-shadow:none;
+
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="receipt" id="receipt">
+
+    <div class="loading">
+
+        Loading bill...
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+
+/* =====================================================
+   AUTH
+===================================================== */
+
+const token = localStorage.getItem("token");
+
+
+
+/* =====================================================
+   ORDER ID
+===================================================== */
+
+const params =
+    new URLSearchParams(window.location.search);
+
+
+const orderId =
+    params.get("id");
+
+
+let currentOrder = null;
+
+
+let editMode =
+    params.get("edit") === "1";
+
+
+
+/* =====================================================
+   RESTAURANT BRANDING
+===================================================== */
+
+let restaurantBrand = {
+
+    name:"",
+    logo:""
+
+};
+
+
+
+/* =====================================================
+   HELPERS
+===================================================== */
+
+function escapeHtml(value){
+
+    if(
+        value === null ||
+        value === undefined
+    ){
+
+        return "";
+
+    }
+
+
+    return String(value)
+
+        .replace(/&/g,"&amp;")
+
+        .replace(/</g,"&lt;")
+
+        .replace(/>/g,"&gt;")
+
+        .replace(/"/g,"&quot;")
+
+        .replace(/'/g,"&#039;");
+
+}
+
+
+
+function money(value){
+
+    const amount =
+        Number(value || 0);
+
+
+    return "Rs " +
+        amount.toLocaleString(
+            "en-PK",
+            {
+                minimumFractionDigits:2,
+                maximumFractionDigits:2
+            }
+        );
+
+}
+
+
+
+function number(value){
+
+    return Number(value || 0);
+
+}
+
+
+
+function getOrderList(response){
+
+    if(Array.isArray(response)){
+        return response;
+    }
+
+
+    if(
+        response &&
+        Array.isArray(response.data)
+    ){
+        return response.data;
+    }
+
+
+    if(
+        response &&
+        Array.isArray(response.orders)
+    ){
+        return response.orders;
+    }
+
+
+    // Some APIs return { data: { orders: [] } }
+    if(
+        response &&
+        response.data &&
+        Array.isArray(response.data.orders)
+    ){
+        return response.data.orders;
+    }
+
+
+    return [];
+
+}
+
+
+
+function getOrderItems(order){
+
+    if(!order){
+        return [];
+    }
+
+
+    // Normal backend response
+    if(Array.isArray(order.items)){
+        return order.items;
+    }
+
+
+    // Agar PostgreSQL JSON array string ban kar aaye
+    if(typeof order.items === "string"){
+
+        try{
+
+            const parsed =
+                JSON.parse(order.items);
+
+            if(Array.isArray(parsed)){
+                return parsed;
+            }
+
+        }catch(error){
+
+            console.warn(
+                "Unable to parse order.items:",
+                error
+            );
+
+        }
+
+    }
+
+
+    // Alternative field
+    if(Array.isArray(order.order_items)){
+        return order.order_items;
+    }
+
+
+    if(typeof order.order_items === "string"){
+
+        try{
+
+            const parsed =
+                JSON.parse(order.order_items);
+
+            if(Array.isArray(parsed)){
+                return parsed;
+            }
+
+        }catch(error){
+
+            console.warn(
+                "Unable to parse order.order_items:",
+                error
+            );
+
+        }
+
+    }
+
+
+    return [];
+
+}
+
+
+
+function formatDate(dateValue){
+
+    if(!dateValue){
+
+        return "-";
+
+    }
+
+
+    const date =
+        new Date(dateValue);
+
+
+    if(isNaN(date.getTime())){
+
+        return "-";
+
+    }
+
+
+    return date.toLocaleDateString(
+        "en-PK",
+        {
+            day:"2-digit",
+            month:"short",
+            year:"numeric"
+        }
+    );
+
+}
+
+
+
+function formatTime(dateValue){
+
+    if(!dateValue){
+
+        return "-";
+
+    }
+
+
+    const date =
+        new Date(dateValue);
+
+
+    if(isNaN(date.getTime())){
+
+        return "-";
+
+    }
+
+
+    return date.toLocaleTimeString(
+        "en-PK",
+        {
+            hour:"2-digit",
+            minute:"2-digit"
+        }
+    );
+
+}
+
+
+
+/* =====================================================
+   LOAD RESTAURANT LOGO + NAME
+===================================================== */
+
+async function loadBranding(){
+
+    try{
+
+        const res =
+            await fetch(
+                "/api/restaurants/me",
+                {
+                    headers:{
+                        "Authorization":
+                            "Bearer " + token
+                    }
+                }
+            );
+
+
+        if(!res.ok){
+
+            console.warn(
+                "Branding request failed:",
+                res.status
+            );
+
+            return;
+
+        }
+
+
+        const data =
+            await res.json();
+
+
+        if(
+            data &&
+            data.success &&
+            data.data
+        ){
+
+            restaurantBrand.name =
+                data.data.name || "";
+
+
+            restaurantBrand.logo =
+                data.data.logo_url || "";
+
+        }
+
+
+    }catch(error){
+
+        console.error(
+            "loadBranding:",
+            error
+        );
+
+    }
+
+}
+
+
+
+/* =====================================================
+   LOAD BILL
+===================================================== */
+
+async function loadBill(){
+
+    const receipt =
+        document.getElementById("receipt");
+
+
+    try{
+
+        if(!token){
+
+            receipt.innerHTML = `
+
+                <div class="error">
+
+                    Please login again.
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        if(!orderId){
+
+            receipt.innerHTML = `
+
+                <div class="error">
+
+                    Order ID is missing.
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        const res =
+            await fetch(
+                "/api/orders",
+                {
+                    headers:{
+                        "Authorization":
+                            "Bearer " + token
+                    }
+                }
+            );
+
+
+        if(!res.ok){
+
+            throw new Error(
+                "Unable to load orders. HTTP " +
+                res.status
+            );
+
+        }
+
+
+        const response =
+            await res.json();
+
+
+        const orders =
+            getOrderList(response);
+
+
+        const order =
+            orders.find(
+                item =>
+                    String(item.id) ===
+                    String(orderId)
+            );
+
+
+        if(!order){
+
+            receipt.innerHTML = `
+
+                <div class="error">
+
+                    Order #${escapeHtml(orderId)}
+                    not found.
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        currentOrder = order;
+
+        console.log("FULL ORDER:", order);
+console.log("ORDER ITEMS:", order.items);
+console.log("ORDER DEALS:", order.deals);
+
+
+
+
+        editMode =
+            editMode &&
+            isEditable(order);
+
+
+        renderBill(order);
+
+
+    }catch(error){
+
+        console.error(
+            "loadBill:",
+            error
+        );
+
+
+        receipt.innerHTML = `
+
+            <div class="error">
+
+                Unable to load bill.
+
+                <br><br>
+
+                ${escapeHtml(error.message)}
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+
+/* =====================================================
+   EDITABLE
+===================================================== */
+
+function isEditable(order){
+
+    return (
+
+        String(
+            order.status || ""
+        ).toLowerCase() === "served"
+
+        &&
+
+        String(
+            order.payment_status || ""
+        ).toLowerCase() !== "paid"
+
+    );
+
+}
+
+
+
+/* =====================================================
+   EDIT BILL
+===================================================== */
+
+function editBill(){
+
+    if(!currentOrder){
+
+        return;
+
+    }
+
+
+    if(!isEditable(currentOrder)){
+
+        alert(
+            "This bill can only be edited before payment."
+        );
+
+        return;
+
+    }
+
+
+    editMode = true;
+
+
+    renderBill(currentOrder);
+
+
+    window.scrollTo({
+
+        top:0,
+
+        behavior:"smooth"
+
+    });
+
+}
+
+
+
+function cancelEdit(){
+
+    editMode = false;
+
+
+    renderBill(currentOrder);
+
+}
+
+
+
+/* =====================================================
+   SAVE BILL EDITS
+===================================================== */
+
+async function saveBillEdits() {
+  if (!currentOrder || !isEditable(currentOrder)) {
+    alert("Only served unpaid bills can be edited.");
+    return;
+  }
+
+  // ✅ Items + Deals dono collect karo
+  const rows = document.querySelectorAll(".edit-item");
+  const changes = [];
+  let remainingQuantity = 0;
+
+  rows.forEach(row => {
+    const input = row.querySelector("input");
+    const quantity = Number(input.value);
+    const original = Number(row.dataset.originalQty);
+
+    // ✅ Items aur deals dono handle karo
+    const itemId = row.dataset.itemId ? Number(row.dataset.itemId) : null;
+    const dealId = row.dataset.dealId ? Number(row.dataset.dealId) : null;
+    const type = row.dataset.type; // 'item' or 'deal'
+
+    remainingQuantity += Math.max(0, quantity);
+
+    if (Number.isInteger(quantity) && quantity >= 0 && quantity !== original) {
+      changes.push({
+        type: type,
+        itemId: itemId,
+        dealId: dealId,
+        quantity: quantity
+      });
+    }
+  });
+
+  // ✅ Remaining quantity check
+  if (remainingQuantity <= 0) {
+    alert("At least one item must remain on the bill.");
+    return;
+  }
+
+  // ✅ Pricing values
+  const discountType = document.getElementById("edit-discount-type").value;
+  const discountValue = Number(document.getElementById("edit-discount-value").value || 0);
+  const gstPercent = Number(document.getElementById("edit-gst-percent").value || 0);
+  const taxPercent = Number(document.getElementById("edit-tax-percent").value || 0);
+
+  // ✅ Validation
+  if (discountValue < 0 || gstPercent < 0 || taxPercent < 0) {
+    alert("Discount, GST and tax cannot be negative.");
+    return;
+  }
+  if (discountType === "percent" && discountValue > 100) {
+    alert("Percentage discount cannot exceed 100%.");
+    return;
+  }
+  if (gstPercent > 100 || taxPercent > 100) {
+    alert("GST/Tax percentage cannot exceed 100%.");
+    return;
+  }
+
+  const saveBtn = document.getElementById("edit-save-btn");
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.innerText = "Saving...";
+  }
+
+  try {
+    // ✅ Items update karo
+    for (const change of changes) {
+      if (change.type === 'item' && change.itemId) {
+        const res = await fetch(`/api/orders/items/${change.itemId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify({ quantity: change.quantity })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.message || "Unable to update item quantity");
+        }
+      }
+      
+      // ✅ DEALS update karo (Naya API call)
+      if (change.type === 'deal' && change.dealId) {
+        const res = await fetch(`/api/orders/deals/${change.dealId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify({ quantity: change.quantity })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.message || "Unable to update deal quantity");
+        }
+      }
+    }
+
+    // ✅ Pricing update
+    const pricingRes = await fetch(`/api/orders/${orderId}/pricing`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({
+        discount_type: discountType,
+        discount_value: discountValue,
+        gst_percent: gstPercent,
+        tax_percent: taxPercent
+      })
+    });
+    const pricingData = await pricingRes.json().catch(() => ({}));
+    if (!pricingRes.ok) {
+      throw new Error(pricingData.message || "Unable to update bill pricing");
+    }
+
+    editMode = false;
+    await loadBill();
+
+  } catch (error) {
+    console.error("saveBillEdits:", error);
+    alert(error.message || "Unable to save bill changes");
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerText = "Save Bill";
+    }
+  }
+}
+
+
+
+/* =====================================================
+   RENDER BILL
+===================================================== */
+
+function renderBill(order){
+
+    const receipt =
+        document.getElementById("receipt");
+
+
+    const items =
+        getOrderItems(order);
+
+        const deals =
+    Array.isArray(order.deals)
+        ? order.deals
+        : [];
+
+        console.log(
+    "RECEIPT DEALS:",
+    JSON.stringify(deals, null, 2)
+);
+
+
+    /* =================================================
+       ITEM TOTAL
+    ================================================= */
+
+    let subtotal = 0;
+
+
+    let rows = "";
+
+
+    /* =================================================
+   NORMAL ITEMS + DEALS
+================================================= */
+
+items.forEach(item => {
+
+    const quantity =
+        number(item.quantity);
+
+    const newQuantity =
+        number(item.new_quantity);
+
+    const price =
+        number(
+            item.price ??
+            item.unit_price ??
+            item.selling_price
+        );
+
+    const amount =
+        price * quantity;
+
+    /*
+     * IMPORTANT:
+     * Deal ke andar ke order_items ko normal
+     * item list mein print nahi karna.
+     *
+     * getAllOrders() already filters:
+     * oi.order_deal_id IS NULL
+     *
+     * Isliye yahan sirf standalone items hain.
+     */
+
+    subtotal += amount;
+
+    const addedHtml =
+        newQuantity > 0
+        ?
+        `
+            <div style="
+                font-size:9px;
+                color:#16805b;
+                margin-top:2px;
+                font-weight:600;
+            ">
+                + Added: ${newQuantity}
+            </div>
+        `
+        :
+        "";
+
+    rows += `
+
+        <tr>
+
+            <td class="item-name">
+
+                ${escapeHtml(
+                    item.name ||
+                    item.item_name ||
+                    "Item"
+                )}
+
+                ${
+                    item.variant_label
+                    ?
+                    `
+                    <div style="
+                        font-size:9px;
+                        color:#555;
+                        margin-top:2px;
+                    ">
+                        ${escapeHtml(
+                            item.variant_label
+                        )}
+                    </div>
+                    `
+                    :
+                    ""
+                }
+
+                ${addedHtml}
+
+            </td>
+
+            <td>
+                ${quantity}
+            </td>
+
+            <td>
+                ${money(price)}
+            </td>
+
+            <td>
+                ${money(amount)}
+            </td>
+
+        </tr>
+
+    `;
+
+});
+
+
+/* =================================================
+   DEALS
+================================================= */
+
+deals.forEach(deal => {
+
+    const quantity =
+        number(deal.quantity);
+
+    const price =
+        number(deal.price);
+
+    const amount =
+        price * quantity;
+
+    subtotal += amount;
+
+
+    let dealItemsHtml = "";
+
+let dealItems = deal.items;
+
+
+/*
+ * PostgreSQL/API kabhi kabhi nested JSON
+ * ko string ki form mein return kar sakta hai.
+ */
+if (typeof dealItems === "string") {
+
+    try {
+
+        dealItems =
+            JSON.parse(dealItems);
+
+    }
+    catch (error) {
+
+        console.warn(
+            "Unable to parse deal.items:",
+            dealItems
+        );
+
+        dealItems = [];
+
+    }
+
+}
+
+
+if (Array.isArray(dealItems)) {
+
+    dealItems.forEach(dealItem => {
+
+        const dealItemQty =
+            number(
+                dealItem.quantity
+            );
+
+
+        const dealItemName =
+            dealItem.name ||
+            dealItem.item_name ||
+            "Item";
+
+
+        const variantLabel =
+            dealItem.variant_label ||
+            dealItem.variant_name ||
+            "";
+
+
+        dealItemsHtml += `
+
+            <div style="
+                font-size:9px;
+                color:#555;
+                margin-top:2px;
+                padding-left:5px;
+                line-height:1.3;
+            ">
+
+                ↳ ${escapeHtml(
+                    dealItemName
+                )}
+
+                × ${dealItemQty}
+
+                ${
+                    variantLabel
+                    ?
+                    ` (${escapeHtml(
+                        variantLabel
+                    )})`
+                    :
+                    ""
+                }
+
+            </div>
+
+        `;
+
+    });
+
+}
+
+
+    rows += `
+
+        <tr>
+
+            <td class="item-name">
+
+                🎁 ${escapeHtml(
+                    deal.deal_name ||
+                    deal.name ||
+                    "Deal"
+                )}
+
+                ${dealItemsHtml}
+
+            </td>
+
+            <td>
+                ${quantity}
+            </td>
+
+            <td>
+                ${money(price)}
+            </td>
+
+            <td>
+                ${money(amount)}
+            </td>
+
+        </tr>
+
+    `;
+
+});
+
+
+
+    /* =================================================
+       DISCOUNT
+    ================================================= */
+
+    const discount =
+        number(
+            order.discount_amount ??
+            order.discount ??
+            order.discount_value
+        );
+
+
+
+    /* =================================================
+       TAX / GST
+    ================================================= */
+
+    const gstAmount =
+        number(
+            order.gst_amount ??
+            order.gst
+        );
+
+
+    const taxAmount =
+        number(
+            order.tax_amount ??
+            order.tax
+        );
+
+
+    const tax =
+        gstAmount +
+        taxAmount;
+
+
+
+    /* =================================================
+       SERVICE CHARGE
+    ================================================= */
+
+    const serviceCharge =
+        number(
+            order.service_charge ??
+            order.service_charge_amount
+        );
+
+
+
+    /* =================================================
+       TOTAL
+    ================================================= */
+
+    let grandTotal =
+
+        subtotal -
+        discount +
+        tax +
+        serviceCharge;
+
+
+    if(
+        order.total_amount !== undefined &&
+        order.total_amount !== null
+    ){
+
+        grandTotal =
+            number(
+                order.total_amount
+            );
+
+    }
+
+    else if(
+        order.total !== undefined &&
+        order.total !== null
+    ){
+
+        grandTotal =
+            number(
+                order.total
+            );
+
+    }
+
+
+
+    /* =================================================
+       PAYMENT
+    ================================================= */
+
+    const paymentMethod =
+        order.payment_method ||
+        order.paymentMethod ||
+        "-";
+
+
+    const paidAmount =
+        number(
+            order.paid_amount ??
+            order.paid ??
+            order.amount_paid
+        );
+
+
+    const changeAmount =
+        number(
+            order.change_amount ??
+            order.change ??
+            order.return_amount
+        );
+
+
+
+    /* =================================================
+       DATE / TIME
+    ================================================= */
+
+    const createdAt =
+        order.created_at ||
+        order.createdAt ||
+        order.date;
+
+
+
+    /* =================================================
+       RESTAURANT INFO
+    ================================================= */
+
+    const restaurantName =
+
+        restaurantBrand.name ||
+
+        order.restaurant_name ||
+
+        order.restaurantName ||
+
+        "Your Restaurant";
+
+
+    const restaurantPhone =
+
+        order.restaurant_phone ||
+
+        order.restaurantPhone ||
+
+        "";
+
+
+    const restaurantAddress =
+
+        order.restaurant_address ||
+
+        order.restaurantAddress ||
+
+        "";
+
+
+
+    /* =================================================
+       LOGO
+    ================================================= */
+
+    const logoHtml =
+
+        restaurantBrand.logo
+
+        ?
+
+        `
+
+            <img
+
+                class="brand-logo"
+
+                src="${escapeHtml(
+                    restaurantBrand.logo
+                )}"
+
+                alt="${escapeHtml(
+                    restaurantName
+                )}"
+
+                onerror="
+                    this.style.display='none';
+                "
+
+            >
+
+        `
+
+        :
+
+        "";
+
+
+
+    /* =================================================
+       DISCOUNT ROW
+    ================================================= */
+
+    const discountRow =
+
+        discount > 0
+
+        ?
+
+        `
+
+            <div class="summary-row discount">
+
+                <span>
+                    Discount
+                </span>
+
+                <span>
+                    - ${money(discount)}
+                </span>
+
+            </div>
+
+        `
+
+        :
+
+        "";
+
+
+
+    /* =================================================
+       TAX ROW
+    ================================================= */
+
+    const taxRow =
+
+        tax > 0
+
+        ?
+
+        `
+
+            ${
+                gstAmount > 0
+
+                ?
+
+                `
+
+                    <div class="summary-row tax">
+
+                        <span>
+                            GST
+                        </span>
+
+                        <span>
+                            ${money(gstAmount)}
+                        </span>
+
+                    </div>
+
+                `
+
+                :
+
+                ""
+            }
+
+
+            ${
+                taxAmount > 0
+
+                ?
+
+                `
+
+                    <div class="summary-row tax">
+
+                        <span>
+                            Other Tax
+                        </span>
+
+                        <span>
+                            ${money(taxAmount)}
+                        </span>
+
+                    </div>
+
+                `
+
+                :
+
+                ""
+            }
+
+        `
+
+        :
+
+        "";
+
+
+
+    /* =================================================
+       SERVICE ROW
+    ================================================= */
+
+    const serviceRow =
+
+        serviceCharge > 0
+
+        ?
+
+        `
+
+            <div class="summary-row service">
+
+                <span>
+                    Service Charge
+                </span>
+
+                <span>
+                    ${money(serviceCharge)}
+                </span>
+
+            </div>
+
+        `
+
+        :
+
+        "";
+
+
+
+    /* =================================================
+       EDIT PANEL
+    ================================================= */
+
+    const editPanel =
+
+        editMode &&
+        isEditable(order)
+
+        ?
+
+        `
+
+        <div class="edit-panel">
+
+            <h3>
+                Edit Bill — before payment
+            </h3>
+
+
+            ${items.map(item => `
+
+                <div
+
+                    class="edit-item"
+
+                    data-item-id="${Number(
+                        item.order_item_id ??
+                        item.id ??
+                        0
+                    )}"
+
+                    data-original-qty="${Number(
+                        item.quantity
+                    )}"
+
+                >
+
+                    <div>
+
+                        ${escapeHtml(
+                            item.name ||
+                            item.item_name ||
+                            "Item"
+                        )}
+
+                    </div>
+
+
+                    <input
+
+                        type="number"
+
+                        min="0"
+
+                        step="1"
+
+                        value="${Number(
+                            item.quantity
+                        )}"
+
+                    >
+
+
+                    <button
+
+                        type="button"
+
+                        class="edit-remove"
+
+                        onclick="
+                            this
+                            .previousElementSibling
+                            .value=0
+                        "
+
+                        title="Remove item"
+
+                    >
+
+                        ×
+
+                    </button>
+
+                </div>
+
+            `).join("")}
+
+            ${deals.map(deal => `
+  <div class="edit-item" data-deal-id="${Number(deal.order_deal_id || deal.id || 0)}" data-original-qty="${Number(deal.quantity)}" data-type="deal">
+    <div>🎁 ${escapeHtml(deal.deal_name || deal.name || "Deal")}</div>
+    <input type="number" min="0" step="1" value="${Number(deal.quantity)}">
+    <button type="button" class="edit-remove" onclick="this.previousElementSibling.value=0">×</button>
+  </div>
+`).join("")}
+
+
+            <div class="edit-pricing">
+
+
+                <label>
+
+                    Discount Type
+
+                    <select
+                        id="edit-discount-type"
+                    >
+
+                        <option
+                            value="none"
+                            ${
+                                String(
+                                    order.discount_type ||
+                                    "none"
+                                ) === "none"
+                                ?
+                                "selected"
+                                :
+                                ""
+                            }
+                        >
+                            None
+                        </option>
+
+
+                        <option
+                            value="percent"
+                            ${
+                                String(
+                                    order.discount_type ||
+                                    ""
+                                ) === "percent"
+                                ?
+                                "selected"
+                                :
+                                ""
+                            }
+                        >
+                            Percent
+                        </option>
+
+
+                        <option
+                            value="fixed"
+                            ${
+                                String(
+                                    order.discount_type ||
+                                    ""
+                                ) === "fixed"
+                                ?
+                                "selected"
+                                :
+                                ""
+                            }
+                        >
+                            Fixed
+                        </option>
+
+                    </select>
+
+                </label>
+
+
+
+                <label>
+
+                    Discount
+
+                    <input
+
+                        id="edit-discount-value"
+
+                        type="number"
+
+                        min="0"
+
+                        step="0.01"
+
+                        value="${Number(
+                            order.discount_value || 0
+                        )}"
+
+                    >
+
+                </label>
+
+
+
+                <label>
+
+                    GST %
+
+                    <input
+
+                        id="edit-gst-percent"
+
+                        type="number"
+
+                        min="0"
+
+                        max="100"
+
+                        step="0.01"
+
+                        value="${Number(
+                            order.gst_percent || 0
+                        )}"
+
+                    >
+
+                </label>
+
+
+
+                <label>
+
+                    Other Tax %
+
+                    <input
+
+                        id="edit-tax-percent"
+
+                        type="number"
+
+                        min="0"
+
+                        max="100"
+
+                        step="0.01"
+
+                        value="${Number(
+                            order.tax_percent || 0
+                        )}"
+
+                    >
+
+                </label>
+
+
+            </div>
+
+
+            <button
+
+                id="edit-save-btn"
+
+                class="edit-save-btn"
+
+                onclick="saveBillEdits()"
+
+            >
+
+                Save Bill
+
+            </button>
+
+
+            <button
+
+                class="edit-cancel-btn"
+
+                onclick="cancelEdit()"
+
+            >
+
+                Cancel
+
+            </button>
+
+        </div>
+
+        `
+
+        :
+
+        "";
+
+
+
+    /* =================================================
+       PAYMENT ROWS
+    ================================================= */
+
+    const paymentRows =
+
+        paidAmount > 0 ||
+        changeAmount > 0 ||
+        paymentMethod !== "-"
+
+        ?
+
+        `
+
+        <div class="payment-section">
+
+
+            <div class="payment-row">
+
+                <span>
+                    Payment
+                </span>
+
+                <span>
+                    ${escapeHtml(
+                        paymentMethod
+                    )}
+                </span>
+
+            </div>
+
+
+            ${
+                paidAmount > 0
+
+                ?
+
+                `
+
+                <div class="payment-row">
+
+                    <span>
+                        Paid
+                    </span>
+
+                    <span>
+                        ${money(
+                            paidAmount
+                        )}
+                    </span>
+
+                </div>
+
+                `
+
+                :
+
+                ""
+            }
+
+
+            ${
+                changeAmount > 0
+
+                ?
+
+                `
+
+                <div class="payment-row">
+
+                    <span>
+                        Change
+                    </span>
+
+                    <span>
+                        ${money(
+                            changeAmount
+                        )}
+                    </span>
+
+                </div>
+
+                `
+
+                :
+
+                ""
+            }
+
+
+        </div>
+
+        `
+
+        :
+
+        "";
+
+
+
+    /* =================================================
+       FINAL RECEIPT
+    ================================================= */
+
+    receipt.innerHTML = `
+
+
+        <!-- LOGO + RESTAURANT NAME -->
+
+        <div class="brand-header">
+
+            ${logoHtml}
+
+
+            <div class="brand-name">
+
+                ${escapeHtml(
+                    restaurantName
+                )}
+
+            </div>
+
+        </div>
+
+
+
+        <div class="restaurant-header">
+
+
+            ${
+                restaurantAddress
+
+                ?
+
+                `
+
+                <div class="restaurant-info">
+
+                    ${escapeHtml(
+                        restaurantAddress
+                    )}
+
+                </div>
+
+                `
+
+                :
+
+                ""
+            }
+
+
+            ${
+                restaurantPhone
+
+                ?
+
+                `
+
+                <div class="restaurant-info">
+
+                    Tel:
+                    ${escapeHtml(
+                        restaurantPhone
+                    )}
+
+                </div>
+
+                `
+
+                :
+
+                ""
+            }
+
+
+            <div class="receipt-title">
+
+                SALES RECEIPT
+
+            </div>
+
+
+        </div>
+
+
+
+        <hr class="divider">
+
+
+
+        <div class="order-info">
+
+
+            <div>
+
+                <strong>
+                    Order #
+                </strong>
+
+                ${escapeHtml(
+                    order.id
+                )}
+
+            </div>
+
+
+            <div>
+
+                <strong>
+                    Table
+                </strong>
+
+                ${escapeHtml(
+
+                    order.table_no ??
+
+                    order.table_number ??
+
+                    "-"
+
+                )}
+
+            </div>
+
+
+            <div>
+
+                <strong>
+                    Date
+                </strong>
+
+                ${formatDate(
+                    createdAt
+                )}
+
+            </div>
+
+
+            <div>
+
+                <strong>
+                    Time
+                </strong>
+
+                ${formatTime(
+                    createdAt
+                )}
+
+            </div>
+
+
+        </div>
+
+
+
+        <hr class="divider">
+
+
+
+        <table class="items">
+
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Item
+                    </th>
+
+                    <th>
+                        Qty
+                    </th>
+
+                    <th>
+                        Price
+                    </th>
+
+                    <th>
+                        Amount
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                ${
+                    rows ||
+
+                    `
+
+                    <tr>
+
+                        <td
+                            colspan="4"
+                            style="
+                                text-align:center;
+                            "
+                        >
+
+                            No items
+
+                        </td>
+
+                    </tr>
+
+                    `
+                }
+
+            </tbody>
+
+
+        </table>
+
+
+
+        <hr class="divider">
+
+
+
+        <div class="summary">
+
+
+            <div class="summary-row">
+
+                <span>
+                    Subtotal
+                </span>
+
+                <span>
+                    ${money(
+                        subtotal
+                    )}
+                </span>
+
+            </div>
+
+
+            ${discountRow}
+
+
+            ${taxRow}
+
+
+            ${serviceRow}
+
+
+            <div class="grand-total">
+
+                <span>
+                    Grand Total
+                </span>
+
+                <span>
+                    ${money(
+                        grandTotal
+                    )}
+                </span>
+
+            </div>
+
+
+        </div>
+
+
+
+        ${editPanel}
+
+
+        ${paymentRows}
+
+
+
+        <div class="thank-you">
+
+            Thank You!
+
+        </div>
+
+
+        <div class="footer-text">
+
+            We appreciate your visit.
+
+            <br>
+
+            Please visit us again.
+
+        </div>
+
+
+
+        <div class="print-actions">
+
+
+            ${
+                isEditable(order) &&
+                !editMode
+
+                ?
+
+                `
+
+                <button
+
+                    class="edit-btn"
+
+                    onclick="editBill()"
+
+                >
+
+                    ✏ Edit Bill
+
+                </button>
+
+                `
+
+                :
+
+                ""
+            }
+
+
+            <button
+
+                class="print-btn"
+
+                onclick="window.print()"
+
+            >
+
+                🖨 Print Receipt
+
+            </button>
+
+
+        </div>
+
+
+    `;
+
+}
+
+
+
+/* =====================================================
+   START
+===================================================== */
+
+async function startBill(){
+
+    await loadBranding();
+
+    await loadBill();
+
+}
+
+
+startBill();
+
+
+</script>
+
+
+</body>
+
+</html>
+

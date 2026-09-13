@@ -1,0 +1,2431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Restaurant POS - Rider</title>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+:root{
+  --bg:#0f172a;
+  --panel:#111827;
+  --panel2:#1e293b;
+  --border:#334155;
+  --text:#f8fafc;
+  --muted:#94a3b8;
+  --green:#22c55e;
+  --green2:#16a34a;
+  --orange:#f59e0b;
+  --red:#ef4444;
+  --blue:#3b82f6;
+  --white:#fff;
+}
+
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
+
+.hidden{
+  display:none !important;
+}
+
+/* =====================================================
+   LOGIN
+===================================================== */
+
+.login-screen{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:
+    radial-gradient(circle at top,#1e293b 0,#0f172a 55%);
+}
+
+.login-card{
+  width:100%;
+  max-width:400px;
+  background:rgba(17,24,39,.96);
+  border:1px solid var(--border);
+  border-radius:22px;
+  padding:30px 24px;
+  box-shadow:0 25px 70px rgba(0,0,0,.45);
+}
+
+.logo{
+  width:72px;
+  height:72px;
+  margin:0 auto 18px;
+  border-radius:20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,#22c55e,#15803d);
+  font-size:36px;
+}
+
+.login-card h1{
+  text-align:center;
+  font-size:25px;
+  margin-bottom:7px;
+}
+
+.login-subtitle{
+  text-align:center;
+  color:var(--muted);
+  margin-bottom:25px;
+}
+
+.input-group{
+  margin-bottom:16px;
+}
+
+.input-group label{
+  display:block;
+  margin-bottom:7px;
+  color:#cbd5e1;
+  font-size:14px;
+}
+
+.input-group input{
+  width:100%;
+  height:48px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#0b1220;
+  color:white;
+  padding:0 14px;
+  outline:none;
+  font-size:16px;
+}
+
+.input-group input:focus{
+  border-color:var(--green);
+}
+
+.login-btn{
+  width:100%;
+  height:50px;
+  border:0;
+  border-radius:12px;
+  background:var(--green);
+  color:#052e16;
+  font-weight:800;
+  font-size:16px;
+  cursor:pointer;
+}
+
+.login-btn:hover{
+  background:#4ade80;
+}
+
+.error{
+  background:rgba(239,68,68,.12);
+  border:1px solid rgba(239,68,68,.35);
+  color:#fca5a5;
+  border-radius:10px;
+  padding:11px 12px;
+  margin-bottom:15px;
+  font-size:14px;
+}
+
+/* =====================================================
+   APP
+===================================================== */
+
+.app{
+  min-height:100vh;
+}
+
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:20;
+  background:rgba(15,23,42,.94);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+}
+
+.topbar-inner{
+  max-width:1100px;
+  margin:auto;
+  min-height:72px;
+  padding:12px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:11px;
+  min-width:0;
+}
+
+.brand-icon{
+  width:43px;
+  height:43px;
+  border-radius:13px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#14532d;
+  font-size:22px;
+  flex-shrink:0;
+}
+
+.brand-text{
+  min-width:0;
+}
+
+.brand-text strong{
+  display:block;
+  font-size:16px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.brand-text span{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  margin-top:2px;
+}
+
+.top-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.online{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:#86efac;
+  font-size:12px;
+  font-weight:700;
+}
+
+.online-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--green);
+  box-shadow:0 0 8px var(--green);
+}
+
+.logout-btn{
+  border:1px solid var(--border);
+  background:#1e293b;
+  color:#cbd5e1;
+  border-radius:10px;
+  padding:9px 12px;
+  cursor:pointer;
+}
+
+/* =====================================================
+   SHIFT
+===================================================== */
+
+.shift-box{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.shift-status{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  border:1px solid var(--border);
+  background:#1e293b;
+  color:#cbd5e1;
+  border-radius:10px;
+  padding:8px 10px;
+  font-size:12px;
+  font-weight:700;
+  white-space:nowrap;
+}
+
+.shift-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#64748b;
+}
+
+.shift-status.active{
+  color:#86efac;
+  border-color:rgba(34,197,94,.35);
+}
+
+.shift-status.active .shift-dot{
+  background:var(--green);
+  box-shadow:0 0 8px var(--green);
+}
+
+.shift-status.inactive{
+  color:#fbbf24;
+  border-color:rgba(245,158,11,.35);
+}
+
+.shift-status.inactive .shift-dot{
+  background:var(--orange);
+}
+
+.shift-btn{
+  border:0;
+  border-radius:10px;
+  padding:9px 12px;
+  font-weight:800;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.shift-btn.start{
+  background:var(--green);
+  color:#052e16;
+}
+
+.shift-btn.end{
+  background:#ef4444;
+  color:white;
+}
+
+.shift-btn:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+@media(max-width:600px){
+  .shift-status{
+    display:none;
+  }
+
+  .shift-btn{
+    padding:8px 9px;
+    font-size:12px;
+  }
+}
+
+.logout-btn:hover{
+  background:#334155;
+}
+
+.main{
+  max-width:1100px;
+  margin:auto;
+  padding:20px 16px 40px;
+}
+
+.welcome{
+  margin-bottom:18px;
+}
+
+.welcome h2{
+  font-size:23px;
+  margin-bottom:5px;
+}
+
+.welcome p{
+  color:var(--muted);
+  font-size:14px;
+}
+
+/* =====================================================
+   STATS
+===================================================== */
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-bottom:20px;
+}
+
+.stat{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:15px;
+  padding:15px;
+}
+
+.stat-label{
+  color:var(--muted);
+  font-size:12px;
+  margin-bottom:7px;
+}
+
+.stat-value{
+  font-size:25px;
+  font-weight:800;
+}
+
+.stat.ready .stat-value{
+  color:var(--orange);
+}
+
+.stat.delivery .stat-value{
+  color:var(--blue);
+}
+
+.stat.done .stat-value{
+  color:var(--green);
+}
+
+/* =====================================================
+   SECTION
+===================================================== */
+
+.section-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+}
+
+.section-head h3{
+  font-size:18px;
+}
+
+.refresh-btn{
+  border:1px solid var(--border);
+  background:var(--panel);
+  color:#cbd5e1;
+  padding:8px 12px;
+  border-radius:9px;
+  cursor:pointer;
+}
+
+.refresh-btn:hover{
+  background:var(--panel2);
+}
+
+/* =====================================================
+   ORDER CARDS
+===================================================== */
+
+.orders{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:14px;
+}
+
+.order-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 8px 25px rgba(0,0,0,.15);
+}
+
+.order-top{
+  padding:15px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.order-number{
+  font-size:19px;
+  font-weight:800;
+}
+
+.order-time{
+  color:var(--muted);
+  font-size:12px;
+  margin-top:4px;
+}
+
+.badge{
+  border-radius:999px;
+  padding:6px 9px;
+  font-size:11px;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+.badge.ready{
+  background:rgba(245,158,11,.15);
+  color:#fbbf24;
+}
+
+.badge.out{
+  background:rgba(59,130,246,.15);
+  color:#60a5fa;
+}
+
+.badge.delivered{
+  background:rgba(34,197,94,.15);
+  color:#4ade80;
+}
+
+.customer{
+  padding:15px;
+  border-bottom:1px solid var(--border);
+}
+
+.customer-name{
+  font-size:17px;
+  font-weight:700;
+  margin-bottom:9px;
+}
+
+.info-row{
+  display:flex;
+  gap:9px;
+  color:#cbd5e1;
+  font-size:13px;
+  margin:7px 0;
+  line-height:1.4;
+}
+
+.info-icon{
+  width:18px;
+  flex-shrink:0;
+}
+
+.address{
+  color:#e2e8f0;
+}
+
+.items{
+  padding:14px 15px;
+  border-bottom:1px solid var(--border);
+}
+
+.items-title{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+  margin-bottom:8px;
+  text-transform:uppercase;
+}
+
+.item-row{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:5px 0;
+  font-size:13px;
+}
+
+.item-name{
+  color:#e2e8f0;
+}
+
+.item-qty{
+  color:#94a3b8;
+  white-space:nowrap;
+}
+
+.deal{
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px dashed #334155;
+}
+
+.total{
+  padding:14px 15px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.total span:first-child{
+  color:var(--muted);
+}
+
+.total strong{
+  font-size:19px;
+}
+
+.card-actions{
+  padding:0 15px 15px;
+}
+
+.action-btn{
+  width:100%;
+  min-height:48px;
+  border:0;
+  border-radius:11px;
+  font-weight:800;
+  font-size:14px;
+  cursor:pointer;
+}
+
+.action-btn.dispatch{
+  background:var(--blue);
+  color:white;
+}
+
+.action-btn.deliver{
+  background:var(--green);
+  color:#052e16;
+}
+
+.action-btn.complete{
+  background:#8b5cf6;
+  color:white;
+}
+
+.action-btn:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+.secondary-actions{
+  display:flex;
+  gap:8px;
+  margin-top:9px;
+}
+
+.call-btn{
+  flex:1;
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  border:1px solid var(--border);
+  background:#1e293b;
+  color:#e2e8f0;
+  border-radius:10px;
+  font-size:13px;
+  font-weight:700;
+}
+
+.empty{
+  border:1px dashed var(--border);
+  background:rgba(17,24,39,.6);
+  border-radius:18px;
+  padding:45px 20px;
+  text-align:center;
+  color:var(--muted);
+}
+
+.empty-icon{
+  font-size:38px;
+  margin-bottom:12px;
+}
+
+.empty strong{
+  display:block;
+  color:#e2e8f0;
+  font-size:16px;
+  margin-bottom:5px;
+}
+
+.loading{
+  text-align:center;
+  padding:40px;
+  color:var(--muted);
+}
+
+/* =====================================================
+   TOAST
+===================================================== */
+
+.toast-container{
+  position:fixed;
+  right:16px;
+  bottom:16px;
+  z-index:100;
+  width:min(360px,calc(100vw - 32px));
+}
+
+.toast{
+  background:#020617;
+  border:1px solid var(--border);
+  border-left:4px solid var(--green);
+  color:#f8fafc;
+  padding:13px 14px;
+  border-radius:12px;
+  margin-top:9px;
+  box-shadow:0 15px 35px rgba(0,0,0,.35);
+  animation:toastIn .2s ease;
+  font-size:14px;
+}
+
+.toast.error{
+  border-left-color:var(--red);
+  background:#020617;
+}
+
+@keyframes toastIn{
+  from{transform:translateY(12px);opacity:0}
+  to{transform:translateY(0);opacity:1}
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media(max-width:600px){
+
+  .topbar-inner{
+    min-height:65px;
+    padding:10px 12px;
+  }
+
+  .brand-icon{
+    width:39px;
+    height:39px;
+  }
+
+  .brand-text strong{
+    font-size:14px;
+  }
+
+  .online{
+    display:none;
+  }
+
+  .logout-btn{
+    padding:8px 10px;
+  }
+
+  .main{
+    padding:16px 12px 30px;
+  }
+
+  .welcome h2{
+    font-size:20px;
+  }
+
+  .stats{
+    gap:8px;
+  }
+
+  .stat{
+    padding:12px 10px;
+  }
+
+  .stat-value{
+    font-size:21px;
+  }
+
+  .stat-label{
+    font-size:10px;
+  }
+
+  .orders{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+  <input type="hidden" id="restaurantIdFromUrl" value="">
+<!-- =====================================================
+     LOGIN SCREEN
+===================================================== -->
+
+<div id="loginScreen" class="login-screen">
+
+  <div class="login-card">
+
+    <div class="logo">🚴</div>
+
+    <h1>Rider Login</h1>
+
+    <p class="login-subtitle">
+      Restaurant POS Delivery
+    </p>
+
+    <div id="loginError" class="error hidden"></div>
+
+    <div class="input-group">
+      <label for="loginUsername">Username</label>
+      <input
+        id="loginUsername"
+        type="text"
+        autocomplete="username"
+        placeholder="Enter username"
+      >
+    </div>
+
+    <div class="input-group">
+      <label for="loginPassword">Password</label>
+      <input
+        id="loginPassword"
+        type="password"
+        autocomplete="current-password"
+        placeholder="Enter password"
+      >
+    </div>
+
+    <button
+      class="login-btn"
+      onclick="riderLogin()"
+    >
+      Login
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     RIDER APP
+===================================================== -->
+
+<div id="appScreen" class="app hidden">
+
+  <header class="topbar">
+
+    <div class="topbar-inner">
+
+      <div class="brand">
+
+        <div class="brand-icon">🚴</div>
+
+        <div class="brand-text">
+          <strong id="restaurantName">
+            Restaurant
+          </strong>
+
+          <span id="riderName">
+            Rider
+          </span>
+        </div>
+
+      </div>
+
+      <div class="top-actions">
+
+        <div
+          id="shiftStatus"
+          class="shift-status inactive"
+        >
+          <span class="shift-dot"></span>
+          <span id="shiftStatusText">
+            Shift Not Started
+          </span>
+        </div>
+
+        <button
+          id="shiftBtn"
+          class="shift-btn start"
+          onclick="toggleShift()"
+        >
+          START SHIFT
+        </button>
+
+        <div class="online">
+          <span class="online-dot"></span>
+          Online
+        </div>
+
+        <button
+          class="logout-btn"
+          onclick="logout()"
+        >
+          Logout
+        </button>
+
+      </div>
+
+    </div>
+
+  </header>
+
+
+  <main class="main">
+
+    <div class="welcome">
+
+      <h2>
+        My Deliveries
+      </h2>
+
+      <p id="lastUpdated">
+        Loading orders...
+      </p>
+
+    </div>
+
+
+    <!-- STATS -->
+
+    <div class="stats">
+
+      <div class="stat ready">
+        <div class="stat-label">
+          READY
+        </div>
+
+        <div
+          id="readyCount"
+          class="stat-value"
+        >
+          0
+        </div>
+      </div>
+
+      <div class="stat delivery">
+        <div class="stat-label">
+          OUT FOR DELIVERY
+        </div>
+
+        <div
+          id="outCount"
+          class="stat-value"
+        >
+          0
+        </div>
+      </div>
+
+      <div class="stat done">
+        <div class="stat-label">
+          DELIVERED
+        </div>
+
+        <div
+          id="deliveredCount"
+          class="stat-value"
+        >
+          0
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- ORDERS -->
+
+    <div class="section-head">
+
+      <h3>
+        Assigned Orders
+      </h3>
+
+      <button
+        class="refresh-btn"
+        onclick="loadOrders()"
+      >
+        ↻ Refresh
+      </button>
+
+    </div>
+
+    <div id="ordersContainer">
+
+      <div class="loading">
+        Loading deliveries...
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
+
+
+<div id="toastContainer" class="toast-container"></div>
+
+
+<script>
+
+  // =====================================================
+// URL PARAMETERS
+// =====================================================
+
+function getRestaurantIdFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  
+  const id = params.get('restaurant') || params.get('restaurant_id');
+  console.log('🔍 Restaurant ID from URL:', id);
+  return id ? Number(id) : null;
+}
+
+const RESTAURANT_ID_FROM_URL = getRestaurantIdFromUrl();
+
+// Store in hidden field
+document.getElementById('restaurantIdFromUrl').value = RESTAURANT_ID_FROM_URL || '';
+const API_BASE = '/api';
+
+let token =
+  localStorage.getItem('rider_token') ||
+  localStorage.getItem('rider_token') ||
+  '';
+
+let currentUser = null;
+let orders = [];
+let socket = null;
+let loadingOrders = false;
+
+let currentShift = null;
+let loadingShift = false;
+
+
+/* =====================================================
+   SHIFT MANAGEMENT
+===================================================== */
+
+async function loadCurrentShift(){
+
+  if(!token || loadingShift){
+    return;
+  }
+
+  loadingShift = true;
+
+  try{
+
+    const response = await fetch(
+      `${API_BASE}/shifts/current`,
+      {
+        method:'GET',
+        headers:authHeaders()
+      }
+    );
+
+    if(response.status === 401){
+      logout();
+      return;
+    }
+
+    const data = await response.json();
+
+    if(!response.ok){
+      throw new Error(
+        data.message || 'Could not load shift'
+      );
+    }
+
+    currentShift = data.data || null;
+
+    renderShift();
+
+  }
+  catch(err){
+
+    console.error(
+      'loadCurrentShift:',
+      err
+    );
+
+    toast(
+      err.message || 'Could not load shift',
+      'error'
+    );
+
+  }
+  finally{
+
+    loadingShift = false;
+
+  }
+
+}
+
+
+function renderShift(){
+
+  const status =
+    document.getElementById('shiftStatus');
+
+  const statusText =
+    document.getElementById('shiftStatusText');
+
+  const button =
+    document.getElementById('shiftBtn');
+
+  if(!status || !statusText || !button){
+    return;
+  }
+
+
+  if(currentShift){
+
+    status.classList.remove('inactive');
+    status.classList.add('active');
+
+    statusText.textContent =
+      'Shift Active';
+
+    button.classList.remove('start');
+    button.classList.add('end');
+
+    button.textContent =
+      'END SHIFT';
+
+  }
+  else{
+
+    status.classList.remove('active');
+    status.classList.add('inactive');
+
+    statusText.textContent =
+      'Shift Not Started';
+
+    button.classList.remove('end');
+    button.classList.add('start');
+
+    button.textContent =
+      'START SHIFT';
+
+  }
+
+}
+
+
+async function toggleShift(){
+
+  if(!token || loadingShift){
+    return;
+  }
+
+  const button =
+    document.getElementById('shiftBtn');
+
+  if(button){
+    button.disabled = true;
+  }
+
+
+  try{
+
+    if(currentShift){
+
+      const confirmed =
+        window.confirm(
+          'End your current shift?'
+        );
+
+      if(!confirmed){
+        return;
+      }
+
+
+      const response =
+        await fetch(
+          `${API_BASE}/shifts/${Number(currentShift.id)}/end`,
+          {
+            method:'PUT',
+            headers:authHeaders()
+          }
+        );
+
+
+      if(response.status === 401){
+        logout();
+        return;
+      }
+
+
+      const data =
+        await response.json();
+
+
+      if(!response.ok){
+        throw new Error(
+          data.message || 'Could not end shift'
+        );
+      }
+
+
+      currentShift = null;
+
+      renderShift();
+
+      toast(
+        'Shift ended successfully.'
+      );
+
+    }
+    else{
+
+      const confirmed =
+        window.confirm(
+          'Start your shift now?'
+        );
+
+      if(!confirmed){
+        return;
+      }
+
+
+      const response =
+        await fetch(
+          `${API_BASE}/shifts/start`,
+          {
+            method:'POST',
+            headers:authHeaders()
+          }
+        );
+
+
+      if(response.status === 401){
+        logout();
+        return;
+      }
+
+
+      const data =
+        await response.json();
+
+
+      if(!response.ok){
+        throw new Error(
+          data.message || 'Could not start shift'
+        );
+      }
+
+
+      currentShift =
+        data.data || null;
+
+      renderShift();
+
+      toast(
+        'Shift started successfully.'
+      );
+
+    }
+
+  }
+  catch(err){
+
+    console.error(
+      'toggleShift:',
+      err
+    );
+
+    toast(
+      err.message || 'Shift action failed',
+      'error'
+    );
+
+  }
+  finally{
+
+    if(button){
+      button.disabled = false;
+    }
+
+  }
+
+}
+
+
+
+
+/* =====================================================
+   HELPERS
+===================================================== */
+
+function esc(value){
+
+  return String(value ?? '')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'",'&#039;');
+
+}
+
+
+function money(value){
+
+  return `RS ${Number(value || 0).toFixed(2)}`;
+
+}
+
+
+function authHeaders(){
+
+  return {
+    'Content-Type':'application/json',
+    'Authorization':`Bearer ${token}`
+  };
+
+}
+
+
+function showLogin(){
+
+  document
+    .getElementById('loginScreen')
+    .classList.remove('hidden');
+
+  document
+    .getElementById('appScreen')
+    .classList.add('hidden');
+
+}
+
+
+function showApp(){
+
+  document
+    .getElementById('loginScreen')
+    .classList.add('hidden');
+
+  document
+    .getElementById('appScreen')
+    .classList.remove('hidden');
+
+}
+
+
+function loginError(message){
+
+  const box =
+    document.getElementById('loginError');
+
+  box.textContent = message || '';
+
+  box.classList.toggle(
+    'hidden',
+    !message
+  );
+
+}
+
+
+function toast(message, type='success'){
+
+  const container =
+    document.getElementById('toastContainer');
+
+  const item =
+    document.createElement('div');
+
+  item.className =
+    `toast ${type === 'error' ? 'error' : ''}`;
+
+  item.textContent = message;
+
+  container.appendChild(item);
+
+  setTimeout(() => {
+    item.remove();
+  }, 3500);
+
+}
+
+
+/* =====================================================
+   LOGIN
+===================================================== */
+
+
+async function riderLogin(){
+
+  const username =
+    document
+      .getElementById('loginUsername')
+      .value
+      .trim();
+
+  const password =
+    document
+      .getElementById('loginPassword')
+      .value;
+
+  if(!username || !password){
+
+    loginError(
+      'Username and password are required.'
+    );
+
+    return;
+
+  }
+
+
+  try{
+
+    loginError('');
+
+    const response =
+      await fetch(
+        `${API_BASE}/auth/login`,
+        {
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json'
+          },
+          body:JSON.stringify({
+            username,
+            password,
+            restaurant_id: RESTAURANT_ID_FROM_URL,
+        role: 'delivery' 
+          })
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if(!response.ok){
+
+      throw new Error(
+        data.message ||
+        'Login failed'
+      );
+
+    }
+
+
+    if(!data.user){
+
+      throw new Error(
+        'Invalid login response.'
+      );
+
+    }
+
+
+    if(data.user.role !== 'delivery'){
+
+      throw new Error(
+        'Access denied. This account is not a Rider account.'
+      );
+
+    }
+
+
+    token = data.token;
+
+    currentUser = data.user;
+
+
+    localStorage.setItem(
+      'rider_token',
+      token
+    );
+
+    localStorage.setItem(
+      'token',
+      token
+    );
+
+    localStorage.setItem(
+      'restaurant_id',
+      currentUser.restaurant_id
+    );
+
+    localStorage.setItem(
+      'rider_user',
+      JSON.stringify(currentUser)
+    );
+
+    localStorage.setItem(
+      'user',
+      JSON.stringify(currentUser)
+    );
+
+
+    showApp();
+
+    initializeApp();
+
+  }
+  catch(err){
+
+    console.error(
+      'Rider login:',
+      err
+    );
+
+    token = '';
+
+    currentUser = null;
+
+    localStorage.removeItem(
+      'rider_token'
+    );
+
+    loginError(
+      err.message ||
+      'Login failed.'
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   RESTORE SESSION
+===================================================== */
+
+function restoreSession(){
+
+  if(!token){
+
+    showLogin();
+
+    return;
+
+  }
+
+
+  try{
+
+    const stored =
+      localStorage.getItem(
+        'rider_user'
+      ) ||
+      localStorage.getItem(
+        'user'
+      );
+
+
+    if(stored){
+
+      const user =
+        JSON.parse(stored);
+
+      if(user.role !== 'delivery'){
+
+        showLogin();
+
+        return;
+
+      }
+
+      currentUser = user;
+
+    }
+
+  }
+  catch(err){
+
+    console.warn(
+      'Session restore failed:',
+      err
+    );
+
+  }
+
+
+  if(!currentUser){
+
+    showLogin();
+
+    return;
+
+  }
+
+
+  showApp();
+
+  initializeApp();
+
+}
+
+
+/* =====================================================
+   APP INITIALIZATION
+===================================================== */
+
+async function initializeApp(){
+
+  document
+    .getElementById('riderName')
+    .textContent =
+      currentUser.full_name ||
+      currentUser.name ||
+      currentUser.username ||
+      'Rider';
+
+
+  document
+    .getElementById('restaurantName')
+    .textContent =
+      currentUser.restaurant_name ||
+      'Restaurant';
+
+      if (RESTAURANT_ID_FROM_URL) {
+  document.getElementById('restaurantName').textContent = 
+    `Restaurant #${RESTAURANT_ID_FROM_URL}`;
+}
+
+  connectSocket();
+
+  await loadCurrentShift();
+
+  await loadOrders();
+
+}
+
+
+/* =====================================================
+   LOAD ORDERS
+===================================================== */
+
+async function loadOrders(){
+
+  if(!token || loadingOrders){
+
+    return;
+
+  }
+
+
+  loadingOrders = true;
+
+
+  try{
+
+    const response =
+      await fetch(
+        `${API_BASE}/orders?restaurant_id=${RESTAURANT_ID_FROM_URL || ''}`,
+        {
+          method:'GET',
+          headers:authHeaders()
+        }
+      );
+
+
+    if(response.status === 401){
+
+      logout();
+
+      return;
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    if(!response.ok){
+
+      throw new Error(
+        data.message ||
+        'Could not load orders'
+      );
+
+    }
+
+
+    const allOrders =
+      Array.isArray(data.orders)
+        ? data.orders
+        : [];
+
+
+    orders =
+      allOrders.filter(order => {
+
+        return (
+          order.order_type === 'delivery' &&
+          Number(order.delivery_rider_id) ===
+            Number(currentUser.id) &&
+          [
+            'ready_to_deliver',
+            'out_for_delivery',
+            'delivered'
+          ].includes(order.status)
+        );
+
+      });
+
+
+    renderOrders();
+
+
+    document
+      .getElementById('lastUpdated')
+      .textContent =
+        `Last updated ${new Date().toLocaleTimeString([], {
+          hour:'2-digit',
+          minute:'2-digit'
+        })}`;
+
+  }
+  catch(err){
+
+    console.error(
+      'loadOrders:',
+      err
+    );
+
+    toast(
+      err.message ||
+      'Could not load orders',
+      'error'
+    );
+
+  }
+  finally{
+
+    loadingOrders = false;
+
+  }
+
+}
+
+
+/* =====================================================
+   RENDER
+===================================================== */
+
+function renderOrders(){
+
+  const container =
+    document.getElementById(
+      'ordersContainer'
+    );
+
+
+  const ready =
+    orders.filter(
+      o => o.status === 'ready_to_deliver'
+    ).length;
+
+
+  const out =
+    orders.filter(
+      o => o.status === 'out_for_delivery'
+    ).length;
+
+
+  const delivered =
+    orders.filter(
+      o => o.status === 'delivered'
+    ).length;
+
+
+  document
+    .getElementById('readyCount')
+    .textContent = ready;
+
+
+  document
+    .getElementById('outCount')
+    .textContent = out;
+
+
+  document
+    .getElementById('deliveredCount')
+    .textContent = delivered;
+
+
+  if(!orders.length){
+
+    container.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">🛵</div>
+        <strong>No assigned deliveries</strong>
+        <span>
+          New assigned orders will appear here automatically.
+        </span>
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  const sorted =
+    [...orders].sort((a,b) => {
+
+      const priority = {
+        ready_to_deliver:1,
+        out_for_delivery:2,
+        delivered:3
+      };
+
+      const pa =
+        priority[a.status] || 99;
+
+      const pb =
+        priority[b.status] || 99;
+
+      if(pa !== pb){
+
+        return pa - pb;
+
+      }
+
+      return (
+        new Date(a.created_at || 0) -
+        new Date(b.created_at || 0)
+      );
+
+    });
+
+
+  container.innerHTML = `
+    <div class="orders">
+      ${sorted.map(renderOrderCard).join('')}
+    </div>
+  `;
+
+}
+
+
+/* =====================================================
+   ORDER CARD
+===================================================== */
+
+function renderOrderCard(order){
+
+  const status =
+    order.status;
+
+
+  let badgeClass = 'ready';
+  let badgeText = 'READY';
+
+  if(status === 'out_for_delivery'){
+
+    badgeClass = 'out';
+    badgeText = 'OUT FOR DELIVERY';
+
+  }
+
+  if(status === 'delivered'){
+
+    badgeClass = 'delivered';
+    badgeText = 'DELIVERED';
+
+  }
+
+
+  const customer =
+    esc(
+      order.customer_name ||
+      'Delivery Customer'
+    );
+
+
+  const phone =
+    String(
+      order.delivery_phone || ''
+    ).trim();
+
+
+  const address =
+    esc(
+      order.delivery_address ||
+      'No delivery address'
+    );
+
+
+  const created =
+    order.created_at
+      ? new Date(
+          order.created_at
+        ).toLocaleString([], {
+          month:'short',
+          day:'numeric',
+          hour:'2-digit',
+          minute:'2-digit'
+        })
+      : '-';
+
+
+  const items =
+    Array.isArray(order.items)
+      ? order.items
+      : [];
+
+
+  const deals =
+    Array.isArray(order.deals)
+      ? order.deals
+      : [];
+
+
+  let itemHtml = '';
+
+
+  if(items.length){
+
+    itemHtml += items.map(item => {
+
+      const variant =
+        item.variant_label
+          ? ` (${esc(item.variant_label)})`
+          : '';
+
+      return `
+        <div class="item-row">
+          <span class="item-name">
+            ${esc(item.name)}${variant}
+          </span>
+
+          <span class="item-qty">
+            x${Number(item.quantity || 0)}
+          </span>
+        </div>
+      `;
+
+    }).join('');
+
+  }
+
+
+  if(deals.length){
+
+    itemHtml += deals.map(deal => {
+
+      return `
+        <div class="deal">
+
+          <div class="item-row">
+            <span class="item-name">
+              🎁 ${esc(deal.deal_name || 'Deal')}
+            </span>
+
+            <span class="item-qty">
+              x${Number(deal.quantity || 0)}
+            </span>
+          </div>
+
+          ${
+            Array.isArray(deal.items)
+              ? deal.items.map(di => `
+                  <div
+                    class="item-row"
+                    style="padding-left:12px;color:#94a3b8;"
+                  >
+                    <span>
+                      ${esc(di.name)}
+                    </span>
+
+                    <span>
+                      x${Number(di.quantity || 0)}
+                    </span>
+                  </div>
+                `).join('')
+              : ''
+          }
+
+        </div>
+      `;
+
+    }).join('');
+
+  }
+
+
+  if(!itemHtml){
+
+    itemHtml =
+      `<div style="color:#94a3b8;font-size:13px;">
+        Order items unavailable
+      </div>`;
+
+  }
+
+
+  let action = '';
+
+
+  if(status === 'ready_to_deliver'){
+
+    action = `
+      <button
+        class="action-btn dispatch"
+        onclick="changeStatus(
+          ${Number(order.id)},
+          'out-for-delivery',
+          this
+        )"
+      >
+        🚴 OUT FOR DELIVERY
+      </button>
+    `;
+
+  }
+  else if(status === 'out_for_delivery'){
+
+    action = `
+      <button
+        class="action-btn deliver"
+        onclick="changeStatus(
+          ${Number(order.id)},
+          'delivered',
+          this
+        )"
+      >
+        ✓ MARK DELIVERED
+      </button>
+    `;
+
+  }
+  else if(status === 'delivered'){
+
+  // ✅ Rider can NOT mark as completed
+  // ✅ Show "Delivered" status with no action button
+  action = `
+    <div style="
+      background:rgba(34,197,94,0.08);
+      border:1px solid rgba(34,197,94,0.2);
+      border-radius:11px;
+      padding:12px;
+      text-align:center;
+      color:#4ade80;
+      font-weight:700;
+      font-size:14px;
+    ">
+      ✅ DELIVERED — Waiting for counter to complete
+    </div>
+  `;
+
+}
+
+
+  const phoneButton =
+    phone
+      ? `
+        <a
+          class="call-btn"
+          href="tel:${esc(phone)}"
+        >
+          📞 Call Customer
+        </a>
+      `
+      : `
+        <div
+          class="call-btn"
+          style="opacity:.5;"
+        >
+          📞 No Phone
+        </div>
+      `;
+
+
+  return `
+    <article
+      class="order-card"
+      data-order-id="${Number(order.id)}"
+    >
+
+      <div class="order-top">
+
+        <div>
+          <div class="order-number">
+            Order #${Number(order.id)}
+          </div>
+
+          <div class="order-time">
+            ${created}
+          </div>
+        </div>
+
+        <span class="badge ${badgeClass}">
+          ${badgeText}
+        </span>
+
+      </div>
+
+
+      <div class="customer">
+
+        <div class="customer-name">
+          ${customer}
+        </div>
+
+        ${
+          phone
+            ? `
+              <div class="info-row">
+                <span class="info-icon">📞</span>
+                <span>${esc(phone)}</span>
+              </div>
+            `
+            : ''
+        }
+
+
+        <div class="info-row">
+          <span class="info-icon">📍</span>
+
+          <span class="address">
+            ${address}
+          </span>
+        </div>
+
+      </div>
+
+
+      <div class="items">
+
+        <div class="items-title">
+          Order Items
+        </div>
+
+        ${itemHtml}
+
+      </div>
+
+
+      <div class="total">
+
+        <span>Total</span>
+
+        <strong>
+          ${money(order.total_amount)}
+        </strong>
+
+      </div>
+
+
+      <div class="card-actions">
+
+        ${action}
+
+        <div class="secondary-actions">
+          ${phoneButton}
+        </div>
+
+      </div>
+
+    </article>
+  `;
+
+}
+
+
+/* =====================================================
+   STATUS ACTION
+===================================================== */
+
+async function changeStatus(
+  orderId,
+  action,
+  button
+){
+
+  if(!orderId){
+
+    return;
+
+  }
+
+
+  const messages = {
+
+    'out-for-delivery':
+      'Start this delivery?',
+
+    'delivered':
+      'Mark this order as delivered?',
+
+    'completed':
+      'Complete this delivery?'
+
+  };
+
+
+  const confirmed =
+    window.confirm(
+      messages[action] ||
+      'Continue?'
+    );
+
+
+  if(!confirmed){
+
+    return;
+
+  }
+
+
+  if(button){
+
+    button.disabled = true;
+
+    button.dataset.originalText =
+      button.textContent;
+
+    button.textContent =
+      'Processing...';
+
+  }
+
+
+  try{
+
+    const response =
+      await fetch(
+        `${API_BASE}/orders/${orderId}/${action}`,
+        {
+          method:'PUT',
+          headers:authHeaders()
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if(!response.ok){
+
+      throw new Error(
+        data.message ||
+        'Action failed'
+      );
+
+    }
+
+
+    toast(
+      data.message ||
+      'Order updated successfully'
+    );
+
+
+    await loadOrders();
+
+  }
+  catch(err){
+
+    console.error(
+      'changeStatus:',
+      err
+    );
+
+    toast(
+      err.message ||
+      'Could not update order',
+      'error'
+    );
+
+
+    if(button){
+
+      button.disabled = false;
+
+      button.textContent =
+        button.dataset.originalText ||
+        'Try Again';
+
+    }
+
+  }
+
+}
+
+
+/* =====================================================
+   SOCKET.IO
+===================================================== */
+
+function connectSocket(){
+
+  if(socket){
+
+    try{
+      socket.disconnect();
+    }catch(e){}
+
+    socket = null;
+
+  }
+
+
+  if(!token){
+
+    return;
+
+  }
+
+
+  try{
+
+    socket =
+      io({
+        auth:{
+          token
+        }
+      });
+
+
+    socket.on(
+      'connect',
+      () => {
+
+        console.log(
+          'Rider socket connected'
+        );
+
+      }
+    );
+
+
+    socket.on(
+      'connect_error',
+      err => {
+
+        console.warn(
+          'Rider socket:',
+          err.message
+        );
+
+      }
+    );
+
+
+    const refreshEvents = [
+      'order_updated',
+      'delivery_rider_assigned',
+      'order_ready',
+      'order_out_for_delivery',
+      'order_delivered',
+      'order_completed'
+    ];
+
+
+    refreshEvents.forEach(eventName => {
+
+      socket.on(
+        eventName,
+        payload => {
+
+          console.log(
+            `Socket ${eventName}:`,
+            payload
+          );
+
+          loadOrders();
+
+        }
+      );
+
+    });
+
+
+  }
+  catch(err){
+
+    console.error(
+      'Socket connection failed:',
+      err
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   LOGOUT
+===================================================== */
+
+function logout(){
+
+  if(socket){
+
+    try{
+      socket.disconnect();
+    }catch(e){}
+
+    socket = null;
+
+  }
+
+
+  token = '';
+
+  currentUser = null;
+
+  orders = [];
+
+
+  localStorage.removeItem(
+    'rider_token'
+  );
+
+
+  /*
+   * Remove shared token too.
+   * Rider page uses the same authentication
+   * storage as the existing POS screens.
+   */
+  localStorage.removeItem(
+    'token'
+  );
+
+  localStorage.removeItem(
+    'restaurant_id'
+  );
+
+  localStorage.removeItem(
+    'rider_user'
+  );
+
+  localStorage.removeItem(
+    'user'
+  );
+
+
+  document
+    .getElementById('loginUsername')
+    .value = '';
+
+  document
+    .getElementById('loginPassword')
+    .value = '';
+
+  showLogin();
+
+}
+
+
+/* =====================================================
+   KEYBOARD LOGIN
+===================================================== */
+
+document
+  .getElementById('loginPassword')
+  .addEventListener(
+    'keydown',
+    event => {
+
+      if(event.key === 'Enter'){
+
+        riderLogin();
+
+      }
+
+    }
+  );
+
+
+/* =====================================================
+   START
+===================================================== */
+
+restoreSession();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,2462 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+   content="width=device-width, initial-scale=1.0">
+
+<title>Status Board</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+}
+
+:root{
+    --bg:#14181C;
+    --panel:#1F262C;
+    --text:#F6F3EC;
+    --border:#2A3138;
+    --accent:#E3A23B;
+    --danger:#E15A4C;
+}
+
+html,
+body{
+    width:100%;
+    height:100%;
+    margin:0;
+    overflow:hidden;
+}
+
+body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Segoe UI',system-ui,sans-serif;
+}
+
+
+/* =====================================================
+   LOGIN
+===================================================== */
+
+#login-box{
+
+    max-width:340px;
+
+    margin:80px auto;
+
+    background:var(--panel);
+
+    padding:32px 28px;
+
+    border-radius:16px;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.4);
+
+    text-align:center;
+}
+
+#login-box h2{
+
+    margin:0 0 24px;
+
+    font-size:20px;
+}
+
+#login-box input,
+.pw-wrap{
+
+    width:100%;
+
+    display:block;
+}
+
+#login-box input{
+
+    padding:12px 14px;
+
+    margin:8px 0;
+
+    border-radius:8px;
+
+    border:1px solid var(--border);
+
+    background:var(--bg);
+
+    color:var(--text);
+
+    font-size:14px;
+}
+
+#login-box input:focus{
+
+    outline:none;
+
+    border-color:var(--accent);
+}
+
+#login-box button{
+
+    width:100%;
+
+    padding:12px;
+
+    margin-top:12px;
+
+    border-radius:8px;
+
+    border:none;
+
+    background:var(--accent);
+
+    color:#14181C;
+
+    font-weight:700;
+
+    font-size:14px;
+
+    cursor:pointer;
+}
+
+#login-box button:disabled{
+
+    opacity:.6;
+
+    cursor:not-allowed;
+}
+
+#login-error{
+
+    min-height:18px;
+
+    font-size:13px;
+
+    color:var(--danger);
+
+    margin-bottom:0;
+}
+
+.pw-wrap{
+
+    position:relative;
+
+    margin:8px 0;
+}
+
+.pw-wrap input{
+
+    margin:0!important;
+
+    width:100%;
+
+    padding-right:40px!important;
+}
+
+.pw-eye{
+
+    position:absolute;
+
+    right:12px;
+
+    top:50%;
+
+    transform:translateY(-50%);
+
+    cursor:pointer;
+
+    font-size:15px;
+
+    user-select:none;
+}
+
+
+/* =====================================================
+   MAIN
+===================================================== */
+
+#app-box{
+
+    width:100vw;
+
+    height:100vh;
+
+    padding:
+    clamp(15px,3vw,50px);
+
+    display:flex;
+
+    flex-direction:column;
+}
+
+#app-box h2{
+
+    margin:0 0 3vh;
+
+    font-size:
+    clamp(22px,3vw,55px);
+}
+
+
+/* =====================================================
+   BRAND HEADER
+===================================================== */
+
+.brand-header{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    padding:12px 16px;
+
+    margin:-20px -20px 20px -20px;
+
+    background:#1F262C;
+
+    border-bottom:1px solid #2A3138;
+}
+
+.brand-header img{
+
+    width:42px;
+
+    height:42px;
+
+    border-radius:8px;
+
+    object-fit:cover;
+
+    background:#fff;
+}
+
+.brand-header .brand-name{
+
+    font-weight:700;
+
+    font-size:15px;
+}
+
+
+/* =====================================================
+   RESTAURANT ID
+===================================================== */
+
+.restaurant-id-label{
+
+    color:#9CA3AF;
+
+    font-size:12px;
+
+    margin-left:auto;
+
+    white-space:nowrap;
+}
+
+
+/* =====================================================
+   ORDER GRID
+===================================================== */
+
+#orders-list{
+
+    flex:1;
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(auto-fit,minmax(320px,1fr));
+
+    gap:
+    clamp(12px,2vw,30px);
+
+    overflow:auto;
+
+    padding-bottom:20px;
+}
+
+
+/* =====================================================
+   CARD
+===================================================== */
+
+.row{ background:#1F262C; 
+    
+    display:flex;
+
+    flex-direction:column; 
+    
+    justify-content:center; 
+    
+    gap:clamp(6px,1.2vw,16px); 
+    
+    padding: clamp(15px,2vw,45px); 
+    
+    min-height: clamp(90px,15vh,200px); 
+    
+    border-radius: clamp(12px,1.5vw,25px); 
+    
+    border-left: clamp(6px,0.8vw,14px) solid transparent; overflow:hidden;
+ }
+
+/* =====================================================
+   TABLE
+===================================================== */
+
+.row .left{ 
+    
+    display:flex; 
+    
+    align-items:baseline; 
+    
+    flex-wrap:wrap; 
+    
+    gap:10px; min-width:0; width:100%; 
+
+} 
+.row .left b{ 
+    
+    font-size: clamp(20px,3.5vw,56px); 
+    
+    white-space:nowrap; overflow:hidden; 
+    
+    text-overflow:ellipsis; 
+    
+    max-width:100%; 
+}
+
+
+/* =====================================================
+   ORDER NUMBER
+===================================================== */
+
+.meta{
+
+    color:#9CA3AF;
+
+    font-size:
+    clamp(14px,1.5vw,32px);
+
+    white-space:nowrap;
+}
+
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+.status-label{ 
+    
+    font-weight:900; 
+    
+    font-size: clamp(16px,2.5vw,44px); 
+    
+    text-align:left; 
+    
+    white-space:normal; 
+    
+    word-break:break-word; }
+
+
+/* =====================================================
+   COUNTDOWN
+===================================================== */
+
+.countdown{
+
+    color:#E3A23B;
+
+    font-weight:900;
+
+    font-size:
+    clamp(16px,2vw,40px);
+
+    display:block;
+
+    margin-top:8px;
+
+    white-space:nowrap;
+}
+
+
+/* =====================================================
+   COLORS
+===================================================== */
+
+.status-pending{
+
+    color:#E3A23B;
+}
+
+.status-placed{
+
+    color:#E3A23B;
+}
+
+.status-accepted{
+
+    color:#E3A23B;
+}
+
+.status-confirmed{
+
+    color:#E3A23B;
+}
+
+.status-preparing{
+
+    color:#E3A23B;
+}
+
+.status-ready{
+
+    color:#2FA37D;
+}
+
+.row.pending{
+
+    border-left-color:#E3A23B;
+}
+
+.row.placed{
+
+    border-left-color:#E3A23B;
+}
+
+.row.accepted{
+
+    border-left-color:#E3A23B;
+}
+
+.row.confirmed{
+
+    border-left-color:#E3A23B;
+}
+
+.row.preparing{
+
+    border-left-color:#E3A23B;
+}
+
+.row.ready{
+
+    border-left-color:#2FA37D;
+}
+
+.status-ready_to_deliver{
+
+    color:#2FA37D;
+}
+
+.row.ready_to_deliver{
+
+    border-left-color:#2FA37D;
+}
+
+.status-out_for_delivery{
+
+    color:#E3A23B;
+}
+
+.row.out_for_delivery{
+
+    border-left-color:#E3A23B;
+}
+
+ .row .right{ 
+    
+    display:flex; 
+    
+    align-items:center; 
+    
+    justify-content:flex-start;
+    
+    min-width:0; width:100%; 
+
+}
+
+.empty{
+
+    color:#6B7280;
+
+    text-align:center;
+
+    font-size:
+    clamp(16px,2vw,30px);
+
+    padding:40px;
+
+    grid-column:1 / -1;
+}
+
+.loading{
+
+    color:#9CA3AF;
+
+    text-align:center;
+
+    font-size:18px;
+
+    padding:40px;
+
+    grid-column:1 / -1;
+}
+
+.screen-error{
+
+    color:#E15A4C;
+
+    text-align:center;
+
+    font-size:18px;
+
+    padding:40px;
+
+    grid-column:1 / -1;
+}
+
+
+/* =====================================================
+   LARGE SCREEN
+===================================================== */
+
+@media(min-width:1600px){
+
+    #orders-list{
+
+        grid-template-columns:
+        repeat(2,1fr);
+    }
+
+    .row{
+
+        min-height:180px;
+    }
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media(max-width:600px){
+
+    html,
+    body{
+
+        overflow-x:hidden;
+
+        overflow-y:auto;
+    }
+
+    #app-box{
+
+        height:auto;
+
+        min-height:100vh;
+
+        padding:15px;
+    }
+
+    .brand-header{
+
+        margin:-15px -15px 15px -15px;
+    }
+
+    #orders-list{
+
+        grid-template-columns:1fr;
+    }
+
+    .row{
+
+        min-height:80px;
+
+        padding:15px;
+    }
+
+    .row .left b{
+
+        font-size:24px;
+    }
+
+    .status-label{
+
+        font-size:18px;
+    }
+
+    .restaurant-id-label{
+
+        font-size:10px;
+    }
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+<!-- =====================================================
+     BRAND
+===================================================== -->
+
+<div
+    class="brand-header"
+    id="brand-header"
+    style="display:none;"
+></div>
+
+
+<!-- =====================================================
+     LOGIN
+===================================================== -->
+
+<div id="login-box">
+
+
+<h2>Status Board Login</h2>
+
+
+<input
+    id="username"
+    placeholder="Username"
+    autocomplete="username"
+    onkeydown="if(event.key==='Enter') login()"
+>
+
+
+<div class="pw-wrap">
+
+    <input
+        id="password"
+        type="password"
+        placeholder="Password"
+        autocomplete="current-password"
+        onkeydown="if(event.key==='Enter') login()"
+    >
+
+    <span
+        class="pw-eye"
+        onmousedown="showPassword()"
+        onmouseup="hidePassword()"
+        onmouseleave="hidePassword()"
+        ontouchstart="showPassword()"
+        ontouchend="hidePassword()"
+    >👁</span>
+
+</div>
+
+
+<button
+    id="login-btn"
+    onclick="login()"
+>
+    Login
+</button>
+
+
+<p id="login-error"></p>
+
+
+</div>
+
+
+<!-- =====================================================
+     MAIN APP
+===================================================== -->
+
+<div
+    id="app-box"
+    style="display:none;"
+>
+
+
+<div
+    style="
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:16px;
+    "
+>
+
+    <div>
+
+        <h2 style="margin:0;">
+            Live Order Status
+        </h2>
+
+    </div>
+
+
+    <div
+        style="
+        display:flex;
+        align-items:center;
+        gap:15px;
+        "
+    >
+
+        <span
+            id="restaurant-id-label"
+            class="restaurant-id-label"
+        ></span>
+
+
+        <button
+            onclick="logout()"
+            style="
+            background:#E15A4C;
+            color:white;
+            border:none;
+            padding:8px 14px;
+            border-radius:8px;
+            font-weight:bold;
+            cursor:pointer;
+            "
+        >
+            Logout
+        </button>
+
+    </div>
+
+
+</div>
+
+
+<div id="orders-list">
+
+    <div class="loading">
+        Loading orders...
+    </div>
+
+</div>
+
+
+</div>
+
+
+<script src="/socket.io/socket.io.js"></script>
+
+
+<script>
+
+/* =====================================================
+   GLOBALS
+===================================================== */
+
+let token =
+    localStorage.getItem('status_token');
+
+let socket = null;
+
+let loadingOrders = false;
+
+
+/*
+  IMPORTANT
+
+  URL:
+
+  /display.html?restaurant=3
+
+  restaurantId = 3
+*/
+
+const urlParams =
+    new URLSearchParams(
+        window.location.search
+    );
+
+
+const restaurantId =
+    urlParams.get('restaurant');
+
+
+/* =====================================================
+   RESTAURANT ID VALIDATION
+===================================================== */
+
+function isValidRestaurantId(){
+
+    if(
+        restaurantId === null ||
+        restaurantId === undefined ||
+        String(restaurantId).trim() === ''
+    ){
+
+        return false;
+
+    }
+
+
+    /*
+      PostgreSQL integer IDs ke liye
+      positive integer expect kar rahe hain.
+    */
+
+    return /^\d+$/.test(
+        String(restaurantId).trim()
+    );
+
+}
+
+
+/* =====================================================
+   SHOW RESTAURANT ERROR
+===================================================== */
+
+function showRestaurantIdError(){
+
+    const loginBox =
+        document.getElementById(
+            'login-box'
+        );
+
+    const error =
+        document.getElementById(
+            'login-error'
+        );
+
+
+    if(loginBox){
+
+        loginBox.style.display =
+            'block';
+
+    }
+
+
+    if(error){
+
+        error.innerText =
+            'Restaurant ID is missing or invalid. Open this screen with ?restaurant=ID';
+
+    }
+
+}
+
+
+/* =====================================================
+   PASSWORD
+===================================================== */
+
+function showPassword(){
+
+    const input =
+        document.getElementById(
+            'password'
+        );
+
+
+    if(input){
+
+        input.type = 'text';
+
+    }
+
+}
+
+
+function hidePassword(){
+
+    const input =
+        document.getElementById(
+            'password'
+        );
+
+
+    if(input){
+
+        input.type = 'password';
+
+    }
+
+}
+
+
+/* =====================================================
+   SAFE JSON
+===================================================== */
+
+async function getJsonResponse(res){
+
+    try{
+
+        return await res.json();
+
+    }catch(error){
+
+        return {};
+
+    }
+
+}
+
+
+/* =====================================================
+   AUTH ERROR
+===================================================== */
+
+function handleAuthFailure(){
+
+    localStorage.removeItem(
+        'token'
+    );
+
+
+    token = null;
+
+
+    if(socket){
+
+        try{
+
+            socket.removeAllListeners();
+
+            socket.disconnect();
+
+        }catch(error){
+
+            console.warn(
+                'Socket cleanup:',
+                error
+            );
+
+        }
+
+    }
+
+
+    socket = null;
+
+
+    const app =
+        document.getElementById(
+            'app-box'
+        );
+
+
+    const loginBox =
+        document.getElementById(
+            'login-box'
+        );
+
+
+    if(app){
+
+        app.style.display =
+            'none';
+
+    }
+
+
+    if(loginBox){
+
+        loginBox.style.display =
+            'block';
+
+    }
+
+
+    const error =
+        document.getElementById(
+            'login-error'
+        );
+
+
+    if(error){
+
+        error.innerText =
+            'Session expired. Please login again.';
+
+    }
+
+}
+
+
+/* =====================================================
+   SOCKET
+===================================================== */
+
+function createSocket(){
+
+    if(!token){
+
+        return;
+
+    }
+
+
+    if(socket){
+
+        try{
+
+            socket.removeAllListeners();
+
+            socket.disconnect();
+
+        }catch(error){
+
+            console.warn(
+                'Old socket cleanup:',
+                error
+            );
+
+        }
+
+    }
+
+
+    socket = io({
+
+        autoConnect:false,
+
+        reconnection:true,
+
+        reconnectionAttempts:Infinity,
+
+        reconnectionDelay:1000,
+
+        transports:[
+            'websocket',
+            'polling'
+        ],
+
+        auth:{
+            token:token,
+
+            /*
+              Send restaurant ID to socket
+              as well.
+            */
+
+            restaurant_id:
+                restaurantId
+
+        }
+
+    });
+
+
+    socket.on(
+        'connect',
+        () => {
+
+            console.log(
+                'STATUS CONNECTED',
+                socket.id,
+                'RESTAURANT:',
+                restaurantId
+            );
+
+        }
+    );
+
+
+    socket.on(
+        'disconnect',
+        (reason) => {
+
+            console.log(
+                'STATUS DISCONNECTED',
+                reason
+            );
+
+        }
+    );
+
+
+    socket.on(
+        'connect_error',
+        (err) => {
+
+            console.log(
+                'STATUS SOCKET ERROR',
+                err?.message || err
+            );
+
+        }
+    );
+
+
+    /*
+      Any order event refreshes the list.
+
+      Backend should ideally emit only to the
+      correct restaurant room. Frontend also
+      filters by restaurant ID as a safety layer.
+    */
+
+    socket.on(
+        'order_created',
+        () => {
+
+            if(!token) return;
+
+            loadOrders();
+
+        }
+    );
+
+
+    socket.on(
+        'customer_order_created',
+        () => {
+
+            if(!token) return;
+
+            loadOrders();
+
+        }
+    );
+
+
+    socket.on(
+        'order_updated',
+        () => {
+
+            if(!token) return;
+
+            loadOrders();
+
+        }
+    );
+
+
+    socket.on(
+        'orders_refresh',
+        () => {
+
+            if(!token) return;
+
+            loadOrders();
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   STATUS LABEL
+===================================================== */
+
+const STATUS_LABEL = {
+
+    pending:
+        'Order Sent',
+
+    placed:
+        'Order Sent',
+
+    accepted:
+        'Accepted',
+
+    confirmed:
+        'Preparing',
+
+    preparing:
+        'Preparing',
+
+    ready:
+        'Ready To Serve',
+
+    ready_to_deliver:
+        'Ready To Deliver',
+
+    out_for_delivery:
+        'Out For Delivery'
+
+};
+
+
+/* =====================================================
+   LOGIN
+===================================================== */
+
+async function login(){
+
+    if(!isValidRestaurantId()){
+
+        showRestaurantIdError();
+
+        return;
+
+    }
+
+
+    const usernameInput =
+        document.getElementById(
+            'username'
+        );
+
+
+    const passwordInput =
+        document.getElementById(
+            'password'
+        );
+
+
+    const loginError =
+        document.getElementById(
+            'login-error'
+        );
+
+
+    const loginBtn =
+        document.getElementById(
+            'login-btn'
+        );
+
+
+    const username =
+        usernameInput?.value.trim() || '';
+
+
+    const password =
+        passwordInput?.value || '';
+
+
+    if(!username || !password){
+
+        if(loginError){
+
+            loginError.innerText =
+                'Username and password are required.';
+
+        }
+
+        return;
+
+    }
+
+
+    if(loginBtn){
+
+        loginBtn.disabled = true;
+
+        loginBtn.innerText =
+            'Logging in...';
+
+    }
+
+
+    if(loginError){
+
+        loginError.innerText = '';
+
+    }
+
+
+    try{
+
+        /*
+          IMPORTANT:
+
+          Backend ko restaurant_id
+          aur role display bhej rahe hain.
+        */
+
+        const res =
+            await fetch(
+                '/api/auth/login',
+                {
+                    method:'POST',
+
+                    headers:{
+                        'Content-Type':
+                            'application/json'
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            username,
+
+                            password,
+
+                            restaurant_id:
+                                restaurantId,
+
+                            role:
+                                'display'
+
+                        })
+
+                }
+            );
+
+
+        const data =
+            await getJsonResponse(res);
+
+
+        if(
+            !res.ok ||
+            !data.token
+        ){
+
+            throw new Error(
+                data.message ||
+                'Login failed.'
+            );
+
+        }
+
+
+        /*
+          Make sure backend returned
+          display role.
+        */
+
+        if(
+            !data.user ||
+            data.user.role !== 'display'
+        ){
+
+            throw new Error(
+                'This login is for the Status Board account only.'
+            );
+
+        }
+
+
+        /*
+          Extra security:
+
+          Login response ka restaurant ID
+          URL ke restaurant ID se match hona chahiye.
+        */
+
+        if(
+            String(
+                data.user.restaurant_id
+            ) !==
+            String(
+                restaurantId
+            )
+        ){
+
+            throw new Error(
+                'This display account does not belong to this restaurant.'
+            );
+
+        }
+
+
+        token =
+            data.token;
+
+
+        localStorage.setItem(
+            'token',
+            token
+        );
+
+
+        /*
+          Save restaurant information
+          for this page session.
+        */
+
+        localStorage.setItem(
+            'display_restaurant_id',
+            String(restaurantId)
+        );
+
+
+        createSocket();
+
+
+        if(
+            socket &&
+            !socket.connected
+        ){
+
+            socket.connect();
+
+        }
+
+
+        document
+            .getElementById(
+                'login-box'
+            )
+            .style.display =
+            'none';
+
+
+        document
+            .getElementById(
+                'app-box'
+            )
+            .style.display =
+            'flex';
+
+
+      
+
+       
+
+
+        loadBranding();
+
+        loadOrders();
+
+
+    }catch(error){
+
+        console.error(
+            'STATUS LOGIN ERROR:',
+            error
+        );
+
+
+        if(loginError){
+
+            loginError.innerText =
+                error.message ||
+                'Unable to login.';
+
+        }
+
+
+    }finally{
+
+        if(loginBtn){
+
+            loginBtn.disabled = false;
+
+            loginBtn.innerText =
+                'Login';
+
+        }
+
+    }
+
+}
+
+
+/* =====================================================
+   LOAD ORDERS
+===================================================== */
+
+async function loadOrders(){
+
+    if(!token){
+
+        return;
+
+    }
+
+
+    if(!isValidRestaurantId()){
+
+        return;
+
+    }
+
+
+    if(loadingOrders){
+
+        return;
+
+    }
+
+
+    loadingOrders = true;
+
+
+    const list =
+        document.getElementById(
+            'orders-list'
+        );
+
+
+    if(list){
+
+        list.innerHTML = `
+
+            <div class="loading">
+                Loading orders...
+            </div>
+
+        `;
+
+    }
+
+
+    try{
+
+        const res =
+            await fetch(
+                '/api/orders',
+                {
+                    headers:{
+                        'Authorization':
+                            'Bearer ' + token
+                    }
+                }
+            );
+
+
+        if(res.status === 401){
+
+            handleAuthFailure();
+
+            return;
+
+        }
+
+
+        const result =
+            await getJsonResponse(res);
+
+
+        console.log(
+            'STATUS ORDERS:',
+            result
+        );
+
+
+        if(!res.ok){
+
+            throw new Error(
+                result.message ||
+                'Orders load failed. HTTP ' +
+                res.status
+            );
+
+        }
+
+
+        /*
+          Backend normally returns:
+
+          {
+              success:true,
+              orders:[]
+          }
+
+          Also supports:
+
+          {
+              success:true,
+              data:[]
+          }
+
+          OR
+
+          []
+        */
+
+        let orders = [];
+
+
+        if(Array.isArray(result)){
+
+            orders =
+                result;
+
+        }else if(
+            result &&
+            Array.isArray(result.orders)
+        ){
+
+            orders =
+                result.orders;
+
+        }else if(
+            result &&
+            Array.isArray(result.data)
+        ){
+
+            orders =
+                result.data;
+
+        }
+
+
+        /*
+          ==================================================
+          RESTAURANT FILTER
+          ==================================================
+
+          Frontend par sirf URL wale restaurant
+          ke orders show honge.
+
+          Example:
+
+          ?restaurant=3
+
+          to sirf restaurant_id = 3.
+        */
+
+        const restaurantOrders =
+            orders.filter(o => {
+
+                if(!o){
+
+                    return false;
+
+                }
+
+
+                const orderRestaurantId =
+                    o.restaurant_id ??
+                    o.restaurantId ??
+                    o.restaurant;
+
+
+                return (
+                    String(
+                        orderRestaurantId
+                    ) ===
+                    String(
+                        restaurantId
+                    )
+                );
+
+            });
+
+
+        /*
+          ==================================================
+          ACTIVE ORDER FILTER
+          ==================================================
+        */
+
+        const activeOrders =
+            restaurantOrders.filter(o => {
+
+                if(!o){
+
+                    return false;
+
+                }
+
+
+                const status =
+                    String(
+                        o.status || ''
+                    ).toLowerCase();
+
+
+                const paymentStatus =
+                    String(
+                        o.payment_status || ''
+                    ).toLowerCase();
+
+
+                return (
+
+                    paymentStatus !== 'paid'
+
+                    &&
+
+                    [
+                        'pending',
+                        'placed',
+                        'accepted',
+                        'confirmed',
+                        'preparing',
+                        'ready',
+                        'ready_to_deliver',
+                        'out_for_delivery'
+                    ].includes(status)
+
+                );
+
+            });
+
+
+        renderOrders(
+            activeOrders
+        );
+
+
+    }catch(error){
+
+        console.error(
+            'STATUS LOAD ORDERS ERROR:',
+            error
+        );
+
+
+        if(list){
+
+            list.innerHTML = `
+
+                <div class="screen-error">
+
+                    Unable to load orders.
+
+                    <br><br>
+
+                    ${escapeHtml(
+                        error.message ||
+                        'Unknown error'
+                    )}
+
+                    <br><br>
+
+                    <button
+                        onclick="loadOrders()"
+                        style="
+                        padding:10px 18px;
+                        border:0;
+                        border-radius:7px;
+                        cursor:pointer;
+                        font-weight:bold;
+                        "
+                    >
+                        Retry
+                    </button>
+
+                </div>
+
+            `;
+
+        }
+
+    }finally{
+
+        loadingOrders = false;
+
+    }
+
+}
+
+
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+
+function escapeHtml(value){
+
+    if(
+        value === null ||
+        value === undefined
+    ){
+
+        return '';
+
+    }
+
+
+    return String(value)
+
+        .replace(
+            /&/g,
+            '&amp;'
+        )
+
+        .replace(
+            /</g,
+            '&lt;'
+        )
+
+        .replace(
+            />/g,
+            '&gt;'
+        )
+
+        .replace(
+            /"/g,
+            '&quot;'
+        )
+
+        .replace(
+            /'/g,
+            '&#039;'
+        );
+
+}
+
+
+/* =====================================================
+   RENDER ORDERS
+===================================================== */
+
+function renderOrders(orders){
+
+    const list =
+        document.getElementById(
+            'orders-list'
+        );
+
+
+    if(!list){
+
+        console.error(
+            'orders-list element not found.'
+        );
+
+        return;
+
+    }
+
+
+    if(!Array.isArray(orders)){
+
+        orders = [];
+
+    }
+
+
+    if(!orders.length){
+
+        list.innerHTML = `
+
+            <div class="empty">
+                No orders right now.
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    list.innerHTML =
+
+        orders.map(o => {
+
+            const status =
+                String(
+                    o.status || ''
+                ).toLowerCase();
+
+
+            const orderType =
+                String(
+                    o.order_type || ''
+                ).toLowerCase();
+
+
+            const rawTableNo =
+                o.table_no ??
+                o.table_number ??
+                null;
+
+
+            let locationLabel = '';
+
+
+            if(
+                rawTableNo !== null &&
+                rawTableNo !== undefined &&
+                String(
+                    rawTableNo
+                ).trim() !== '' &&
+                Number(
+                    rawTableNo
+                ) !== 0
+            ){
+
+                locationLabel =
+                    `Table ${escapeHtml(
+                        rawTableNo
+                    )}`;
+
+            }else if(
+                orderType === 'delivery'
+            ){
+
+                locationLabel =
+                    'Delivery';
+
+            }else if(
+                orderType === 'takeaway' ||
+                orderType === 'take away'
+            ){
+
+                locationLabel =
+                    'Takeaway';
+
+            }else{
+
+                locationLabel =
+                    'Order';
+
+            }
+
+
+            let prepText = '';
+
+
+            /*
+              Countdown only when order is preparing.
+            */
+
+            if(
+                status === 'preparing' &&
+                o.confirmed_at &&
+                Number(
+                    o.prep_minutes
+                ) > 0
+            ){
+
+                prepText = `
+
+                    <span
+                        class="meta countdown"
+                        data-time="${escapeHtml(
+                            o.confirmed_at
+                        )}"
+                        data-minutes="${Number(
+                            o.prep_minutes
+                        )}"
+                    >
+                        Calculating...
+                    </span>
+
+                `;
+
+            }
+
+
+            return `
+
+                <div
+                    class="row ${escapeHtml(status)}"
+                    data-restaurant-id="${escapeHtml(
+                        restaurantId
+                    )}"
+                >
+
+                    <div class="left">
+
+                        <b>
+                            ${locationLabel}
+                        </b>
+
+                        ${
+                            prepText
+                        }
+
+                    </div>
+
+
+                    <div class="right">
+
+                        <span
+                            class="
+                                status-label
+                                status-${escapeHtml(status)}
+                            "
+                        >
+
+                            ${escapeHtml(
+                                STATUS_LABEL[status]
+                                ||
+                                status
+                                ||
+                                'Unknown'
+                            )}
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+            `;
+
+        }).join('');
+
+
+    updateCountdown();
+
+}
+
+
+/* =====================================================
+   LOAD BRANDING
+===================================================== */
+
+async function loadBranding(){
+
+    if(!token){
+
+        return;
+
+    }
+
+
+    if(!isValidRestaurantId()){
+
+        return;
+
+    }
+
+
+    try{
+
+        const res =
+            await fetch(
+                '/api/restaurants/me',
+                {
+                    headers:{
+                        'Authorization':
+                            'Bearer ' + token
+                    }
+                }
+            );
+
+
+        if(res.status === 401){
+
+            handleAuthFailure();
+
+            return;
+
+        }
+
+
+        const data =
+            await getJsonResponse(res);
+
+
+        if(
+            !res.ok ||
+            !data.success
+        ){
+
+            console.warn(
+                'Branding load failed:',
+                data.message ||
+                'Unknown error'
+            );
+
+            return;
+
+        }
+
+
+        const restaurant =
+            data.data || {};
+
+
+        /*
+          Extra restaurant safety check.
+        */
+
+        if(
+            restaurant.id !== undefined &&
+            String(
+                restaurant.id
+            ) !==
+            String(
+                restaurantId
+            )
+        ){
+
+            console.warn(
+                'Branding restaurant mismatch.'
+            );
+
+            return;
+
+        }
+
+
+        const header =
+            document.getElementById(
+                'brand-header'
+            );
+
+
+        if(!header){
+
+            return;
+
+        }
+
+
+        const name =
+            restaurant.name ||
+            'Restaurant';
+
+
+        const logoUrl =
+            restaurant.logo_url ||
+            restaurant.logo ||
+            '';
+
+
+        header.style.display =
+            'flex';
+
+
+        header.innerHTML =
+
+            (
+                logoUrl
+                ?
+
+                `
+
+                <img
+                    src="${escapeHtml(
+                        logoUrl
+                    )}"
+                    alt="Restaurant Logo"
+                    onerror="
+                        this.style.display='none';
+                    "
+                >
+
+                `
+
+                :
+
+                ''
+
+            )
+
+            +
+
+            `
+
+            <span class="brand-name">
+                ${escapeHtml(name)}
+            </span>
+
+           
+
+
+
+            `;
+
+
+    }catch(error){
+
+        console.error(
+            'BRANDING LOAD ERROR:',
+            error
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   LOGOUT
+===================================================== */
+
+function logout(){
+
+    localStorage.removeItem(
+        'token'
+    );
+
+
+    localStorage.removeItem(
+        'display_restaurant_id'
+    );
+
+
+    token = null;
+
+
+    if(socket){
+
+        try{
+
+            socket.removeAllListeners();
+
+            socket.disconnect();
+
+        }catch(error){
+
+            console.warn(
+                'Socket logout error:',
+                error
+            );
+
+        }
+
+    }
+
+
+    socket = null;
+
+
+    const app =
+        document.getElementById(
+            'app-box'
+        );
+
+
+    const loginBox =
+        document.getElementById(
+            'login-box'
+        );
+
+
+    const list =
+        document.getElementById(
+            'orders-list'
+        );
+
+
+    if(app){
+
+        app.style.display =
+            'none';
+
+    }
+
+
+    if(loginBox){
+
+        loginBox.style.display =
+            'block';
+
+    }
+
+
+    if(list){
+
+        list.innerHTML = '';
+
+    }
+
+
+    const username =
+        document.getElementById(
+            'username'
+        );
+
+
+    const password =
+        document.getElementById(
+            'password'
+        );
+
+
+    const error =
+        document.getElementById(
+            'login-error'
+        );
+
+
+    if(username){
+
+        username.value = '';
+
+    }
+
+
+    if(password){
+
+        password.value = '';
+
+    }
+
+
+    if(error){
+
+        error.innerText = '';
+
+    }
+
+}
+
+
+/* =====================================================
+   COUNTDOWN
+===================================================== */
+
+function updateCountdown(){
+
+    document
+        .querySelectorAll(
+            '.countdown'
+        )
+        .forEach(el => {
+
+            const start =
+                new Date(
+                    el.dataset.time
+                ).getTime();
+
+
+            const minutes =
+                Number(
+                    el.dataset.minutes
+                );
+
+
+            if(
+                !Number.isFinite(start) ||
+                !Number.isFinite(minutes) ||
+                minutes <= 0
+            ){
+
+                el.innerHTML =
+                    '· Ready';
+
+                return;
+
+            }
+
+
+            const end =
+                start +
+                (
+                    minutes *
+                    60 *
+                    1000
+                );
+
+
+            let diff =
+                Math.floor(
+                    (
+                        end -
+                        Date.now()
+                    ) / 1000
+                );
+
+
+            if(diff <= 0){
+
+                el.innerHTML =
+                    '· Ready';
+
+                return;
+
+            }
+
+
+            const m =
+                Math.floor(
+                    diff / 60
+                );
+
+
+            const s =
+                diff % 60;
+
+
+            el.innerHTML =
+                `· ${m}:${s
+                    .toString()
+                    .padStart(
+                        2,
+                        '0'
+                    )
+                } min`;
+
+        });
+
+}
+
+
+/* =====================================================
+   AUTO COUNTDOWN
+===================================================== */
+
+setInterval(
+    updateCountdown,
+    1000
+);
+
+
+/* =====================================================
+   START
+===================================================== */
+
+window.addEventListener(
+    'load',
+    () => {
+
+        /*
+          Restaurant ID mandatory hai.
+        */
+
+        if(!isValidRestaurantId()){
+
+            showRestaurantIdError();
+
+            return;
+
+        }
+
+
+      
+
+
+        const saved =
+            localStorage.getItem(
+                'token'
+            );
+
+
+        if(!saved){
+
+            return;
+
+        }
+
+
+        token =
+            saved;
+
+
+        document
+            .getElementById(
+                'login-box'
+            )
+            .style.display =
+            'none';
+
+
+        document
+            .getElementById(
+                'app-box'
+            )
+            .style.display =
+            'flex';
+
+
+        createSocket();
+
+
+        if(
+            socket &&
+            !socket.connected
+        ){
+
+            socket.connect();
+
+        }
+
+
+        loadBranding();
+
+        loadOrders();
+
+    }
+
+);
+
+</script>
+
+</body>
+
+</html>

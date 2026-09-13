@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Menu</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: #14181C; color: #F6F3EC; font-family: 'Segoe UI', system-ui, sans-serif; }
+  body { padding-bottom: 90px; }
+
+  /* ---- Header ---- */
+  .brand-header { display:none; position:sticky; top:0; z-index:40; align-items:center; gap:10px; padding:12px 16px; background:#1B2126; border-bottom:1px solid #262E34; }
+  .brand-header img { width:38px; height:38px; border-radius:10px; object-fit:cover; }
+  .brand-header .brand-name { font-weight:700; font-size:15px; }
+  .table-chip { margin-left:auto; background:#E3A23B; color:#14181C; font-weight:700; font-size:12px; padding:5px 12px; border-radius:20px; }
+
+  /* ---- Search bar ---- */
+  .search-wrap { position:sticky; top:0; z-index:41; padding:10px 16px 6px; background:#14181C; }
+  .search-box { position:relative; }
+  .search-box input { width:100%; padding:11px 14px 11px 38px; border-radius:12px; border:1px solid #2A3138; background:#1F262C; color:#F6F3EC; font-size:13px; }
+  .search-box input:focus { outline:none; border-color:#E3A23B; }
+  .search-box .search-icon { position:absolute; left:13px; top:50%; transform:translateY(-50%); font-size:14px; color:#9CA3AF; pointer-events:none; }
+  .search-box .search-clear { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#9CA3AF; font-size:16px; cursor:pointer; display:none; padding:4px; }
+  .search-box .search-clear.show { display:block; }
+
+  /* ---- Category pill nav ---- */
+  .cat-nav { position:sticky; top:52px; z-index:39; display:flex; gap:8px; overflow-x:auto; padding:10px 16px; background:#14181C; border-bottom:1px solid #1F262C; scrollbar-width:none; }
+  .cat-nav::-webkit-scrollbar { display:none; }
+  .cat-pill { flex:0 0 auto; padding:7px 16px; border-radius:20px; background:#1F262C; color:#9CA3AF; font-size:12px; font-weight:600; white-space:nowrap; cursor:pointer; border:1px solid transparent; }
+  .cat-pill.active { background:#E3A23B; color:#14181C; }
+
+  /* ---- Menu ---- */
+  #menu-list { max-width: 640px; margin: 0 auto; padding: 4px 14px 20px; }
+
+  /* ---- Deals & Combos ---- */
+  .deals-section { max-width: 640px; margin: 0 auto; padding: 4px 14px 0; }
+  .deals-heading { color:#E3A23B; font-size:15px; font-weight:700; margin:14px 2px 10px; }
+  .deals-grid { display:grid; grid-template-columns:1fr; gap:10px; margin-bottom:6px; }
+  @media (min-width:520px) { .deals-grid { grid-template-columns: 1fr 1fr; } }
+  .deal-card { background:#241C14; border:1px solid #E3A23B33; border-radius:14px; padding:14px; display:flex; flex-direction:column; }
+  .deal-card.in-cart { border-color:#E3A23B; }
+  .deal-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .deal-name { font-size:14px; font-weight:700; }
+  .deal-badge { flex-shrink:0; background:#E3A23B; color:#14181C; font-size:10px; font-weight:700; text-transform:uppercase; padding:3px 8px; border-radius:10px; }
+  .deal-items { color:#9CA3AF; font-size:11px; margin-top:6px; line-height:1.5; }
+  .deal-footer { display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
+  .deal-price { color:#E3A23B; font-weight:700; font-size:14px; }
+
+  .cat-heading { color:#E3A23B; font-size:15px; font-weight:700; margin:22px 2px 10px; scroll-margin-top:150px; }
+  .item-grid { display:grid; grid-template-columns:1fr; gap:10px; }
+  @media (min-width:520px) { .item-grid { grid-template-columns: 1fr 1fr; } }
+
+  .item-card { background:#1F262C; border-radius:14px; overflow:hidden; display:flex; border:1px solid transparent; transition:border-color .15s; }
+  .item-card.in-cart { border-color:#E3A23B; }
+  .item-img-wrap { width:88px; flex-shrink:0; background:#F6F3EC; display:flex; align-items:center; justify-content:center; }
+  .item-img-wrap img { width:100%; height:100%; object-fit:cover; }
+  .item-img-wrap .placeholder { font-size:26px; opacity:.5; }
+  .item-body { flex:1; padding:12px 14px; display:flex; flex-direction:column; justify-content:center; min-width:0; }
+  .item-name { font-size:14px; font-weight:600; line-height:1.3; }
+  .item-price { color:#9CA3AF; font-size:12px; margin-top:3px; }
+  .item-controls { margin-top:8px; }
+  .add-btn { background:transparent; border:1px solid #E3A23B; color:#E3A23B; padding:6px 16px; border-radius:20px; font-size:12px; font-weight:700; cursor:pointer; }
+  .qty-stepper { display:flex; align-items:center; gap:10px; }
+  .qty-stepper button { width:26px; height:26px; border-radius:50%; border:none; background:#E3A23B; color:#14181C; font-weight:700; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .qty-stepper button.minus { background:#2A3138; color:#F6F3EC; }
+  .qty-stepper span { font-weight:700; min-width:16px; text-align:center; font-size:13px; }
+
+  /* ---- Variant rows (size / ml / pcs) ---- */
+  .variant-row { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 0; border-top:1px solid #262E34; }
+  .variant-row:first-child { border-top:none; }
+  .variant-row .variant-label { font-size:12px; color:#F6F3EC; }
+  .variant-row .variant-price { font-size:11px; color:#9CA3AF; margin-top:1px; }
+  .variant-row .qty-stepper button { width:22px; height:22px; font-size:12px; }
+  .variant-row .add-btn { padding:5px 12px; font-size:11px; }
+
+  .empty-state, .error-state { text-align:center; padding:50px 20px; color:#6B7280; font-size:13px; }
+
+  /* ---- Floating buttons ---- */
+  .fab-call { position:fixed; right:16px; bottom:96px; width:52px; height:52px; border-radius:50%; background:#E15A4C; color:#fff; border:none; font-size:20px; box-shadow:0 8px 20px rgba(0,0,0,.4); cursor:pointer; z-index:60; display:flex; align-items:center; justify-content:center; }
+  .fab-call.called { background:#2FA37D; }
+
+  /* ---- Cart bar ---- */
+  .cart-bar { position:fixed; left:0; right:0; bottom:0; z-index:50; background:#1B2126; border-top:1px solid #262E34; padding:12px 16px; display:none; align-items:center; gap:12px; }
+  .cart-bar.show { display:flex; }
+  .cart-bar .cart-info { font-size:13px; }
+  .cart-bar .cart-info b { display:block; font-size:14px; }
+  .cart-bar .cart-info span { color:#9CA3AF; font-size:11px; }
+  .cart-bar button.view-cart { flex:1; background:#E3A23B; color:#14181C; border:none; padding:13px; border-radius:12px; font-weight:700; font-size:14px; cursor:pointer; }
+
+  /* ---- Cart drawer ---- */
+  .drawer-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:70; }
+  .drawer-overlay.open { display:block; }
+  .drawer { position:fixed; left:0; right:0; bottom:0; max-height:82vh; background:#1B2126; border-radius:20px 20px 0 0; z-index:80; transform:translateY(100%); transition:transform .25s ease; display:flex; flex-direction:column; }
+  .drawer.open { transform:translateY(0); }
+  .drawer-handle { width:40px; height:4px; background:#3B4552; border-radius:4px; margin:10px auto 4px; }
+  .drawer-header { display:flex; justify-content:space-between; align-items:center; padding:8px 18px 12px; border-bottom:1px solid #262E34; }
+  .drawer-header h3 { margin:0; font-size:16px; }
+  .drawer-close { background:none; border:none; color:#9CA3AF; font-size:20px; cursor:pointer; }
+  .drawer-body { overflow-y:auto; padding:14px 18px; flex:1; }
+  .drawer-footer { padding:14px 18px 20px; border-top:1px solid #262E34; }
+
+  .cart-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #21282E; }
+  .cart-row:last-child { border-bottom:none; }
+  .cart-row .name { font-weight:600; font-size:13px; }
+  .cart-row .name .variant-tag { color:#E3A23B; font-weight:500; }
+  .cart-row .sub { color:#9CA3AF; font-size:11px; margin-top:2px; }
+  .cart-row-actions { display:flex; align-items:center; gap:8px; }
+  .cart-row-actions button { width:26px; height:26px; border-radius:50%; border:none; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; }
+  .cart-row-actions .minus { background:#2A3138; color:#fff; }
+  .cart-row-actions .plus { background:#E3A23B; color:#14181C; }
+  .cart-row-actions .remove { background:transparent; color:#E15A4C; font-size:15px; }
+
+  #customer-name { width:100%; padding:11px 14px; margin-bottom:10px; border-radius:10px; border:1px solid #2A3138; background:#14181C; color:#F6F3EC; font-size:13px; }
+  .total-row { display:flex; justify-content:space-between; font-size:15px; font-weight:700; margin-bottom:12px; }
+  .total-row span:last-child { color:#E3A23B; }
+  #order-btn { width:100%; padding:14px; background:#2FA37D; color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; }
+  #order-btn:disabled { opacity:.6; }
+
+  /* ---- Toast ---- */
+  #toast { position:fixed; top:16px; left:50%; transform:translateX(-50%) translateY(-20px); background:#2FA37D; color:#fff; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:600; z-index:200; opacity:0; transition:.25s; pointer-events:none; box-shadow:0 8px 20px rgba(0,0,0,.4); max-width:90%; text-align:center; }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  #toast.error { background:#E15A4C; }
+</style>
+</head>
+<body>
+  <body>
+
+  <!-- ✅ GPS OVERLAY — YEH ADD KARO -->
+  <div id="gps-overlay" style="display:none; position:fixed; inset:0; z-index:9999; 
+       background:#14181C; color:#F6F3EC; font-family:'Segoe UI',sans-serif;
+       align-items:center; justify-content:center; flex-direction:column; padding:40px 20px;">
+    <div id="gps-overlay-content" style="text-align:center; max-width:400px;">
+      <div style="font-size:56px; margin-bottom:20px;">📍</div>
+      <h2 style="margin:0 0 12px; font-size:22px;">Verifying Your Location...</h2>
+      <p style="color:#8B95A5; margin:0 0 20px; line-height:1.6;">
+        Please allow location access so we can confirm you are at the restaurant.
+      </p>
+      <div id="gps-status" style="color:#E3A23B; font-size:14px;">
+        Waiting for permission...
+      </div>
+    </div>
+  </div>
+
+
+  
+  
+
+  <div class="brand-header" id="brand-header">
+    <div class="table-chip" id="table-label"></div>
+  </div>
+
+  <div class="search-wrap">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input
+        id="search-input"
+        placeholder="Search menu..."
+        oninput="onSearchInput()"
+        autocomplete="off"
+      >
+      <button
+        class="search-clear"
+        id="search-clear"
+        onclick="clearSearch()"
+      >✕</button>
+    </div>
+  </div>
+
+  <div class="cat-nav" id="cat-nav"></div>
+
+  <div class="deals-section" id="deals-section" style="display:none;">
+    <div class="deals-heading">🎁 Deals & Combos</div>
+    <div class="deals-grid" id="deals-grid"></div>
+  </div>
+
+  <div id="menu-list"></div>
+
+  <button class="fab-call" id="call-btn" onclick="callWaiter()" title="Call Waiter">📞</button>
+
+  <div class="cart-bar" id="cart-bar">
+    <div class="cart-info">
+      <b id="cart-count-label">0 items</b>
+      <span id="cart-total-label">Rs 0</span>
+    </div>
+    <button class="view-cart" onclick="openDrawer()">View Cart</button>
+  </div>
+
+  <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-handle"></div>
+    <div class="drawer-header">
+      <h3>Your Order</h3>
+      <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    </div>
+    <div class="drawer-body" id="cart-list"></div>
+    <div class="drawer-footer">
+      <input id="customer-name" placeholder="Your Name (optional)">
+      <div class="total-row"><span>Total</span><span id="drawer-total">Rs 0</span></div>
+      <button id="order-btn" onclick="placeOrder()">Place Order</button>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const restaurantId = params.get('r');
+  const tableNo = params.get('t');
+  let cart = [];
+  let dealCart = [];
+  let groupedMenu = {};
+  let searchTerm = '';
+
+  if (!restaurantId || !tableNo) {
+    document.body.innerHTML = "<h2 style='text-align:center;margin-top:60px;'>Invalid QR Code</h2>";
+    throw new Error("Restaurant ID or Table Number missing");
+  }
+
+  document.getElementById('table-label').innerText = 'Table ' + tableNo;
+
+
+// =================================================
+// GPS LOCATION VERIFICATION — OVERLAY VERSION
+// =================================================
+
+async function verifyCustomerLocation() {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('gps-overlay');
+    const statusEl = document.getElementById('gps-status');
+
+    // ✅ HTTPS check — HTTP pe GPS kaam nahi karta
+    const isSecureContext = window.isSecureContext || 
+                            location.protocol === 'https:' || 
+                            location.hostname === 'localhost' ||
+                            location.hostname === '127.0.0.1';
+
+    if (!isSecureContext) {
+      console.warn('⚠️ HTTP pe GPS kaam nahi karta. Skipping location check.');
+      resolve({ 
+        allowed: true, 
+        message: 'Location check skipped (HTTP)' 
+      });
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      resolve({ allowed: true, message: 'GPS not supported' });
+      return;
+    }
+
+    overlay.style.display = 'flex';
+    if (statusEl) statusEl.innerText = 'Getting your location...';
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        if (statusEl) statusEl.innerText = 'Checking distance...';
+
+        try {
+          const res = await fetch(`/api/public/${restaurantId}/verify-location`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            })
+          });
+
+          const data = await res.json();
+          resolve(data);
+        } catch (err) {
+          console.error('Location verify error:', err);
+          resolve({ allowed: true, message: 'Server error' });
+        }
+      },
+      (error) => {
+        console.warn('GPS error:', error.message);
+        // ✅ Fallback: GPS fail ho toh allow karo
+        resolve({
+          allowed: true,
+          message: 'GPS unavailable, proceeding'
+        });
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+    );
+  });
+}
+
+// =================================================
+// SHOW BLOCKED SCREEN (Overlay ke andar)
+// =================================================
+
+function showLocationBlockedScreen(message) {
+  const overlay = document.getElementById('gps-overlay');
+  const contentEl = document.getElementById('gps-overlay-content');
+
+  overlay.style.display = 'flex';
+
+  contentEl.innerHTML = `
+    <div style="font-size:64px; margin-bottom:20px;">🚫</div>
+    <h2 style="margin:0 0 16px; font-size:24px; color:#E15A4C;">Location Required</h2>
+    <p style="color:#8B95A5; margin:0 0 28px; line-height:1.7; font-size:15px;">
+      ${message || 'Please come to the restaurant to place an order.'}
+    </p>
+    <button onclick="location.reload()" 
+            style="background:#E3A23B; color:#11161D; border:none; 
+                   padding:14px 36px; border-radius:10px; 
+                   font-weight:700; font-size:15px; cursor:pointer;">
+      🔄 Try Again
+    </button>
+    <p style="color:#6B7280; font-size:12px; margin-top:24px; line-height:1.6;">
+      Make sure location is enabled in your browser settings.
+    </p>
+  `;
+}
+
+// =================================================
+// PAGE INIT
+// =================================================
+
+(async function init() {
+  const locationCheck = await verifyCustomerLocation();
+
+  // Overlay hide karo (agar allowed hai)
+  const overlay = document.getElementById('gps-overlay');
+
+  if (!locationCheck.allowed) {
+    showLocationBlockedScreen(locationCheck.message);
+    return;
+  }
+
+  // Location OK — overlay hide karo
+  overlay.style.display = 'none';
+
+  // Ab menu load karo (elements intact hain)
+  loadBranding();
+  loadMenu();
+  loadDeals();
+})();
+
+  function showToast(msg, isError) {
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.classList.toggle('error', isError);
+    t.classList.add('show');
+    setTimeout(() => {
+      t.classList.remove('show');
+    }, 2600);
+  }
+
+  async function loadBranding() {
+    try {
+      const res = await fetch(`/api/public/${restaurantId}/info`);
+      const data = await res.json();
+      if (data.success) {
+        const header = document.getElementById('brand-header');
+        header.style.display = 'flex';
+        header.innerHTML =
+          (data.data.logo_url ? `<img src="${data.data.logo_url}">` : '') +
+          `<span class="brand-name">${data.data.name}</span>` +
+          `<div class="table-chip">Table ${tableNo}</div>`;
+      }
+    } catch (e) {}
+  }
+
+  async function loadDeals() {
+    const section = document.getElementById('deals-section');
+    const grid = document.getElementById('deals-grid');
+    try {
+      const res = await fetch(`/api/public/${restaurantId}/deals`);
+      if (!res.ok) { section.style.display = 'none'; return; }
+      const result = await res.json();
+      const deals = Array.isArray(result.data) ? result.data : [];
+      window.dealsList = deals;
+
+      if (!deals.length) { section.style.display = 'none'; return; }
+
+      section.style.display = 'block';
+      grid.innerHTML = deals.map(deal => renderDealCard(deal)).join('');
+      updateDealButtons();
+
+    } catch (err) {
+      console.error('DEALS ERROR:', err);
+      section.style.display = 'none';
+    }
+  }
+
+  function renderDealCard(deal) {
+    const itemsSummary = (deal.items || []).map(i =>
+      `${Number(i.quantity)}× ${escapeHtml(i.name)}` +
+      (i.variant_label ? ` (${escapeHtml(i.variant_label)})` : '')
+    ).join(', ');
+
+    return `
+      <div class="deal-card" id="deal-card-${deal.id}">
+        <div class="deal-top">
+          <div class="deal-name">${escapeHtml(deal.name)}</div>
+          <div class="deal-badge">${escapeHtml(deal.type)}</div>
+        </div>
+        <div class="deal-items">${itemsSummary}</div>
+        <div class="deal-footer">
+          <div class="deal-price">Rs ${deal.price}</div>
+          <div id="deal-controls-${deal.id}"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function findDealCartLine(id) {
+    return dealCart.find(d => d.deal_id === id);
+  }
+
+  function addDealToCart(id, name, price) {
+    const existing = findDealCartLine(id);
+    if (existing) existing.quantity++;
+    else dealCart.push({ deal_id: id, name, price: Number(price), quantity: 1 });
+    updateDealButtons();
+    updateCartBar();
+  }
+
+  function decreaseDealQuantity(id) {
+    const item = findDealCartLine(id);
+    if (!item) return;
+    item.quantity--;
+    if (item.quantity <= 0) dealCart = dealCart.filter(d => d !== item);
+    updateDealButtons();
+    updateCartBar();
+  }
+
+  function removeDealFromCart(id) {
+    dealCart = dealCart.filter(d => d.deal_id !== id);
+    updateDealButtons();
+    updateCartBar();
+  }
+
+  function updateDealButtons() {
+    (window.dealsList || []).forEach(deal => {
+      const controls = document.getElementById(`deal-controls-${deal.id}`);
+      const card = document.getElementById(`deal-card-${deal.id}`);
+      if (!controls) return;
+      const cartItem = findDealCartLine(deal.id);
+      if (card) card.classList.toggle('in-cart', !!cartItem);
+
+      const nameEsc = deal.name.replace(/'/g,"\\'");
+
+      if (cartItem) {
+        controls.innerHTML = `
+          <div class="qty-stepper">
+            <button class="minus" onclick="decreaseDealQuantity(${deal.id})">−</button>
+            <span>${cartItem.quantity}</span>
+            <button onclick="addDealToCart(${deal.id}, '${nameEsc}', ${deal.price})">+</button>
+          </div>`;
+      } else {
+        controls.innerHTML = `<button class="add-btn" onclick="addDealToCart(${deal.id}, '${nameEsc}', ${deal.price})">Add</button>`;
+      }
+    });
+  }
+
+  async function loadMenu() {
+    const list = document.getElementById('menu-list');
+    try {
+      const res = await fetch(`/api/public/${restaurantId}/menu`);
+      if (!res.ok) { showToast('Unable to load menu', true); return; }
+      const result = await res.json();
+      const items = Array.isArray(result) ? result : result.data;
+      window.menuItems = items;
+
+      if (!Array.isArray(items)) { showToast('Menu loading failed', true); return; }
+
+      if (items.length === 0) {
+        list.innerHTML = `<div class="empty-state">No menu items available right now.</div>`;
+        return;
+      }
+
+      renderMenu();
+
+    } catch (err) {
+      console.error('MENU ERROR:', err);
+      list.innerHTML = `<div class="error-state">Unable to load menu.<br>Please try again later.</div>`;
+    }
+  }
+
+  function slugify(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, '-'); }
+
+  /* ---------------------------------------------------
+     SEARCH
+  --------------------------------------------------- */
+
+  function onSearchInput() {
+    searchTerm = document.getElementById('search-input').value.trim().toLowerCase();
+    document.getElementById('search-clear').classList.toggle('show', searchTerm.length > 0);
+    renderMenu();
+  }
+
+  function clearSearch() {
+    searchTerm = '';
+    document.getElementById('search-input').value = '';
+    document.getElementById('search-clear').classList.remove('show');
+    renderMenu();
+  }
+
+  function getFilteredItems() {
+    const items = window.menuItems || [];
+    if (!searchTerm) return items;
+    return items.filter(item =>
+      (item.name || '').toLowerCase().includes(searchTerm) ||
+      (item.category || '').toLowerCase().includes(searchTerm)
+    );
+  }
+
+  function renderMenu() {
+    const list = document.getElementById('menu-list');
+    const catNav = document.getElementById('cat-nav');
+    const filtered = getFilteredItems();
+
+    if (!filtered.length) {
+      list.innerHTML = `<div class="empty-state">No items match "${escapeHtml(searchTerm)}".</div>`;
+      catNav.innerHTML = '';
+      return;
+    }
+
+    groupedMenu = {};
+    filtered.forEach(item => {
+      const cat = item.category || 'Other';
+      if (!groupedMenu[cat]) groupedMenu[cat] = [];
+      groupedMenu[cat].push(item);
+    });
+
+    catNav.innerHTML = Object.keys(groupedMenu).map((cat, i) =>
+      `<div class="cat-pill${i===0?' active':''}" data-cat="${escapeHtml(cat)}" onclick="scrollToCat('${cat.replace(/'/g,"\\'")}')">${escapeHtml(cat)}</div>`
+    ).join('');
+
+    list.innerHTML = Object.entries(groupedMenu).map(([category, catItems]) => `
+      <div class="cat-heading" id="cat-${slugify(category)}">${escapeHtml(category)}</div>
+      <div class="item-grid">
+        ${catItems.map(item => renderItemCard(item)).join('')}
+      </div>
+    `).join('');
+
+    updateMenuButtons();
+    setupCatObserver();
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  function renderItemCard(item) {
+    return `
+      <div class="item-card" id="card-${item.id}">
+        <div class="item-img-wrap">
+          ${item.image ? `<img src="${item.image}">` : `<span class="placeholder">🍽️</span>`}
+        </div>
+        <div class="item-body">
+          <div class="item-name">${escapeHtml(item.name)}</div>
+          <div class="item-price">Rs ${item.price}</div>
+          <div class="item-controls" id="controls-${item.id}"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function scrollToCat(cat) {
+    const el = document.getElementById('cat-' + slugify(cat));
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function setupCatObserver() {
+    const headings = document.querySelectorAll('.cat-heading');
+    const pills = document.querySelectorAll('.cat-pill');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const cat = entry.target.innerText;
+          pills.forEach(p => p.classList.toggle('active', p.dataset.cat === cat));
+        }
+      });
+    }, { rootMargin: '-170px 0px -70% 0px' });
+    headings.forEach(h => observer.observe(h));
+  }
+
+  /* ---------------------------------------------------
+     CART
+     Cart line key = menu_item_id + variant_id (null-safe)
+  --------------------------------------------------- */
+
+  function findCartLine(id, variantId) {
+    return cart.find(i =>
+      i.menu_item_id === id &&
+      (i.variant_id || null) === (variantId || null)
+    );
+  }
+
+  function addToCart(id, name, price, variantId, variantLabel) {
+    variantId = variantId || null;
+    const existing = findCartLine(id, variantId);
+    if (existing) existing.quantity++;
+    else cart.push({
+      menu_item_id: id,
+      variant_id: variantId,
+      variant_label: variantLabel || null,
+      name,
+      price,
+      quantity: 1
+    });
+    updateMenuButtons();
+    updateCartBar();
+  }
+
+  function decreaseQuantity(id, variantId) {
+    variantId = variantId || null;
+    const item = findCartLine(id, variantId);
+    if (!item) return;
+    item.quantity--;
+    if (item.quantity <= 0) {
+      cart = cart.filter(i => i !== item);
+    }
+    updateMenuButtons();
+    updateCartBar();
+  }
+
+  function removeFromCart(id, variantId) {
+    variantId = variantId || null;
+    cart = cart.filter(i =>
+      !(i.menu_item_id === id && (i.variant_id || null) === variantId)
+    );
+    updateMenuButtons();
+    updateCartBar();
+  }
+
+  function updateMenuButtons() {
+    (window.menuItems || []).forEach(menuItem => {
+      const controls = document.getElementById(`controls-${menuItem.id}`);
+      const card = document.getElementById(`card-${menuItem.id}`);
+      if (!controls) return;
+
+      const hasVariants = Array.isArray(menuItem.variants) && menuItem.variants.length > 0;
+      const anyInCart = cart.some(i => i.menu_item_id === menuItem.id);
+      if (card) card.classList.toggle('in-cart', anyInCart);
+
+      if (!hasVariants) {
+        const cartItem = findCartLine(menuItem.id, null);
+
+        if (cartItem) {
+          controls.innerHTML = `
+            <div class="qty-stepper">
+              <button class="minus" onclick="decreaseQuantity(${menuItem.id}, null)">−</button>
+              <span>${cartItem.quantity}</span>
+              <button onclick="addToCart(${menuItem.id}, '${menuItem.name.replace(/'/g,"\\'")}', ${menuItem.price}, null, null)">+</button>
+            </div>`;
+        } else {
+          controls.innerHTML = `<button class="add-btn" onclick="addToCart(${menuItem.id}, '${menuItem.name.replace(/'/g,"\\'")}', ${menuItem.price}, null, null)">Add</button>`;
+        }
+        return;
+      }
+
+      controls.innerHTML = menuItem.variants.map(variant => {
+        const cartItem = findCartLine(menuItem.id, variant.id);
+        const nameEsc = menuItem.name.replace(/'/g,"\\'");
+        const labelEsc = variant.label.replace(/'/g,"\\'");
+
+        return `
+          <div class="variant-row">
+            <div>
+              <div class="variant-label">${escapeHtml(variant.label)}</div>
+              <div class="variant-price">Rs ${variant.price}</div>
+            </div>
+            ${cartItem
+              ? `<div class="qty-stepper">
+                   <button class="minus" onclick="decreaseQuantity(${menuItem.id}, ${variant.id})">−</button>
+                   <span>${cartItem.quantity}</span>
+                   <button onclick="addToCart(${menuItem.id}, '${nameEsc}', ${variant.price}, ${variant.id}, '${labelEsc}')">+</button>
+                 </div>`
+              : `<button class="add-btn" onclick="addToCart(${menuItem.id}, '${nameEsc}', ${variant.price}, ${variant.id}, '${labelEsc}')">Add</button>`
+            }
+          </div>
+        `;
+      }).join('');
+    });
+  }
+
+  function cartTotal() {
+    return cart.reduce((s, i) => s + i.price * i.quantity, 0) +
+      dealCart.reduce((s, d) => s + d.price * d.quantity, 0);
+  }
+  function cartCount() {
+    return cart.reduce((s, i) => s + i.quantity, 0) +
+      dealCart.reduce((s, d) => s + d.quantity, 0);
+  }
+
+  function updateCartBar() {
+    const bar = document.getElementById('cart-bar');
+    const count = cartCount();
+    if (count > 0) {
+      bar.classList.add('show');
+      document.getElementById('cart-count-label').innerText = count + ' items';
+      document.getElementById('cart-total-label').innerText = 'Rs ' + cartTotal();
+    } else {
+      bar.classList.remove('show');
+      closeDrawer();
+    }
+    renderCartDrawer();
+  }
+
+    function renderCartDrawer() {
+    const cartList = document.getElementById('cart-list');
+
+    if (cart.length === 0 && dealCart.length === 0) {
+      cartList.innerHTML = `<div class="empty-state">Your cart is empty.</div>`;
+    } else {
+
+      const dealRows = dealCart.map(deal => `
+        <div class="cart-row">
+          <div>
+            <div class="name">
+              🎁 ${escapeHtml(deal.name)}
+            </div>
+            <div class="sub">Rs ${deal.price} × ${deal.quantity} = Rs ${deal.price * deal.quantity}</div>
+          </div>
+          <div class="cart-row-actions">
+            <button class="minus" onclick="decreaseDealQuantity(${deal.deal_id})">−</button>
+            
+            <span style="font-weight:700;min-width:16px;text-align:center;">${deal.quantity}</span>
+            <button class="plus" onclick="addDealToCart(${deal.deal_id}, '${deal.name.replace(/'/g,"\\'")}', ${deal.price})">+</button>
+            <button class="remove" onclick="removeDealFromCart(${deal.deal_id})">✕</button>
+          </div>
+        </div>
+      `).join('');
+
+      const itemRows = cart.map(item => `
+        <div class="cart-row">
+          <div>
+            <div class="name">
+              ${escapeHtml(item.name)}
+              ${item.variant_label ? `<span class="variant-tag">(${escapeHtml(item.variant_label)})</span>` : ''}
+            </div>
+            <div class="sub">Rs ${item.price} × ${item.quantity} = Rs ${item.price * item.quantity}</div>
+          </div>
+          <div class="cart-row-actions">
+            <button class="minus" onclick="decreaseQuantity(${item.menu_item_id}, ${item.variant_id || 'null'})">−</button>
+            
+            <span style="font-weight:700;min-width:16px;text-align:center;">${item.quantity}</span>
+            <button class="plus" onclick="addToCart(${item.menu_item_id}, '${item.name.replace(/'/g,"\\'")}', ${item.price}, ${item.variant_id || 'null'}, ${item.variant_label ? `'${item.variant_label.replace(/'/g,"\\'")}'` : 'null'})">+</button>
+            <button class="remove" onclick="removeFromCart(${item.menu_item_id}, ${item.variant_id || 'null'})">✕</button>
+          </div>
+        </div>
+      `).join('');
+
+      cartList.innerHTML = dealRows + itemRows;
+    }
+    document.getElementById('drawer-total').innerText = 'Rs ' + cartTotal();
+  }
+
+  function openDrawer() {
+    if (cart.length === 0 && dealCart.length === 0) return;
+    document.getElementById('drawer').classList.add('open');
+    document.getElementById('drawer-overlay').classList.add('open');
+  }
+  function closeDrawer() {
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('drawer-overlay').classList.remove('open');
+  }
+
+  async function callWaiter() {
+    const btn = document.getElementById('call-btn');
+    btn.disabled = true;
+    btn.classList.add('called');
+    try {
+      const res = await fetch(`/api/public/${restaurantId}/call-waiter`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table_no: Number(tableNo) })
+      });
+      if (!res.ok) {
+        showToast('Unable to call waiter', true);
+        btn.disabled = false; btn.classList.remove('called');
+        return;
+      }
+      showToast('Someone will be with you shortly');
+      setTimeout(() => { btn.disabled = false; btn.classList.remove('called'); }, 30000);
+    } catch (err) {
+      showToast('Server error', true);
+      btn.disabled = false; btn.classList.remove('called');
+    }
+  }
+
+  async function placeOrder() {
+    if (cart.length === 0 && dealCart.length === 0) { showToast('Cart is empty', true); return; }
+    const btn = document.getElementById('order-btn');
+    btn.disabled = true;
+    btn.innerText = 'Sending...';
+
+    const customer_name = document.getElementById('customer-name')?.value.trim() || 'Walk-in';
+
+    try {
+      const res = await fetch(`/api/public/${restaurantId}/order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          table_no: Number(tableNo),
+          customer_name,
+          items: cart.map(i => ({
+            menu_item_id: i.menu_item_id,
+            variant_id: i.variant_id || null,
+            quantity: i.quantity
+          })),
+          deals: dealCart.map(d => ({
+            deal_id: d.deal_id,
+            quantity: d.quantity
+          }))
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        
+        if (data.error === 'INSUFFICIENT_KITCHEN_STOCK') {
+          showToast(`Sorry, ${data.ingredient} is out of stock!`, true);
+        } else {
+          showToast(data.message || 'Order failed', true);
+        }
+        btn.disabled = false; btn.innerText = 'Place Order';
+        return;
+      }
+
+      showToast('✅ Order sent to waiter');
+      cart = [];
+      dealCart = [];
+      updateMenuButtons();
+      updateDealButtons();
+      updateCartBar();
+      closeDrawer();
+      btn.disabled = false; btn.innerText = 'Place Order';
+      const nameInput = document.getElementById('customer-name');
+      if (nameInput) nameInput.value = '';
+
+    } catch (err) {
+      console.error(err);
+      showToast('Server error', true);
+      btn.disabled = false; btn.innerText = 'Place Order';
+    }
+  }
+
+
+</script>
+
+</body>
+</html>

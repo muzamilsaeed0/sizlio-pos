@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waiter</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #14181C; color: #F6F3EC; margin: 0; padding: 0; }
+
+  #login-box { max-width: 340px; margin: 80px auto; background: #1F262C; padding: 32px 28px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); text-align: center; }
+  #login-box h2 { margin: 0 0 24px; font-size: 20px; }
+  #login-box input, .pw-wrap { width: 100%; display: block; box-sizing: border-box; }
+  #login-box input { padding: 12px 14px; margin: 8px 0; border-radius: 8px; border: 1px solid #2A3138; background: #14181C; color: #F6F3EC; font-size: 14px; }
+  #login-box input:focus { outline: none; border-color: #E3A23B; }
+  #login-box button { width: 100%; padding: 12px; margin-top: 12px; border-radius: 8px; border: none; background: #E3A23B; color: #14181C; font-weight: 700; font-size: 14px; cursor: pointer; }
+  #login-error { min-height: 18px; font-size: 13px; color: #E15A4C; }
+  .pw-wrap { position: relative; margin: 8px 0; }
+  .pw-wrap input { margin: 0; width: 100%; padding-right: 40px; }
+  .pw-eye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 15px; user-select: none; }
+
+  #app-box { max-width: 560px; margin: 0 auto; padding: 20px 16px 180px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid #21282E; }
+  .topbar h2 { margin: 0; font-size: 17px; letter-spacing: -0.01em; }
+  .table-picker { display: flex; align-items: center; gap: 8px; }
+  .table-picker span { color: #9CA3AF; font-size: 12px; }
+  .table-num { font-weight: 700; font-size: 18px; min-width: 20px; text-align: center; }
+  .step-btn { width: 28px; height: 28px; border-radius: 8px; border: none; background: #2A3138; color: #F6F3EC; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .step-btn.accent { background: #E3A23B; color: #14181C; }
+
+  .search-wrap { margin-bottom: 14px; }
+  .search-box { position: relative; }
+  .search-box input { width: 100%; padding: 11px 14px 11px 38px; border-radius: 12px; border: 1px solid #2A3138; background: #1F262C; color: #F6F3EC; font-size: 13px; }
+  .search-box input:focus { outline: none; border-color: #E3A23B; }
+  .search-box .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 14px; color: #9CA3AF; pointer-events: none; }
+  .search-box .search-clear { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9CA3AF; font-size: 16px; cursor: pointer; display: none; padding: 4px; }
+  .search-box .search-clear.show { display: block; }
+
+  #ready-section { margin-bottom: 20px; }
+  #ready-section h3 { color: #2FA37D; margin: 0 0 10px; font-size: 14px; }
+  #pending-section h3 { color: #E3A23B; margin: 0 0 10px; font-size: 14px; }
+  .ready-card { background: #17251F; border: 1px solid #2FA37D; border-radius: 10px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+  .btn-serve { background: #2FA37D; color: #fff; border: none; border-radius: 6px; padding: 8px 12px; font-weight: 700; cursor: pointer; font-size: 12px; }
+
+  .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 12px; }
+  .menu-card { background: #1F262C; border-radius: 12px; padding: 14px; border: 1px solid transparent; transition: border-color .15s; display: flex; flex-direction: column; }
+  .menu-card.active { border-color: #E3A23B; }
+  .menu-card .name { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+  .menu-card .price { color: #6B7280; font-size: 12px; margin-bottom: 10px; }
+  .menu-card .controls { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+  .add-btn { width: 100%; padding: 7px; border-radius: 8px; border: 1px solid #E3A23B; background: transparent; color: #E3A23B; font-weight: 700; font-size: 12px; cursor: pointer; }
+
+  .menu-card .variant-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 5px 0; border-top: 1px solid #262E34; }
+  .menu-card .variant-row:first-child { border-top: none; }
+  .menu-card .variant-label { font-size: 11px; color: #F6F3EC; }
+  .menu-card .variant-price { font-size: 10px; color: #6B7280; }
+  .menu-card .variant-row .step-btn { width: 22px; height: 22px; font-size: 13px; }
+  .menu-card .variant-row .add-btn { width: auto; padding: 5px 10px; font-size: 11px; }
+
+  .deals-section { margin-bottom: 20px; }
+  .deals-heading { color:#E3A23B; font-size:14px; font-weight:700; margin:0 0 10px; }
+  .deals-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap:12px; }
+  .deal-card { background:#241C14; border:1px solid #E3A23B33; border-radius:12px; padding:14px; display:flex; flex-direction:column; }
+  .deal-card.active { border-color:#E3A23B; }
+  .deal-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .deal-name { font-size:13px; font-weight:700; }
+  .deal-badge { flex-shrink:0; background:#E3A23B; color:#14181C; font-size:9px; font-weight:700; text-transform:uppercase; padding:3px 7px; border-radius:10px; }
+  .deal-items { color:#9CA3AF; font-size:11px; margin-top:6px; line-height:1.5; }
+  .deal-footer { display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
+  .deal-price { color:#E3A23B; font-weight:700; font-size:13px; }
+
+  @media (max-width: 480px) {
+    .menu-grid { grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap: 8px; }
+  }
+  @media (min-width: 900px) {
+    #app-box { max-width: 720px; }
+    .menu-grid { grid-template-columns: repeat(auto-fill, minmax(170px,1fr)); }
+  }
+
+  /* ===== CART BAR ===== */
+  .cart-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #1B2126;
+    border-top: 1px solid #262E34;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 70vh;
+    overflow-y: auto;
+    z-index: 100;
+  }
+  .cart-items-list {
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-right: 4px;
+  }
+  .cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #14181C;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+  .cart-item .item-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .cart-item .item-name { font-weight: 600; }
+  .cart-item .item-variant { color: #9CA3AF; font-size: 11px; }
+  .cart-item .item-price { color: #E3A23B; font-size: 12px; }
+  .cart-item .item-controls { display: flex; align-items: center; gap: 6px; }
+  .cart-item .item-controls .step-btn { width: 24px; height: 24px; font-size: 14px; }
+  .cart-item .item-controls .qty { font-weight: 700; min-width: 20px; text-align: center; }
+  .cart-summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-top: 1px solid #262E34;
+    padding-top: 10px;
+  }
+  .cart-summary .info { font-size: 13px; flex: 1; }
+  .cart-summary .info b { display: block; }
+  .cart-summary .info span { color: #6B7280; font-size: 11px; }
+  .cart-summary button {
+    flex: 1;
+    padding: 13px;
+    border-radius: 10px;
+    border: none;
+    background: #E3A23B;
+    color: #14181C;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .empty-cart-msg { color: #6B7280; font-size: 13px; padding: 8px 0; text-align: center; }
+
+  #current-order-section { margin-bottom: 20px; }
+  #current-order-section h3 { color: #E3A23B; margin: 0 0 10px; font-size: 14px; }
+  .current-item { background: #1F262C; border-radius: 10px; padding: 10px 14px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+  .current-item .actions { display: flex; align-items: center; gap: 8px; }
+  .current-item .variant-tag { color: #E3A23B; font-size: 11px; }
+
+  /* ===== TOAST NOTIFICATIONS (Top-center) ===== */
+  #toast-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    pointer-events: none;
+  }
+  .toast {
+    background: #1F262C;
+    border: 1px solid #2A3138;
+    color: #F6F3EC;
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    font-weight: 600;
+    font-size: 15px;
+    min-width: 280px;
+    text-align: center;
+    pointer-events: auto;
+    animation: toastIn 0.3s ease-out;
+  }
+  .toast.success { border-color: #2FA37D; }
+  .toast.error { border-color: #E15A4C; }
+  .toast .toast-sub { font-weight: 400; font-size: 12px; color: #9CA3AF; margin-top: 4px; }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* ===== CENTER STOCK ALERT (Overlay) ===== */
+  #stock-alert-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  #stock-alert-overlay.show { display: flex; }
+  .stock-alert-box {
+    background: #1F262C;
+    border: 2px solid #E15A4C;
+    border-radius: 16px;
+    padding: 30px 40px;
+    max-width: 420px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    animation: toastIn 0.3s ease-out;
+  }
+  .stock-alert-box .icon { font-size: 48px; margin-bottom: 10px; }
+  .stock-alert-box h3 { color: #E15A4C; margin: 0 0 8px; font-size: 20px; }
+  .stock-alert-box p { color: #9CA3AF; font-size: 14px; line-height: 1.6; margin: 0 0 16px; }
+  .stock-alert-box button {
+    background: #E3A23B;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 28px;
+    font-weight: 700;
+    font-size: 14px;
+    color: #14181C;
+    cursor: pointer;
+  }
+  .stock-alert-box button:hover { opacity: 0.9; }
+
+  .brand-header { display:flex; align-items:center; gap:10px; padding:12px 16px; background:#1F262C; border-bottom:1px solid #2A3138; }
+  .brand-header img { width:36px; height:36px; border-radius:8px; object-fit:cover; }
+  .brand-header .brand-name { font-weight:700; font-size:15px; }
+  #notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .notification {
+    background: #E15A4C;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    font-weight: bold;
+    min-width: 250px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  }
+</style>
+</head>
+<body>
+
+  <div class="brand-header" id="brand-header" style="display:none;"></div>
+
+  <!-- TOAST CONTAINER (Top-center) -->
+  <div id="toast-container"></div>
+
+  <!-- STOCK ALERT OVERLAY -->
+  <div id="stock-alert-overlay">
+    <div class="stock-alert-box">
+      <div class="icon">⚠️</div>
+      <h3>Low Stock</h3>
+      <p id="stock-alert-msg">Sorry, item has low stock.</p>
+      <button onclick="closeStockAlert()">Got it</button>
+    </div>
+  </div>
+
+<div id="login-box">
+  <h2>Waiter Login</h2>
+  <input id="username" placeholder="Username" onkeydown="if(event.key==='Enter') login()">
+  <div class="pw-wrap">
+    <input id="password" type="password" placeholder="Password" onkeydown="if(event.key==='Enter') login()">
+    <span class="pw-eye"
+          onmousedown="document.getElementById('password').type='text'"
+          onmouseup="document.getElementById('password').type='password'"
+          onmouseleave="document.getElementById('password').type='password'"
+          ontouchstart="document.getElementById('password').type='text'"
+          ontouchend="document.getElementById('password').type='password'">👁</span>
+  </div>
+  <button onclick="login()">Login</button>
+  <p id="login-error"></p>
+</div>
+
+<div id="app-box" style="display:none;">
+  <div style="display:flex; justify-content:flex-end; margin-bottom:15px;">
+    <button onclick="logout()" style="background:#E15A4C;color:white;border:none;padding:10px 16px;border-radius:8px;font-weight:bold;cursor:pointer;">Logout</button>
+  </div>
+  <div id="pending-section"></div>
+  <div id="ready-section"></div>
+  <div id="current-order-section"></div>
+
+  <div class="topbar">
+    <h2>Menu</h2>
+    <div class="table-picker">
+      <span>Table</span>
+      <button class="step-btn" onclick="changeTable(-1)">−</button>
+      <div class="table-num" id="table-display">1</div>
+      <button class="step-btn accent" onclick="changeTable(1)">+</button>
+    </div>
+  </div>
+
+  <div class="search-wrap">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input id="search-input" placeholder="Search menu..." oninput="onSearchInput()" autocomplete="off">
+      <button class="search-clear" id="search-clear" onclick="clearSearch()">✕</button>
+    </div>
+  </div>
+
+  <div id="deals-section" style="display:none;">
+    <div class="deals-heading">🎁 Deals & Combos</div>
+    <div class="deals-grid" id="deals-grid"></div>
+  </div>
+
+  <div id="menu-list" class="menu-grid"></div>
+  <p id="order-status"></p>
+</div>
+
+<!-- CART BAR -->
+<div class="cart-bar" id="cart-bar" style="display:none;">
+  <div class="cart-items-list" id="cart-items-list"></div>
+  <div class="cart-summary">
+    <div class="info">
+      <b id="cart-count">0 items</b>
+      <span id="cart-table">Table 1</span>
+    </div>
+    <button onclick="placeOrder()">Send to Kitchen</button>
+  </div>
+</div>
+
+<div id="notification-container"></div>
+<audio id="new-order-sound" preload="auto"><source src="/sounds/order.mp3" type="audio/mpeg"></audio>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+// ============================================================
+//  GLOBALS
+// ============================================================
+let token = localStorage.getItem('waiter_token');
+let restaurantId = new URLSearchParams(window.location.search).get('restaurant') || localStorage.getItem('restaurant_id');
+let menu = [];
+let cart = [];
+let dealCart = [];
+let table = 1;
+let searchTerm = '';
+let dealsList = [];
+
+const socket = io({
+  autoConnect: false,
+  reconnection: true,
+  reconnectionAttempts: Infinity,
+  reconnectionDelay: 1000,
+  transports: ['websocket','polling'],
+  auth: { token: token }
+});
+
+// ============================================================
+//  HELPERS
+// ============================================================
+function authHeaders(json = false) {
+  const headers = { 'Authorization': 'Bearer ' + token };
+  if (json) headers['Content-Type'] = 'application/json';
+  return headers;
+}
+
+function checkUnauthorized(res) {
+  if (res.status === 401) {
+    showToast('Session expired. Please login again.', 'error');
+    logout();
+    return true;
+  }
+  return false;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+// ============================================================
+//  TOAST NOTIFICATION (Top-center)
+// ============================================================
+function showToast(message, type = 'success', sub = '') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + type;
+  toast.innerHTML = message + (sub ? `<div class="toast-sub">${sub}</div>` : '');
+  container.appendChild(toast);
+  setTimeout(() => { toast.remove(); }, 4000);
+}
+
+// ============================================================
+//  STOCK ALERT (Center overlay)
+// ============================================================
+function showStockAlert(message) {
+  document.getElementById('stock-alert-msg').textContent = message;
+  document.getElementById('stock-alert-overlay').classList.add('show');
+}
+function closeStockAlert() {
+  document.getElementById('stock-alert-overlay').classList.remove('show');
+}
+
+// ============================================================
+//  LOGIN
+// ============================================================
+async function login() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const errorBox = document.getElementById('login-error');
+  errorBox.innerText = '';
+
+  if (!username || !password) {
+    errorBox.innerText = 'Username and Password required';
+    return;
+  }
+  if (!restaurantId) {
+    errorBox.innerText = 'Restaurant ID missing. Use ?restaurant=ID in URL.';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, restaurant_id: restaurantId, role: 'waiter' })
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.token) {
+      let msg = data.message || 'Invalid username or password';
+      if (msg.toLowerCase().includes('role') || msg.toLowerCase().includes('waiter')) {
+        msg = 'This login is for waiters only.';
+      }
+      errorBox.innerText = msg;
+      return;
+    }
+
+    if (data.user.role !== 'waiter') {
+      errorBox.innerText = 'This login is for waiters only.';
+      return;
+    }
+    if (String(data.user.restaurant_id) !== String(restaurantId)) {
+      errorBox.innerText = 'You are not authorized for this restaurant.';
+      return;
+    }
+
+    token = data.token;
+    localStorage.setItem('waiter_token', token);
+    localStorage.setItem('restaurant_id', String(restaurantId));
+
+    socket.auth = { token };
+    if (!socket.connected) socket.connect();
+
+    document.getElementById('login-box').style.display = 'none';
+    document.getElementById('app-box').style.display = 'block';
+
+    loadBranding();
+    loadMenu();
+    loadDeals();
+    loadPendingOrders();
+    loadReadyOrders();
+    loadCurrentOrder();
+
+  } catch (err) {
+    console.error(err);
+    errorBox.innerText = 'Unable to connect server';
+  }
+}
+
+// ============================================================
+//  LOGOUT
+// ============================================================
+function logout() {
+  localStorage.removeItem('waiter_token');
+  localStorage.removeItem('token');
+  localStorage.removeItem('restaurant_id');
+  localStorage.removeItem('user');
+  token = null;
+  restaurantId = null;
+  if (socket.connected) socket.disconnect();
+  cart = [];
+  dealCart = [];
+  table = 1;
+  searchTerm = '';
+  document.getElementById('app-box').style.display = 'none';
+  document.getElementById('login-box').style.display = 'block';
+  document.getElementById('table-display').innerText = '1';
+  document.getElementById('menu-list').innerHTML = '';
+  document.getElementById('deals-grid').innerHTML = '';
+  document.getElementById('deals-section').style.display = 'none';
+  document.getElementById('ready-section').innerHTML = '';
+  document.getElementById('pending-section').innerHTML = '';
+  document.getElementById('current-order-section').innerHTML = '';
+  document.getElementById('cart-bar').style.display = 'none';
+  document.getElementById('order-status').innerText = '';
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-clear').classList.remove('show');
+  document.getElementById('username').value = '';
+  document.getElementById('password').value = '';
+}
+
+// ============================================================
+//  BRANDING
+// ============================================================
+async function loadBranding() {
+  try {
+    const res = await fetch('/api/restaurants/me', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    if (data.success) {
+      const header = document.getElementById('brand-header');
+      header.style.display = 'flex';
+      header.innerHTML = (data.data.logo_url ? `<img src="${data.data.logo_url}">` : '') +
+        `<span class="brand-name">${data.data.name}</span>`;
+    }
+  } catch (e) { console.error('branding load failed', e); }
+}
+
+// ============================================================
+//  MENU
+// ============================================================
+async function loadMenu() {
+  const res = await fetch('/api/menu', { headers: authHeaders() });
+  if (checkUnauthorized(res)) return;
+  const result = await res.json();
+  if (!result.success) { alert(result.message || 'Menu loading failed'); return; }
+  menu = result.data || [];
+  renderMenu();
+}
+
+function renderMenu() {
+  const list = document.getElementById('menu-list');
+  const filtered = getFilteredMenu();
+  if (!filtered.length) {
+    list.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#6B7280; padding:30px; font-size:13px;">No items match "${escapeHtml(searchTerm)}".</div>`;
+    return;
+  }
+  const grouped = {};
+  filtered.forEach(item => {
+    const cat = item.category || 'Other';
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(item);
+  });
+  list.innerHTML = Object.entries(grouped).map(([category, catItems]) => `
+    <div style="grid-column: 1 / -1; color:#E3A23B; font-size:14px; font-weight:700; margin:14px 0 8px;">${escapeHtml(category)}</div>
+    ${catItems.map(item => renderMenuCard(item)).join('')}
+  `).join('');
+}
+
+function renderMenuCard(item) {
+  const hasVariants = Array.isArray(item.variants) && item.variants.length > 0;
+  const anyInCart = cart.some(i => i.menu_item_id === item.id);
+
+  if (!hasVariants) {
+    const cartItem = findCartLine(item.id, null);
+    return `
+      <div class="menu-card${anyInCart ? ' active' : ''}">
+        <div class="name">${escapeHtml(item.name)}</div>
+        <div class="price">Rs ${item.price}</div>
+        <div class="controls">
+          ${cartItem
+            ? `<button class="step-btn" onclick="removeItem(${item.id}, null)">−</button>
+               <span>${cartItem.quantity}</span>
+               <button class="step-btn accent" onclick="addItem(${item.id}, '${item.name.replace(/'/g,"\\'")}', ${item.price}, null, null)">+</button>`
+            : `<button class="add-btn" onclick="addItem(${item.id}, '${item.name.replace(/'/g,"\\'")}', ${item.price}, null, null)">Add</button>`}
+        </div>
+      </div>`;
+  }
+
+  const nameEsc = item.name.replace(/'/g,"\\'");
+
+  return `
+    <div class="menu-card${anyInCart ? ' active' : ''}">
+      <div class="name">${escapeHtml(item.name)}</div>
+      <div class="price">Rs ${item.price}</div>
+      ${item.variants.map(variant => {
+        const cartItem = findCartLine(item.id, variant.id);
+        const labelEsc = variant.label.replace(/'/g,"\\'");
+        return `
+          <div class="variant-row">
+            <div>
+              <div class="variant-label">${escapeHtml(variant.label)}</div>
+              <div class="variant-price">Rs ${variant.price}</div>
+            </div>
+            ${cartItem
+              ? `<div style="display:flex; align-items:center; gap:6px;">
+                   <button class="step-btn" onclick="removeItem(${item.id}, ${variant.id})">−</button>
+                   <span>${cartItem.quantity}</span>
+                   <button class="step-btn accent" onclick="addItem(${item.id}, '${nameEsc}', ${variant.price}, ${variant.id}, '${labelEsc}')">+</button>
+                 </div>`
+              : `<button class="add-btn" onclick="addItem(${item.id}, '${nameEsc}', ${variant.price}, ${variant.id}, '${labelEsc}')">Add</button>`
+            }
+          </div>
+        `;
+      }).join('')}
+    </div>`;
+}
+
+function findCartLine(id, variantId) {
+  return cart.find(i => i.menu_item_id === id && (i.variant_id || null) === (variantId || null));
+}
+
+function addItem(id, name, price, variantId, variantLabel) {
+  variantId = variantId || null;
+  const existing = findCartLine(id, variantId);
+  if (existing) existing.quantity++;
+  else cart.push({ menu_item_id: id, variant_id: variantId, variant_label: variantLabel || null, name, price, quantity: 1 });
+  renderMenu();
+  updateCartBar();
+}
+
+function removeItem(id, variantId) {
+  variantId = variantId || null;
+  const item = findCartLine(id, variantId);
+  if (!item) return;
+  item.quantity--;
+  if (item.quantity <= 0) cart = cart.filter(i => i !== item);
+  renderMenu();
+  updateCartBar();
+}
+
+// ✅ NEW: Full remove item (Cross button)
+function removeItemFull(id, variantId) {
+  variantId = variantId || null;
+  cart = cart.filter(i => 
+    !(i.menu_item_id === id && (i.variant_id || null) === variantId)
+  );
+  renderMenu();
+  updateCartBar();
+}
+
+// ✅ NEW: Full remove deal (Cross button)
+function removeDealFull(id) {
+  dealCart = dealCart.filter(d => d.deal_id !== id);
+  updateDealButtons();
+  updateCartBar();
+}
+
+function getFilteredMenu() {
+  if (!searchTerm) return menu;
+  return menu.filter(item => (item.name || '').toLowerCase().includes(searchTerm) || (item.category || '').toLowerCase().includes(searchTerm));
+}
+
+// ============================================================
+//  SEARCH
+// ============================================================
+function onSearchInput() {
+  searchTerm = document.getElementById('search-input').value.trim().toLowerCase();
+  document.getElementById('search-clear').classList.toggle('show', searchTerm.length > 0);
+  renderMenu();
+}
+function clearSearch() {
+  searchTerm = '';
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-clear').classList.remove('show');
+  renderMenu();
+}
+
+// ============================================================
+//  DEALS
+// ============================================================
+async function loadDeals() {
+  const section = document.getElementById('deals-section');
+  const grid = document.getElementById('deals-grid');
+  try {
+    const res = await fetch('/api/deals', { headers: authHeaders() });
+    if (checkUnauthorized(res)) return;
+    const result = await res.json();
+    const deals = Array.isArray(result.data) ? result.data : [];
+    window.dealsList = deals;
+    if (!deals.length) { section.style.display = 'none'; return; }
+    section.style.display = 'block';
+    grid.innerHTML = deals.map(deal => renderDealCard(deal)).join('');
+    updateDealButtons();
+  } catch (err) {
+    console.error('DEALS ERROR:', err);
+    section.style.display = 'none';
+  }
+}
+
+function renderDealCard(deal) {
+  const itemsSummary = (deal.items || []).map(i =>
+    `${Number(i.quantity)}× ${escapeHtml(i.name)}` + (i.variant_label ? ` (${escapeHtml(i.variant_label)})` : '')
+  ).join(', ');
+  return `
+    <div class="deal-card" id="deal-card-${deal.id}">
+      <div class="deal-top">
+        <div class="deal-name">${escapeHtml(deal.name)}</div>
+        <div class="deal-badge">${escapeHtml(deal.type)}</div>
+      </div>
+      <div class="deal-items">${itemsSummary}</div>
+      <div class="deal-footer">
+        <div class="deal-price">Rs ${deal.price}</div>
+        <div id="deal-controls-${deal.id}"></div>
+      </div>
+    </div>
+  `;
+}
+
+function findDealCartLine(id) { return dealCart.find(d => d.deal_id === id); }
+function addDealToCart(id, name, price) {
+  const existing = findDealCartLine(id);
+  if (existing) existing.quantity++;
+  else dealCart.push({ deal_id: id, name, price: Number(price), quantity: 1 });
+  updateDealButtons();
+  updateCartBar();
+}
+function decreaseDealQuantity(id) {
+  const item = findDealCartLine(id);
+  if (!item) return;
+  item.quantity--;
+  if (item.quantity <= 0) dealCart = dealCart.filter(d => d !== item);
+  updateDealButtons();
+  updateCartBar();
+}
+function updateDealButtons() {
+  (window.dealsList || []).forEach(deal => {
+    const controls = document.getElementById(`deal-controls-${deal.id}`);
+    const card = document.getElementById(`deal-card-${deal.id}`);
+    if (!controls) return;
+    const cartItem = findDealCartLine(deal.id);
+    if (card) card.classList.toggle('active', !!cartItem);
+    const nameEsc = deal.name.replace(/'/g,"\\'");
+    if (cartItem) {
+      controls.innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="step-btn" onclick="decreaseDealQuantity(${deal.id})">−</button>
+          <span>${cartItem.quantity}</span>
+          <button class="step-btn accent" onclick="addDealToCart(${deal.id}, '${nameEsc}', ${deal.price})">+</button>
+        </div>`;
+    } else {
+      controls.innerHTML = `<button class="add-btn" onclick="addDealToCart(${deal.id}, '${nameEsc}', ${deal.price})">Add</button>`;
+    }
+  });
+}
+
+// ============================================================
+//  CART BAR (with × remove button)
+// ============================================================
+function updateCartBar() {
+  const cartItemsList = document.getElementById('cart-items-list');
+  const cartCount = document.getElementById('cart-count');
+  const cartTable = document.getElementById('cart-table');
+  const cartBar = document.getElementById('cart-bar');
+  const totalItems = cart.reduce((a, i) => a + i.quantity, 0) + 
+                     dealCart.reduce((a, d) => a + d.quantity, 0);
+
+  if (totalItems === 0) { cartBar.style.display = 'none'; return; }
+  cartBar.style.display = 'flex';
+  cartCount.innerText = totalItems + ' items';
+  cartTable.innerText = 'Table ' + table;
+
+  let html = '';
+
+  // ✅ Cart Items with × button
+  cart.forEach(item => {
+    const nameEsc = item.name.replace(/'/g, "\\'");
+    const variantLabel = item.variant_label ? ` (${escapeHtml(item.variant_label)})` : '';
+    html += `
+      <div class="cart-item">
+        <div class="item-info">
+          <span class="item-name">${escapeHtml(item.name)}</span>
+          <span class="item-variant">${variantLabel}</span>
+          <span class="item-price">Rs ${item.price}</span>
+        </div>
+        <div class="item-controls">
+          <button class="step-btn" onclick="removeItem(${item.menu_item_id}, ${item.variant_id || 'null'})">−</button>
+          <span class="qty">${item.quantity}</span>
+          <button class="step-btn accent" onclick="addItem(${item.menu_item_id}, '${nameEsc}', ${item.price}, ${item.variant_id || 'null'}, '${item.variant_label || ''}')">+</button>
+          <button class="step-btn" 
+                  style="background:#E15A4C; color:#fff; font-size:15px; margin-left:4px;" 
+                  onclick="removeItemFull(${item.menu_item_id}, ${item.variant_id || 'null'})"
+                  title="Remove item">×</button>
+        </div>
+      </div>
+    `;
+  });
+
+  // ✅ Deal Items with × button
+  dealCart.forEach(deal => {
+    const nameEsc = deal.name.replace(/'/g, "\\'");
+    html += `
+      <div class="cart-item" style="border-left: 3px solid #E3A23B;">
+        <div class="item-info">
+          <span class="item-name">🎁 ${escapeHtml(deal.name)}</span>
+          <span class="item-price">Rs ${deal.price}</span>
+        </div>
+        <div class="item-controls">
+          <button class="step-btn" onclick="decreaseDealQuantity(${deal.deal_id})">−</button>
+          <span class="qty">${deal.quantity}</span>
+          <button class="step-btn accent" onclick="addDealToCart(${deal.deal_id}, '${nameEsc}', ${deal.price})">+</button>
+          <button class="step-btn" 
+                  style="background:#E15A4C; color:#fff; font-size:15px; margin-left:4px;" 
+                  onclick="removeDealFull(${deal.deal_id})"
+                  title="Remove deal">×</button>
+        </div>
+      </div>
+    `;
+  });
+
+  if (!html) html = `<div class="empty-cart-msg">Cart is empty</div>`;
+  cartItemsList.innerHTML = html;
+}
+
+// ============================================================
+//  TABLE
+// ============================================================
+function changeTable(delta) {
+  table = Math.max(1, table + delta);
+  document.getElementById('table-display').innerText = table;
+  updateCartBar();
+  loadCurrentOrder();
+}
+
+// ============================================================
+//  PENDING ORDERS (with customer name + items detail)
+// ============================================================
+async function loadPendingOrders() {
+  const res = await fetch('/api/orders', { headers: authHeaders() });
+  if (checkUnauthorized(res)) return;
+  const result = await res.json();
+  if (!result.success) { alert(result.message); return; }
+  const orders = result.orders;
+  const pending = orders.filter(o => o.status === 'pending');
+  const section = document.getElementById('pending-section');
+  if (!pending.length) { section.innerHTML = ''; return; }
+
+  section.innerHTML =
+    '<h3 style="color:#E3A23B;">Pending Orders</h3>' +
+    pending.map(o => {
+      const items = Array.isArray(o.items) ? o.items : [];
+      const deals = Array.isArray(o.deals) ? o.deals : [];
+
+      let itemsHtml = '';
+      if (items.length) {
+        itemsHtml += items.map(i =>
+          `${escapeHtml(i.name)}${i.variant_label ? ' (' + escapeHtml(i.variant_label) + ')' : ''} × ${Number(i.quantity)}`
+        ).join('<br>');
+      }
+      if (deals.length) {
+        const dealsStr = deals.map(d =>
+          `🎁 ${escapeHtml(d.deal_name)} × ${Number(d.quantity)}`
+        ).join('<br>');
+        itemsHtml += (itemsHtml ? '<br>' : '') + dealsStr;
+      }
+      if (!itemsHtml) itemsHtml = '<em style="color:#6B7280;">No items</em>';
+
+      const customerName = o.customer_name || 'Walk-in';
+      const total = Number(o.total_amount || 0).toFixed(0);
+
+      return `
+        <div class="ready-card" style="flex-direction:column; align-items:stretch; gap:10px; padding:14px;">
+          
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+            <div>
+              <div style="font-weight:700; font-size:14px;">
+                Table ${escapeHtml(o.table_no)} · #${o.id}
+              </div>
+              <div style="font-size:12px; color:#E3A23B; margin-top:3px;">
+                👤 ${escapeHtml(customerName)}
+              </div>
+            </div>
+            <div style="font-weight:800; color:#E3A23B; font-size:14px; white-space:nowrap;">
+              Rs ${total}
+            </div>
+          </div>
+
+          <div style="font-size:12px; color:#D1D5DB; line-height:1.6; 
+                      background:#0F1216; padding:10px 12px; border-radius:8px;">
+            ${itemsHtml}
+          </div>
+
+          <div style="display:flex; gap:8px;">
+            <button class="btn-serve" style="flex:1;" onclick="acceptOrder(${o.id})">✓ Accept</button>
+            <button class="btn-serve" style="background:#E15A4C; flex:1;" onclick="cancelOrder(${o.id})">✕ Cancel</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+}
+
+async function acceptOrder(id) {
+  const res = await fetch(`/api/orders/${id}/accept`, { method: 'PUT', headers: authHeaders(true) });
+  if (checkUnauthorized(res)) return;
+  const data = await res.json();
+  if (!res.ok) { alert(data.message); return; }
+  loadPendingOrders();
+  loadCurrentOrder();
+}
+
+// ============================================================
+//  READY ORDERS (with customer name + items detail)
+// ============================================================
+async function loadReadyOrders() {
+  const res = await fetch('/api/orders', { headers: authHeaders() });
+  if (checkUnauthorized(res)) return;
+  const result = await res.json();
+  if (!result.success) { alert(result.message); return; }
+  const orders = result.orders;
+  const ready = orders.filter(o => o.status === 'ready');
+  const section = document.getElementById('ready-section');
+  if (!ready.length) { section.innerHTML = ''; return; }
+
+  section.innerHTML = '<h3 style="color:#2FA37D;">Ready to Serve</h3>' +
+    ready.map(o => {
+      const items = Array.isArray(o.items) ? o.items : [];
+      const deals = Array.isArray(o.deals) ? o.deals : [];
+
+      let itemsHtml = '';
+      if (items.length) {
+        itemsHtml += items.map(i =>
+          `${escapeHtml(i.name)}${i.variant_label ? ' (' + escapeHtml(i.variant_label) + ')' : ''} × ${Number(i.quantity)}`
+        ).join('<br>');
+      }
+      if (deals.length) {
+        const dealsStr = deals.map(d =>
+          `🎁 ${escapeHtml(d.deal_name)} × ${Number(d.quantity)}`
+        ).join('<br>');
+        itemsHtml += (itemsHtml ? '<br>' : '') + dealsStr;
+      }
+      if (!itemsHtml) itemsHtml = '<em style="color:#6B7280;">No items</em>';
+
+      const customerName = o.customer_name || 'Walk-in';
+      const total = Number(o.total_amount || 0).toFixed(0);
+
+      return `
+        <div class="ready-card" style="flex-direction:column; align-items:stretch; gap:10px; padding:14px;">
+          
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+            <div>
+              <div style="font-weight:700; font-size:14px;">
+                Table ${escapeHtml(o.table_no)} · #${o.id}
+              </div>
+              <div style="font-size:12px; color:#2FA37D; margin-top:3px;">
+                👤 ${escapeHtml(customerName)}
+              </div>
+            </div>
+            <div style="font-weight:800; color:#2FA37D; font-size:14px; white-space:nowrap;">
+              Rs ${total}
+            </div>
+          </div>
+
+          <div style="font-size:12px; color:#D1D5DB; line-height:1.6; 
+                      background:#0F1216; padding:10px 12px; border-radius:8px;">
+            ${itemsHtml}
+          </div>
+
+          <button class="btn-serve" style="width:100%; padding:10px;" onclick="serveOrder(${o.id})">
+            🍽️ Serve Order
+          </button>
+        </div>
+      `;
+    }).join('');
+}
+
+async function serveOrder(id) {
+  const res = await fetch(`/api/orders/${id}/serve`, { method: 'PUT', headers: authHeaders(true) });
+  if (checkUnauthorized(res)) return;
+  const data = await res.json();
+  if (!res.ok) { alert(data.message); return; }
+  loadReadyOrders();
+  loadCurrentOrder();
+}
+
+async function cancelOrder(id) {
+  if (!confirm('Are you sure you want to cancel this order?')) return;
+  const res = await fetch(`/api/orders/${id}/cancel`, { method: 'PUT', headers: authHeaders() });
+  if (checkUnauthorized(res)) return;
+  const data = await res.json();
+  if (!res.ok) { alert(data.message); return; }
+  alert('Order canceled successfully.');
+  loadPendingOrders();
+  loadReadyOrders();
+  loadCurrentOrder();
+}
+
+// ============================================================
+//  CURRENT ORDER
+// ============================================================
+async function loadCurrentOrder() {
+  const res = await fetch('/api/orders', { headers: authHeaders() });
+  if (checkUnauthorized(res)) return;
+  const result = await res.json();
+  if (!result.success) { alert(result.message); return; }
+  const orders = result.orders;
+  const active = orders.find(o => o.table_no === table && (o.status === 'pending' || o.status === 'confirmed'));
+  const section = document.getElementById('current-order-section');
+  if (!active) { section.innerHTML = ''; return; }
+  section.innerHTML = '<h3>Current Order — Table ' + table + ' (#' + active.id + ')</h3>' +
+    active.items.map(i => `
+      <div class="current-item">
+        <span>
+          ${escapeHtml(i.name)}
+          ${i.variant_label ? `<span class="variant-tag">(${escapeHtml(i.variant_label)})</span>` : ''}
+          (Rs ${i.price})
+        </span>
+        <div class="actions">
+          <button class="step-btn" onclick="changeQty(${i.order_item_id}, ${i.quantity - 1})">−</button>
+          <span>${i.quantity}</span>
+          <button class="step-btn accent" onclick="changeQty(${i.order_item_id}, ${i.quantity + 1})">+</button>
+        </div>
+      </div>`).join('') +
+    '<div style="margin-top:10px;"><button class="btn-serve" style="background:#E15A4C;width:100%;" onclick="cancelOrder(' + active.id + ')">Cancel Entire Order</button></div>';
+}
+
+async function changeQty(orderItemId, newQty) {
+  if (newQty <= 0) {
+    const res = await fetch(`/api/orders/items/${orderItemId}`, { method: 'DELETE', headers: authHeaders() });
+    if (checkUnauthorized(res)) return;
+  } else {
+    const res = await fetch(`/api/orders/items/${orderItemId}`, { method: 'PUT', headers: authHeaders(true), body: JSON.stringify({ quantity: newQty }) });
+    if (checkUnauthorized(res)) return;
+  }
+  loadCurrentOrder();
+  loadPendingOrders();
+  loadReadyOrders();
+}
+
+// ============================================================
+//  PLACE ORDER
+// ============================================================
+async function placeOrder() {
+  const items = cart.map(i => ({
+    menu_item_id: i.menu_item_id,
+    variant_id: i.variant_id || null,
+    quantity: i.quantity
+  }));
+
+  const deals = dealCart.map(d => ({
+    deal_id: d.deal_id,
+    quantity: d.quantity
+  }));
+
+  if (!items.length && !deals.length) return;
+
+  const res = await fetch('/api/orders', {
+    method: 'POST',
+    headers: authHeaders(true),
+    body: JSON.stringify({
+      table_no: table,
+      items,
+      deals,
+      order_source: 'WAITER'
+    })
+  });
+
+  if (checkUnauthorized(res)) return;
+  const data = await res.json();
+
+  if (!res.ok) {
+    let errMsg = data.message || data.error || 'Order failed';
+    if (data.error === 'INSUFFICIENT_KITCHEN_STOCK' || data.error === 'KITCHEN_STOCK_NOT_FOUND') {
+      showStockAlert(`Sorry, ${data.ingredient || 'item'} has low stock. Available: ${data.available || 0}, Required: ${data.required || 0} ${data.unit || 'pcs'}`);
+      return;
+    }
+    showStockAlert(errMsg);
+    return;
+  }
+
+  showToast(`✅ Order #${data.order.id} sent to kitchen`, 'success', `Table ${table}`);
+  cart = [];
+  dealCart = [];
+  renderMenu();
+  updateDealButtons();
+  updateCartBar();
+  loadCurrentOrder();
+}
+
+// ============================================================
+//  SOCKET EVENTS
+// ============================================================
+socket.on('waiter_call', (data) => {
+  const container = document.getElementById('notification-container');
+  const box = document.createElement('div');
+  box.className = 'notification';
+  box.innerHTML = `📞 Table ${data.table_no} called waiter`;
+  container.appendChild(box);
+  setTimeout(() => box.remove(), 10000);
+});
+
+socket.on('order_created', () => {
+  const sound = document.getElementById('new-order-sound');
+  if (sound) { sound.currentTime = 0; sound.play().catch(() => {}); }
+  loadPendingOrders();
+  loadReadyOrders();
+  loadCurrentOrder();
+});
+
+socket.on('customer_order_created', () => {
+  const sound = document.getElementById('new-order-sound');
+  if (sound) { sound.currentTime = 0; sound.play().catch(() => {}); }
+  loadPendingOrders();
+  loadReadyOrders();
+  loadCurrentOrder();
+});
+
+socket.on('order_updated', () => {
+  loadPendingOrders();
+  loadReadyOrders();
+  loadCurrentOrder();
+});
+
+socket.on('orders_refresh', () => {
+  if (!token) return;
+  loadPendingOrders();
+  loadReadyOrders();
+  loadCurrentOrder();
+});
+
+// ============================================================
+//  INITIALIZATION
+// ============================================================
+window.onload = async () => {
+  token = localStorage.getItem('waiter_token');
+  const urlRestaurantId = new URLSearchParams(window.location.search).get('restaurant');
+  if (urlRestaurantId) {
+    restaurantId = urlRestaurantId;
+    localStorage.setItem('restaurant_id', restaurantId);
+  } else {
+    restaurantId = localStorage.getItem('restaurant_id') || null;
+  }
+
+  if (token && restaurantId) {
+    try {
+      const res = await fetch('/api/restaurants/me', { headers: { 'Authorization': 'Bearer ' + token } });
+      const data = await res.json();
+      if (!res.ok || !data.success || String(data.data.id) !== String(restaurantId)) {
+        localStorage.removeItem('waiter_token');
+        localStorage.removeItem('token');
+        localStorage.removeItem('restaurant_id');
+        token = null;
+        document.getElementById('login-box').style.display = 'block';
+        document.getElementById('app-box').style.display = 'none';
+        document.getElementById('login-error').innerText = 'Invalid username or password';
+        return;
+      }
+      socket.auth = { token };
+      if (!socket.connected) socket.connect();
+      document.getElementById('login-box').style.display = 'none';
+      document.getElementById('app-box').style.display = 'block';
+      loadBranding();
+      loadMenu();
+      loadDeals();
+      loadPendingOrders();
+      loadReadyOrders();
+      loadCurrentOrder();
+    } catch (err) {
+      console.error(err);
+      localStorage.removeItem('waiter_token');
+      localStorage.removeItem('token');
+      localStorage.removeItem('restaurant_id');
+      token = null;
+      document.getElementById('login-box').style.display = 'block';
+      document.getElementById('app-box').style.display = 'none';
+      document.getElementById('login-error').innerText = 'Invalid username or password';
+    }
+    return;
+  }
+  document.getElementById('login-box').style.display = 'block';
+  document.getElementById('app-box').style.display = 'none';
+};
+</script>
+</body>
+</html>
