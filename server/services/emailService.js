@@ -1,6 +1,3 @@
-cd ~/sizlio-pos/server
-
-cat > services/emailService.js << 'ENDOFFILE'
 const { Resend } = require("resend");
 
 // =====================================================
@@ -214,10 +211,6 @@ const sendRestaurantCredentials = async ({
     </html>
   `;
 
-  // =====================================================
-  // SEND VIA RESEND
-  // =====================================================
-
   const result = await resend.emails.send({
     from: FROM_ADDRESS,
     to: restaurant.email,
@@ -231,10 +224,6 @@ const sendRestaurantCredentials = async ({
 
   return result;
 };
-
-// =====================================================
-// ESCAPE HELPERS
-// =====================================================
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -252,4 +241,3 @@ function escapeAttribute(value) {
 module.exports = {
   sendRestaurantCredentials
 };
-ENDOFFILE
