@@ -1,0 +1,12 @@
+{
+  "name": "sizlio-pos",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "cd server && node server.js",
+    "postinstall": "cd server && npm install"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}
