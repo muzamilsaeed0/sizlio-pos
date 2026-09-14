@@ -3320,6 +3320,27 @@ document.getElementById('total').textContent = money(total);
             }
         }
 
+        function getStatusLabel(status, orderType, paymentStatus) {
+    const s = String(status || '').toLowerCase();
+    const ot = String(orderType || '').toLowerCase();
+    const ps = String(paymentStatus || '').toLowerCase();
+    
+    // ✅ Walk-in specific labels
+    if (ot === 'walk_in') {
+        if (s === 'ready_to_dispatch') return 'Ready for Customer';
+        if (s === 'served') return 'Awaiting Payment';   // unpaid walked out
+        if (s === 'completed') return 'Handed Over';     // paid + done
+    }
+    
+    // ✅ Baaki orders ke liye default
+    if (s === 'ready_to_dispatch') return 'Ready To Dispatch';
+    if (s === 'ready_to_deliver') return 'Ready To Deliver';
+    if (s === 'out_for_delivery') return 'Out For Delivery';
+    
+    // Default: underscore ki jagah space
+    return s.replaceAll('_', ' ');
+}
+
         function renderOrders() {
             const box = document.getElementById('orders');
             if (!orders.length) {
@@ -3413,7 +3434,7 @@ return `
         <div class="order-card">
             <h4>
                 <span>#${o.id} ${typeLabel}</span>
-                <span class="status-chip st-${esc(statusValue)}">${esc(statusValue.replaceAll('_',' '))}</span>
+                <span class="status-chip st-${esc(statusValue)}">${esc(getStatusLabel(statusValue, o.order_type, o.payment_status))}</span>
             </h4>
             <div class="meta">
                 Payment: <b>${esc(paymentStatus)}</b>
