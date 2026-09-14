@@ -105,7 +105,9 @@ exports.topItems = async (req,res)=>{
 
 
     const data = await getTopItems(
-      req.user.restaurant_id
+      req.user.restaurant_id,
+      req.query.from,      
+       req.query.to  
     );
 
 

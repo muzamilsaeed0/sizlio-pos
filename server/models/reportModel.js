@@ -94,51 +94,63 @@ const getSalesDetails = async (
 
       o.tax_amount,
 
+      o.delivery_charge,          
+
+      o.dine_charge, 
+
       o.total_amount::numeric(10,2) AS total,
 
-      /* =========================
-         NORMAL ITEMS
-         ========================= */
+     /* =========================
+   NORMAL ITEMS
+   ========================= */
 
-      COALESCE(
+COALESCE(
+  (
+    SELECT json_agg(
+      json_build_object(
+
+        'type', 'item',
+
+        'menu_item_id', oi.menu_item_id,
+
+        'variant_id', oi.variant_id,
+
+        'variant_label', miv.label,
+
+        'name', m.name,
+
+        'qty', oi.quantity,
+
+        'price',
+        COALESCE(miv.price, m.price)::numeric(10,2),
+
+        'total',
         (
-          SELECT json_agg(
-            json_build_object(
+          oi.quantity * COALESCE(miv.price, m.price)
+        )::numeric(10,2)
 
-              'type', 'item',
+      )
 
-              'name', m.name,
+      ORDER BY m.name
 
-              'qty', oi.quantity,
+    )
 
-              'price',
-              m.price::numeric(10,2),
+    FROM order_items oi
 
-              'total',
-              (
-                oi.quantity * m.price
-              )::numeric(10,2)
+    INNER JOIN menu_items m
+      ON m.id = oi.menu_item_id
 
-            )
+    LEFT JOIN menu_item_variants miv
+      ON miv.id = oi.variant_id
 
-            ORDER BY m.name
+    WHERE oi.order_id = o.id
 
-          )
+      AND oi.order_deal_id IS NULL
+  ),
 
-          FROM order_items oi
+  '[]'::json
 
-          INNER JOIN menu_items m
-            ON m.id = oi.menu_item_id
-
-          WHERE oi.order_id = o.id
-
-            AND oi.order_deal_id IS NULL
-        ),
-
-        '[]'::json
-
-      ) AS items,
-
+) AS items,
 
       /* =========================
          DEALS
@@ -270,7 +282,19 @@ const getSalesDetails = async (
 
 };
 
-const getTopItems = async (restaurantId) => {
+const getTopItems = async (
+  restaurantId,
+  from,
+  to
+) => {
+
+  let dateFilter = "";
+  const params = [restaurantId];
+
+  if (from && to) {
+    dateFilter = `AND o.paid_at::date BETWEEN $2 AND $3`;
+    params.push(from, to);
+  }
 
   const result = await pool.query(
     `
@@ -282,7 +306,7 @@ const getTopItems = async (restaurantId) => {
 
       COALESCE(
         SUM(
-          oi.quantity * m.price
+          oi.quantity * COALESCE(miv.price, m.price)
         ),
         0
       )::numeric(10,2) AS sales
@@ -295,11 +319,16 @@ const getTopItems = async (restaurantId) => {
     JOIN menu_items m
       ON m.id = oi.menu_item_id
 
+    LEFT JOIN menu_item_variants miv
+      ON miv.id = oi.variant_id
+
     WHERE o.restaurant_id = $1
 
       AND o.payment_status = 'paid'
 
       AND oi.order_deal_id IS NULL
+
+      ${dateFilter}
 
     GROUP BY
       m.id,
@@ -310,7 +339,7 @@ const getTopItems = async (restaurantId) => {
 
     LIMIT 10
     `,
-    [restaurantId]
+    params
   );
 
   return result.rows;
