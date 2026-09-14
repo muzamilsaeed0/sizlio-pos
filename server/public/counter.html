@@ -1181,12 +1181,35 @@
             localStorage.setItem('counter_default_delivery', delivery);
             localStorage.setItem('counter_default_dine', dine);
 
-            document.getElementById('gstPercent').value = gst;
-            document.getElementById('taxPercent').value = tax;
+            // ✅ Apply defaults to the active order form immediately
+            resetChargesToDefaults();
 
             alert('✅ Settings saved');
             closeSettings();
             renderCart();
+        }
+
+        // ✅ NEW: Re-load saved defaults from Settings into the order form fields.
+        // Used on app start, after saving settings, and after placing an order.
+        function resetChargesToDefaults() {
+            const gst = localStorage.getItem('counter_default_gst') || 0;
+            const tax = localStorage.getItem('counter_default_tax') || 0;
+            const delivery = localStorage.getItem('counter_default_delivery') || 0;
+            const dine = localStorage.getItem('counter_default_dine') || 0;
+
+            const gstEl = document.getElementById('gstPercent');
+            const taxEl = document.getElementById('taxPercent');
+            const delEl = document.getElementById('deliveryCharge');
+            const dineEl = document.getElementById('dineCharge');
+            const dtEl = document.getElementById('discountType');
+            const dvEl = document.getElementById('discountValue');
+
+            if (gstEl) gstEl.value = gst;
+            if (taxEl) taxEl.value = tax;
+            if (delEl) delEl.value = delivery;
+            if (dineEl) dineEl.value = dine;
+            if (dtEl) dtEl.value = 'none';
+            if (dvEl) dvEl.value = '0';
         }
 
         function toggleSideMenu() {
@@ -1290,7 +1313,7 @@
                         const dealItems = Array.isArray(deal.items) ? deal.items : [];
                         const subHtml = dealItems.map(di =>
                             `<div class="order-item" style="padding-left:16px;color:var(--muted);">
-                                <span>↳ ${esc(di.name)}${di.variant_label ? ' (' + esc(di.variant_label) + ')' : ''}</span>
+                                <span>↳ ${esc(di.name)}${di.variant_label ? ' (' + di.variant_label + ')' : ''}</span>
                                 <span>×${esc(di.quantity)}</span>
                             </div>`
                         ).join('');
@@ -1546,17 +1569,14 @@
             const dineChargeField = document.getElementById('dineChargeField');
             if (dineChargeField) dineChargeField.style.display = (type === 'dine_in') ? 'flex' : 'none';
 
+            // ✅ Apply saved default for the relevant charge type on every switch
             if (type === 'delivery') {
                 const delEl = document.getElementById('deliveryCharge');
-                if (delEl && Number(delEl.value) === 0) {
-                    delEl.value = localStorage.getItem('counter_default_delivery') || 0;
-                }
+                if (delEl) delEl.value = localStorage.getItem('counter_default_delivery') || 0;
             }
             if (type === 'dine_in') {
                 const dineEl = document.getElementById('dineCharge');
-                if (dineEl && Number(dineEl.value) === 0) {
-                    dineEl.value = localStorage.getItem('counter_default_dine') || 0;
-                }
+                if (dineEl) dineEl.value = localStorage.getItem('counter_default_dine') || 0;
             }
 
             const labels = { dine_in: 'Dine In', delivery: 'Delivery', walk_in: 'Walk-in' };
@@ -2110,10 +2130,8 @@
                     document.getElementById('deliveryAddress').value = '';
                     const lookupStatus = document.getElementById('customerLookupStatus');
                     if (lookupStatus) { lookupStatus.textContent = ''; }
-                    document.getElementById('discountType').value = 'none';
-                    document.getElementById('discountValue').value = '0';
-                    document.getElementById('gstPercent').value = '0';
-                    document.getElementById('taxPercent').value = '0';
+                    // ✅ FIX: Reload saved defaults instead of hardcoding 0
+                    resetChargesToDefaults();
                     if (orderType === 'dine_in') {
                         document.getElementById('tableNo').value = '';
                     }
@@ -2153,10 +2171,8 @@
                 if (lookupStatus) {
                     lookupStatus.textContent = '';
                 }
-                document.getElementById('discountType').value = 'none';
-                document.getElementById('discountValue').value = '0';
-                document.getElementById('gstPercent').value = '0';
-                document.getElementById('taxPercent').value = '0';
+                // ✅ FIX: Reload saved defaults instead of hardcoding 0
+                resetChargesToDefaults();
                 if (orderType === 'dine_in') {
                     document.getElementById('tableNo').value = '';
                 }
@@ -2195,10 +2211,8 @@
                         document.getElementById('deliveryAddress').value = '';
                         const lookupStatus = document.getElementById('customerLookupStatus');
                         if (lookupStatus) { lookupStatus.textContent = ''; }
-                        document.getElementById('discountType').value = 'none';
-                        document.getElementById('discountValue').value = '0';
-                        document.getElementById('gstPercent').value = '0';
-                        document.getElementById('taxPercent').value = '0';
+                        // ✅ FIX: Reload saved defaults instead of hardcoding 0
+                        resetChargesToDefaults();
                         if (orderType === 'dine_in') {
                             document.getElementById('tableNo').value = '';
                         }
@@ -3001,10 +3015,8 @@
         async function startCounter() {
             setOrderType('dine_in');
 
-            const defaultGst = Number(localStorage.getItem('counter_default_gst') || 0);
-            const defaultTax = Number(localStorage.getItem('counter_default_tax') || 0);
-            if (document.getElementById('gstPercent')) document.getElementById('gstPercent').value = defaultGst;
-            if (document.getElementById('taxPercent')) document.getElementById('taxPercent').value = defaultTax;
+            // ✅ FIX: Load saved defaults into the order form on startup
+            resetChargesToDefaults();
 
             renderCart();
             await loadBranding();
@@ -3192,6 +3204,14 @@
         window.closeSettings = closeSettings;
         window.saveSettings = saveSettings;
         window.dispatchWalkIn = dispatchWalkIn;
+        window.resetChargesToDefaults = resetChargesToDefaults;
+        window.loadBranding = loadBranding;
+        window.loadMenu = loadMenu;
+        window.loadDeals = loadDeals;
+        window.loadShiftStatus = loadShiftStatus;
+       
+        
+
     </script>
 </body>
 </html>
