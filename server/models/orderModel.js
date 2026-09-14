@@ -2271,18 +2271,20 @@ const markWalkInHandedOver = async (
     const wasPaid = String(order.payment_status).toLowerCase() === 'paid';
     const newStatus = wasPaid ? 'completed' : 'served';
 
+       const completedAt = wasPaid ? new Date() : null;
+
     const result = await client.query(
       `
       UPDATE orders
       SET
-        status = $1,
+        status = $1::varchar,
         served_at = NOW(),
-        completed_at = CASE WHEN $1 = 'completed' THEN NOW() ELSE NULL END
-      WHERE id = $2
-        AND restaurant_id = $3
+        completed_at = $2
+      WHERE id = $3
+        AND restaurant_id = $4
       RETURNING *
       `,
-      [newStatus, id, restaurantId]
+      [newStatus, completedAt, id, restaurantId]
     );
 
     await client.query('COMMIT');
