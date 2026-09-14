@@ -47,7 +47,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .ticket .perf{height:6px;background:repeating-linear-gradient(90deg,transparent,transparent 6px,#14181C 6px,#14181C 8px)}
 .ticket .body{padding:14px 16px;display:flex;flex-direction:column;flex:1}
 .ticket .head{display:flex;justify-content:space-between;align-items:center}
-.table-num{font-size:26px;font-weight:bold}
+.table-num{font-size:26px;font-weight:bold;word-break:break-word;line-height:1.2}
+.table-num.walk-in{font-size:18px;color:#E3A23B}
 .order-id{font-size:11px;color:#8a8478}
 .ticket .items{margin:10px 0;flex:1}
 .ticket .items div{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed #ddd}
@@ -736,8 +737,17 @@ function printOrderReceipt(order){
   // Fallback if nothing was printed
   if (!itemsHtml) itemsHtml = '<tr><td colspan="2">No items</td></tr>';
 
-  const tableLabel = order.order_type === 'delivery' ? 'Delivery' :
-                     (order.table_no != null && order.table_no !== '') ? `Table ${escapeHtml(order.table_no)}` : 'Order';
+  const orderType = String(order.order_type || '').toLowerCase();
+  let tableLabel;
+  if (orderType === 'delivery') {
+    tableLabel = 'Delivery';
+  } else if (orderType === 'walk_in') {
+    tableLabel = 'Walk-in';
+  } else if (order.table_no != null && order.table_no !== '' && Number(order.table_no) > 0) {
+    tableLabel = `Table ${escapeHtml(order.table_no)}`;
+  } else {
+    tableLabel = 'Order';
+  }
 
   const printerWidth = localStorage.getItem('printerWidth') || 'auto';
   const pageSizeRule = printerWidth === 'auto' ? 'auto' : (printerWidth + ' auto');
@@ -828,16 +838,24 @@ function renderOrders(orders){
   return `<div class="order-item" style="font-weight:bold;border-top:1px dashed #999;padding-top:6px;margin-top:4px;"><span>🎁 ${escapeHtml(deal.deal_name)} ×${escapeHtml(deal.quantity)}${newBadge}</span><b></b></div>${dealItemsHtml}`;
 }).join('');
     let tableLabel;
-    if(String(o.order_type || '').toLowerCase() === 'delivery'){ tableLabel = 'Delivery'; }
-    else if(o.table_no !== null && o.table_no !== undefined && String(o.table_no).trim() !== ''){ tableLabel = `T${escapeHtml(o.table_no)}`; }
-    else{ tableLabel = 'Order'; }
+        const tableClass = orderType === 'walk_in' ? 'table-num walk-in' : 'table-num';
+    const orderType = String(o.order_type || '').toLowerCase();
+    if (orderType === 'delivery') {
+      tableLabel = 'Delivery';
+    } else if (orderType === 'walk_in') {
+      tableLabel = 'Walk-in';
+    } else if (o.table_no !== null && o.table_no !== undefined && String(o.table_no).trim() !== '' && Number(o.table_no) > 0) {
+      tableLabel = `T${escapeHtml(o.table_no)}`;
+    } else {
+      tableLabel = 'Order';
+    }
     let action = '';
     if(status === 'placed' || status === 'accepted' || status === 'confirmed'){
       action = `<div class="row"><input id="prep-${Number(o.id)}" value="15" type="number" min="1" step="1" aria-label="Preparation minutes"><button class="btn-confirm" onclick="confirmOrder(${Number(o.id)})">Confirm</button></div>`;
     } else if(status === 'preparing'){
       action = `<div class="meta">Est ${escapeHtml(o.prep_minutes || 0)} min</div><button class="btn-ready" onclick="readyOrder(${Number(o.id)})">Mark Ready</button>`;
     }
-    return `<div class="ticket ${o.is_new ? 'new-order' : ''}"><div class="perf"></div><div class="body"><div class="head"><div class="table-num">${tableLabel}</div><div class="order-id">#${escapeHtml(o.id)}</div></div><div class="items">${items || `<div class="order-item"><span style="color:#b91c1c">No items found on this order</span></div>`}</div>${action}</div></div>`;
+    return `<div class="ticket ${o.is_new ? 'new-order' : ''}"><div class="perf"></div><div class="body"><div class="head"><div class="${tableClass}">${tableLabel}</div><div class="order-id">#${escapeHtml(o.id)}</div></div><div class="items">${items || `<div class="order-item"><span style="color:#b91c1c">No items found on this order</span></div>`}</div>${action}</div></div>`;
   }).join('');
 }
 
