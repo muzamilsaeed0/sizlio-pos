@@ -837,9 +837,9 @@ function renderOrders(orders){
   const dealItemsHtml = dealItems.map(item => `<div class="order-item"><span>${escapeHtml(item.name)}${item.variant_label ? ' (' + escapeHtml(item.variant_label) + ')' : ''}</span><b>×${escapeHtml(item.quantity)}</b></div>`).join('');
   return `<div class="order-item" style="font-weight:bold;border-top:1px dashed #999;padding-top:6px;margin-top:4px;"><span>🎁 ${escapeHtml(deal.deal_name)} ×${escapeHtml(deal.quantity)}${newBadge}</span><b></b></div>${dealItemsHtml}`;
 }).join('');
-    let tableLabel;
-        const tableClass = orderType === 'walk_in' ? 'table-num walk-in' : 'table-num';
     const orderType = String(o.order_type || '').toLowerCase();
+    let tableLabel;
+    const tableClass = orderType === 'walk_in' ? 'table-num walk-in' : 'table-num';
     if (orderType === 'delivery') {
       tableLabel = 'Delivery';
     } else if (orderType === 'walk_in') {
