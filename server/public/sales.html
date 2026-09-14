@@ -2704,15 +2704,29 @@ function exportCSV(){
     }
 
     let csv =
-        'Order,Type,Table,Customer,Phone,Address,Date,Items,Deals,Total\n';
+        'Order,Type,Location,Customer,Phone,Address,Date,Items,Deals,Subtotal,Discount,GST,Other Tax,Delivery Charge,Dine Charge,Total\n';
 
 
     orders.forEach(order => {
 
-        const orderType =
-            getOrderType(order) === 'delivery'
-            ? 'Delivery'
-            : 'Dine In';
+        const orderType = getOrderType(order);
+
+        let typeLabel;
+        let locationLabel;
+
+        if (orderType === 'delivery') {
+            typeLabel = 'Delivery';
+            locationLabel = 'Delivery';
+        } else if (orderType === 'walk_in') {
+            typeLabel = 'Walk-in';
+            locationLabel = 'Walk-in';
+        } else {
+            typeLabel = 'Dine In';
+            const tableNo = Number(order.table_no ?? order.table_number ?? 0);
+            locationLabel = (Number.isFinite(tableNo) && tableNo > 0)
+                ? `Table ${tableNo}`
+                : 'Table -';
+        }
 
 
         const items =
@@ -2723,13 +2737,131 @@ function exportCSV(){
             )
             .map(item => {
 
-                const qty =
-                    getItemQty(item);
+                const qty = getItemQty(item);
 
-                return `${getItemName(item)} x${qty}`;
+                const variant = item.variant_label
+                    ? ` (${item.variant_label})`
+                    : '';
+
+                return `${getItemName(item)}${variant} x${qty}`;
 
             })
             .join(' | ');
+
+
+        const deals =
+            getDeals(order)
+            .map(deal => {
+
+                const qty = getDealQty(deal);
+
+                const price = getDealPrice(deal);
+
+                return `${deal.name || deal.deal_name || 'Deal'} x${qty} @ ${price}`;
+
+            })
+            .join(' | ');
+
+
+        const dateValue =
+            order.paid_at ||
+            order.created_at ||
+            order.createdAt ||
+            '';
+
+
+        const date =
+            dateValue
+            ? new Date(dateValue).toLocaleString('en-PK')
+            : '';
+
+
+        /* =========================
+           PRICING VALUES
+        ========================= */
+
+        const subtotal    = num(order.subtotal);
+        const discount    = num(order.discount_amount);
+        const gst         = num(order.gst_amount);
+        const tax         = num(order.tax_amount);
+        const deliveryFee = num(order.delivery_charge);
+        const dineFee     = num(order.dine_charge);
+
+
+        const row = [
+
+            order.id || '',
+
+            csvEscape(typeLabel),
+
+            csvEscape(locationLabel),
+
+            csvEscape(order.customer_name || ''),
+
+            csvEscape(order.delivery_phone || ''),
+
+            csvEscape(order.delivery_address || ''),
+
+            csvEscape(date),
+
+            csvEscape(items),
+
+            csvEscape(deals),
+
+            subtotal.toFixed(2),
+
+            discount.toFixed(2),
+
+            gst.toFixed(2),
+
+            tax.toFixed(2),
+
+            deliveryFee.toFixed(2),
+
+            dineFee.toFixed(2),
+
+            getOrderTotal(order)
+
+        ];
+
+
+        csv += row.join(',') + '\n';
+
+    });
+
+
+    const blob =
+        new Blob(
+            [csv],
+            {
+                type: 'text/csv;charset=utf-8;'
+            }
+        );
+
+
+    const url =
+        URL.createObjectURL(blob);
+
+
+    const a =
+        document.createElement('a');
+
+
+    a.href = url;
+
+    a.download =
+        'sales-report.csv';
+
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    a.remove();
+
+    URL.revokeObjectURL(url);
+
+}
 
 
         const deals =
