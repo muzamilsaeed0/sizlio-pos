@@ -1870,125 +1870,134 @@
         let customerLookupTimer = null;
         let customerLookupRequest = 0;
 
-        async function lookupDeliveryCustomer() {
-            clearTimeout(customerLookupTimer);
-            const phoneInput = document.getElementById('deliveryPhone');
-            const nameInput = document.getElementById('customerName');
-            const addressInput = document.getElementById('deliveryAddress');
-            const statusEl = document.getElementById('customerLookupStatus');
-            if (!phoneInput || !nameInput || !addressInput) return;
+       async function lookupDeliveryCustomer() {
+    clearTimeout(customerLookupTimer);
+    const phoneInput = document.getElementById('deliveryPhone');
+    const nameInput = document.getElementById('customerName');
+    const addressInput = document.getElementById('deliveryAddress');
+    const statusEl = document.getElementById('customerLookupStatus');
+    if (!phoneInput || !nameInput || !addressInput) return;
 
-            const phone = phoneInput.value.trim();
-            nameInput.value = '';
-            addressInput.value = '';
+    const phone = phoneInput.value.trim();
+    nameInput.value = '';
+    addressInput.value = '';
 
-            if (!phone) {
+    if (!phone) {
+        if (statusEl) statusEl.textContent = '';
+        return;
+    }
+
+    customerLookupTimer = setTimeout(async () => {
+        const requestId = ++customerLookupRequest;
+
+        if (statusEl) {
+            statusEl.textContent = 'Searching customer...';
+            statusEl.style.color = '#8B949E';
+        }
+
+        // ✅ Composite key for restaurant-wise cache
+        const cacheKey = [RESTAURANT_ID_FROM_URL, phone];
+
+        // ✅ OFFLINE: Local cache se dekho
+        if (!navigator.onLine) {
+            try {
+                const cached = await db.customers.get(cacheKey);
+                if (cached) {
+                    if (cached.customer_name) nameInput.value = cached.customer_name;
+                    if (cached.delivery_address) addressInput.value = cached.delivery_address;
+                    if (statusEl) {
+                        statusEl.textContent = '✓ Found in local cache (offline)';
+                        statusEl.style.color = '#2FA37D';
+                    }
+                } else {
+                    if (statusEl) {
+                        statusEl.textContent = 'New customer (offline mode)';
+                        statusEl.style.color = '#8B949E';
+                    }
+                }
+            } catch (err) {
+                console.error('Offline customer lookup:', err);
                 if (statusEl) statusEl.textContent = '';
-                return;
             }
+            return;
+        }
 
-            customerLookupTimer = setTimeout(async () => {
-                const requestId = ++customerLookupRequest;
+        // ✅ ONLINE: Server se try karo
+        try {
+            const data = await apiFetch(
+                `${API_BASE}/orders/customer-lookup?phone=${encodeURIComponent(phone)}`);
 
+            if (requestId !== customerLookupRequest) return;
+
+            const customer = data.data;
+
+            if (customer) {
+                if (customer.customer_name) nameInput.value = customer.customer_name;
+                if (customer.delivery_address) addressInput.value = customer.delivery_address;
                 if (statusEl) {
-                    statusEl.textContent = 'Searching customer...';
+                    statusEl.textContent = '✓ Previous customer details found';
+                    statusEl.style.color = '#2FA37D';
+                }
+
+                // ✅ Cache mein save karo (restaurant-wise)
+                try {
+                    await db.customers.put({
+                        restaurant_id: RESTAURANT_ID_FROM_URL,
+                        phone: phone,
+                        customer_name: customer.customer_name || '',
+                        delivery_address: customer.delivery_address || '',
+                        cached_at: new Date().toISOString()
+                    });
+                } catch (e) {
+                    console.warn('Customer cache save failed:', e);
+                }
+            } else {
+                if (statusEl) {
+                    statusEl.textContent = 'New customer';
                     statusEl.style.color = '#8B949E';
                 }
+            }
+        } catch (err) {
+            console.error('Customer lookup error:', err);
 
-                if (!navigator.onLine) {
-                    try {
-                        const cached = await db.customers.get(phone);
-                        if (cached) {
-                            if (cached.customer_name) nameInput.value = cached.customer_name;
-                            if (cached.delivery_address) addressInput.value = cached.delivery_address;
-                            if (statusEl) {
-                                statusEl.textContent = '✓ Found in local cache (offline)';
-                                statusEl.style.color = '#2FA37D';
-                            }
-                        } else {
-                            if (statusEl) {
-                                statusEl.textContent = 'New customer (offline mode)';
-                                statusEl.style.color = '#8B949E';
-                            }
-                        }
-                    } catch (err) {
-                        console.error('Offline customer lookup:', err);
-                        if (statusEl) statusEl.textContent = '';
-                    }
-                    return;
-                }
-
-                try {
-                    const data = await apiFetch(
-                        `${API_BASE}/orders/customer-lookup?phone=${encodeURIComponent(phone)}`);
-
-                    if (requestId !== customerLookupRequest) return;
-
-                    const customer = data.data;
-
-                    if (customer) {
-                        if (customer.customer_name) nameInput.value = customer.customer_name;
-                        if (customer.delivery_address) addressInput.value = customer.delivery_address;
-                        if (statusEl) {
-                            statusEl.textContent = '✓ Previous customer details found';
-                            statusEl.style.color = '#2FA37D';
-                        }
-
-                        try {
-                            await db.customers.put({
-                                phone,
-                                customer_name: customer.customer_name || '',
-                                delivery_address: customer.delivery_address || '',
-                                cached_at: new Date().toISOString()
-                            });
-                        } catch (e) {
-                            console.warn('Customer cache save failed:', e);
-                        }
-                    } else {
-                        if (statusEl) {
-                            statusEl.textContent = 'New customer';
-                            statusEl.style.color = '#8B949E';
-                        }
-                    }
-                } catch (err) {
-                    console.error('Customer lookup error:', err);
-
-                    try {
-                        const cached = await db.customers.get(phone);
-                        if (cached) {
-                            if (cached.customer_name) nameInput.value = cached.customer_name;
-                            if (cached.delivery_address) addressInput.value = cached.delivery_address;
-                            if (statusEl) {
-                                statusEl.textContent = '✓ Found in local cache';
-                                statusEl.style.color = '#2FA37D';
-                            }
-                        } else {
-                            if (statusEl) {
-                                statusEl.textContent = 'Network issue';
-                                statusEl.style.color = '#E15A4C';
-                            }
-                        }
-                    } catch (e) {
-                        if (statusEl) statusEl.textContent = '';
-                    }
-                }
-            }, 450);
-        }
-
-        async function cacheCustomerForOffline(phone, name, address) {
-            if (!phone) return;
-            if (!name && !address) return;
+            // ✅ Network fail: Local cache se try karo
             try {
-                await db.customers.put({
-                    phone: phone,
-                    customer_name: name || '',
-                    delivery_address: address || '',
-                    cached_at: new Date().toISOString()
-                });
+                const cached = await db.customers.get(cacheKey);
+                if (cached) {
+                    if (cached.customer_name) nameInput.value = cached.customer_name;
+                    if (cached.delivery_address) addressInput.value = cached.delivery_address;
+                    if (statusEl) {
+                        statusEl.textContent = '✓ Found in local cache';
+                        statusEl.style.color = '#2FA37D';
+                    }
+                } else {
+                    if (statusEl) {
+                        statusEl.textContent = 'Network issue';
+                        statusEl.style.color = '#E15A4C';
+                    }
+                }
             } catch (e) {
-                console.warn('Customer cache save failed:', e);
+                if (statusEl) statusEl.textContent = '';
             }
         }
+    }, 450);
+}
+        async function cacheCustomerForOffline(phone, name, address) {
+    if (!phone) return;
+    if (!name && !address) return;
+    if (!RESTAURANT_ID_FROM_URL) return;
+    try {
+        await db.customers.put({
+            restaurant_id: RESTAURANT_ID_FROM_URL,
+            phone: phone,
+            customer_name: name || '',
+            delivery_address: address || '',
+            cached_at: new Date().toISOString()
+        });
+    } catch (e) {
+        console.warn('Customer cache save failed:', e);
+    }
+}
 
         let placingOrder = false;
 
