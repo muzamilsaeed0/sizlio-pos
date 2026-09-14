@@ -1901,7 +1901,7 @@
         // ✅ OFFLINE: Local cache se dekho
         if (!navigator.onLine) {
             try {
-                const cached = await db.customers.get(cacheKey);
+                const cached = await db.customers_v2.get(cacheKey);
                 if (cached) {
                     if (cached.customer_name) nameInput.value = cached.customer_name;
                     if (cached.delivery_address) addressInput.value = cached.delivery_address;
@@ -1941,7 +1941,7 @@
 
                 // ✅ Cache mein save karo (restaurant-wise)
                 try {
-                    await db.customers.put({
+                    await db.customers_v2.put({
                         restaurant_id: RESTAURANT_ID_FROM_URL,
                         phone: phone,
                         customer_name: customer.customer_name || '',
@@ -1962,7 +1962,7 @@
 
             // ✅ Network fail: Local cache se try karo
             try {
-                const cached = await db.customers.get(cacheKey);
+                const cached = await db.customers_v2.get(cacheKey);
                 if (cached) {
                     if (cached.customer_name) nameInput.value = cached.customer_name;
                     if (cached.delivery_address) addressInput.value = cached.delivery_address;
@@ -1987,7 +1987,7 @@
     if (!name && !address) return;
     if (!RESTAURANT_ID_FROM_URL) return;
     try {
-        await db.customers.put({
+        await db.customers_v2.put({
             restaurant_id: RESTAURANT_ID_FROM_URL,
             phone: phone,
             customer_name: name || '',
