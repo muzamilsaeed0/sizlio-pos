@@ -890,6 +890,10 @@
             background: rgba(227, 162, 59, .18);
             color: var(--accent);
         }
+                .status-chip.st-ready_to_dispatch {
+            background: rgba(47, 163, 125, .18);
+            color: var(--success);
+        }
         .status-chip.st-served,
         .status-chip.st-delivered {
             background: rgba(47, 163, 125, .18);
@@ -3334,19 +3338,21 @@ document.getElementById('total').textContent = money(total);
                 let actions = '';
 
                 if (alreadyPaid) {
-    actions += `<span class="paid-badge">PAID${paidTime ? ' • ' + paidTime : ''}</span>`;
-
-                       
+                    actions += `<span class="paid-badge">PAID${paidTime ? ' • ' + paidTime : ''}</span>`;
+                    
+                    // ✅ Walk-in: Paid + ready → Counter hands over
+                    if (o.order_type === 'walk_in' && statusValue === 'ready_to_dispatch') {
+                        actions += `<button class="action-btn serve" onclick="dispatchWalkIn(${o.id})">✅ Handed to Customer</button>`;
+                    } else {
                         const canComplete = (delivery && statusValue === 'delivered') || (!delivery && statusValue === 'served');
-
                         if (canComplete) {
                             actions += `<button class="action-btn serve" onclick="markCompleted(${o.id})">Mark Completed</button>`;
                         } else {
-                            
                             const waitingFor = delivery ? 'delivery' : 'serving';
                             actions += `<span style="color:var(--muted);font-size:12px;">⏳ Paid – waiting for ${waitingFor}</span>`;
                         }
-                    } else {
+                    }
+                } else {
                     if (delivery) {
                         if (statusValue === 'ready_to_deliver') {
                             actions += `<button class="action-btn serve" onclick="outForDelivery(${o.id})">Out for Delivery</button>`;
@@ -3365,6 +3371,11 @@ document.getElementById('total').textContent = money(total);
                             actions = `<span style="color:var(--muted);font-size:12px;font-weight:700;">✅ Ready</span>`;
                         }
                     } else {
+                        // ✅ Walk-in: Ready → Counter hands over
+                        if (o.order_type === 'walk_in' && statusValue === 'ready_to_dispatch') {
+                            actions += `<button class="action-btn serve" onclick="dispatchWalkIn(${o.id})">✅ Handed to Customer</button>`;
+                        }
+                        
                         if (statusValue === 'served') {
                             actions += `<button class="action-btn edit" onclick="editBill(${o.id})">Edit Bill</button>`;
                             actions += `<button class="action-btn pay" onclick="openPayment(${o.id})">Mark Paid</button>`;
@@ -3373,7 +3384,7 @@ document.getElementById('total').textContent = money(total);
                             actions =
                                 `<span style="color:var(--muted);font-size:12px;font-weight:700;">🕐 In Kitchen / Preparing</span>`;
                             actions += `<button class="action-btn cancel" onclick="cancelOrder(${o.id})">Cancel Order</button>`;
-                        } else if (statusValue === 'ready') {
+                        } else if (statusValue === 'ready' && o.order_type !== 'walk_in') {
                             actions = `<span style="color:var(--muted);font-size:12px;font-weight:700;">✅ Ready to Serve</span>`;
                         }
                     }
@@ -3445,6 +3456,29 @@ return `
                 await loadOrders();
             } catch (err) { alert(err.message); }
         }
+
+        async function dispatchWalkIn(id) {
+    if (!confirm('Confirm this order has been handed to the customer?')) return;
+    try {
+        const order = orders.find(x => Number(x.id) === Number(id));
+        const wasPaid = order && String(order.payment_status).toLowerCase() === 'paid';
+        
+        // Deduct inventory + mark served
+        await apiFetch(`${API_BASE}/orders/${id}/serve`, { method: 'PUT' });
+        
+        // Agar already paid tha, tou direct completed karo
+        if (wasPaid) {
+            await apiFetch(`${API_BASE}/orders/${id}/completed`, { method: 'PUT' });
+            status(`Order #${id} handed over and completed.`);
+        } else {
+            status(`Order #${id} handed over. Collect payment now.`);
+        }
+        
+        await loadOrders();
+    } catch (err) {
+        alert(err.message);
+    }
+}
 
         async function cancelOrder(id) {
             if (!confirm('Are you sure you want to cancel this order? Inventory will be released.')) return;
@@ -4088,6 +4122,7 @@ if (document.getElementById('taxPercent')) document.getElementById('taxPercent')
         window.openSettings = openSettings;
         window.closeSettings = closeSettings;
         window.saveSettings = saveSettings;
+        window.dispatchWalkIn = dispatchWalkIn;
     </script>
 </body>
 </html>

@@ -1529,18 +1529,17 @@ const markReady = async (
           CASE
             WHEN order_type = 'delivery'
               THEN 'ready_to_deliver'
+            WHEN order_type = 'walk_in'
+              THEN 'ready_to_dispatch'
             ELSE 'ready'
           END,
 
         ready_at = NOW()
 
-      WHERE id = $1
-
-        AND restaurant_id = $2
-
-        AND status = 'preparing'
-
-      RETURNING *
+             WHERE id = $1
+          AND restaurant_id = $2
+          AND status IN ('ready', 'ready_to_dispatch')
+        RETURNING *
       `,
       [
         id,
@@ -1719,12 +1718,9 @@ const markServed = async (
 
         FROM orders
 
-        WHERE id = $1
-
+                WHERE id = $1
           AND restaurant_id = $2
-
-          AND status = 'ready'
-
+          AND status IN ('ready', 'ready_to_dispatch')
         FOR UPDATE
         `,
         [

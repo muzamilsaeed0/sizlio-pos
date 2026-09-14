@@ -604,6 +604,14 @@ body{
     font-size: clamp(18px, 2.5vw, 40px);
 }
 
+.status-ready_to_dispatch {
+    color: #2FA37D;
+}
+
+.row.ready_to_dispatch {
+    border-left-color: #2FA37D;
+}
+
 </style>
 
 </head>
@@ -1176,6 +1184,9 @@ const STATUS_LABEL = {
 
     ready:
         'Ready To Serve',
+
+    ready_to_dispatch: 
+        'Ready for Customer',
 
     ready_to_deliver:
         'Ready To Deliver',
