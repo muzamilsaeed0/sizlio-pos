@@ -435,6 +435,16 @@ body{
   box-shadow:0 8px 25px rgba(0,0,0,.15);
 }
 
+.order-card.just-assigned{
+  animation:new-order-flash 2s ease-out;
+}
+
+@keyframes new-order-flash{
+  0%{box-shadow:0 0 0 0 rgba(34,197,94,.7)}
+  50%{box-shadow:0 0 0 12px rgba(34,197,94,0)}
+  100%{box-shadow:0 8px 25px rgba(0,0,0,.15)}
+}
+
 .order-top{
   padding:15px;
   border-bottom:1px solid var(--border);
@@ -676,6 +686,132 @@ body{
 }
 
 /* =====================================================
+   NOTIFICATION PERMISSION BANNER
+===================================================== */
+
+.perm-banner{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  z-index:60;
+  background:#7c2d12;
+  border-bottom:2px solid #f59e0b;
+  color:#fef3c7;
+  padding:14px 16px;
+  display:none;
+  align-items:center;
+  gap:12px;
+  box-shadow:0 4px 16px rgba(0,0,0,.4);
+  flex-wrap:wrap;
+}
+
+.perm-banner.show{
+  display:flex;
+}
+
+.perm-banner-text{
+  flex:1;
+  font-size:13px;
+  line-height:1.5;
+  min-width:200px;
+}
+
+.perm-banner-text strong{
+  display:block;
+  font-size:14px;
+  margin-bottom:2px;
+  color:#fbbf24;
+}
+
+.perm-banner button{
+  background:#f59e0b;
+  color:#14181c;
+  border:0;
+  border-radius:8px;
+  padding:9px 16px;
+  font-weight:800;
+  font-size:13px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.perm-banner .dismiss{
+  background:transparent;
+  color:#fef3c7;
+  border:1px solid rgba(254,243,199,.3);
+  padding:9px 12px;
+  font-weight:600;
+}
+
+/* =====================================================
+   NEW ORDER ALERT BANNER
+===================================================== */
+
+.new-order-alert{
+  position:fixed;
+  top:80px;
+  left:50%;
+  transform:translateX(-50%) translateY(-200px);
+  z-index:70;
+  background:linear-gradient(135deg,#16a34a,#15803d);
+  color:white;
+  border-radius:16px;
+  padding:18px 22px;
+  box-shadow:0 20px 50px rgba(34,197,94,.4);
+  width:min(420px,calc(100vw - 32px));
+  transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+.new-order-alert.show{
+  transform:translateX(-50%) translateY(0);
+}
+
+.new-order-alert-icon{
+  font-size:38px;
+  flex-shrink:0;
+  animation:bell-shake 1s infinite;
+}
+
+@keyframes bell-shake{
+  0%,100%{transform:rotate(0deg)}
+  25%{transform:rotate(-15deg)}
+  75%{transform:rotate(15deg)}
+}
+
+.new-order-alert-body{
+  flex:1;
+  min-width:0;
+}
+
+.new-order-alert-title{
+  font-size:15px;
+  font-weight:800;
+  margin-bottom:4px;
+}
+
+.new-order-alert-text{
+  font-size:13px;
+  opacity:.95;
+  line-height:1.4;
+}
+
+.new-order-alert button{
+  background:rgba(255,255,255,.2);
+  border:0;
+  color:white;
+  border-radius:8px;
+  padding:9px 12px;
+  font-weight:800;
+  font-size:14px;
+  cursor:pointer;
+  flex-shrink:0;
+}
+
+/* =====================================================
    RESPONSIVE
 ===================================================== */
 
@@ -730,13 +866,59 @@ body{
   .orders{
     grid-template-columns:1fr;
   }
+
+  .new-order-alert{
+    top:12px;
+    padding:14px 16px;
+  }
+
+  .new-order-alert-icon{
+    font-size:30px;
+  }
+
+  .new-order-alert-title{
+    font-size:14px;
+  }
+
+  .new-order-alert-text{
+    font-size:12px;
+  }
 }
 </style>
 </head>
 
 <body>
 
-  <input type="hidden" id="restaurantIdFromUrl" value="">
+<input type="hidden" id="restaurantIdFromUrl" value="">
+
+<!-- =====================================================
+     NOTIFICATION PERMISSION BANNER
+===================================================== -->
+
+<div id="permBanner" class="perm-banner">
+  <div class="perm-banner-text">
+    <strong>🔔 Enable Notifications</strong>
+    Order aane par beep aur notification paane ke liye notifications allow karein.
+  </div>
+  <button onclick="requestNotificationPermission()">Allow</button>
+  <button class="dismiss" onclick="dismissPermBanner()">Later</button>
+</div>
+
+<!-- =====================================================
+     NEW ORDER ALERT
+===================================================== -->
+
+<div id="newOrderAlert" class="new-order-alert">
+  <div class="new-order-alert-icon">🔔</div>
+  <div class="new-order-alert-body">
+    <div class="new-order-alert-title">Naya Order Aaya!</div>
+    <div class="new-order-alert-text" id="newOrderAlertText">
+      Order assign ho gaya hai
+    </div>
+  </div>
+  <button onclick="closeNewOrderAlert()">✕</button>
+</div>
+
 <!-- =====================================================
      LOGIN SCREEN
 ===================================================== -->
@@ -948,13 +1130,12 @@ body{
 
 <script>
 
-  // =====================================================
-// URL PARAMETERS
-// =====================================================
+/* =====================================================
+   URL PARAMETERS
+===================================================== */
 
 function getRestaurantIdFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  
   const id = params.get('restaurant') || params.get('restaurant_id');
   console.log('🔍 Restaurant ID from URL:', id);
   return id ? Number(id) : null;
@@ -962,13 +1143,12 @@ function getRestaurantIdFromUrl() {
 
 const RESTAURANT_ID_FROM_URL = getRestaurantIdFromUrl();
 
-// Store in hidden field
 document.getElementById('restaurantIdFromUrl').value = RESTAURANT_ID_FROM_URL || '';
 const API_BASE = '/api';
 
 let token =
   localStorage.getItem('rider_token') ||
-  localStorage.getItem('rider_token') ||
+  localStorage.getItem('token') ||
   '';
 
 let currentUser = null;
@@ -979,13 +1159,288 @@ let loadingOrders = false;
 let currentShift = null;
 let loadingShift = false;
 
+let lastOrderIds = new Set();
+
+/* =====================================================
+   HELPERS
+===================================================== */
+
+function esc(value){
+  return String(value ?? '')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'",'&#039;');
+}
+
+function money(value){
+  return `RS ${Number(value || 0).toFixed(2)}`;
+}
+
+function authHeaders(){
+  return {
+    'Content-Type':'application/json',
+    'Authorization':`Bearer ${token}`
+  };
+}
+
+function showLogin(){
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('appScreen').classList.add('hidden');
+  document.getElementById('permBanner').classList.remove('show');
+}
+
+function showApp(){
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('appScreen').classList.remove('hidden');
+}
+
+function loginError(message){
+  const box = document.getElementById('loginError');
+  box.textContent = message || '';
+  box.classList.toggle('hidden', !message);
+}
+
+function toast(message, type='success'){
+  const container = document.getElementById('toastContainer');
+  const item = document.createElement('div');
+  item.className = `toast ${type === 'error' ? 'error' : ''}`;
+  item.textContent = message;
+  container.appendChild(item);
+  setTimeout(() => { item.remove(); }, 3500);
+}
+
+
+/* =====================================================
+   NOTIFICATION PERMISSIONS
+===================================================== */
+
+function shouldShowPermBanner(){
+  if(!('Notification' in window)) return false;
+  if(Notification.permission === 'granted') return false;
+  if(Notification.permission === 'denied') return false;
+  if(localStorage.getItem('perm_banner_dismissed') === 'true') return false;
+  return true;
+}
+
+function showPermBanner(){
+  if(shouldShowPermBanner()){
+    document.getElementById('permBanner').classList.add('show');
+  }
+}
+
+function dismissPermBanner(){
+  document.getElementById('permBanner').classList.remove('show');
+  localStorage.setItem('perm_banner_dismissed', 'true');
+}
+
+async function requestNotificationPermission(){
+  try {
+    if(!('Notification' in window)){
+      toast('Yeh browser notifications support nahi karta', 'error');
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+
+    if(permission === 'granted'){
+      document.getElementById('permBanner').classList.remove('show');
+      toast('✅ Notifications enable ho gayi');
+
+      showSystemNotification(
+        'Notifications Active',
+        'Ab aapko order aane par alert milega.'
+      );
+
+      if(navigator.vibrate) navigator.vibrate(200);
+
+    } else {
+      toast('Notifications allow nahi hui', 'error');
+    }
+  } catch(err){
+    console.error('Permission request failed:', err);
+  }
+}
+
+
+/* =====================================================
+   AUDIO BEEP
+===================================================== */
+
+let audioContext = null;
+
+function initAudio(){
+  if(!audioContext){
+    try {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    } catch(e){
+      console.warn('AudioContext not supported');
+    }
+  }
+  if(audioContext && audioContext.state === 'suspended'){
+    audioContext.resume();
+  }
+}
+
+function playBeep(){
+  initAudio();
+  if(!audioContext) return;
+
+  const times = [0, 0.25, 0.5];
+
+  times.forEach(delay => {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.frequency.value = 880;
+    oscillator.type = 'sine';
+
+    const startTime = audioContext.currentTime + delay;
+    const endTime = startTime + 0.18;
+
+    gainNode.gain.setValueAtTime(0, startTime);
+    gainNode.gain.linearRampToValueAtTime(0.6, startTime + 0.02);
+    gainNode.gain.linearRampToValueAtTime(0, endTime);
+
+    oscillator.start(startTime);
+    oscillator.stop(endTime);
+  });
+}
+
+
+/* =====================================================
+   SYSTEM NOTIFICATION
+===================================================== */
+
+function showSystemNotification(title, body, orderId){
+  try {
+    if(!('Notification' in window)) return;
+    if(Notification.permission !== 'granted') return;
+
+    const notif = new Notification(title, {
+      body: body,
+      tag: orderId ? `order-${orderId}` : 'new-order',
+      requireInteraction: true,
+      vibrate: [200, 100, 200]
+    });
+
+    notif.onclick = function(){
+      window.focus();
+      this.close();
+      closeNewOrderAlert();
+    };
+
+    setTimeout(() => {
+      try { notif.close(); } catch(e) {}
+    }, 60000);
+
+  } catch(err){
+    console.warn('System notification failed:', err);
+  }
+}
+
+
+/* =====================================================
+   NEW ORDER ALERT
+===================================================== */
+
+let newOrderAlertTimer = null;
+
+function triggerNewOrderAlert(order){
+  playBeep();
+
+  if(navigator.vibrate){
+    navigator.vibrate([300, 150, 300, 150, 300]);
+  }
+
+  const customerName = order?.customer_name || 'Customer';
+  const address = order?.delivery_address || 'Address not available';
+  const orderId = order?.id || '';
+
+  showSystemNotification(
+    `🚴 Naya Order #${orderId}`,
+    `${customerName} — ${address}`,
+    orderId
+  );
+
+  const alertBox = document.getElementById('newOrderAlert');
+  const alertText = document.getElementById('newOrderAlertText');
+  if(alertText){
+    alertText.textContent = `Order #${orderId} — ${customerName}`;
+  }
+  if(alertBox){
+    alertBox.classList.add('show');
+
+    if(newOrderAlertTimer){
+      clearTimeout(newOrderAlertTimer);
+    }
+
+    newOrderAlertTimer = setTimeout(() => {
+      alertBox.classList.remove('show');
+    }, 15000);
+  }
+}
+
+function closeNewOrderAlert(){
+  const alertBox = document.getElementById('newOrderAlert');
+  if(alertBox){
+    alertBox.classList.remove('show');
+  }
+  if(newOrderAlertTimer){
+    clearTimeout(newOrderAlertTimer);
+    newOrderAlertTimer = null;
+  }
+}
+
+
+/* =====================================================
+   WAKE LOCK
+===================================================== */
+
+let wakeLock = null;
+
+async function requestWakeLock(){
+  try {
+    if('wakeLock' in navigator && !wakeLock){
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log('🔆 Wake Lock active');
+
+      wakeLock.addEventListener('release', () => {
+        console.log('🔆 Wake Lock released');
+      });
+    }
+  } catch(err){
+    console.warn('Wake Lock failed:', err);
+  }
+}
+
+async function releaseWakeLock(){
+  try {
+    if(wakeLock){
+      await wakeLock.release();
+      wakeLock = null;
+    }
+  } catch(err){
+    console.warn('Wake Lock release failed:', err);
+  }
+}
+
+document.addEventListener('visibilitychange', async () => {
+  if(document.visibilityState === 'visible' && currentShift && !wakeLock){
+    requestWakeLock();
+  }
+});
+
 
 /* =====================================================
    SHIFT MANAGEMENT
 ===================================================== */
 
 async function loadCurrentShift(){
-
   if(!token || loadingShift){
     return;
   }
@@ -993,7 +1448,6 @@ async function loadCurrentShift(){
   loadingShift = true;
 
   try{
-
     const response = await fetch(
       `${API_BASE}/shifts/current`,
       {
@@ -1010,322 +1464,145 @@ async function loadCurrentShift(){
     const data = await response.json();
 
     if(!response.ok){
-      throw new Error(
-        data.message || 'Could not load shift'
-      );
+      throw new Error(data.message || 'Could not load shift');
     }
 
     currentShift = data.data || null;
-
     renderShift();
 
   }
   catch(err){
-
-    console.error(
-      'loadCurrentShift:',
-      err
-    );
-
-    toast(
-      err.message || 'Could not load shift',
-      'error'
-    );
-
+    console.error('loadCurrentShift:', err);
+    toast(err.message || 'Could not load shift', 'error');
   }
   finally{
-
     loadingShift = false;
-
   }
-
 }
 
 
 function renderShift(){
-
-  const status =
-    document.getElementById('shiftStatus');
-
-  const statusText =
-    document.getElementById('shiftStatusText');
-
-  const button =
-    document.getElementById('shiftBtn');
+  const status = document.getElementById('shiftStatus');
+  const statusText = document.getElementById('shiftStatusText');
+  const button = document.getElementById('shiftBtn');
 
   if(!status || !statusText || !button){
     return;
   }
 
-
   if(currentShift){
-
     status.classList.remove('inactive');
     status.classList.add('active');
-
-    statusText.textContent =
-      'Shift Active';
-
+    statusText.textContent = 'Shift Active';
     button.classList.remove('start');
     button.classList.add('end');
-
-    button.textContent =
-      'END SHIFT';
-
+    button.textContent = 'END SHIFT';
   }
   else{
-
     status.classList.remove('active');
     status.classList.add('inactive');
-
-    statusText.textContent =
-      'Shift Not Started';
-
+    statusText.textContent = 'Shift Not Started';
     button.classList.remove('end');
     button.classList.add('start');
-
-    button.textContent =
-      'START SHIFT';
-
+    button.textContent = 'START SHIFT';
   }
-
 }
 
 
 async function toggleShift(){
-
   if(!token || loadingShift){
     return;
   }
 
-  const button =
-    document.getElementById('shiftBtn');
+  const button = document.getElementById('shiftBtn');
 
   if(button){
     button.disabled = true;
   }
 
-
   try{
-
     if(currentShift){
-
-      const confirmed =
-        window.confirm(
-          'End your current shift?'
-        );
-
+      const confirmed = window.confirm('End your current shift?');
       if(!confirmed){
         return;
       }
 
-
-      const response =
-        await fetch(
-          `${API_BASE}/shifts/${Number(currentShift.id)}/end`,
-          {
-            method:'PUT',
-            headers:authHeaders()
-          }
-        );
-
+      const response = await fetch(
+        `${API_BASE}/shifts/${Number(currentShift.id)}/end`,
+        {
+          method:'PUT',
+          headers:authHeaders()
+        }
+      );
 
       if(response.status === 401){
         logout();
         return;
       }
 
-
-      const data =
-        await response.json();
-
+      const data = await response.json();
 
       if(!response.ok){
-        throw new Error(
-          data.message || 'Could not end shift'
-        );
+        throw new Error(data.message || 'Could not end shift');
       }
 
-
       currentShift = null;
-
       renderShift();
 
-      toast(
-        'Shift ended successfully.'
-      );
+      await releaseWakeLock();
+      closeNewOrderAlert();
+
+      toast('Shift ended successfully.');
 
     }
     else{
-
-      const confirmed =
-        window.confirm(
-          'Start your shift now?'
-        );
-
+      const confirmed = window.confirm('Start your shift now?');
       if(!confirmed){
         return;
       }
 
-
-      const response =
-        await fetch(
-          `${API_BASE}/shifts/start`,
-          {
-            method:'POST',
-            headers:authHeaders()
-          }
-        );
-
+      const response = await fetch(
+        `${API_BASE}/shifts/start`,
+        {
+          method:'POST',
+          headers:authHeaders()
+        }
+      );
 
       if(response.status === 401){
         logout();
         return;
       }
 
-
-      const data =
-        await response.json();
-
+      const data = await response.json();
 
       if(!response.ok){
-        throw new Error(
-          data.message || 'Could not start shift'
-        );
+        throw new Error(data.message || 'Could not start shift');
       }
 
-
-      currentShift =
-        data.data || null;
-
+      currentShift = data.data || null;
       renderShift();
 
-      toast(
-        'Shift started successfully.'
-      );
+      showPermBanner();
 
+      if('Notification' in window && Notification.permission === 'granted'){
+        playBeep();
+      }
+
+      await requestWakeLock();
+
+      toast('Shift started successfully.');
     }
-
   }
   catch(err){
-
-    console.error(
-      'toggleShift:',
-      err
-    );
-
-    toast(
-      err.message || 'Shift action failed',
-      'error'
-    );
-
+    console.error('toggleShift:', err);
+    toast(err.message || 'Shift action failed', 'error');
   }
   finally{
-
     if(button){
       button.disabled = false;
     }
-
   }
-
-}
-
-
-
-
-/* =====================================================
-   HELPERS
-===================================================== */
-
-function esc(value){
-
-  return String(value ?? '')
-    .replaceAll('&','&amp;')
-    .replaceAll('<','&lt;')
-    .replaceAll('>','&gt;')
-    .replaceAll('"','&quot;')
-    .replaceAll("'",'&#039;');
-
-}
-
-
-function money(value){
-
-  return `RS ${Number(value || 0).toFixed(2)}`;
-
-}
-
-
-function authHeaders(){
-
-  return {
-    'Content-Type':'application/json',
-    'Authorization':`Bearer ${token}`
-  };
-
-}
-
-
-function showLogin(){
-
-  document
-    .getElementById('loginScreen')
-    .classList.remove('hidden');
-
-  document
-    .getElementById('appScreen')
-    .classList.add('hidden');
-
-}
-
-
-function showApp(){
-
-  document
-    .getElementById('loginScreen')
-    .classList.add('hidden');
-
-  document
-    .getElementById('appScreen')
-    .classList.remove('hidden');
-
-}
-
-
-function loginError(message){
-
-  const box =
-    document.getElementById('loginError');
-
-  box.textContent = message || '';
-
-  box.classList.toggle(
-    'hidden',
-    !message
-  );
-
-}
-
-
-function toast(message, type='success'){
-
-  const container =
-    document.getElementById('toastContainer');
-
-  const item =
-    document.createElement('div');
-
-  item.className =
-    `toast ${type === 'error' ? 'error' : ''}`;
-
-  item.textContent = message;
-
-  container.appendChild(item);
-
-  setTimeout(() => {
-    item.remove();
-  }, 3500);
-
 }
 
 
@@ -1333,143 +1610,66 @@ function toast(message, type='success'){
    LOGIN
 ===================================================== */
 
-
 async function riderLogin(){
-
-  const username =
-    document
-      .getElementById('loginUsername')
-      .value
-      .trim();
-
-  const password =
-    document
-      .getElementById('loginPassword')
-      .value;
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
 
   if(!username || !password){
-
-    loginError(
-      'Username and password are required.'
-    );
-
+    loginError('Username and password are required.');
     return;
-
   }
 
-
   try{
-
     loginError('');
 
-    const response =
-      await fetch(
-        `${API_BASE}/auth/login`,
-        {
-          method:'POST',
-          headers:{
-            'Content-Type':'application/json'
-          },
-          body:JSON.stringify({
-            username,
-            password,
-            restaurant_id: RESTAURANT_ID_FROM_URL,
-        role: 'delivery' 
-          })
-        }
-      );
+    const response = await fetch(
+      `${API_BASE}/auth/login`,
+      {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body:JSON.stringify({
+          username,
+          password,
+          restaurant_id: RESTAURANT_ID_FROM_URL,
+          role: 'delivery'
+        })
+      }
+    );
 
-
-    const data =
-      await response.json();
-
+    const data = await response.json();
 
     if(!response.ok){
-
-      throw new Error(
-        data.message ||
-        'Login failed'
-      );
-
+      throw new Error(data.message || 'Login failed');
     }
-
 
     if(!data.user){
-
-      throw new Error(
-        'Invalid login response.'
-      );
-
+      throw new Error('Invalid login response.');
     }
-
 
     if(data.user.role !== 'delivery'){
-
-      throw new Error(
-        'Access denied. This account is not a Rider account.'
-      );
-
+      throw new Error('Access denied. This account is not a Rider account.');
     }
 
-
     token = data.token;
-
     currentUser = data.user;
 
-
-    localStorage.setItem(
-      'rider_token',
-      token
-    );
-
-    localStorage.setItem(
-      'token',
-      token
-    );
-
-    localStorage.setItem(
-      'restaurant_id',
-      currentUser.restaurant_id
-    );
-
-    localStorage.setItem(
-      'rider_user',
-      JSON.stringify(currentUser)
-    );
-
-    localStorage.setItem(
-      'user',
-      JSON.stringify(currentUser)
-    );
-
+    localStorage.setItem('rider_token', token);
+    localStorage.setItem('token', token);
+    localStorage.setItem('restaurant_id', currentUser.restaurant_id);
+    localStorage.setItem('rider_user', JSON.stringify(currentUser));
+    localStorage.setItem('user', JSON.stringify(currentUser));
 
     showApp();
-
     initializeApp();
 
   }
   catch(err){
-
-    console.error(
-      'Rider login:',
-      err
-    );
-
+    console.error('Rider login:', err);
     token = '';
-
     currentUser = null;
-
-    localStorage.removeItem(
-      'rider_token'
-    );
-
-    loginError(
-      err.message ||
-      'Login failed.'
-    );
-
+    localStorage.removeItem('rider_token');
+    loginError(err.message || 'Login failed.');
   }
-
 }
 
 
@@ -1478,68 +1678,34 @@ async function riderLogin(){
 ===================================================== */
 
 function restoreSession(){
-
   if(!token){
-
     showLogin();
-
     return;
-
   }
-
 
   try{
-
-    const stored =
-      localStorage.getItem(
-        'rider_user'
-      ) ||
-      localStorage.getItem(
-        'user'
-      );
-
+    const stored = localStorage.getItem('rider_user') || localStorage.getItem('user');
 
     if(stored){
-
-      const user =
-        JSON.parse(stored);
-
+      const user = JSON.parse(stored);
       if(user.role !== 'delivery'){
-
         showLogin();
-
         return;
-
       }
-
       currentUser = user;
-
     }
-
   }
   catch(err){
-
-    console.warn(
-      'Session restore failed:',
-      err
-    );
-
+    console.warn('Session restore failed:', err);
   }
-
 
   if(!currentUser){
-
     showLogin();
-
     return;
-
   }
 
-
   showApp();
-
   initializeApp();
-
 }
 
 
@@ -1549,32 +1715,32 @@ function restoreSession(){
 
 async function initializeApp(){
 
-  document
-    .getElementById('riderName')
-    .textContent =
-      currentUser.full_name ||
-      currentUser.name ||
-      currentUser.username ||
-      'Rider';
+  document.getElementById('riderName').textContent =
+    currentUser.full_name ||
+    currentUser.name ||
+    currentUser.username ||
+    'Rider';
 
+  document.getElementById('restaurantName').textContent =
+    currentUser.restaurant_name ||
+    'Restaurant';
 
-  document
-    .getElementById('restaurantName')
-    .textContent =
-      currentUser.restaurant_name ||
-      'Restaurant';
-
-      if (RESTAURANT_ID_FROM_URL) {
-  document.getElementById('restaurantName').textContent = 
-    `Restaurant #${RESTAURANT_ID_FROM_URL}`;
-}
+  if (RESTAURANT_ID_FROM_URL) {
+    document.getElementById('restaurantName').textContent =
+      `Restaurant #${RESTAURANT_ID_FROM_URL}`;
+  }
 
   connectSocket();
 
   await loadCurrentShift();
-
   await loadOrders();
 
+  showPermBanner();
+  initAudio();
+
+  if(currentShift){
+    requestWakeLock();
+  }
 }
 
 
@@ -1583,107 +1749,76 @@ async function initializeApp(){
 ===================================================== */
 
 async function loadOrders(){
-
   if(!token || loadingOrders){
-
     return;
-
   }
-
 
   loadingOrders = true;
 
-
   try{
-
-    const response =
-      await fetch(
-        `${API_BASE}/orders?restaurant_id=${RESTAURANT_ID_FROM_URL || ''}`,
-        {
-          method:'GET',
-          headers:authHeaders()
-        }
-      );
-
+    const response = await fetch(
+      `${API_BASE}/orders?restaurant_id=${RESTAURANT_ID_FROM_URL || ''}`,
+      {
+        method:'GET',
+        headers:authHeaders()
+      }
+    );
 
     if(response.status === 401){
-
       logout();
-
       return;
-
     }
 
-
-    const data =
-      await response.json();
-
+    const data = await response.json();
 
     if(!response.ok){
-
-      throw new Error(
-        data.message ||
-        'Could not load orders'
-      );
-
+      throw new Error(data.message || 'Could not load orders');
     }
 
+    const allOrders = Array.isArray(data.orders) ? data.orders : [];
 
-    const allOrders =
-      Array.isArray(data.orders)
-        ? data.orders
-        : [];
+    const previousOrders = orders;
+    const previousIds = new Set(previousOrders.map(o => Number(o.id)));
 
+    orders = allOrders.filter(order => {
+      return (
+        order.order_type === 'delivery' &&
+        Number(order.delivery_rider_id) === Number(currentUser.id) &&
+        [
+          'ready_to_deliver',
+          'out_for_delivery',
+          'delivered'
+        ].includes(order.status)
+      );
+    });
 
-    orders =
-      allOrders.filter(order => {
-
-        return (
-          order.order_type === 'delivery' &&
-          Number(order.delivery_rider_id) ===
-            Number(currentUser.id) &&
-          [
-            'ready_to_deliver',
-            'out_for_delivery',
-            'delivered'
-          ].includes(order.status)
-        );
-
+    // ✅ DETECT NEWLY ASSIGNED ORDERS
+    if(previousOrders.length > 0 || previousIds.size > 0){
+      orders.forEach(order => {
+        const orderId = Number(order.id);
+        if(!previousIds.has(orderId)){
+          // Newly appeared order
+          triggerNewOrderAlert(order);
+        }
       });
-
+    }
 
     renderOrders();
 
-
-    document
-      .getElementById('lastUpdated')
-      .textContent =
-        `Last updated ${new Date().toLocaleTimeString([], {
-          hour:'2-digit',
-          minute:'2-digit'
-        })}`;
+    document.getElementById('lastUpdated').textContent =
+      `Last updated ${new Date().toLocaleTimeString([], {
+        hour:'2-digit',
+        minute:'2-digit'
+      })}`;
 
   }
   catch(err){
-
-    console.error(
-      'loadOrders:',
-      err
-    );
-
-    toast(
-      err.message ||
-      'Could not load orders',
-      'error'
-    );
-
+    console.error('loadOrders:', err);
+    toast(err.message || 'Could not load orders', 'error');
   }
   finally{
-
     loadingOrders = false;
-
   }
-
 }
 
 
@@ -1692,48 +1827,17 @@ async function loadOrders(){
 ===================================================== */
 
 function renderOrders(){
+  const container = document.getElementById('ordersContainer');
 
-  const container =
-    document.getElementById(
-      'ordersContainer'
-    );
+  const ready = orders.filter(o => o.status === 'ready_to_deliver').length;
+  const out = orders.filter(o => o.status === 'out_for_delivery').length;
+  const delivered = orders.filter(o => o.status === 'delivered').length;
 
-
-  const ready =
-    orders.filter(
-      o => o.status === 'ready_to_deliver'
-    ).length;
-
-
-  const out =
-    orders.filter(
-      o => o.status === 'out_for_delivery'
-    ).length;
-
-
-  const delivered =
-    orders.filter(
-      o => o.status === 'delivered'
-    ).length;
-
-
-  document
-    .getElementById('readyCount')
-    .textContent = ready;
-
-
-  document
-    .getElementById('outCount')
-    .textContent = out;
-
-
-  document
-    .getElementById('deliveredCount')
-    .textContent = delivered;
-
+  document.getElementById('readyCount').textContent = ready;
+  document.getElementById('outCount').textContent = out;
+  document.getElementById('deliveredCount').textContent = delivered;
 
   if(!orders.length){
-
     container.innerHTML = `
       <div class="empty">
         <div class="empty-icon">🛵</div>
@@ -1743,47 +1847,34 @@ function renderOrders(){
         </span>
       </div>
     `;
-
     return;
-
   }
 
+  const sorted = [...orders].sort((a,b) => {
+    const priority = {
+      ready_to_deliver:1,
+      out_for_delivery:2,
+      delivered:3
+    };
 
-  const sorted =
-    [...orders].sort((a,b) => {
+    const pa = priority[a.status] || 99;
+    const pb = priority[b.status] || 99;
 
-      const priority = {
-        ready_to_deliver:1,
-        out_for_delivery:2,
-        delivered:3
-      };
+    if(pa !== pb){
+      return pa - pb;
+    }
 
-      const pa =
-        priority[a.status] || 99;
-
-      const pb =
-        priority[b.status] || 99;
-
-      if(pa !== pb){
-
-        return pa - pb;
-
-      }
-
-      return (
-        new Date(a.created_at || 0) -
-        new Date(b.created_at || 0)
-      );
-
-    });
-
+    return (
+      new Date(a.created_at || 0) -
+      new Date(b.created_at || 0)
+    );
+  });
 
   container.innerHTML = `
     <div class="orders">
       ${sorted.map(renderOrderCard).join('')}
     </div>
   `;
-
 }
 
 
@@ -1792,120 +1883,70 @@ function renderOrders(){
 ===================================================== */
 
 function renderOrderCard(order){
-
-  const status =
-    order.status;
-
+  const status = order.status;
 
   let badgeClass = 'ready';
   let badgeText = 'READY';
 
   if(status === 'out_for_delivery'){
-
     badgeClass = 'out';
     badgeText = 'OUT FOR DELIVERY';
-
   }
 
   if(status === 'delivered'){
-
     badgeClass = 'delivered';
     badgeText = 'DELIVERED';
-
   }
 
+  const customer = esc(order.customer_name || 'Delivery Customer');
+  const phone = String(order.delivery_phone || '').trim();
+  const address = esc(order.delivery_address || 'No delivery address');
 
-  const customer =
-    esc(
-      order.customer_name ||
-      'Delivery Customer'
-    );
+  const created = order.created_at
+    ? new Date(order.created_at).toLocaleString([], {
+        month:'short',
+        day:'numeric',
+        hour:'2-digit',
+        minute:'2-digit'
+      })
+    : '-';
 
-
-  const phone =
-    String(
-      order.delivery_phone || ''
-    ).trim();
-
-
-  const address =
-    esc(
-      order.delivery_address ||
-      'No delivery address'
-    );
-
-
-  const created =
-    order.created_at
-      ? new Date(
-          order.created_at
-        ).toLocaleString([], {
-          month:'short',
-          day:'numeric',
-          hour:'2-digit',
-          minute:'2-digit'
-        })
-      : '-';
-
-
-  const items =
-    Array.isArray(order.items)
-      ? order.items
-      : [];
-
-
-  const deals =
-    Array.isArray(order.deals)
-      ? order.deals
-      : [];
-
+  const items = Array.isArray(order.items) ? order.items : [];
+  const deals = Array.isArray(order.deals) ? order.deals : [];
 
   let itemHtml = '';
 
-
   if(items.length){
-
     itemHtml += items.map(item => {
-
-      const variant =
-        item.variant_label
-          ? ` (${esc(item.variant_label)})`
-          : '';
+      const variant = item.variant_label
+        ? ` (${esc(item.variant_label)})`
+        : '';
 
       return `
         <div class="item-row">
           <span class="item-name">
             ${esc(item.name)}${variant}
           </span>
-
           <span class="item-qty">
             x${Number(item.quantity || 0)}
           </span>
         </div>
       `;
-
     }).join('');
-
   }
 
-
   if(deals.length){
-
     itemHtml += deals.map(deal => {
-
       return `
         <div class="deal">
-
           <div class="item-row">
             <span class="item-name">
               🎁 ${esc(deal.deal_name || 'Deal')}
             </span>
-
             <span class="item-qty">
               x${Number(deal.quantity || 0)}
             </span>
           </div>
-
           ${
             Array.isArray(deal.items)
               ? deal.items.map(di => `
@@ -1913,202 +1954,121 @@ function renderOrderCard(order){
                     class="item-row"
                     style="padding-left:12px;color:#94a3b8;"
                   >
-                    <span>
-                      ${esc(di.name)}
-                    </span>
-
-                    <span>
-                      x${Number(di.quantity || 0)}
-                    </span>
+                    <span>${esc(di.name)}</span>
+                    <span>x${Number(di.quantity || 0)}</span>
                   </div>
                 `).join('')
               : ''
           }
-
         </div>
       `;
-
     }).join('');
-
   }
-
 
   if(!itemHtml){
-
-    itemHtml =
-      `<div style="color:#94a3b8;font-size:13px;">
+    itemHtml = `<div style="color:#94a3b8;font-size:13px;">
         Order items unavailable
       </div>`;
-
   }
-
 
   let action = '';
 
-
   if(status === 'ready_to_deliver'){
-
     action = `
       <button
         class="action-btn dispatch"
-        onclick="changeStatus(
-          ${Number(order.id)},
-          'out-for-delivery',
-          this
-        )"
+        onclick="changeStatus(${Number(order.id)}, 'out-for-delivery', this)"
       >
         🚴 OUT FOR DELIVERY
       </button>
     `;
-
   }
   else if(status === 'out_for_delivery'){
-
     action = `
       <button
         class="action-btn deliver"
-        onclick="changeStatus(
-          ${Number(order.id)},
-          'delivered',
-          this
-        )"
+        onclick="changeStatus(${Number(order.id)}, 'delivered', this)"
       >
         ✓ MARK DELIVERED
       </button>
     `;
-
   }
   else if(status === 'delivered'){
+    action = `
+      <div style="
+        background:rgba(34,197,94,0.08);
+        border:1px solid rgba(34,197,94,0.2);
+        border-radius:11px;
+        padding:12px;
+        text-align:center;
+        color:#4ade80;
+        font-weight:700;
+        font-size:14px;
+      ">
+        ✅ DELIVERED — Waiting for counter to complete
+      </div>
+    `;
+  }
 
-  // ✅ Rider can NOT mark as completed
-  // ✅ Show "Delivered" status with no action button
-  action = `
-    <div style="
-      background:rgba(34,197,94,0.08);
-      border:1px solid rgba(34,197,94,0.2);
-      border-radius:11px;
-      padding:12px;
-      text-align:center;
-      color:#4ade80;
-      font-weight:700;
-      font-size:14px;
-    ">
-      ✅ DELIVERED — Waiting for counter to complete
-    </div>
-  `;
-
-}
-
-
-  const phoneButton =
-    phone
-      ? `
-        <a
-          class="call-btn"
-          href="tel:${esc(phone)}"
-        >
-          📞 Call Customer
-        </a>
-      `
-      : `
-        <div
-          class="call-btn"
-          style="opacity:.5;"
-        >
-          📞 No Phone
-        </div>
-      `;
-
+  const phoneButton = phone
+    ? `<a class="call-btn" href="tel:${esc(phone)}">📞 Call Customer</a>`
+    : `<div class="call-btn" style="opacity:.5;">📞 No Phone</div>`;
 
   return `
     <article
       class="order-card"
       data-order-id="${Number(order.id)}"
     >
-
       <div class="order-top">
-
         <div>
           <div class="order-number">
             Order #${Number(order.id)}
           </div>
-
           <div class="order-time">
             ${created}
           </div>
         </div>
-
         <span class="badge ${badgeClass}">
           ${badgeText}
         </span>
-
       </div>
 
-
       <div class="customer">
-
         <div class="customer-name">
           ${customer}
         </div>
-
         ${
           phone
-            ? `
-              <div class="info-row">
+            ? `<div class="info-row">
                 <span class="info-icon">📞</span>
                 <span>${esc(phone)}</span>
-              </div>
-            `
+              </div>`
             : ''
         }
-
-
         <div class="info-row">
           <span class="info-icon">📍</span>
-
-          <span class="address">
-            ${address}
-          </span>
+          <span class="address">${address}</span>
         </div>
-
       </div>
-
 
       <div class="items">
-
-        <div class="items-title">
-          Order Items
-        </div>
-
+        <div class="items-title">Order Items</div>
         ${itemHtml}
-
       </div>
-
 
       <div class="total">
-
         <span>Total</span>
-
-        <strong>
-          ${money(order.total_amount)}
-        </strong>
-
+        <strong>${money(order.total_amount)}</strong>
       </div>
 
-
       <div class="card-actions">
-
         ${action}
-
         <div class="secondary-actions">
           ${phoneButton}
         </div>
-
       </div>
-
     </article>
   `;
-
 }
 
 
@@ -2116,121 +2076,58 @@ function renderOrderCard(order){
    STATUS ACTION
 ===================================================== */
 
-async function changeStatus(
-  orderId,
-  action,
-  button
-){
-
+async function changeStatus(orderId, action, button){
   if(!orderId){
-
     return;
-
   }
-
 
   const messages = {
-
-    'out-for-delivery':
-      'Start this delivery?',
-
-    'delivered':
-      'Mark this order as delivered?',
-
-    'completed':
-      'Complete this delivery?'
-
+    'out-for-delivery': 'Start this delivery?',
+    'delivered': 'Mark this order as delivered?',
+    'completed': 'Complete this delivery?'
   };
 
-
-  const confirmed =
-    window.confirm(
-      messages[action] ||
-      'Continue?'
-    );
-
+  const confirmed = window.confirm(messages[action] || 'Continue?');
 
   if(!confirmed){
-
     return;
-
   }
-
 
   if(button){
-
     button.disabled = true;
-
-    button.dataset.originalText =
-      button.textContent;
-
-    button.textContent =
-      'Processing...';
-
+    button.dataset.originalText = button.textContent;
+    button.textContent = 'Processing...';
   }
 
-
   try{
-
-    const response =
-      await fetch(
-        `${API_BASE}/orders/${orderId}/${action}`,
-        {
-          method:'PUT',
-          headers:authHeaders()
-        }
-      );
-
-
-    const data =
-      await response.json();
-
-
-    if(!response.ok){
-
-      throw new Error(
-        data.message ||
-        'Action failed'
-      );
-
-    }
-
-
-    toast(
-      data.message ||
-      'Order updated successfully'
+    const response = await fetch(
+      `${API_BASE}/orders/${orderId}/${action}`,
+      {
+        method:'PUT',
+        headers:authHeaders()
+      }
     );
 
+    const data = await response.json();
+
+    if(!response.ok){
+      throw new Error(data.message || 'Action failed');
+    }
+
+    toast(data.message || 'Order updated successfully');
 
     await loadOrders();
 
   }
   catch(err){
-
-    console.error(
-      'changeStatus:',
-      err
-    );
-
-    toast(
-      err.message ||
-      'Could not update order',
-      'error'
-    );
-
+    console.error('changeStatus:', err);
+    toast(err.message || 'Could not update order', 'error');
 
     if(button){
-
       button.disabled = false;
-
-      button.textContent =
-        button.dataset.originalText ||
-        'Try Again';
-
+      button.textContent = button.dataset.originalText || 'Try Again';
     }
-
   }
-
 }
 
 
@@ -2239,99 +2136,63 @@ async function changeStatus(
 ===================================================== */
 
 function connectSocket(){
-
   if(socket){
-
-    try{
-      socket.disconnect();
-    }catch(e){}
-
+    try{ socket.disconnect(); }catch(e){}
     socket = null;
-
   }
-
 
   if(!token){
-
     return;
-
   }
 
-
   try{
+    socket = io({
+      auth:{ token }
+    });
 
-    socket =
-      io({
-        auth:{
-          token
-        }
-      });
+    socket.on('connect', () => {
+      console.log('Rider socket connected');
+    });
 
-
-    socket.on(
-      'connect',
-      () => {
-
-        console.log(
-          'Rider socket connected'
-        );
-
-      }
-    );
-
-
-    socket.on(
-      'connect_error',
-      err => {
-
-        console.warn(
-          'Rider socket:',
-          err.message
-        );
-
-      }
-    );
-
+    socket.on('connect_error', err => {
+      console.warn('Rider socket:', err.message);
+    });
 
     const refreshEvents = [
       'order_updated',
-      'delivery_rider_assigned',
       'order_ready',
       'order_out_for_delivery',
       'order_delivered',
       'order_completed'
     ];
 
-
     refreshEvents.forEach(eventName => {
-
-      socket.on(
-        eventName,
-        payload => {
-
-          console.log(
-            `Socket ${eventName}:`,
-            payload
-          );
-
-          loadOrders();
-
-        }
-      );
-
+      socket.on(eventName, payload => {
+        console.log(`Socket ${eventName}:`, payload);
+        loadOrders();
+      });
     });
 
+    // ✅ SPECIAL: New order assigned to this rider
+    socket.on('delivery_rider_assigned', payload => {
+      console.log('🎯 delivery_rider_assigned:', payload);
+
+      const assignedRiderId =
+        payload?.rider_id ??
+        payload?.delivery_rider_id ??
+        payload?.order?.delivery_rider_id;
+
+      if(assignedRiderId && Number(assignedRiderId) === Number(currentUser?.id)){
+        triggerNewOrderAlert(payload?.order || payload);
+      }
+
+      loadOrders();
+    });
 
   }
   catch(err){
-
-    console.error(
-      'Socket connection failed:',
-      err
-    );
-
+    console.error('Socket connection failed:', err);
   }
-
 }
 
 
@@ -2340,62 +2201,28 @@ function connectSocket(){
 ===================================================== */
 
 function logout(){
-
   if(socket){
-
-    try{
-      socket.disconnect();
-    }catch(e){}
-
+    try{ socket.disconnect(); }catch(e){}
     socket = null;
-
   }
 
+  releaseWakeLock();
+  closeNewOrderAlert();
 
   token = '';
-
   currentUser = null;
-
   orders = [];
 
+  localStorage.removeItem('rider_token');
+  localStorage.removeItem('token');
+  localStorage.removeItem('restaurant_id');
+  localStorage.removeItem('rider_user');
+  localStorage.removeItem('user');
 
-  localStorage.removeItem(
-    'rider_token'
-  );
-
-
-  /*
-   * Remove shared token too.
-   * Rider page uses the same authentication
-   * storage as the existing POS screens.
-   */
-  localStorage.removeItem(
-    'token'
-  );
-
-  localStorage.removeItem(
-    'restaurant_id'
-  );
-
-  localStorage.removeItem(
-    'rider_user'
-  );
-
-  localStorage.removeItem(
-    'user'
-  );
-
-
-  document
-    .getElementById('loginUsername')
-    .value = '';
-
-  document
-    .getElementById('loginPassword')
-    .value = '';
+  document.getElementById('loginUsername').value = '';
+  document.getElementById('loginPassword').value = '';
 
   showLogin();
-
 }
 
 
@@ -2403,20 +2230,32 @@ function logout(){
    KEYBOARD LOGIN
 ===================================================== */
 
-document
-  .getElementById('loginPassword')
-  .addEventListener(
-    'keydown',
-    event => {
+document.getElementById('loginPassword').addEventListener('keydown', event => {
+  if(event.key === 'Enter'){
+    riderLogin();
+  }
+});
 
-      if(event.key === 'Enter'){
+document.getElementById('loginUsername').addEventListener('keydown', event => {
+  if(event.key === 'Enter'){
+    riderLogin();
+  }
+});
 
-        riderLogin();
 
-      }
+/* =====================================================
+   AUDIO UNLOCK ON FIRST INTERACTION
+===================================================== */
 
-    }
-  );
+document.addEventListener('click', function initAudioOnce(){
+  initAudio();
+  document.removeEventListener('click', initAudioOnce);
+}, { once: true });
+
+document.addEventListener('touchstart', function initAudioOnce(){
+  initAudio();
+  document.removeEventListener('touchstart', initAudioOnce);
+}, { once: true });
 
 
 /* =====================================================
