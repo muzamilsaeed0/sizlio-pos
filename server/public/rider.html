@@ -1140,10 +1140,33 @@ body{
 ===================================================== */
 
 function getRestaurantIdFromUrl() {
+  // 1️⃣ First try URL parameter
   const params = new URLSearchParams(window.location.search);
-  const id = params.get('restaurant') || params.get('restaurant_id');
-  console.log('🔍 Restaurant ID from URL:', id);
-  return id ? Number(id) : null;
+  const urlId = params.get('restaurant') || params.get('restaurant_id');
+  
+  if (urlId) {
+    console.log('🔍 Restaurant ID from URL:', urlId);
+    // ✅ Permanently save for PWA usage
+    localStorage.setItem('rider_restaurant_id', urlId);
+    return Number(urlId);
+  }
+  
+  // 2️⃣ Fallback to localStorage (PWA mode, no URL param)
+  const savedId = localStorage.getItem('rider_restaurant_id');
+  if (savedId) {
+    console.log('🔍 Restaurant ID from localStorage:', savedId);
+    return Number(savedId);
+  }
+  
+  // 3️⃣ Last resort: generic storage
+  const genericId = localStorage.getItem('restaurant_id');
+  if (genericId) {
+    console.log('🔍 Restaurant ID from generic storage:', genericId);
+    return Number(genericId);
+  }
+  
+  console.warn('⚠️ No Restaurant ID found anywhere');
+  return null;
 }
 
 const RESTAURANT_ID_FROM_URL = getRestaurantIdFromUrl();
@@ -1755,6 +1778,7 @@ async function riderLogin(){
     localStorage.setItem('rider_token', token);
     localStorage.setItem('token', token);
     localStorage.setItem('restaurant_id', currentUser.restaurant_id);
+    localStorage.setItem('rider_restaurant_id', currentUser.restaurant_id);
     localStorage.setItem('rider_user', JSON.stringify(currentUser));
     localStorage.setItem('user', JSON.stringify(currentUser));
 
@@ -2320,7 +2344,8 @@ function logout(){
 
   localStorage.removeItem('rider_token');
   localStorage.removeItem('token');
-  localStorage.removeItem('restaurant_id');
+ // localStorage.removeItem('restaurant_id');
+//  localStorage.removeItem('rider_restaurant_id');
   localStorage.removeItem('rider_user');
   localStorage.removeItem('user');
 
