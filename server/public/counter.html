@@ -3457,18 +3457,13 @@ return `
             } catch (err) { alert(err.message); }
         }
 
-        async function dispatchWalkIn(id) {
+       async function dispatchWalkIn(id) {
     if (!confirm('Confirm this order has been handed to the customer?')) return;
     try {
-        const order = orders.find(x => Number(x.id) === Number(id));
-        const wasPaid = order && String(order.payment_status).toLowerCase() === 'paid';
+        const data = await apiFetch(`${API_BASE}/orders/${id}/handover`, { method: 'PUT' });
         
-        // Deduct inventory + mark served
-        await apiFetch(`${API_BASE}/orders/${id}/serve`, { method: 'PUT' });
-        
-        // Agar already paid tha, tou direct completed karo
-        if (wasPaid) {
-            await apiFetch(`${API_BASE}/orders/${id}/completed`, { method: 'PUT' });
+        const newStatus = data.order?.status;
+        if (newStatus === 'completed') {
             status(`Order #${id} handed over and completed.`);
         } else {
             status(`Order #${id} handed over. Collect payment now.`);
@@ -3479,6 +3474,7 @@ return `
         alert(err.message);
     }
 }
+
 
         async function cancelOrder(id) {
             if (!confirm('Are you sure you want to cancel this order? Inventory will be released.')) return;

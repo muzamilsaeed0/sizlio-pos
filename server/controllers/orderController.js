@@ -4633,3 +4633,49 @@ await client.query(
     client.release();
   }
 }
+
+const { markWalkInHandedOver } = require('../models/orderModel');
+
+exports.handoverWalkIn = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const restaurantId = req.user.restaurant_id;
+
+    const result = await markWalkInHandedOver(id, restaurantId);
+
+    // Order nahi mila ya galat status mein hai
+    if (!result) {
+      return res.status(409).json({
+        success: false,
+        message: 'Only ready walk-in orders can be handed over to the customer.'
+      });
+    }
+
+    // Stock error
+    if (result.error) {
+      return res.status(409).json({
+        success: false,
+        error: result.error,
+        ingredient: result.ingredient,
+        available: result.available,
+        required: result.required,
+        unit: result.unit,
+        message: `Sorry, ${result.ingredient || 'item'} has low stock.`
+      });
+    }
+
+    // Socket event emit karein taake dusre screens refresh ho jayein
+    req.app.get('io')
+      .to(`restaurant_${restaurantId}`)
+      .emit('order_updated', result);
+
+    return res.json({
+      success: true,
+      order: result
+    });
+
+  } catch (err) {
+    console.error('handoverWalkIn:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};

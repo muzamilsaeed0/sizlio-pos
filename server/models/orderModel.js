@@ -2087,6 +2087,218 @@ const markServed = async (
 };
 
 // ======================================================
+// MARK WALK-IN HANDED OVER
+//
+// ready_to_dispatch → completed (paid) ya served (unpaid)
+//
+// - Sirf walk-in orders
+// - Sirf counter role se call hoga
+// - Inventory yahin deduct hoti hai
+// - Agar paid hai → direct completed
+// - Agar unpaid hai → served (phir counter payment collect karega)
+// ======================================================
+
+const markWalkInHandedOver = async (
+  id,
+  restaurantId
+) => {
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // --------------------------------------------------
+    // LOCK ORDER
+    // --------------------------------------------------
+
+    const orderResult = await client.query(
+      `
+      SELECT *
+      FROM orders
+      WHERE id = $1
+        AND restaurant_id = $2
+        AND order_type = 'walk_in'
+        AND status = 'ready_to_dispatch'
+      FOR UPDATE
+      `,
+      [id, restaurantId]
+    );
+
+    if (!orderResult.rows.length) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+
+    const order = orderResult.rows[0];
+
+    // --------------------------------------------------
+    // GET INGREDIENT REQUIREMENTS
+    // --------------------------------------------------
+
+    const ingredientsResult = await client.query(
+      `
+      SELECT
+        mii.inventory_id,
+        ii.name AS ingredient_name,
+        ii.unit,
+        mii.quantity AS recipe_quantity,
+        oi.quantity AS order_quantity
+      FROM order_items oi
+      INNER JOIN menu_items mi
+        ON mi.id = oi.menu_item_id
+      INNER JOIN menu_item_ingredients mii
+        ON mii.menu_item_id = mi.id
+        AND (mii.variant_id IS NULL OR mii.variant_id = oi.variant_id)
+      INNER JOIN inventory_items ii
+        ON ii.id = mii.inventory_id
+      WHERE oi.order_id = $1
+        AND mi.restaurant_id = $2
+        AND ii.restaurant_id = $2
+      `,
+      [id, restaurantId]
+    );
+
+    // --------------------------------------------------
+    // CALCULATE REQUIRED STOCK
+    // --------------------------------------------------
+
+    const requiredStock = {};
+
+    for (const row of ingredientsResult.rows) {
+      const inventoryId = row.inventory_id;
+      const requiredQuantity =
+        Number(row.recipe_quantity) * Number(row.order_quantity);
+
+      if (!requiredStock[inventoryId]) {
+        requiredStock[inventoryId] = {
+          inventory_id: inventoryId,
+          ingredient_name: row.ingredient_name,
+          unit: row.unit,
+          required_quantity: 0
+        };
+      }
+
+      requiredStock[inventoryId].required_quantity += requiredQuantity;
+    }
+
+    // --------------------------------------------------
+    // CHECK + DEDUCT KITCHEN INVENTORY
+    // --------------------------------------------------
+
+    for (const inventoryId of Object.keys(requiredStock)) {
+      const item = requiredStock[inventoryId];
+
+      const stockResult = await client.query(
+        `
+        SELECT id, quantity AS stock_quantity
+        FROM kitchen_inventory
+        WHERE restaurant_id = $1
+          AND inventory_id = $2
+        FOR UPDATE
+        `,
+        [restaurantId, item.inventory_id]
+      );
+
+      if (!stockResult.rows.length) {
+        await client.query('ROLLBACK');
+        return {
+          error: 'KITCHEN_STOCK_NOT_FOUND',
+          ingredient: item.ingredient_name
+        };
+      }
+
+      const stock = Number(stockResult.rows[0].stock_quantity);
+
+      if (stock < item.required_quantity) {
+        await client.query('ROLLBACK');
+        return {
+          error: 'INSUFFICIENT_KITCHEN_STOCK',
+          ingredient: item.ingredient_name,
+          available: stock,
+          required: item.required_quantity,
+          unit: item.unit
+        };
+      }
+
+      const kitchenInventoryId = stockResult.rows[0].id;
+
+      await client.query(
+        `
+        UPDATE kitchen_inventory
+        SET quantity = quantity - $1, updated_at = NOW()
+        WHERE id = $2
+        `,
+        [item.required_quantity, kitchenInventoryId]
+      );
+
+      await client.query(
+        `
+        INSERT INTO kitchen_inventory_transactions
+        (kitchen_inventory_id, type, quantity, note, order_id)
+        VALUES ($1, 'OUT', $2, $3, $4)
+        `,
+        [
+          kitchenInventoryId,
+          item.required_quantity,
+          `Walk-in order #${order.id} handed over`,
+          order.id
+        ]
+      );
+    }
+
+    // --------------------------------------------------
+    // CONSUME RESERVATIONS
+    // --------------------------------------------------
+
+    await client.query(
+      `
+      UPDATE inventory_reservations
+      SET status = 'consumed'
+      WHERE order_id = $1
+        AND status = 'reserved'
+      `,
+      [order.id]
+    );
+
+    // --------------------------------------------------
+    // DETERMINE FINAL STATUS
+    //
+    // paid   → completed
+    // unpaid → served (counter phir payment collect karega)
+    // --------------------------------------------------
+
+    const wasPaid = String(order.payment_status).toLowerCase() === 'paid';
+    const newStatus = wasPaid ? 'completed' : 'served';
+
+    const result = await client.query(
+      `
+      UPDATE orders
+      SET
+        status = $1,
+        served_at = NOW(),
+        completed_at = CASE WHEN $1 = 'completed' THEN NOW() ELSE NULL END
+      WHERE id = $2
+        AND restaurant_id = $3
+      RETURNING *
+      `,
+      [newStatus, id, restaurantId]
+    );
+
+    await client.query('COMMIT');
+
+    return result.rows[0] || null;
+
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch (_) {}
+    throw err;
+  } finally {
+    client.release();
+  }
+
+};
+
+// ======================================================
 // UPDATE ORDER PRICING
 //
 // SERVED + UNPAID ONLY
@@ -5429,6 +5641,8 @@ module.exports = {
   markCompleted,
 
   markServed,
+
+  markWalkInHandedOver,
 
   markPaid,
 

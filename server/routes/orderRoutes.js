@@ -20,6 +20,7 @@ const {
   delivered,
   completed,
   serve,
+  handoverWalkIn, 
   cancel,
   addItems,
   updatePricing,
@@ -379,6 +380,13 @@ router.put(
   serve
 );
 
+
+router.put(
+  '/:id/handover',
+  authMiddleware,
+  authorize('counter', 'manager'),
+  handoverWalkIn
+);
 
 // ======================================================
 // ADD ITEMS TO SERVED + UNPAID BILL
