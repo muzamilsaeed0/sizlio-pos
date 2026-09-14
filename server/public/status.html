@@ -598,6 +598,12 @@ body{
     }
 }
 
+
+.row .left b.walk-in-label {
+    color: #E3A23B;
+    font-size: clamp(18px, 2.5vw, 40px);
+}
+
 </style>
 
 </head>
@@ -1833,6 +1839,14 @@ function renderOrders(orders){
 
         orders.map(o => {
 
+             // ✅ DEBUG: Yeh add karein
+            console.log('Order Debug:', {
+                id: o.id,
+                order_type: o.order_type,
+                table_no: o.table_no,
+                status: o.status
+            });
+
             const status =
                 String(
                     o.status || ''
@@ -1851,45 +1865,24 @@ function renderOrders(orders){
                 null;
 
 
-            let locationLabel = '';
+                        let locationLabel = '';
 
-
-            if(
+            // ✅ Priority: Delivery > Walk-in > Takeaway > Table > Order
+            if (orderType === 'delivery') {
+                locationLabel = 'Delivery';
+            } else if (orderType === 'walk_in' || orderType === 'walkin' || orderType === 'walk in') {
+                locationLabel = 'Walk-in';
+            } else if (orderType === 'takeaway' || orderType === 'take away') {
+                locationLabel = 'Takeaway';
+            } else if (
                 rawTableNo !== null &&
                 rawTableNo !== undefined &&
-                String(
-                    rawTableNo
-                ).trim() !== '' &&
-                Number(
-                    rawTableNo
-                ) !== 0
-            ){
-
-                locationLabel =
-                    `Table ${escapeHtml(
-                        rawTableNo
-                    )}`;
-
-            }else if(
-                orderType === 'delivery'
-            ){
-
-                locationLabel =
-                    'Delivery';
-
-            }else if(
-                orderType === 'takeaway' ||
-                orderType === 'take away'
-            ){
-
-                locationLabel =
-                    'Takeaway';
-
-            }else{
-
-                locationLabel =
-                    'Order';
-
+                String(rawTableNo).trim() !== '' &&
+                Number(rawTableNo) !== 0
+            ) {
+                locationLabel = `Table ${escapeHtml(rawTableNo)}`;
+            } else {
+                locationLabel = 'Order';
             }
 
 
