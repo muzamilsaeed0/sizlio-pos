@@ -5159,6 +5159,28 @@ const assignDeliveryRider = async (
     ]
   );
 
+  // ✅ Send push notification to rider
+if (result.rows[0]) {
+    try {
+        const { sendPushToUser } = require('../routes/pushRoutes');
+        
+        const order = result.rows[0];
+        
+        await sendPushToUser(riderId, {
+            title: `🚴 Naya Order #${order.id}`,
+            body: `${order.customer_name || 'Customer'} — ${order.delivery_address || 'Address'}`,
+            tag: `order-${order.id}`,
+            data: {
+                url: `/rider?restaurant=${restaurantId}`,
+                orderId: order.id
+            }
+        });
+    } catch(err) {
+        console.error('Push send failed:', err);
+        // Don't fail assignment if push fails
+    }
+}
+
   return result.rows[0] || null;
 };
 
@@ -5364,6 +5386,21 @@ const autoAssignDeliveryRider = async (
 
     await client.query('COMMIT');
 
+    // ✅ Send push notification to assigned rider
+    try {
+        const { sendPushToUser } = require('../routes/pushRoutes');
+        
+        await sendPushToUser(selectedRider.rider_id, {
+            title: `🚴 Naya Order #${updateResult.rows[0].id}`,
+            body: `Auto-assigned delivery order`,
+            data: {
+                url: `/rider?restaurant=${restaurantId}`,
+                orderId: updateResult.rows[0].id
+            }
+        });
+    } catch(err) {
+        console.error('Push send failed:', err);
+    }
 
     return {
       order: updateResult.rows[0],
