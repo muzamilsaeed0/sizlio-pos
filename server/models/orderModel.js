@@ -1527,26 +1527,23 @@ const markReady = async (
 
         status =
           CASE
-            WHEN order_type = 'delivery'
-              THEN 'ready_to_deliver'
-            WHEN order_type = 'walk_in'
-              THEN 'ready_to_dispatch'
+            WHEN order_type = 'delivery' THEN 'ready_to_deliver'
+            WHEN order_type = 'walk_in' THEN 'ready_to_dispatch'
             ELSE 'ready'
           END,
 
         ready_at = NOW()
 
-             WHERE id = $1
-          AND restaurant_id = $2
-          AND status IN ('ready', 'ready_to_dispatch')
-        RETURNING *
+      WHERE id = $1
+        AND restaurant_id = $2
+        AND status = 'preparing'              
+      RETURNING *
       `,
       [
         id,
         restaurantId
       ]
     );
-
 
   return result.rows[0] || null;
 
@@ -2052,7 +2049,7 @@ const markServed = async (
 
           AND restaurant_id = $2
 
-          AND status = 'ready'
+          AND status IN ('ready', 'ready_to_dispatch')
 
         RETURNING *
         `,
