@@ -10,6 +10,8 @@ const pool = require("./config/db");
 
 const app = express();
 
+const pushRoutes = require('./routes/pushRoutes');
+
 app.use(cors());
 app.use(express.json());
 
@@ -163,6 +165,7 @@ app.use('/api/kitchen-inventory', require('./routes/kitchenInventoryRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/restaurants', require('./routes/restaurantRoutes'));
 app.use('/api/shifts', require('./routes/shiftRoutes'));
+app.use('/api/push', pushRoutes);
 
 
 const server = http.createServer(app);
