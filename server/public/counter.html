@@ -3328,8 +3328,13 @@ document.getElementById('total').textContent = money(total);
     // ✅ Walk-in specific labels
     if (ot === 'walk_in') {
         if (s === 'ready_to_dispatch') return 'Ready for Customer';
-        if (s === 'served') return 'Awaiting Payment';   // unpaid walked out
-        if (s === 'completed') return 'Handed Over';     // paid + done
+        
+        if (s === 'served') {
+            // Payment ho gayi ya nahi, us hisaab se label
+            return ps === 'paid' ? 'Ready to Complete' : 'Awaiting Payment';
+        }
+        
+        if (s === 'completed') return 'Handed Over';
     }
     
     // ✅ Baaki orders ke liye default
@@ -3337,7 +3342,6 @@ document.getElementById('total').textContent = money(total);
     if (s === 'ready_to_deliver') return 'Ready To Deliver';
     if (s === 'out_for_delivery') return 'Out For Delivery';
     
-    // Default: underscore ki jagah space
     return s.replaceAll('_', ' ');
 }
 
