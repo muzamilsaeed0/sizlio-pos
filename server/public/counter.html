@@ -3429,9 +3429,19 @@ document.getElementById('total').textContent = money(total);
                         ${(d.items || []).map(di => `<div class="deal-sub">${esc(di.name)}${di.variant_label ? ' (' + esc(di.variant_label) + ')' : ''} × ${Number(di.quantity)}</div>`).join('')}
                     `).join('');
 
-                    let typeLabel = o.order_type === 'delivery' 
-    ? '• Delivery' 
-    : (o.order_type === 'walk_in' ? '• Walk-in' : '• Table ' + esc(o.table_no));
+                    // ✅ Robust: lowercase + trim + safe fallback
+const otRaw = String(o.order_type || '').toLowerCase().trim();
+const tnNum = Number(o.table_no);
+let typeLabel;
+if (otRaw === 'delivery') {
+    typeLabel = '• Delivery';
+} else if (otRaw === 'walk_in' || otRaw === 'walkin') {
+    typeLabel = '• Walk-in';
+} else if (Number.isFinite(tnNum) && tnNum > 0) {
+    typeLabel = '• Table ' + esc(tnNum);
+} else {
+    typeLabel = '• Order';
+}
 
 // ✅ 2. Ab return statement ke andar sahi tareeqe se use karein
 return `
@@ -4020,22 +4030,38 @@ if (document.getElementById('taxPercent')) document.getElementById('taxPercent')
                     container.innerHTML = '<div class="empty">No offline orders</div>';
                     return;
                 }
-                container.innerHTML = offlineOrders.map(order => `
-                        <div class="offline-order-card">
-                            <div class="row">
-                                <div>
-                                    <strong>Table ${order.table_no}</strong>
-                                    <span style="font-size:11px;color:var(--muted);margin-left:10px;">${new Date(order.created_at).toLocaleTimeString()}</span>
-                                </div>
-                                <span class="pending">⏳ Pending Sync</span>
-                            </div>
-                            <div class="items-list">${(order.items || []).map(i => `${esc(i.name || i.item_name || 'Item')} × ${Number(i.quantity || 1)} · ${money(i.price ?? i.unit_price ?? 0)}`).join('<br>') || 'No item details saved'}</div>
-                            <div class="footer">
-                                <strong>${(order.items || []).length} items · ${money(order.total_amount || order.total || 0)}</strong>
-                                <button class="action-btn print" onclick="printOfflineOrder(${Number(order.id)})">🖨️ Print</button>
-                            </div>
-                        </div>
-                    `).join('');
+               container.innerHTML = offlineOrders.map(order => {
+    // ✅ Order type ke hisaab se label
+    const ot = String(order.order_type || '').toLowerCase();
+    const tn = Number(order.table_no);
+    let locationLabel;
+    if (ot === 'delivery') {
+        locationLabel = 'Delivery';
+    } else if (ot === 'walk_in') {
+        locationLabel = 'Walk-in';
+    } else if (Number.isFinite(tn) && tn > 0) {
+        locationLabel = `Table ${tn}`;
+    } else {
+        locationLabel = 'Order';
+    }
+    
+    return `
+        <div class="offline-order-card">
+            <div class="row">
+                <div>
+                    <strong>${locationLabel}</strong>
+                    <span style="font-size:11px;color:var(--muted);margin-left:10px;">${new Date(order.created_at).toLocaleTimeString()}</span>
+                </div>
+                <span class="pending">⏳ Pending Sync</span>
+            </div>
+            <div class="items-list">${(order.items || []).map(i => `${esc(i.name || i.item_name || 'Item')} × ${Number(i.quantity || 1)} · ${money(i.price ?? i.unit_price ?? 0)}`).join('<br>') || 'No item details saved'}</div>
+            <div class="footer">
+                <strong>${(order.items || []).length} items · ${money(order.total_amount || order.total || 0)}</strong>
+                <button class="action-btn print" onclick="printOfflineOrder(${Number(order.id)})">🖨️ Print</button>
+            </div>
+        </div>
+    `;
+}).join('');
             } catch (err) {
                 console.error('loadOfflineOrders:', err);
                 container.innerHTML = '<div class="empty">Error loading offline orders</div>';
