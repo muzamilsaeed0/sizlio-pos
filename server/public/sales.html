@@ -574,6 +574,61 @@ button.active{
     }
 }
 
+
+/* =========================
+   PRICING BREAKDOWN
+========================= */
+
+.pricing-breakdown{
+    margin-top:15px;
+    padding-top:12px;
+    border-top:1px dashed var(--border);
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+
+.summary-row{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    font-size:13px;
+    color:#D1D5DB;
+}
+
+.summary-row span:last-child{
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+}
+
+.summary-row.discount span:last-child{
+    color:#2FA37D;
+}
+
+.summary-row.tax span:last-child{
+    color:#F6F3EC;
+}
+
+.summary-row.charge span:last-child{
+    color:var(--accent);
+}
+
+/* Print view */
+@media print {
+    .pricing-breakdown{
+        border-top:1px dashed #ccc;
+    }
+    .summary-row{
+        color:#333 !important;
+    }
+    .summary-row.discount span:last-child{
+        color:#16805b !important;
+    }
+    .summary-row.charge span:last-child{
+        color:#111 !important;
+    }
+}
+
 /* =========================
    MOBILE
 ========================= */
@@ -1154,28 +1209,11 @@ function getOrderTotal(order){
 ===================================================== */
 
 function getOrderType(order){
-
-    const type =
-        String(
-            order.order_type ||
-            order.type ||
-            ''
-        ).toLowerCase();
-
-    if(type === 'delivery'){
-        return 'delivery';
-    }
-
-    if(
-        type === 'dine_in' ||
-        type === 'dine-in' ||
-        type === 'dinein'
-    ){
-        return 'dine_in';
-    }
-
+    const type = String(order.order_type || order.type || '').toLowerCase();
+    if (type === 'delivery') return 'delivery';
+    if (type === 'walk_in' || type === 'walkin' || type === 'walk-in') return 'walk_in';
+    if (type === 'dine_in' || type === 'dine-in' || type === 'dinein') return 'dine_in';
     return type || 'dine_in';
-
 }
 
 
@@ -1891,27 +1929,37 @@ function render(){
                 );
 
 
-            /* =========================
-               TYPE
-            ========================= */
+                /* =========================
+                         TYPE
+                ========================= */
 
-            const orderType =
-                getOrderType(order);
+                const orderType = getOrderType(order);
 
-            const typeLabel =
-                orderType === 'delivery'
-                ? 'Delivery'
-                : 'Dine In';
+                let typeLabel;
+                if (orderType === 'delivery') {
+                    typeLabel = 'Delivery';
+                } else if (orderType === 'walk_in') {
+                    typeLabel = 'Walk-in';
+                } else {
+                    typeLabel = 'Dine In';
+                }
 
+                /* =========================
+                LOCATION LABEL
+                ========================= */
 
-            /* =========================
-               TABLE
-            ========================= */
+                const tableNo = Number(order.table_no ?? order.table_number ?? 0);
 
-            const table =
-                order.table_no ??
-                order.table_number ??
-                '-';
+                let locationLabel;
+                if (orderType === 'delivery') {
+                    locationLabel = '🚚 Delivery Order';
+                } else if (orderType === 'walk_in') {
+                    locationLabel = '🛍️ Walk-in Order';
+                } else if (Number.isFinite(tableNo) && tableNo > 0) {
+                    locationLabel = `🍽 Table ${tableNo}`;
+                } else {
+                    locationLabel = '🍽 Table —';
+                }
 
 
             /* =========================
@@ -2017,6 +2065,77 @@ function render(){
 
                 `;
 
+                  /* =========================
+                    PRICING BREAKDOWN
+                    ========================= */
+
+                    const subtotal     = num(order.subtotal);
+                    const discountAmt  = num(order.discount_amount);
+                    const gstAmount    = num(order.gst_amount);
+                    const taxAmount    = num(order.tax_amount);
+                    const deliveryFee  = num(order.delivery_charge);
+                    const dineFee      = num(order.dine_charge);
+
+                    const breakdownRows = [];
+
+                    if (subtotal > 0) {
+                        breakdownRows.push(`
+                            <div class="summary-row">
+                                <span>Subtotal</span>
+                                <span>${money(subtotal)}</span>
+                            </div>
+                        `);
+                    }
+
+                    if (discountAmt > 0) {
+                        breakdownRows.push(`
+                            <div class="summary-row discount">
+                                <span>Discount</span>
+                                <span>- ${money(discountAmt)}</span>
+                            </div>
+                        `);
+                    }
+
+                    if (gstAmount > 0) {
+                        breakdownRows.push(`
+                            <div class="summary-row tax">
+                                <span>GST</span>
+                                <span>${money(gstAmount)}</span>
+                            </div>
+                        `);
+                    }
+
+                    if (taxAmount > 0) {
+                        breakdownRows.push(`
+                            <div class="summary-row tax">
+                                <span>Other Tax</span>
+                                <span>${money(taxAmount)}</span>
+                            </div>
+                        `);
+                    }
+
+                    if (deliveryFee > 0) {
+                        breakdownRows.push(`
+                            <div class="summary-row charge">
+                                <span>🛵 Delivery Charges</span>
+                                <span>${money(deliveryFee)}</span>
+                            </div>
+                        `);
+                    }
+
+                    if (dineFee > 0) {
+                        breakdownRows.push(`
+                            <div class="summary-row charge">
+                                <span>🍽️ Dine-in Charges</span>
+                                <span>${money(dineFee)}</span>
+                            </div>
+                        `);
+                    }
+
+                    const breakdownHtml = breakdownRows.length
+                        ? `<div class="pricing-breakdown">${breakdownRows.join('')}</div>`
+                        : '';
+
 
             /* =========================
                FINAL ORDER
@@ -2053,34 +2172,20 @@ function render(){
                     </div>
 
 
-                    <div class="order-info">
-
-                        ${
-                            orderType === 'delivery'
-
-                            ?
-
-                            '🚚 Delivery Order'
-
-                            :
-
-                            `🍽 Table ${escapeHtml(
-                                String(table)
-                            )}`
-
-                        }
-
+                   <div class="order-info">
+                        ${locationLabel}
                     </div>
 
 
                     ${deliveryHtml}
 
 
-                    <hr>
+                   <hr>
 
 
                     ${contentHtml}
 
+                    ${breakdownHtml}
 
                     <div class="total">
 
