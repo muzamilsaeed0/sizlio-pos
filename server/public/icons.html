@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Icon Generator - Rider App</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: Arial, sans-serif;
+        background: #0f172a;
+        color: white;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    .box {
+        background: #1e293b;
+        border-radius: 20px;
+        padding: 40px 30px;
+        max-width: 500px;
+        width: 100%;
+        text-align: center;
+        border: 1px solid #334155;
+    }
+    h1 { color: #22c55e; margin-bottom: 10px; font-size: 24px; }
+    p { color: #94a3b8; margin-bottom: 30px; font-size: 14px; line-height: 1.6; }
+    .preview-row {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        margin-bottom: 30px;
+        align-items: center;
+    }
+    .preview-item {
+        text-align: center;
+    }
+    .preview-item canvas {
+        background: #22c55e;
+        border-radius: 22%;
+        display: block;
+        box-shadow: 0 8px 20px rgba(34,197,94,.3);
+    }
+    .preview-item span {
+        display: block;
+        color: #94a3b8;
+        font-size: 12px;
+        margin-top: 8px;
+        font-weight: 700;
+    }
+    .btn {
+        background: #22c55e;
+        color: #052e16;
+        border: 0;
+        border-radius: 12px;
+        padding: 14px 28px;
+        font-weight: 800;
+        font-size: 15px;
+        cursor: pointer;
+        width: 100%;
+        margin-bottom: 12px;
+    }
+    .btn:hover { background: #4ade80; }
+    .btn-secondary {
+        background: transparent;
+        color: #94a3b8;
+        border: 1px solid #334155;
+    }
+    .btn-secondary:hover { background: #334155; color: white; }
+    .emoji-choice {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+    }
+    .emoji-choice button {
+        background: #0f172a;
+        border: 2px solid #334155;
+        border-radius: 14px;
+        width: 60px;
+        height: 60px;
+        font-size: 28px;
+        cursor: pointer;
+        transition: all .15s;
+    }
+    .emoji-choice button:hover { border-color: #22c55e; }
+    .emoji-choice button.active { border-color: #22c55e; background: rgba(34,197,94,.1); }
+    .color-choice {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+    }
+    .color-choice button {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 3px solid transparent;
+        cursor: pointer;
+        transition: all .15s;
+    }
+    .color-choice button:hover { transform: scale(1.1); }
+    .color-choice button.active { border-color: white; transform: scale(1.1); }
+</style>
+</head>
+<body>
+
+<div class="box">
+    <h1>🚴 Rider App Icons</h1>
+    <p>
+        Icon banane ke liye emoji aur color select karein,<br>
+        phir "Download Icons" dabayein. Dono PNG files download hongi.
+    </p>
+
+    <div class="preview-row">
+        <div class="preview-item">
+            <canvas id="preview192" width="192" height="192" style="width:96px;height:96px;"></canvas>
+            <span>192 × 192</span>
+        </div>
+        <div class="preview-item">
+            <canvas id="preview512" width="512" height="512" style="width:96px;height:96px;"></canvas>
+            <span>512 × 512</span>
+        </div>
+    </div>
+
+    <div class="emoji-choice" id="emojiChoice">
+        <button data-emoji="🚴" class="active">🚴</button>
+        <button data-emoji="🛵">🛵</button>
+        <button data-emoji="📦">📦</button>
+        <button data-emoji="🍔">🍔</button>
+        <button data-emoji="🏪">🏪</button>
+    </div>
+
+    <div class="color-choice" id="colorChoice">
+        <button data-color="#22c55e" style="background:#22c55e" class="active"></button>
+        <button data-color="#3b82f6" style="background:#3b82f6"></button>
+        <button data-color="#f59e0b" style="background:#f59e0b"></button>
+        <button data-color="#ef4444" style="background:#ef4444"></button>
+        <button data-color="#8b5cf6" style="background:#8b5cf6"></button>
+        <button data-color="#0f172a" style="background:#0f172a;border:3px solid #334155"></button>
+    </div>
+
+    <button class="btn" onclick="downloadIcons()">⬇️ Download Icons (Both)</button>
+    <button class="btn btn-secondary" onclick="downloadIcon(192)">Download 192 only</button>
+</div>
+
+<script>
+    let currentEmoji = '🚴';
+    let currentColor = '#22c55e';
+
+    function drawIcon(canvas, size) {
+        const ctx = canvas.getContext('2d');
+        
+        // Clear
+        ctx.clearRect(0, 0, size, size);
+        
+        // Rounded rectangle background
+        const radius = size * 0.22;
+        ctx.fillStyle = currentColor;
+        ctx.beginPath();
+        ctx.moveTo(radius, 0);
+        ctx.lineTo(size - radius, 0);
+        ctx.quadraticCurveTo(size, 0, size, radius);
+        ctx.lineTo(size, size - radius);
+        ctx.quadraticCurveTo(size, size, size - radius, size);
+        ctx.lineTo(radius, size);
+        ctx.quadraticCurveTo(0, size, 0, size - radius);
+        ctx.lineTo(0, radius);
+        ctx.quadraticCurveTo(0, 0, radius, 0);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Emoji
+        const emojiSize = size * 0.55;
+        ctx.font = `${emojiSize}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(currentEmoji, size / 2, size / 2 + size * 0.03);
+    }
+
+    function refreshPreviews() {
+        drawIcon(document.getElementById('preview192'), 192);
+        drawIcon(document.getElementById('preview512'), 512);
+    }
+
+    // Emoji selection
+    document.getElementById('emojiChoice').addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        document.querySelectorAll('#emojiChoice button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentEmoji = btn.dataset.emoji;
+        refreshPreviews();
+    });
+
+    // Color selection
+    document.getElementById('colorChoice').addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        document.querySelectorAll('#colorChoice button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentColor = btn.dataset.color;
+        refreshPreviews();
+    });
+
+    function downloadIcon(size) {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        drawIcon(canvas, size);
+        
+        canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `icon-${size}.png`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }, 'image/png');
+    }
+
+    function downloadIcons() {
+        downloadIcon(192);
+        setTimeout(() => downloadIcon(512), 500);
+    }
+
+    // Initial render
+    refreshPreviews();
+</script>
+
+</body>
+</html>
