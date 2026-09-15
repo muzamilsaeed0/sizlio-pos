@@ -761,8 +761,12 @@
                 <div class="delivery" id="payNowFields">
                     <div class="field">
                         <label>Payment Method</label>
-                        <select id="payNowMethod" onchange="renderCart()">
-                            <option>Cash</option><option>Card</option><option>Bank</option><option>Other</option>
+                        <select id="payNowMethod" onchange="onPayNowMethodChange()">
+                            <option>Cash</option>
+                            <option>Card</option>
+                            <option>Bank</option>
+                            <option id="qrPaymentOption" style="display:none;">QR Payment</option>
+                            <option>Other</option>
                         </select>
                         <small id="payNowMethodHint" class="surcharge-hint" style="display:none;"></small>
                     </div>
@@ -1004,10 +1008,59 @@
                 <label>🏦 Default Bank Charges % <small style="color:var(--muted);font-weight:400">(surcharge on bank transfers)</small></label>
                 <input id="settingsBankCharges" type="number" min="0" max="100" step="0.01" value="0" />
             </div>
+            <div class="field" style="margin-top:10px">
+                <label>🔗 Raast QR String <small style="color:var(--muted);font-weight:400">(bank se milega — QR Payment option iske baad enable hoga)</small></label>
+                <input id="settingsRaastQr" type="text" placeholder="RAAST://PAY?..." />
+            </div>
 
             <div class="modal-actions">
                 <button class="cancel" onclick="closeSettings()">Cancel</button>
                 <button class="confirm" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR PAYMENT MODAL -->
+    <div class="modal" id="qrPaymentModal">
+        <div class="modal-box" style="max-width:420px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <h3 style="margin:0;">📱 Scan to Pay</h3>
+                <button class="modal-close-x" onclick="cancelQrPayment()">&times;</button>
+            </div>
+
+            <div style="text-align:center;margin-bottom:14px;">
+                <div style="font-size:12px;color:var(--muted);">Amount to Pay</div>
+                <div id="qrAmountText" style="font-size:28px;font-weight:800;color:var(--accent);margin-top:4px;">RS 0.00</div>
+                <div id="qrOrderText" style="font-size:12px;color:var(--muted);margin-top:2px;"></div>
+            </div>
+
+            <div style="text-align:center;padding:16px;background:#fff;border-radius:12px;margin-bottom:12px;">
+                <img id="qrImage" src="" alt="QR"
+                     style="width:260px;height:260px;display:block;margin:0 auto;" />
+            </div>
+
+            <div id="qrStatusText" style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:8px;">
+                ⏳ Waiting for payment...
+            </div>
+
+            <div id="qrTimerText" style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:14px;"></div>
+
+            <div id="qrManualBox" style="border-top:1px dashed var(--border);padding-top:12px;">
+                <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:8px;">
+                    Staff manually confirm kare:
+                </div>
+                <button class="confirm" style="width:100%;height:42px;"
+                        onclick="manualConfirmQr()">
+                    ✅ Payment Received
+                </button>
+            </div>
+
+            <div class="modal-actions" style="margin-top:12px;">
+                <button class="cancel" onclick="cancelQrPayment()">Cancel</button>
+                <button class="cancel" style="background:rgba(227,162,59,.15);color:var(--accent);border-color:rgba(227,162,59,.4);"
+                        onclick="regenerateQr()">
+                    🔄 Refresh
+                </button>
             </div>
         </div>
     </div>
@@ -1046,6 +1099,16 @@
         let payNow = false;
         let pollTimer = null;
         let restaurantBrand = { name: '', logo: '', address: '', phone: '' };
+
+        /* QR payment state */
+        let qrPollTimer = null;
+        let qrCountdownTimer = null;
+        let activeQrId = null;
+        let activeQrOrderId = null;
+        let activeQrAmount = 0;
+
+        /* ✅ Raast availability flag */
+        let raastQrAvailable = false;
 
         function normalizeLogoUrl(value) {
             if (!value) return '';
@@ -1167,7 +1230,7 @@
             document.getElementById('loginError').classList.add('hidden');
         }
 
-        function openSettings() {
+        async function openSettings() {
             closeSideMenu();
             document.getElementById('settingsGst').value = localStorage.getItem('counter_default_gst') || 0;
             document.getElementById('settingsTax').value = localStorage.getItem('counter_default_tax') || 0;
@@ -1175,6 +1238,16 @@
             document.getElementById('settingsDine').value = localStorage.getItem('counter_default_dine') || 0;
             document.getElementById('settingsCardCharges').value = localStorage.getItem('counter_default_card_charges') || 0;
             document.getElementById('settingsBankCharges').value = localStorage.getItem('counter_default_bank_charges') || 0;
+
+            // Load Raast QR from backend
+            try {
+                const res = await apiFetch(`${API_BASE}/settings/raast-qr`);
+                document.getElementById('settingsRaastQr').value = res.data?.raast_qr_string || '';
+            } catch (err) {
+                console.warn('Raast QR load failed:', err.message);
+                document.getElementById('settingsRaastQr').value = '';
+            }
+
             document.getElementById('settingsModal').classList.add('show');
         }
 
@@ -1182,13 +1255,14 @@
             document.getElementById('settingsModal').classList.remove('show');
         }
 
-        function saveSettings() {
+        async function saveSettings() {
             const gst = Number(document.getElementById('settingsGst').value || 0);
             const tax = Number(document.getElementById('settingsTax').value || 0);
             const delivery = Number(document.getElementById('settingsDelivery').value || 0);
             const dine = Number(document.getElementById('settingsDine').value || 0);
             const cardCharges = Number(document.getElementById('settingsCardCharges').value || 0);
             const bankCharges = Number(document.getElementById('settingsBankCharges').value || 0);
+            const raastQr = document.getElementById('settingsRaastQr').value.trim();
 
             if (gst < 0 || tax < 0 || delivery < 0 || dine < 0 || cardCharges < 0 || bankCharges < 0) {
                 alert('Values cannot be negative');
@@ -1202,16 +1276,25 @@
             localStorage.setItem('counter_default_card_charges', cardCharges);
             localStorage.setItem('counter_default_bank_charges', bankCharges);
 
-            // ✅ Apply defaults to the active order form immediately
+            // Save Raast QR to backend
+            try {
+                await apiFetch(`${API_BASE}/settings/raast-qr`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ raast_qr_string: raastQr })
+                });
+            } catch (err) {
+                console.warn('Raast QR save failed:', err.message);
+                alert('⚠️ Raast QR save nahi hua: ' + err.message);
+            }
+
             resetChargesToDefaults();
+            await checkQrAvailability();
 
             alert('✅ Settings saved');
             closeSettings();
             renderCart();
         }
 
-        // ✅ Re-load saved defaults from Settings into the order form fields.
-        // Used on app start, after saving settings, and after placing an order.
         function resetChargesToDefaults() {
             const gst = localStorage.getItem('counter_default_gst') || 0;
             const tax = localStorage.getItem('counter_default_tax') || 0;
@@ -1231,6 +1314,31 @@
             if (dineEl) dineEl.value = dine;
             if (dtEl) dtEl.value = 'none';
             if (dvEl) dvEl.value = '0';
+        }
+
+        /* ✅ NEW: Check if QR payment is available */
+        async function checkQrAvailability() {
+            try {
+                const res = await apiFetch(`${API_BASE}/settings/raast-qr`);
+                const raastQr = (res.data?.raast_qr_string || '').trim();
+                raastQrAvailable = raastQr.length > 0;
+
+                const qrOption = document.getElementById('qrPaymentOption');
+                if (qrOption) {
+                    qrOption.style.display = raastQrAvailable ? 'block' : 'none';
+                }
+
+                // Agar QR unavailable ho jaye lekin selected ho to Cash pe switch karo
+                const methodSelect = document.getElementById('payNowMethod');
+                if (methodSelect && methodSelect.value === 'QR Payment' && !raastQrAvailable) {
+                    methodSelect.value = 'Cash';
+                }
+            } catch (err) {
+                console.warn('QR availability check failed:', err.message);
+                raastQrAvailable = false;
+                const qrOption = document.getElementById('qrPaymentOption');
+                if (qrOption) qrOption.style.display = 'none';
+            }
         }
 
         function toggleSideMenu() {
@@ -1590,7 +1698,6 @@
             const dineChargeField = document.getElementById('dineChargeField');
             if (dineChargeField) dineChargeField.style.display = (type === 'dine_in') ? 'flex' : 'none';
 
-            // ✅ Apply saved default for the relevant charge type on every switch
             if (type === 'delivery') {
                 const delEl = document.getElementById('deliveryCharge');
                 if (delEl) delEl.value = localStorage.getItem('counter_default_delivery') || 0;
@@ -1810,7 +1917,6 @@
             renderCart();
         }
 
-        // ✅ Get card/bank surcharge percent for the current pay-now method
         function getPaymentSurchargePercent(method) {
             if (method === 'Card') {
                 return Number(localStorage.getItem('counter_default_card_charges') || 0);
@@ -1821,12 +1927,16 @@
             return 0;
         }
 
-        // ✅ Update the small hint under the Pay Now payment method select
         function updatePayNowMethodHint() {
             const hint = document.getElementById('payNowMethodHint');
             if (!hint) return;
             if (!payNow) { hint.style.display = 'none'; return; }
             const method = document.getElementById('payNowMethod')?.value || 'Cash';
+            if (method === 'QR Payment') {
+                hint.textContent = `📱 QR code generate hoga payment ke liye`;
+                hint.style.display = 'block';
+                return;
+            }
             const percent = getPaymentSurchargePercent(method);
             if (percent > 0) {
                 hint.textContent = `⚠️ ${method} payment surcharge: ${percent}% will be added to the total.`;
@@ -1860,10 +1970,8 @@
             const appliedDine = (orderType === 'dine_in') ? dineCharge : 0;
             const extraCharges = appliedDelivery + appliedDine;
 
-            // ✅ Base bill before payment surcharge
             const billBeforeSurcharge = afterDiscount + gstAmount + taxAmount + extraCharges;
 
-            // ✅ Card/Bank surcharge (only when Pay Now is active)
             let cardChargeAmount = 0;
             let bankChargeAmount = 0;
             let cardPercent = 0;
@@ -1959,7 +2067,6 @@
                 if (dineCharge > 0) {
                     lines.push(`<div class="summary-line"><span>🍽️ Dine-in Charges</span><span>${money(dineCharge)}</span></div>`);
                 }
-                // ✅ Card/Bank surcharge lines
                 if (cardChargeAmount > 0) {
                     lines.push(`<div class="summary-line"><span>💳 Card Charges (${cardPercent}%)</span><span>${money(cardChargeAmount)}</span></div>`);
                 }
@@ -1973,134 +2080,274 @@
         let customerLookupTimer = null;
         let customerLookupRequest = 0;
 
-       async function lookupDeliveryCustomer() {
-    clearTimeout(customerLookupTimer);
-    const phoneInput = document.getElementById('deliveryPhone');
-    const nameInput = document.getElementById('customerName');
-    const addressInput = document.getElementById('deliveryAddress');
-    const statusEl = document.getElementById('customerLookupStatus');
-    if (!phoneInput || !nameInput || !addressInput) return;
+        async function lookupDeliveryCustomer() {
+            clearTimeout(customerLookupTimer);
+            const phoneInput = document.getElementById('deliveryPhone');
+            const nameInput = document.getElementById('customerName');
+            const addressInput = document.getElementById('deliveryAddress');
+            const statusEl = document.getElementById('customerLookupStatus');
+            if (!phoneInput || !nameInput || !addressInput) return;
 
-    const phone = phoneInput.value.trim();
-    nameInput.value = '';
-    addressInput.value = '';
+            const phone = phoneInput.value.trim();
+            nameInput.value = '';
+            addressInput.value = '';
 
-    if (!phone) {
-        if (statusEl) statusEl.textContent = '';
-        return;
-    }
-
-    customerLookupTimer = setTimeout(async () => {
-        const requestId = ++customerLookupRequest;
-
-        if (statusEl) {
-            statusEl.textContent = 'Searching customer...';
-            statusEl.style.color = '#8B949E';
-        }
-
-        // ✅ Composite key for restaurant-wise cache
-        const cacheKey = [RESTAURANT_ID_FROM_URL, phone];
-
-        // ✅ OFFLINE: Local cache se dekho
-        if (!navigator.onLine) {
-            try {
-                const cached = await db.customers_v2.get(cacheKey);
-                if (cached) {
-                    if (cached.customer_name) nameInput.value = cached.customer_name;
-                    if (cached.delivery_address) addressInput.value = cached.delivery_address;
-                    if (statusEl) {
-                        statusEl.textContent = '✓ Found in local cache (offline)';
-                        statusEl.style.color = '#2FA37D';
-                    }
-                } else {
-                    if (statusEl) {
-                        statusEl.textContent = 'New customer (offline mode)';
-                        statusEl.style.color = '#8B949E';
-                    }
-                }
-            } catch (err) {
-                console.error('Offline customer lookup:', err);
+            if (!phone) {
                 if (statusEl) statusEl.textContent = '';
+                return;
             }
-            return;
-        }
 
-        // ✅ ONLINE: Server se try karo
-        try {
-            const data = await apiFetch(
-                `${API_BASE}/orders/customer-lookup?phone=${encodeURIComponent(phone)}`);
+            customerLookupTimer = setTimeout(async () => {
+                const requestId = ++customerLookupRequest;
 
-            if (requestId !== customerLookupRequest) return;
-
-            const customer = data.data;
-
-            if (customer) {
-                if (customer.customer_name) nameInput.value = customer.customer_name;
-                if (customer.delivery_address) addressInput.value = customer.delivery_address;
                 if (statusEl) {
-                    statusEl.textContent = '✓ Previous customer details found';
-                    statusEl.style.color = '#2FA37D';
-                }
-
-                // ✅ Cache mein save karo (restaurant-wise)
-                try {
-                    await db.customers_v2.put({
-                        restaurant_id: RESTAURANT_ID_FROM_URL,
-                        phone: phone,
-                        customer_name: customer.customer_name || '',
-                        delivery_address: customer.delivery_address || '',
-                        cached_at: new Date().toISOString()
-                    });
-                } catch (e) {
-                    console.warn('Customer cache save failed:', e);
-                }
-            } else {
-                if (statusEl) {
-                    statusEl.textContent = 'New customer';
+                    statusEl.textContent = 'Searching customer...';
                     statusEl.style.color = '#8B949E';
                 }
-            }
-        } catch (err) {
-            console.error('Customer lookup error:', err);
 
-            // ✅ Network fail: Local cache se try karo
-            try {
-                const cached = await db.customers_v2.get(cacheKey);
-                if (cached) {
-                    if (cached.customer_name) nameInput.value = cached.customer_name;
-                    if (cached.delivery_address) addressInput.value = cached.delivery_address;
-                    if (statusEl) {
-                        statusEl.textContent = '✓ Found in local cache';
-                        statusEl.style.color = '#2FA37D';
+                const cacheKey = [RESTAURANT_ID_FROM_URL, phone];
+
+                if (!navigator.onLine) {
+                    try {
+                        const cached = await db.customers_v2.get(cacheKey);
+                        if (cached) {
+                            if (cached.customer_name) nameInput.value = cached.customer_name;
+                            if (cached.delivery_address) addressInput.value = cached.delivery_address;
+                            if (statusEl) {
+                                statusEl.textContent = '✓ Found in local cache (offline)';
+                                statusEl.style.color = '#2FA37D';
+                            }
+                        } else {
+                            if (statusEl) {
+                                statusEl.textContent = 'New customer (offline mode)';
+                                statusEl.style.color = '#8B949E';
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Offline customer lookup:', err);
+                        if (statusEl) statusEl.textContent = '';
                     }
-                } else {
-                    if (statusEl) {
-                        statusEl.textContent = 'Network issue';
-                        statusEl.style.color = '#E15A4C';
+                    return;
+                }
+
+                try {
+                    const data = await apiFetch(
+                        `${API_BASE}/orders/customer-lookup?phone=${encodeURIComponent(phone)}`);
+
+                    if (requestId !== customerLookupRequest) return;
+
+                    const customer = data.data;
+
+                    if (customer) {
+                        if (customer.customer_name) nameInput.value = customer.customer_name;
+                        if (customer.delivery_address) addressInput.value = customer.delivery_address;
+                        if (statusEl) {
+                            statusEl.textContent = '✓ Previous customer details found';
+                            statusEl.style.color = '#2FA37D';
+                        }
+                        try {
+                            await db.customers_v2.put({
+                                restaurant_id: RESTAURANT_ID_FROM_URL,
+                                phone: phone,
+                                customer_name: customer.customer_name || '',
+                                delivery_address: customer.delivery_address || '',
+                                cached_at: new Date().toISOString()
+                            });
+                        } catch (e) {
+                            console.warn('Customer cache save failed:', e);
+                        }
+                    } else {
+                        if (statusEl) {
+                            statusEl.textContent = 'New customer';
+                            statusEl.style.color = '#8B949E';
+                        }
+                    }
+                } catch (err) {
+                    console.error('Customer lookup error:', err);
+                    try {
+                        const cached = await db.customers_v2.get(cacheKey);
+                        if (cached) {
+                            if (cached.customer_name) nameInput.value = cached.customer_name;
+                            if (cached.delivery_address) addressInput.value = cached.delivery_address;
+                            if (statusEl) {
+                                statusEl.textContent = '✓ Found in local cache';
+                                statusEl.style.color = '#2FA37D';
+                            }
+                        } else {
+                            if (statusEl) {
+                                statusEl.textContent = 'Network issue';
+                                statusEl.style.color = '#E15A4C';
+                            }
+                        }
+                    } catch (e) {
+                        if (statusEl) statusEl.textContent = '';
                     }
                 }
+            }, 450);
+        }
+
+        async function cacheCustomerForOffline(phone, name, address) {
+            if (!phone) return;
+            if (!name && !address) return;
+            if (!RESTAURANT_ID_FROM_URL) return;
+            try {
+                await db.customers_v2.put({
+                    restaurant_id: RESTAURANT_ID_FROM_URL,
+                    phone: phone,
+                    customer_name: name || '',
+                    delivery_address: address || '',
+                    cached_at: new Date().toISOString()
+                });
             } catch (e) {
-                if (statusEl) statusEl.textContent = '';
+                console.warn('Customer cache save failed:', e);
             }
         }
-    }, 450);
-}
-        async function cacheCustomerForOffline(phone, name, address) {
-    if (!phone) return;
-    if (!name && !address) return;
-    if (!RESTAURANT_ID_FROM_URL) return;
-    try {
-        await db.customers_v2.put({
-            restaurant_id: RESTAURANT_ID_FROM_URL,
-            phone: phone,
-            customer_name: name || '',
-            delivery_address: address || '',
-            cached_at: new Date().toISOString()
-        });
-    } catch (e) {
-        console.warn('Customer cache save failed:', e);
-    }
-}
+
+        /* QR PAYMENT FLOW */
+        async function startQrPayment(orderId, amount) {
+            try {
+                const res = await apiFetch(`${API_BASE}/payments/qr/create`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        order_id: orderId,
+                        amount: amount,
+                        description: `Order #${orderId}`,
+                    }),
+                });
+
+                const data = res.data;
+                activeQrId = data.qr_id;
+                activeQrOrderId = orderId;
+                activeQrAmount = amount;
+
+                document.getElementById('qrAmountText').textContent = money(amount);
+                document.getElementById('qrOrderText').textContent = `Order #${orderId}`;
+                document.getElementById('qrImage').src = data.qr_image_url;
+                document.getElementById('qrStatusText').textContent = '⏳ Waiting for payment...';
+                document.getElementById('qrStatusText').style.color = 'var(--muted)';
+                document.getElementById('qrManualBox').style.display = 'block';
+                document.getElementById('qrPaymentModal').classList.add('show');
+
+                startQrCountdown(data.expires_at);
+                startQrPolling();
+            } catch (err) {
+                console.error('QR start error:', err);
+                alert('QR generate nahi ho saka: ' + err.message);
+            }
+        }
+
+        function startQrPolling() {
+            stopQrPolling();
+            qrPollTimer = setInterval(async () => {
+                if (!activeQrId) return;
+                try {
+                    const res = await apiFetch(`${API_BASE}/payments/qr/status/${activeQrId}`);
+                    const st = res.data.status;
+                    if (st === 'paid') onQrPaid(res.data);
+                    else if (st === 'expired') onQrExpired();
+                    else if (st === 'cancelled') onQrCancelled();
+                } catch (err) { console.warn('QR poll error:', err.message); }
+            }, 3000);
+        }
+
+        function stopQrPolling() {
+            if (qrPollTimer) { clearInterval(qrPollTimer); qrPollTimer = null; }
+            if (qrCountdownTimer) { clearInterval(qrCountdownTimer); qrCountdownTimer = null; }
+        }
+
+        function startQrCountdown(expiresAt) {
+            const el = document.getElementById('qrTimerText');
+            if (qrCountdownTimer) clearInterval(qrCountdownTimer);
+            qrCountdownTimer = setInterval(() => {
+                const left = Math.max(0, Math.floor((new Date(expiresAt) - new Date()) / 1000));
+                const m = Math.floor(left / 60);
+                const s = String(left % 60).padStart(2, '0');
+                el.textContent = `⏱ Expires in ${m}:${s}`;
+                if (left <= 0) clearInterval(qrCountdownTimer);
+            }, 1000);
+        }
+
+        function onQrPaid(data) {
+            stopQrPolling();
+            document.getElementById('qrStatusText').textContent = '✅ Payment received!';
+            document.getElementById('qrStatusText').style.color = 'var(--success)';
+            const orderId = activeQrOrderId;
+            const amount = data.paid_amount || activeQrAmount;
+            const method = data.payment_method || 'QR';
+            setTimeout(async () => {
+                closeQrModal();
+                await markOrderPaidViaQr(orderId, amount, method);
+            }, 1200);
+        }
+
+        function onQrExpired() {
+            stopQrPolling();
+            document.getElementById('qrStatusText').textContent = '⏰ QR expired. Refresh karein.';
+            document.getElementById('qrStatusText').style.color = 'var(--danger)';
+            document.getElementById('qrManualBox').style.display = 'none';
+        }
+
+        function onQrCancelled() {
+            stopQrPolling();
+            closeQrModal();
+        }
+
+        async function manualConfirmQr() {
+            if (!activeQrId) return;
+            if (!confirm('Confirm karein ke customer ka payment aa gaya hai?')) return;
+            try {
+                await apiFetch(`${API_BASE}/payments/qr/manual-confirm/${activeQrId}`, { method: 'POST' });
+                onQrPaid({ paid_amount: activeQrAmount, payment_method: 'QR' });
+            } catch (err) {
+                alert('Confirm failed: ' + err.message);
+            }
+        }
+
+        function cancelQrPayment() {
+            if (activeQrId) {
+                apiFetch(`${API_BASE}/payments/qr/cancel/${activeQrId}`, { method: 'POST' }).catch(() => {});
+            }
+            closeQrModal();
+        }
+
+        function closeQrModal() {
+            stopQrPolling();
+            document.getElementById('qrPaymentModal').classList.remove('show');
+            activeQrId = null;
+            activeQrOrderId = null;
+            activeQrAmount = 0;
+        }
+
+        function regenerateQr() {
+            const orderId = activeQrOrderId;
+            const amount = activeQrAmount;
+            closeQrModal();
+            setTimeout(() => startQrPayment(orderId, amount), 300);
+        }
+
+        function onPayNowMethodChange() {
+            updatePayNowMethodHint();
+            renderCart();
+        }
+
+        async function markOrderPaidViaQr(orderId, amount, method) {
+            try {
+                await apiFetch(`${API_BASE}/orders/${orderId}/pay`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        payment_method: method === 'manual_confirm' ? 'QR Payment' : method,
+                        paid_amount: amount,
+                        card_charge: 0,
+                        bank_charge: 0,
+                    }),
+                });
+                status(`✅ QR Payment received for Order #${orderId}`);
+                await loadOrders();
+            } catch (err) {
+                console.error('markOrderPaidViaQr:', err);
+                alert('Order mark paid failed: ' + err.message);
+            }
+        }
 
         let placingOrder = false;
 
@@ -2180,13 +2427,48 @@
                 subtotal: Number(subtotalNow || 0),
                 delivery_charge: (orderType === 'delivery') ? Number(document.getElementById('deliveryCharge').value || 0) : 0,
                 dine_charge: (orderType === 'dine_in') ? Number(document.getElementById('dineCharge').value || 0) : 0,
-                // ✅ Payment surcharges
                 card_charge: Number(cardChargeAmount || 0),
                 bank_charge: Number(bankChargeAmount || 0),
                 total_amount: Number(finalTotalNow || 0),
                 created_at: new Date().toISOString(),
                 pricing
             };
+
+            /* QR PAYMENT BRANCH */
+            if (payNow && payNowMethodValue === 'QR Payment') {
+                placingOrder = true;
+                const placeBtnQ = document.getElementById('placeBtn');
+                if (placeBtnQ) { placeBtnQ.disabled = true; placeBtnQ.textContent = 'Creating...'; }
+
+                try {
+                    status('Creating order...');
+                    const data = await apiFetch(`${API_BASE}/orders`, {
+                        method: 'POST',
+                        body: JSON.stringify({ ...payload, payment_status: 'unpaid', paid_amount: 0, payment_method: 'QR Payment' }),
+                    });
+                    const newOrderId = data.order?.id;
+                    if (!newOrderId) throw new Error('Order ID missing');
+
+                    cart = [];
+                    dealCart = [];
+                    setPaymentTiming(false);
+                    renderCart();
+                    resetChargesToDefaults();
+                    if (orderType === 'dine_in') {
+                        document.getElementById('tableNo').value = '';
+                    }
+                    status(`Order #${newOrderId} created. Waiting for QR payment...`);
+                    await loadOrders();
+                    await startQrPayment(newOrderId, finalTotalNow);
+                } catch (err) {
+                    console.error('QR order create error:', err);
+                    status(err.message);
+                } finally {
+                    placingOrder = false;
+                    if (placeBtnQ) { placeBtnQ.disabled = false; placeBtnQ.textContent = 'Place Order'; }
+                }
+                return;
+            }
 
             placingOrder = true;
             const placeBtn = document.getElementById('placeBtn');
@@ -2201,7 +2483,6 @@
                 if (!navigator.onLine) {
                     await syncService.saveOrderOffline(payload);
 
-                    // ✅ Customer cache BEFORE clearing fields
                     if (orderType === 'delivery' && phone) {
                         await cacheCustomerForOffline(
                             phone,
@@ -2221,7 +2502,6 @@
                     document.getElementById('deliveryAddress').value = '';
                     const lookupStatus = document.getElementById('customerLookupStatus');
                     if (lookupStatus) { lookupStatus.textContent = ''; }
-                    // ✅ FIX: Reload saved defaults instead of hardcoding 0
                     resetChargesToDefaults();
                     if (orderType === 'dine_in') {
                         document.getElementById('tableNo').value = '';
@@ -2240,7 +2520,6 @@
                     body: JSON.stringify(payload)
                 });
 
-                // ✅ Online success: cache customer too (BEFORE clearing)
                 if (orderType === 'delivery' && phone) {
                     await cacheCustomerForOffline(
                         phone,
@@ -2262,7 +2541,6 @@
                 if (lookupStatus) {
                     lookupStatus.textContent = '';
                 }
-                // ✅ FIX: Reload saved defaults instead of hardcoding 0
                 resetChargesToDefaults();
                 if (orderType === 'dine_in') {
                     document.getElementById('tableNo').value = '';
@@ -2282,7 +2560,6 @@
                     try {
                         await syncService.saveOrderOffline(payload);
 
-                        // ✅ Network failure: cache customer too (BEFORE clearing)
                         if (orderType === 'delivery' && phone) {
                             await cacheCustomerForOffline(
                                 phone,
@@ -2302,7 +2579,6 @@
                         document.getElementById('deliveryAddress').value = '';
                         const lookupStatus = document.getElementById('customerLookupStatus');
                         if (lookupStatus) { lookupStatus.textContent = ''; }
-                        // ✅ FIX: Reload saved defaults instead of hardcoding 0
                         resetChargesToDefaults();
                         if (orderType === 'dine_in') {
                             document.getElementById('tableNo').value = '';
@@ -2769,167 +3045,161 @@
             document.getElementById('slipModal').classList.remove('show');
         }
 
-   function confirmPrintSlip() {
-    const o = orders.find(x => Number(x.id) === Number(slipOrderId));
-    if (!o) return closeSlip();
-    const eta = document.getElementById('slipEta').value.trim();
-    const items = Array.isArray(o.items) ? o.items : [];
-    const deals = Array.isArray(o.deals) ? o.deals : [];
+        function confirmPrintSlip() {
+            const o = orders.find(x => Number(x.id) === Number(slipOrderId));
+            if (!o) return closeSlip();
+            const eta = document.getElementById('slipEta').value.trim();
+            const items = Array.isArray(o.items) ? o.items : [];
+            const deals = Array.isArray(o.deals) ? o.deals : [];
 
-    let subtotal = 0;
+            let subtotal = 0;
 
-    const itemRows = items.map(i => {
-        const qty = Number(i.quantity || 0);
-        const price = Number(i.price ?? i.unit_price ?? 0);
-        const amount = price * qty;
-        subtotal += amount;
-        return `<tr><td class="item-name">${esc(i.name || 'Item')}${i.variant_label ? ' (' + esc(i.variant_label) + ')' : ''}</td><td>${qty}</td><td>${money(price)}</td><td>${money(amount)}</td></tr>`;
-    }).join('');
+            const itemRows = items.map(i => {
+                const qty = Number(i.quantity || 0);
+                const price = Number(i.price ?? i.unit_price ?? 0);
+                const amount = price * qty;
+                subtotal += amount;
+                return `<tr><td class="item-name">${esc(i.name || 'Item')}${i.variant_label ? ' (' + esc(i.variant_label) + ')' : ''}</td><td>${qty}</td><td>${money(price)}</td><td>${money(amount)}</td></tr>`;
+            }).join('');
 
-    const dealRows = deals.map(d => {
-        const qty = Number(d.quantity || 0);
-        const price = Number(d.price || 0);
-        const amount = price * qty;
-        subtotal += amount;
-        const subItems = (d.items || []).map(di => `${di.name}${di.variant_label ? ' (' + di.variant_label + ')' : ''}`).join(', ');
-        return `<tr><td class="item-name">🎁 ${esc(d.deal_name || 'Deal')}<br><span style="font-weight:400;font-size:10px;color:#555">${esc(subItems)}</span></td><td>${qty}</td><td>${money(price)}</td><td>${money(amount)}</td></tr>`;
-    }).join('');
+            const dealRows = deals.map(d => {
+                const qty = Number(d.quantity || 0);
+                const price = Number(d.price || 0);
+                const amount = price * qty;
+                subtotal += amount;
+                const subItems = (d.items || []).map(di => `${di.name}${di.variant_label ? ' (' + di.variant_label + ')' : ''}`).join(', ');
+                return `<tr><td class="item-name">🎁 ${esc(d.deal_name || 'Deal')}<br><span style="font-weight:400;font-size:10px;color:#555">${esc(subItems)}</span></td><td>${qty}</td><td>${money(price)}</td><td>${money(amount)}</td></tr>`;
+            }).join('');
 
-    const rows = dealRows + itemRows;
+            const rows = dealRows + itemRows;
 
-    /* ---------- Extract from order ---------- */
-    const discount        = Number(o.discount_amount || 0);
-    const gstAmount       = Number(o.gst_amount || 0);
-    const taxAmount       = Number(o.tax_amount || 0);
-    const tax             = gstAmount + taxAmount;
-    const serviceCharge   = Number(o.service_charge || 0);
-    const dineCharge      = Number(o.dine_charge || 0);
-    const deliveryCharge  = Number(o.delivery_charge || 0);
+            const discount        = Number(o.discount_amount || 0);
+            const gstAmount       = Number(o.gst_amount || 0);
+            const taxAmount       = Number(o.tax_amount || 0);
+            const tax             = gstAmount + taxAmount;
+            const serviceCharge   = Number(o.service_charge || 0);
+            const dineCharge      = Number(o.dine_charge || 0);
+            const deliveryCharge  = Number(o.delivery_charge || 0);
 
-    const paymentMethod   = String(o.payment_method || '').toLowerCase();
-    const paidAmount      = Number(o.paid_amount || 0);
+            const paymentMethod   = String(o.payment_method || '').toLowerCase();
+            const paidAmount      = Number(o.paid_amount || 0);
 
-    /* ---------- Card/Bank: prefer order, else derive ---------- */
-    let cardCharge = Number(o.card_charge || 0);
-    let bankCharge = Number(o.bank_charge || 0);
+            let cardCharge = Number(o.card_charge || 0);
+            let bankCharge = Number(o.bank_charge || 0);
 
-    const baseTotal = (o.total_amount !== undefined && o.total_amount !== null)
-        ? Number(o.total_amount)
-        : (subtotal - discount + tax + serviceCharge + dineCharge + deliveryCharge);
+            const baseTotal = (o.total_amount !== undefined && o.total_amount !== null)
+                ? Number(o.total_amount)
+                : (subtotal - discount + tax + serviceCharge + dineCharge + deliveryCharge);
 
-    if (cardCharge === 0 && bankCharge === 0 && paidAmount > baseTotal + 0.01) {
-        const diff = paidAmount - baseTotal;
-        if (paymentMethod === 'card')      cardCharge = diff;
-        else if (paymentMethod === 'bank') bankCharge = diff;
-    }
+            if (cardCharge === 0 && bankCharge === 0 && paidAmount > baseTotal + 0.01) {
+                const diff = paidAmount - baseTotal;
+                if (paymentMethod === 'card')      cardCharge = diff;
+                else if (paymentMethod === 'bank') bankCharge = diff;
+            }
 
-    /* ---------- Grand total ---------- */
-    const baseIncludesSurcharge = Math.abs(
-        baseTotal - (subtotal - discount + tax + serviceCharge + dineCharge + deliveryCharge + cardCharge + bankCharge)
-    ) < 0.01;
+            const baseIncludesSurcharge = Math.abs(
+                baseTotal - (subtotal - discount + tax + serviceCharge + dineCharge + deliveryCharge + cardCharge + bankCharge)
+            ) < 0.01;
 
-    const grandTotal = baseIncludesSurcharge
-        ? baseTotal
-        : baseTotal + cardCharge + bankCharge;
+            const grandTotal = baseIncludesSurcharge
+                ? baseTotal
+                : baseTotal + cardCharge + bankCharge;
 
-    /* ---------- Summary rows ---------- */
-    const discountRow   = discount > 0       ? `<div class="summary-row discount"><span>Discount</span><span>- ${money(discount)}</span></div>` : '';
-    const gstRow        = gstAmount > 0      ? `<div class="summary-row tax"><span>GST</span><span>${money(gstAmount)}</span></div>` : '';
-    const taxRow        = taxAmount > 0      ? `<div class="summary-row tax"><span>Other Tax</span><span>${money(taxAmount)}</span></div>` : '';
-    const serviceRow    = serviceCharge > 0  ? `<div class="summary-row service"><span>Service Charge</span><span>${money(serviceCharge)}</span></div>` : '';
-    const dineRow       = dineCharge > 0     ? `<div class="summary-row service"><span>🍽️ Dine-in Charges</span><span>${money(dineCharge)}</span></div>` : '';
-    const deliveryRow   = deliveryCharge > 0 ? `<div class="summary-row service"><span>🛵 Delivery Charges</span><span>${money(deliveryCharge)}</span></div>` : '';
-    const cardRow       = cardCharge > 0     ? `<div class="summary-row service"><span>💳 Card Charges</span><span>${money(cardCharge)}</span></div>` : '';
-    const bankRow       = bankCharge > 0     ? `<div class="summary-row service"><span>🏦 Bank Charges</span><span>${money(bankCharge)}</span></div>` : '';
+            const discountRow   = discount > 0       ? `<div class="summary-row discount"><span>Discount</span><span>- ${money(discount)}</span></div>` : '';
+            const gstRow        = gstAmount > 0      ? `<div class="summary-row tax"><span>GST</span><span>${money(gstAmount)}</span></div>` : '';
+            const taxRow        = taxAmount > 0      ? `<div class="summary-row tax"><span>Other Tax</span><span>${money(taxAmount)}</span></div>` : '';
+            const serviceRow    = serviceCharge > 0  ? `<div class="summary-row service"><span>Service Charge</span><span>${money(serviceCharge)}</span></div>` : '';
+            const dineRow       = dineCharge > 0     ? `<div class="summary-row service"><span>🍽️ Dine-in Charges</span><span>${money(dineCharge)}</span></div>` : '';
+            const deliveryRow   = deliveryCharge > 0 ? `<div class="summary-row service"><span>🛵 Delivery Charges</span><span>${money(deliveryCharge)}</span></div>` : '';
+            const cardRow       = cardCharge > 0     ? `<div class="summary-row service"><span>💳 Card Charges</span><span>${money(cardCharge)}</span></div>` : '';
+            const bankRow       = bankCharge > 0     ? `<div class="summary-row service"><span>🏦 Bank Charges</span><span>${money(bankCharge)}</span></div>` : '';
 
-    const createdAt = o.created_at || o.createdAt;
-    const dateStr = createdAt ? new Date(createdAt).toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
-    const timeStr = createdAt ? new Date(createdAt).toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' }) : '-';
-    const restaurantName = restaurantBrand.name || currentUser?.restaurant_name || 'Your Restaurant';
-    const logoHtml = restaurantBrand.logo ? `<img class="brand-logo" src="${esc(restaurantBrand.logo)}" alt="${esc(restaurantName)}" onerror="this.style.display='none';">` : '';
+            const createdAt = o.created_at || o.createdAt;
+            const dateStr = createdAt ? new Date(createdAt).toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+            const timeStr = createdAt ? new Date(createdAt).toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' }) : '-';
+            const restaurantName = restaurantBrand.name || currentUser?.restaurant_name || 'Your Restaurant';
+            const logoHtml = restaurantBrand.logo ? `<img class="brand-logo" src="${esc(restaurantBrand.logo)}" alt="${esc(restaurantName)}" onerror="this.style.display='none';">` : '';
 
-    const paymentRows = `<div class="payment-section"><div class="payment-row"><span>Payment</span><span>${o.payment_status === 'paid' ? esc(o.payment_method || 'Paid') : 'UNPAID (' + esc(o.payment_timing || 'PAY_LATER') + ')'}</span></div>${o.payment_status === 'paid' && o.paid_amount ? `<div class="payment-row"><span>Paid</span><span>${money(o.paid_amount)}</span></div>` : ''}</div>`;
+            const paymentRows = `<div class="payment-section"><div class="payment-row"><span>Payment</span><span>${o.payment_status === 'paid' ? esc(o.payment_method || 'Paid') : 'UNPAID (' + esc(o.payment_timing || 'PAY_LATER') + ')'}</span></div>${o.payment_status === 'paid' && o.paid_amount ? `<div class="payment-row"><span>Paid</span><span>${money(o.paid_amount)}</span></div>` : ''}</div>`;
 
-    const deliveryInfo = o.order_type === 'delivery'
-        ? `<div class="order-info" style="grid-template-columns:1fr">${o.customer_name ? `<div><strong>Customer</strong> ${esc(o.customer_name)}</div>` : ''}${o.delivery_phone ? `<div><strong>Phone</strong> ${esc(o.delivery_phone)}</div>` : ''}${o.delivery_address ? `<div><strong>Address</strong> ${esc(o.delivery_address)}</div>` : ''}${eta ? `<div><strong>ETA</strong> ${esc(eta)}</div>` : ''}</div><hr class="divider">`
-        : '';
+            const deliveryInfo = o.order_type === 'delivery'
+                ? `<div class="order-info" style="grid-template-columns:1fr">${o.customer_name ? `<div><strong>Customer</strong> ${esc(o.customer_name)}</div>` : ''}${o.delivery_phone ? `<div><strong>Phone</strong> ${esc(o.delivery_phone)}</div>` : ''}${o.delivery_address ? `<div><strong>Address</strong> ${esc(o.delivery_address)}</div>` : ''}${eta ? `<div><strong>ETA</strong> ${esc(eta)}</div>` : ''}</div><hr class="divider">`
+                : '';
 
-    /* ---------- ✅ FIX: proper Table/Type label with SPACE ---------- */
-    let typeLabel, locationValue;
-    if (o.order_type === 'delivery') {
-        typeLabel = 'Type';
-        locationValue = 'Delivery';
-    } else if (o.order_type === 'walk_in') {
-        typeLabel = 'Type';
-        locationValue = 'Walk-in';
-    } else {
-        typeLabel = 'Table';
-        locationValue = esc(o.table_no ?? '-');
-    }
+            let typeLabel, locationValue;
+            if (o.order_type === 'delivery') {
+                typeLabel = 'Type';
+                locationValue = 'Delivery';
+            } else if (o.order_type === 'walk_in') {
+                typeLabel = 'Type';
+                locationValue = 'Walk-in';
+            } else {
+                typeLabel = 'Table';
+                locationValue = esc(o.table_no ?? '-');
+            }
 
-    const html = `
-        <html><head><style>
-            *{box-sizing:border-box}
-            html,body{margin:0;padding:0;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif}
-            .receipt{width:300px;margin:0 auto;padding:14px}
-            .brand-header{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:8px}
-            .brand-logo{width:60px;height:60px;object-fit:contain;margin:0 auto 6px auto}
-            .brand-name{margin:0;font-size:19px;font-weight:700}
-            .restaurant-header{text-align:center}
-            .restaurant-info{margin-top:4px;font-size:11px;color:#333}
-            .receipt-title{margin-top:8px;font-size:12px;font-weight:bold;letter-spacing:1px}
-            .divider{border:0;border-top:1px dashed #222;margin:9px 0}
-            .order-info{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:11px}
-            .order-info div:nth-child(even){text-align:right}
-            .items{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:4px}
-            .items th{padding:4px 0;border-bottom:1px dashed #222;font-size:11px}
-            .items td{padding:5px 0;font-size:11px}
-            .items th:nth-child(1),.items td:nth-child(1){width:44%;text-align:left}
-            .items th:nth-child(2),.items td:nth-child(2){width:14%;text-align:center}
-            .items th:nth-child(3),.items td:nth-child(3){width:21%;text-align:right}
-            .items th:nth-child(4),.items td:nth-child(4){width:21%;text-align:right}
-            .item-name{font-weight:600}
-            .summary-row{display:flex;justify-content:space-between;font-size:12px;margin:5px 0}
-            .discount{color:#16805b}
-            .grand-total{border-top:1px dashed #222;border-bottom:1px dashed #222;margin-top:8px;padding:8px 0;display:flex;justify-content:space-between;font-size:15px;font-weight:700}
-            .payment-section{margin-top:8px}
-            .payment-row{display:flex;justify-content:space-between;font-size:11px;margin:4px 0}
-            .payment-row span:last-child{font-weight:600}
-            .thank-you{text-align:center;margin-top:12px;font-size:12px;font-weight:bold}
-            .footer-text{text-align:center;margin-top:4px;font-size:10px;color:#555}
-            @page{size:80mm auto;margin:0}
-        </style></head>
-        <body onload="window.print();">
-            <div class="receipt">
-                <div class="brand-header">${logoHtml}<div class="brand-name">${esc(restaurantName)}</div></div>
-                <div class="restaurant-header">${restaurantBrand.address ? `<div class="restaurant-info">${esc(restaurantBrand.address)}</div>` : ''}${restaurantBrand.phone ? `<div class="restaurant-info">Tel: ${esc(restaurantBrand.phone)}</div>` : ''}<div class="receipt-title">${o.order_type === 'delivery' ? 'DELIVERY SLIP' : 'SALES RECEIPT'}</div></div>
-                <hr class="divider">
-                <div class="order-info"><div><strong>Order #</strong> ${esc(o.id)}</div>
-                <div><strong>${typeLabel} </strong>${locationValue}</div>
-                <div><strong>Date</strong> ${dateStr}</div><div><strong>Time</strong> ${timeStr}</div></div>
-                <hr class="divider">${deliveryInfo}
-                <table class="items"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead><tbody>${rows || '<tr><td colspan="4" style="text-align:center">No items</td></tr>'}</tbody></table>
-                <hr class="divider">
-                <div class="summary">
-                    <div class="summary-row"><span>Subtotal</span><span>${money(subtotal)}</span></div>
-                    ${discountRow}${gstRow}${taxRow}${serviceRow}${dineRow}${deliveryRow}${cardRow}${bankRow}
-                    <div class="grand-total"><span>Grand Total</span><span>${money(grandTotal)}</span></div>
-                </div>
-                ${paymentRows}
-                <div class="thank-you">Thank You!</div>
-                <div class="footer-text">We appreciate your visit.<br>Please visit us again.</div>
-            </div>
-        </body></html>
-    `;
-    const frame = document.getElementById('printFrame');
-    const doc = frame.contentWindow.document;
-    doc.open();
-    doc.write(html);
-    doc.close();
-    closeSlip();
-}
+            const html = `
+                <html><head><style>
+                    *{box-sizing:border-box}
+                    html,body{margin:0;padding:0;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif}
+                    .receipt{width:300px;margin:0 auto;padding:14px}
+                    .brand-header{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:8px}
+                    .brand-logo{width:60px;height:60px;object-fit:contain;margin:0 auto 6px auto}
+                    .brand-name{margin:0;font-size:19px;font-weight:700}
+                    .restaurant-header{text-align:center}
+                    .restaurant-info{margin-top:4px;font-size:11px;color:#333}
+                    .receipt-title{margin-top:8px;font-size:12px;font-weight:bold;letter-spacing:1px}
+                    .divider{border:0;border-top:1px dashed #222;margin:9px 0}
+                    .order-info{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:11px}
+                    .order-info div:nth-child(even){text-align:right}
+                    .items{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:4px}
+                    .items th{padding:4px 0;border-bottom:1px dashed #222;font-size:11px}
+                    .items td{padding:5px 0;font-size:11px}
+                    .items th:nth-child(1),.items td:nth-child(1){width:44%;text-align:left}
+                    .items th:nth-child(2),.items td:nth-child(2){width:14%;text-align:center}
+                    .items th:nth-child(3),.items td:nth-child(3){width:21%;text-align:right}
+                    .items th:nth-child(4),.items td:nth-child(4){width:21%;text-align:right}
+                    .item-name{font-weight:600}
+                    .summary-row{display:flex;justify-content:space-between;font-size:12px;margin:5px 0}
+                    .discount{color:#16805b}
+                    .grand-total{border-top:1px dashed #222;border-bottom:1px dashed #222;margin-top:8px;padding:8px 0;display:flex;justify-content:space-between;font-size:15px;font-weight:700}
+                    .payment-section{margin-top:8px}
+                    .payment-row{display:flex;justify-content:space-between;font-size:11px;margin:4px 0}
+                    .payment-row span:last-child{font-weight:600}
+                    .thank-you{text-align:center;margin-top:12px;font-size:12px;font-weight:bold}
+                    .footer-text{text-align:center;margin-top:4px;font-size:10px;color:#555}
+                    @page{size:80mm auto;margin:0}
+                </style></head>
+                <body onload="window.print();">
+                    <div class="receipt">
+                        <div class="brand-header">${logoHtml}<div class="brand-name">${esc(restaurantName)}</div></div>
+                        <div class="restaurant-header">${restaurantBrand.address ? `<div class="restaurant-info">${esc(restaurantBrand.address)}</div>` : ''}${restaurantBrand.phone ? `<div class="restaurant-info">Tel: ${esc(restaurantBrand.phone)}</div>` : ''}<div class="receipt-title">${o.order_type === 'delivery' ? 'DELIVERY SLIP' : 'SALES RECEIPT'}</div></div>
+                        <hr class="divider">
+                        <div class="order-info"><div><strong>Order #</strong> ${esc(o.id)}</div>
+                        <div><strong>${typeLabel} </strong>${locationValue}</div>
+                        <div><strong>Date</strong> ${dateStr}</div><div><strong>Time</strong> ${timeStr}</div></div>
+                        <hr class="divider">${deliveryInfo}
+                        <table class="items"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead><tbody>${rows || '<tr><td colspan="4" style="text-align:center">No items</td></tr>'}</tbody></table>
+                        <hr class="divider">
+                        <div class="summary">
+                            <div class="summary-row"><span>Subtotal</span><span>${money(subtotal)}</span></div>
+                            ${discountRow}${gstRow}${taxRow}${serviceRow}${dineRow}${deliveryRow}${cardRow}${bankRow}
+                            <div class="grand-total"><span>Grand Total</span><span>${money(grandTotal)}</span></div>
+                        </div>
+                        ${paymentRows}
+                        <div class="thank-you">Thank You!</div>
+                        <div class="footer-text">We appreciate your visit.<br>Please visit us again.</div>
+                    </div>
+                </body></html>
+            `;
+            const frame = document.getElementById('printFrame');
+            const doc = frame.contentWindow.document;
+            doc.open();
+            doc.write(html);
+            doc.close();
+            closeSlip();
+        }
 
-        // ✅ Update paid amount + hint when payment method changes in the Receive Payment modal
         function updatePaymentSurcharge() {
             const hint = document.getElementById('paymentSurchargeHint');
             if (!paymentOrderId) {
@@ -2961,7 +3231,6 @@
             const order = orders.find(x => Number(x.id) === Number(id));
             if (!order) return;
             paymentOrderId = Number(id);
-            // Reset to Cash by default and compute amount (no surcharge for Cash)
             document.getElementById('paymentMethod').value = 'Cash';
             document.getElementById('paidAmount').value = Number(order.total_amount || 0).toFixed(2);
             document.getElementById('paymentInfo').textContent = `Order #${order.id} — Total ${money(order.total_amount)}`;
@@ -2984,7 +3253,6 @@
             if (!Number.isFinite(amount) || amount < 0) {
                 return alert('Invalid paid amount.');
             }
-            // Compute surcharge fields for the API
             const order = orders.find(x => Number(x.id) === Number(paymentOrderId));
             const baseAmount = Number(order?.total_amount || 0);
             const percent = getPaymentSurchargePercent(method);
@@ -3042,6 +3310,12 @@
             socket.on('order_created', () => loadOrders());
             socket.on('order_updated', () => loadOrders());
             socket.on('orders_refresh', () => loadOrders());
+
+            socket.on('qr_payment_update', (payload) => {
+                if (payload && payload.qr_id === activeQrId && payload.status === 'paid') {
+                    onQrPaid({ paid_amount: activeQrAmount, payment_method: 'QR' });
+                }
+            });
         }
 
         function startPolling() {
@@ -3219,7 +3493,6 @@
         async function startCounter() {
             setOrderType('dine_in');
 
-            // ✅ Load saved defaults into the order form on startup
             resetChargesToDefaults();
 
             renderCart();
@@ -3230,6 +3503,10 @@
             await loadShiftStatus();
             await loadOfflineOrders();
             updateSyncStatus();
+
+            /* ✅ Check if Raast QR is configured */
+            await checkQrAvailability();
+
             connectSocket();
             startPolling();
         }
@@ -3414,6 +3691,13 @@
         window.loadMenu = loadMenu;
         window.loadDeals = loadDeals;
         window.loadShiftStatus = loadShiftStatus;
+        window.startQrPayment = startQrPayment;
+        window.cancelQrPayment = cancelQrPayment;
+        window.manualConfirmQr = manualConfirmQr;
+        window.regenerateQr = regenerateQr;
+        window.onPayNowMethodChange = onPayNowMethodChange;
+        window.closeQrModal = closeQrModal;
+        window.checkQrAvailability = checkQrAvailability;
     </script>
 </body>
 </html>

@@ -180,6 +180,7 @@ body{
   min-width:0;
 }
 
+/* ✅ NEW: Brand icon supports both emoji and uploaded logo */
 .brand-icon{
   width:43px;
   height:43px;
@@ -190,6 +191,21 @@ body{
   background:#14532d;
   font-size:22px;
   flex-shrink:0;
+  overflow:hidden;
+  position:relative;
+}
+
+.brand-icon img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  border-radius:13px;
+}
+
+.brand-icon .emoji-fallback{
+  display:block;
+  line-height:1;
 }
 
 .brand-text{
@@ -986,7 +1002,10 @@ body{
 
       <div class="brand">
 
-        <div class="brand-icon">🚴</div>
+        <!-- ✅ NEW: Brand icon can show logo image -->
+        <div class="brand-icon" id="brandIcon">
+          <span class="emoji-fallback" id="brandEmoji">🚴</span>
+        </div>
 
         <div class="brand-text">
           <strong id="restaurantName">
@@ -1140,25 +1159,21 @@ body{
 ===================================================== */
 
 function getRestaurantIdFromUrl() {
-  // 1️⃣ First try URL parameter
   const params = new URLSearchParams(window.location.search);
   const urlId = params.get('restaurant') || params.get('restaurant_id');
   
   if (urlId) {
     console.log('🔍 Restaurant ID from URL:', urlId);
-    // ✅ Permanently save for PWA usage
     localStorage.setItem('rider_restaurant_id', urlId);
     return Number(urlId);
   }
   
-  // 2️⃣ Fallback to localStorage (PWA mode, no URL param)
   const savedId = localStorage.getItem('rider_restaurant_id');
   if (savedId) {
     console.log('🔍 Restaurant ID from localStorage:', savedId);
     return Number(savedId);
   }
   
-  // 3️⃣ Last resort: generic storage
   const genericId = localStorage.getItem('restaurant_id');
   if (genericId) {
     console.log('🔍 Restaurant ID from generic storage:', genericId);
@@ -1179,7 +1194,11 @@ let token =
   localStorage.getItem('token') ||
   '';
 
-  // =====================================================
+/* ✅ NEW: Restaurant branding state */
+let restaurantBrand = { name: '', logo: '' };
+
+
+// =====================================================
 // SERVICE WORKER + PUSH SUBSCRIPTION
 // =====================================================
 
@@ -1225,16 +1244,13 @@ async function subscribeToPush(){
             return;
         }
         
-        // Check permission
         if(Notification.permission !== 'granted'){
             console.log('Notification permission not granted');
             return;
         }
         
-        // Wait for service worker to be ready
         await navigator.serviceWorker.ready;
         
-        // Get VAPID public key from backend
         const keyRes = await fetch(`${API_BASE}/push/vapid-public-key`);
         const keyData = await keyRes.json();
         
@@ -1243,7 +1259,6 @@ async function subscribeToPush(){
             return;
         }
         
-        // Subscribe to push
         const subscription = await swRegistration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
@@ -1251,7 +1266,6 @@ async function subscribeToPush(){
         
         console.log('✅ Push subscription:', subscription.endpoint);
         
-        // Send to backend
         const res = await fetch(`${API_BASE}/push/subscribe`, {
             method: 'POST',
             headers: authHeaders(),
@@ -1303,6 +1317,14 @@ function authHeaders(){
   };
 }
 
+/* ✅ NEW: Normalize logo URL */
+function normalizeLogoUrl(value) {
+  if (!value) return '';
+  let url = String(value).trim();
+  if (/^https?:\/\//i.test(url) || url.startsWith('//') || url.startsWith('/')) return url;
+  return '/' + url;
+}
+
 function showLogin(){
   document.getElementById('loginScreen').classList.remove('hidden');
   document.getElementById('appScreen').classList.add('hidden');
@@ -1327,6 +1349,64 @@ function toast(message, type='success'){
   item.textContent = message;
   container.appendChild(item);
   setTimeout(() => { item.remove(); }, 3500);
+}
+
+
+/* =====================================================
+   ✅ NEW: LOAD RESTAURANT BRANDING (name + logo)
+===================================================== */
+
+async function loadBranding(){
+  try {
+    if(!token) return;
+
+    const res = await fetch('/api/restaurants/me', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+
+    if(!res.ok){
+      console.warn('Branding request failed:', res.status);
+      return;
+    }
+
+    const data = await res.json();
+
+    if(data && data.success && data.data){
+      restaurantBrand.name = data.data.name || '';
+      restaurantBrand.logo = data.data.logo_url || '';
+
+      renderBranding();
+    }
+  } catch (err) {
+    console.error('loadBranding:', err);
+  }
+}
+
+function renderBranding(){
+  // Update restaurant name
+  const nameEl = document.getElementById('restaurantName');
+  if(nameEl){
+    nameEl.textContent = restaurantBrand.name || 'Restaurant';
+  }
+
+  // Update brand icon — show logo if available
+  const iconEl = document.getElementById('brandIcon');
+  const emojiEl = document.getElementById('brandEmoji');
+
+  if(!iconEl) return;
+
+  if(restaurantBrand.logo){
+    const logoUrl = normalizeLogoUrl(restaurantBrand.logo);
+    iconEl.innerHTML = `
+      <img src="${esc(logoUrl)}"
+           alt="${esc(restaurantBrand.name || 'Restaurant')}"
+           onerror="this.style.display='none';document.getElementById('brandEmoji').style.display='block';" />
+      <span class="emoji-fallback" id="brandEmoji" style="display:none;">🚴</span>
+    `;
+  } else if(emojiEl){
+    // Just keep the emoji
+    emojiEl.style.display = 'block';
+  }
 }
 
 
@@ -1366,7 +1446,6 @@ async function requestNotificationPermission(){
       document.getElementById('permBanner').classList.remove('show');
       toast('✅ Notifications enable ho gayi');
 
-      // ✅ Register SW + subscribe to push
       await registerServiceWorker();
       await subscribeToPush();
 
@@ -1844,20 +1923,13 @@ async function initializeApp(){
     currentUser.username ||
     'Rider';
 
-  document.getElementById('restaurantName').textContent =
-    currentUser.restaurant_name ||
-    'Restaurant';
-
-  if (RESTAURANT_ID_FROM_URL) {
-    document.getElementById('restaurantName').textContent =
-      `Restaurant #${RESTAURANT_ID_FROM_URL}`;
-  }
+  /* ✅ NEW: Load restaurant branding (name + logo) */
+  await loadBranding();
 
   connectSocket();
 
   await registerServiceWorker();
     
-    // ✅ If permission already granted, subscribe
     if('Notification' in window && Notification.permission === 'granted'){
         await subscribeToPush();
     }
@@ -1921,12 +1993,10 @@ async function loadOrders(){
       );
     });
 
-    // ✅ DETECT NEWLY ASSIGNED ORDERS
     if(previousOrders.length > 0 || previousIds.size > 0){
       orders.forEach(order => {
         const orderId = Number(order.id);
         if(!previousIds.has(orderId)){
-          // Newly appeared order
           triggerNewOrderAlert(order);
         }
       });
@@ -2302,7 +2372,6 @@ function connectSocket(){
       });
     });
 
-    // ✅ SPECIAL: New order assigned to this rider
     socket.on('delivery_rider_assigned', payload => {
       console.log('🎯 delivery_rider_assigned:', payload);
 
@@ -2344,8 +2413,6 @@ function logout(){
 
   localStorage.removeItem('rider_token');
   localStorage.removeItem('token');
- // localStorage.removeItem('restaurant_id');
-//  localStorage.removeItem('rider_restaurant_id');
   localStorage.removeItem('rider_user');
   localStorage.removeItem('user');
 

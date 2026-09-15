@@ -166,6 +166,8 @@ app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/restaurants', require('./routes/restaurantRoutes'));
 app.use('/api/shifts', require('./routes/shiftRoutes'));
 app.use('/api/push', pushRoutes);
+app.use('/api/payments', require('./routes/paymentRoutes'));
+app.use('/api/settings', require('./routes/settingsRoutes'));
 
 
 const server = http.createServer(app);
