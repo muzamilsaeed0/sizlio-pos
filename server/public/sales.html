@@ -613,6 +613,17 @@ button.active{
     color:var(--accent);
 }
 
+/* ✅ NEW: card / bank charge row colors */
+.summary-row.card-row span:last-child{
+    color:#a78bfa;
+    font-weight:600;
+}
+
+.summary-row.bank-row span:last-child{
+    color:#38bdf8;
+    font-weight:600;
+}
+
 /* Print view */
 @media print {
     .pricing-breakdown{
@@ -625,6 +636,10 @@ button.active{
         color:#16805b !important;
     }
     .summary-row.charge span:last-child{
+        color:#111 !important;
+    }
+    .summary-row.card-row span:last-child,
+    .summary-row.bank-row span:last-child{
         color:#111 !important;
     }
 }
@@ -2076,6 +2091,10 @@ function render(){
                     const deliveryFee  = num(order.delivery_charge);
                     const dineFee      = num(order.dine_charge);
 
+                    /* ✅ NEW: Card + Bank surcharges */
+                    const cardCharge   = num(order.card_charge);
+                    const bankCharge   = num(order.bank_charge);
+
                     const breakdownRows = [];
 
                     if (subtotal > 0) {
@@ -2128,6 +2147,26 @@ function render(){
                             <div class="summary-row charge">
                                 <span>🍽️ Dine-in Charges</span>
                                 <span>${money(dineFee)}</span>
+                            </div>
+                        `);
+                    }
+
+                    /* ✅ NEW: Card Charges row */
+                    if (cardCharge > 0) {
+                        breakdownRows.push(`
+                            <div class="summary-row card-row">
+                                <span>💳 Card Charges</span>
+                                <span>${money(cardCharge)}</span>
+                            </div>
+                        `);
+                    }
+
+                    /* ✅ NEW: Bank Charges row */
+                    if (bankCharge > 0) {
+                        breakdownRows.push(`
+                            <div class="summary-row bank-row">
+                                <span>🏦 Bank Charges</span>
+                                <span>${money(bankCharge)}</span>
                             </div>
                         `);
                     }
@@ -2704,7 +2743,7 @@ function exportCSV(){
     }
 
     let csv =
-        'Order,Type,Location,Customer,Phone,Address,Date,Items,Deals,Subtotal,Discount,GST,Other Tax,Delivery Charge,Dine Charge,Total\n';
+        'Order,Type,Location,Customer,Phone,Address,Date,Items,Deals,Subtotal,Discount,GST,Other Tax,Delivery Charge,Dine Charge,Card Charge,Bank Charge,Total\n';
 
 
     orders.forEach(order => {
@@ -2787,6 +2826,10 @@ function exportCSV(){
         const deliveryFee = num(order.delivery_charge);
         const dineFee     = num(order.dine_charge);
 
+        /* ✅ NEW: Card + Bank surcharges */
+        const cardFee     = num(order.card_charge);
+        const bankFee     = num(order.bank_charge);
+
 
         const row = [
 
@@ -2819,6 +2862,10 @@ function exportCSV(){
             deliveryFee.toFixed(2),
 
             dineFee.toFixed(2),
+
+            cardFee.toFixed(2),
+
+            bankFee.toFixed(2),
 
             getOrderTotal(order)
 
@@ -2908,4 +2955,3 @@ window.onload = function(){
 
 </body>
 </html>
-

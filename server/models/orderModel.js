@@ -2734,7 +2734,6 @@ const markPaid = async (
       'Cash',
       'Card',
       'Bank',
-      'Online',
       'Other'
     ];
 

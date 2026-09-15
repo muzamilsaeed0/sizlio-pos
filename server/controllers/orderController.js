@@ -2929,7 +2929,6 @@ exports.pay = async (
     'Cash',
     'Card',
     'Bank',
-    'Online',
     'Other'
   ];
 

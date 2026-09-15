@@ -341,6 +341,38 @@ body{
 }
 
 
+.delivery-row{
+
+    color:#333;
+
+}
+
+
+.dine-row{
+
+    color:#333;
+
+}
+
+
+.card-row{
+
+    color:#7c3aed;
+
+    font-weight:600;
+
+}
+
+
+.bank-row{
+
+    color:#0ea5e9;
+
+    font-weight:600;
+
+}
+
+
 .grand-total{
 
     border-top:1px dashed #222;
@@ -1827,6 +1859,48 @@ if (Array.isArray(dealItems)) {
 
 
     /* =================================================
+       DINE-IN / DELIVERY / CARD / BANK CHARGES
+       (✅ NEW — pehle ye calculate nahi ho rahe the)
+    ================================================= */
+
+    const dineCharge =
+        number(
+            order.dine_charge ??
+            order.dine_charge_amount ??
+            order.dinein_charge ??
+            0
+        );
+
+
+    const deliveryCharge =
+        number(
+            order.delivery_charge ??
+            order.delivery_charge_amount ??
+            order.delivery_fee ??
+            0
+        );
+
+
+    const cardCharge =
+        number(
+            order.card_charge ??
+            order.card_charge_amount ??
+            order.card_charges ??
+            0
+        );
+
+
+    const bankCharge =
+        number(
+            order.bank_charge ??
+            order.bank_charge_amount ??
+            order.bank_charges ??
+            0
+        );
+
+
+
+    /* =================================================
        TOTAL
     ================================================= */
 
@@ -1835,7 +1909,11 @@ if (Array.isArray(dealItems)) {
         subtotal -
         discount +
         tax +
-        serviceCharge;
+        serviceCharge +
+        dineCharge +
+        deliveryCharge +
+        cardCharge +
+        bankCharge;
 
 
     if(
@@ -2112,6 +2190,119 @@ if (Array.isArray(dealItems)) {
 
 
     /* =================================================
+       ✅ NEW: DINE-IN, DELIVERY, CARD, BANK ROWS
+    ================================================= */
+
+    const dineChargeRow =
+
+        dineCharge > 0
+
+        ?
+
+        `
+
+            <div class="summary-row dine-row">
+
+                <span>
+                    🍽️ Dine-in Charges
+                </span>
+
+                <span>
+                    ${money(dineCharge)}
+                </span>
+
+            </div>
+
+        `
+
+        :
+
+        "";
+
+
+    const deliveryChargeRow =
+
+        deliveryCharge > 0
+
+        ?
+
+        `
+
+            <div class="summary-row delivery-row">
+
+                <span>
+                    🛵 Delivery Charges
+                </span>
+
+                <span>
+                    ${money(deliveryCharge)}
+                </span>
+
+            </div>
+
+        `
+
+        :
+
+        "";
+
+
+    const cardChargeRow =
+
+        cardCharge > 0
+
+        ?
+
+        `
+
+            <div class="summary-row card-row">
+
+                <span>
+                    💳 Card Charges
+                </span>
+
+                <span>
+                    ${money(cardCharge)}
+                </span>
+
+            </div>
+
+        `
+
+        :
+
+        "";
+
+
+    const bankChargeRow =
+
+        bankCharge > 0
+
+        ?
+
+        `
+
+            <div class="summary-row bank-row">
+
+                <span>
+                    🏦 Bank Charges
+                </span>
+
+                <span>
+                    ${money(bankCharge)}
+                </span>
+
+            </div>
+
+        `
+
+        :
+
+        "";
+
+
+
+    /* =================================================
        EDIT PANEL
     ================================================= */
 
@@ -2146,6 +2337,8 @@ if (Array.isArray(dealItems)) {
                     data-original-qty="${Number(
                         item.quantity
                     )}"
+
+                    data-type="item"
 
                 >
 
@@ -2741,6 +2934,18 @@ if (Array.isArray(dealItems)) {
             ${serviceRow}
 
 
+            ${dineChargeRow}
+
+
+            ${deliveryChargeRow}
+
+
+            ${cardChargeRow}
+
+
+            ${bankChargeRow}
+
+
             <div class="grand-total">
 
                 <span>
@@ -2861,4 +3066,3 @@ startBill();
 </body>
 
 </html>
-
