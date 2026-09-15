@@ -830,7 +830,10 @@ body{
    AUTH
 ===================================================== */
 
-const token = localStorage.getItem("token");
+const token =
+    localStorage.getItem("token") ||
+    localStorage.getItem("counter_token") ||
+    "";
 
 
 
@@ -1272,8 +1275,8 @@ async function loadBill(){
         currentOrder = order;
 
         console.log("FULL ORDER:", order);
-console.log("ORDER ITEMS:", order.items);
-console.log("ORDER DEALS:", order.deals);
+        console.log("ORDER ITEMS:", order.items);
+        console.log("ORDER DEALS:", order.deals);
 
 
 
@@ -1859,8 +1862,7 @@ if (Array.isArray(dealItems)) {
 
 
     /* =================================================
-       DINE-IN / DELIVERY / CARD / BANK CHARGES
-       (✅ NEW — pehle ye calculate nahi ho rahe the)
+       DINE-IN / DELIVERY CHARGES
     ================================================= */
 
     const dineCharge =
@@ -1881,7 +1883,14 @@ if (Array.isArray(dealItems)) {
         );
 
 
-    const cardCharge =
+
+    /* =================================================
+       ✅ CARD / BANK CHARGES
+       Pehle server se lo. Agar server na bheje lekin
+       paid_amount > total_amount ho, to farq se derive karo.
+    ================================================= */
+
+    let cardCharge =
         number(
             order.card_charge ??
             order.card_charge_amount ??
@@ -1890,55 +1899,13 @@ if (Array.isArray(dealItems)) {
         );
 
 
-    const bankCharge =
+    let bankCharge =
         number(
             order.bank_charge ??
             order.bank_charge_amount ??
             order.bank_charges ??
             0
         );
-
-
-
-    /* =================================================
-       TOTAL
-    ================================================= */
-
-    let grandTotal =
-
-        subtotal -
-        discount +
-        tax +
-        serviceCharge +
-        dineCharge +
-        deliveryCharge +
-        cardCharge +
-        bankCharge;
-
-
-    if(
-        order.total_amount !== undefined &&
-        order.total_amount !== null
-    ){
-
-        grandTotal =
-            number(
-                order.total_amount
-            );
-
-    }
-
-    else if(
-        order.total !== undefined &&
-        order.total !== null
-    ){
-
-        grandTotal =
-            number(
-                order.total
-            );
-
-    }
 
 
 
@@ -1966,6 +1933,114 @@ if (Array.isArray(dealItems)) {
             order.change ??
             order.return_amount
         );
+
+
+
+    /* =================================================
+       TOTAL (server authoritative)
+    ================================================= */
+
+    let baseGrandTotal =
+
+        subtotal -
+        discount +
+        tax +
+        serviceCharge +
+        dineCharge +
+        deliveryCharge;
+
+
+    if(
+        order.total_amount !== undefined &&
+        order.total_amount !== null
+    ){
+
+        baseGrandTotal =
+            number(
+                order.total_amount
+            );
+
+    }
+
+    else if(
+        order.total !== undefined &&
+        order.total !== null
+    ){
+
+        baseGrandTotal =
+            number(
+                order.total
+            );
+
+    }
+
+
+
+    /* =================================================
+       ✅ DERIVE CARD / BANK CHARGES
+       Agar dono zero hain lekin paid_amount > total_amount,
+       to difference ko payment method ke hisaab se assign karo.
+    ================================================= */
+
+    const methodLower =
+        String(paymentMethod).toLowerCase();
+
+
+    if (
+        cardCharge === 0 &&
+        bankCharge === 0 &&
+        paidAmount > baseGrandTotal + 0.01
+    ){
+
+        const diff =
+            paidAmount - baseGrandTotal;
+
+        if (methodLower === "card"){
+
+            cardCharge = diff;
+
+        }
+        else if (methodLower === "bank"){
+
+            bankCharge = diff;
+
+        }
+
+    }
+
+
+
+    /* =================================================
+       ✅ FINAL GRAND TOTAL
+       = base total + (derived or actual) surcharges
+       — sirf tab jab surcharge already base mein
+       include na ho (i.e. server ne total_amount mein add nahi kiya).
+    ================================================= */
+
+    const baseIncludesSurcharge =
+
+        Math.abs(
+            baseGrandTotal -
+            (
+                subtotal -
+                discount +
+                tax +
+                serviceCharge +
+                dineCharge +
+                deliveryCharge +
+                cardCharge +
+                bankCharge
+            )
+        ) < 0.01;
+
+
+    const grandTotal =
+
+        baseIncludesSurcharge
+
+            ? baseGrandTotal
+
+            : baseGrandTotal + cardCharge + bankCharge;
 
 
 
@@ -2190,7 +2265,7 @@ if (Array.isArray(dealItems)) {
 
 
     /* =================================================
-       ✅ NEW: DINE-IN, DELIVERY, CARD, BANK ROWS
+       DINE-IN, DELIVERY, CARD, BANK ROWS
     ================================================= */
 
     const dineChargeRow =
