@@ -2769,106 +2769,165 @@
             document.getElementById('slipModal').classList.remove('show');
         }
 
-        function confirmPrintSlip() {
-            const o = orders.find(x => Number(x.id) === Number(slipOrderId));
-            if (!o) return closeSlip();
-            const eta = document.getElementById('slipEta').value.trim();
-            const items = Array.isArray(o.items) ? o.items : [];
-            const deals = Array.isArray(o.deals) ? o.deals : [];
-            let subtotal = 0;
-            const itemRows = items.map(i => {
-                const qty = Number(i.quantity || 0);
-                const price = Number(i.price ?? i.unit_price ?? 0);
-                const amount = price * qty;
-                subtotal += amount;
-                return `<tr><td class="item-name">${esc(i.name || 'Item')}${i.variant_label ? ' (' + esc(i.variant_label) + ')' : ''}</td><td>${qty}</td><td>${money(price)}</td><td>${money(amount)}</td></tr>`;
-            }).join('');
-            const dealRows = deals.map(d => {
-                const qty = Number(d.quantity || 0);
-                const price = Number(d.price || 0);
-                const amount = price * qty;
-                subtotal += amount;
-                const subItems = (d.items || []).map(di => `${di.name}${di.variant_label ? ' (' + di.variant_label + ')' : ''}`).join(', ');
-                return `<tr><td class="item-name">🎁 ${esc(d.deal_name || 'Deal')}<br><span style="font-weight:400;font-size:10px;color:#555">${esc(subItems)}</span></td><td>${qty}</td><td>${money(price)}</td><td>${money(amount)}</td></tr>`;
-            }).join('');
-            const rows = dealRows + itemRows;
-            const discount = Number(o.discount_amount || 0);
-            const gstAmount = Number(o.gst_amount || 0);
-            const taxAmount = Number(o.tax_amount || 0);
-            const tax = gstAmount + taxAmount;
-            const serviceCharge = Number(o.service_charge || 0);
-            const cardCharge = Number(o.card_charge || 0);
-            const bankCharge = Number(o.bank_charge || 0);
-            const grandTotal = o.total_amount !== undefined && o.total_amount !== null ? Number(o.total_amount) : (subtotal - discount + tax + serviceCharge + cardCharge + bankCharge);
-            const discountRow = discount > 0 ? `<div class="summary-row discount"><span>Discount</span><span>- ${money(discount)}</span></div>` : '';
-            const taxRow = tax > 0 ? `${gstAmount > 0 ? `<div class="summary-row tax"><span>GST</span><span>${money(gstAmount)}</span></div>` : ''}${taxAmount > 0 ? `<div class="summary-row tax"><span>Other Tax</span><span>${money(taxAmount)}</span></div>` : ''}` : '';
-            const serviceRow = serviceCharge > 0 ? `<div class="summary-row service"><span>Service Charge</span><span>${money(serviceCharge)}</span></div>` : '';
-            const cardRow = cardCharge > 0 ? `<div class="summary-row"><span>💳 Card Charges</span><span>${money(cardCharge)}</span></div>` : '';
-            const bankRow = bankCharge > 0 ? `<div class="summary-row"><span>🏦 Bank Charges</span><span>${money(bankCharge)}</span></div>` : '';
-            const createdAt = o.created_at || o.createdAt;
-            const dateStr = createdAt ? new Date(createdAt).toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
-            const timeStr = createdAt ? new Date(createdAt).toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' }) : '-';
-            const restaurantName = restaurantBrand.name || currentUser?.restaurant_name || 'Your Restaurant';
-            const logoHtml = restaurantBrand.logo ? `<img class="brand-logo" src="${esc(restaurantBrand.logo)}" alt="${esc(restaurantName)}" onerror="this.style.display='none';">` : '';
-            const paymentRows = `<div class="payment-section"><div class="payment-row"><span>Payment</span><span>${o.payment_status === 'paid' ? esc(o.payment_method || 'Paid') : 'UNPAID (' + esc(o.payment_timing || 'PAY_LATER') + ')'}</span></div>${o.payment_status === 'paid' && o.paid_amount ? `<div class="payment-row"><span>Paid</span><span>${money(o.paid_amount)}</span></div>` : ''}</div>`;
-            const deliveryInfo = o.order_type === 'delivery' ? `<div class="order-info" style="grid-template-columns:1fr">${o.customer_name ? `<div><strong>Customer</strong> ${esc(o.customer_name)}</div>` : ''}${o.delivery_phone ? `<div><strong>Phone</strong> ${esc(o.delivery_phone)}</div>` : ''}${o.delivery_address ? `<div><strong>Address</strong> ${esc(o.delivery_address)}</div>` : ''}${eta ? `<div><strong>ETA</strong> ${esc(eta)}</div>` : ''}</div><hr class="divider">` : '';
-            const html = `
-                    <html><head><style>
-                        *{box-sizing:border-box}
-                        html,body{margin:0;padding:0;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif}
-                        .receipt{width:300px;margin:0 auto;padding:14px}
-                        .brand-header{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:8px}
-                        .brand-logo{width:60px;height:60px;object-fit:contain;margin:0 auto 6px auto}
-                        .brand-name{margin:0;font-size:19px;font-weight:700}
-                        .restaurant-header{text-align:center}
-                        .restaurant-info{margin-top:4px;font-size:11px;color:#333}
-                        .receipt-title{margin-top:8px;font-size:12px;font-weight:bold;letter-spacing:1px}
-                        .divider{border:0;border-top:1px dashed #222;margin:9px 0}
-                        .order-info{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:11px}
-                        .order-info div:nth-child(even){text-align:right}
-                        .items{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:4px}
-                        .items th{padding:4px 0;border-bottom:1px dashed #222;font-size:11px}
-                        .items td{padding:5px 0;font-size:11px}
-                        .items th:nth-child(1),.items td:nth-child(1){width:44%;text-align:left}
-                        .items th:nth-child(2),.items td:nth-child(2){width:14%;text-align:center}
-                        .items th:nth-child(3),.items td:nth-child(3){width:21%;text-align:right}
-                        .items th:nth-child(4),.items td:nth-child(4){width:21%;text-align:right}
-                        .item-name{font-weight:600}
-                        .summary-row{display:flex;justify-content:space-between;font-size:12px;margin:5px 0}
-                        .discount{color:#16805b}
-                        .grand-total{border-top:1px dashed #222;border-bottom:1px dashed #222;margin-top:8px;padding:8px 0;display:flex;justify-content:space-between;font-size:15px;font-weight:700}
-                        .payment-section{margin-top:8px}
-                        .payment-row{display:flex;justify-content:space-between;font-size:11px;margin:4px 0}
-                        .payment-row span:last-child{font-weight:600}
-                        .thank-you{text-align:center;margin-top:12px;font-size:12px;font-weight:bold}
-                        .footer-text{text-align:center;margin-top:4px;font-size:10px;color:#555}
-                        @page{size:80mm auto;margin:0}
-                    </style></head>
-                    <body onload="window.print();">
-                        <div class="receipt">
-                            <div class="brand-header">${logoHtml}<div class="brand-name">${esc(restaurantName)}</div></div>
-                            <div class="restaurant-header">${restaurantBrand.address ? `<div class="restaurant-info">${esc(restaurantBrand.address)}</div>` : ''}${restaurantBrand.phone ? `<div class="restaurant-info">Tel: ${esc(restaurantBrand.phone)}</div>` : ''}<div class="receipt-title">${o.order_type === 'delivery' ? 'DELIVERY SLIP' : 'SALES RECEIPT'}</div></div>
-                            <hr class="divider">
-                            <div class="order-info"><div><strong>Order #</strong> ${esc(o.id)}</div>
-                            <div><strong>${o.order_type === 'delivery' ? 'Type' : (o.order_type === 'walk_in' ? 'Type' : 'Table')}</strong>${o.order_type === 'delivery' ? 'Delivery' : (o.order_type === 'walk_in' ? 'Walk-in' : esc(o.table_no ?? '-'))}</div>
-                            <div><strong>Date</strong> ${dateStr}</div><div><strong>Time</strong> ${timeStr}</div></div>
-                            <hr class="divider">${deliveryInfo}
-                            <table class="items"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead><tbody>${rows || '<tr><td colspan="4" style="text-align:center">No items</td></tr>'}</tbody></table>
-                            <hr class="divider">
-                            <div class="summary"><div class="summary-row"><span>Subtotal</span><span>${money(subtotal)}</span></div>${discountRow}${taxRow}${serviceRow}${cardRow}${bankRow}<div class="grand-total"><span>Grand Total</span><span>${money(grandTotal)}</span></div></div>
-                            ${paymentRows}
-                            <div class="thank-you">Thank You!</div>
-                            <div class="footer-text">We appreciate your visit.<br>Please visit us again.</div>
-                        </div>
-                    </body></html>
-                `;
-            const frame = document.getElementById('printFrame');
-            const doc = frame.contentWindow.document;
-            doc.open();
-            doc.write(html);
-            doc.close();
-            closeSlip();
-        }
+   function confirmPrintSlip() {
+    const o = orders.find(x => Number(x.id) === Number(slipOrderId));
+    if (!o) return closeSlip();
+    const eta = document.getElementById('slipEta').value.trim();
+    const items = Array.isArray(o.items) ? o.items : [];
+    const deals = Array.isArray(o.deals) ? o.deals : [];
+
+    let subtotal = 0;
+
+    const itemRows = items.map(i => {
+        const qty = Number(i.quantity || 0);
+        const price = Number(i.price ?? i.unit_price ?? 0);
+        const amount = price * qty;
+        subtotal += amount;
+        return `<tr><td class="item-name">${esc(i.name || 'Item')}${i.variant_label ? ' (' + esc(i.variant_label) + ')' : ''}</td><td>${qty}</td><td>${money(price)}</td><td>${money(amount)}</td></tr>`;
+    }).join('');
+
+    const dealRows = deals.map(d => {
+        const qty = Number(d.quantity || 0);
+        const price = Number(d.price || 0);
+        const amount = price * qty;
+        subtotal += amount;
+        const subItems = (d.items || []).map(di => `${di.name}${di.variant_label ? ' (' + di.variant_label + ')' : ''}`).join(', ');
+        return `<tr><td class="item-name">🎁 ${esc(d.deal_name || 'Deal')}<br><span style="font-weight:400;font-size:10px;color:#555">${esc(subItems)}</span></td><td>${qty}</td><td>${money(price)}</td><td>${money(amount)}</td></tr>`;
+    }).join('');
+
+    const rows = dealRows + itemRows;
+
+    /* ---------- Extract from order ---------- */
+    const discount        = Number(o.discount_amount || 0);
+    const gstAmount       = Number(o.gst_amount || 0);
+    const taxAmount       = Number(o.tax_amount || 0);
+    const tax             = gstAmount + taxAmount;
+    const serviceCharge   = Number(o.service_charge || 0);
+    const dineCharge      = Number(o.dine_charge || 0);
+    const deliveryCharge  = Number(o.delivery_charge || 0);
+
+    const paymentMethod   = String(o.payment_method || '').toLowerCase();
+    const paidAmount      = Number(o.paid_amount || 0);
+
+    /* ---------- Card/Bank: prefer order, else derive ---------- */
+    let cardCharge = Number(o.card_charge || 0);
+    let bankCharge = Number(o.bank_charge || 0);
+
+    const baseTotal = (o.total_amount !== undefined && o.total_amount !== null)
+        ? Number(o.total_amount)
+        : (subtotal - discount + tax + serviceCharge + dineCharge + deliveryCharge);
+
+    if (cardCharge === 0 && bankCharge === 0 && paidAmount > baseTotal + 0.01) {
+        const diff = paidAmount - baseTotal;
+        if (paymentMethod === 'card')      cardCharge = diff;
+        else if (paymentMethod === 'bank') bankCharge = diff;
+    }
+
+    /* ---------- Grand total ---------- */
+    const baseIncludesSurcharge = Math.abs(
+        baseTotal - (subtotal - discount + tax + serviceCharge + dineCharge + deliveryCharge + cardCharge + bankCharge)
+    ) < 0.01;
+
+    const grandTotal = baseIncludesSurcharge
+        ? baseTotal
+        : baseTotal + cardCharge + bankCharge;
+
+    /* ---------- Summary rows ---------- */
+    const discountRow   = discount > 0       ? `<div class="summary-row discount"><span>Discount</span><span>- ${money(discount)}</span></div>` : '';
+    const gstRow        = gstAmount > 0      ? `<div class="summary-row tax"><span>GST</span><span>${money(gstAmount)}</span></div>` : '';
+    const taxRow        = taxAmount > 0      ? `<div class="summary-row tax"><span>Other Tax</span><span>${money(taxAmount)}</span></div>` : '';
+    const serviceRow    = serviceCharge > 0  ? `<div class="summary-row service"><span>Service Charge</span><span>${money(serviceCharge)}</span></div>` : '';
+    const dineRow       = dineCharge > 0     ? `<div class="summary-row service"><span>🍽️ Dine-in Charges</span><span>${money(dineCharge)}</span></div>` : '';
+    const deliveryRow   = deliveryCharge > 0 ? `<div class="summary-row service"><span>🛵 Delivery Charges</span><span>${money(deliveryCharge)}</span></div>` : '';
+    const cardRow       = cardCharge > 0     ? `<div class="summary-row service"><span>💳 Card Charges</span><span>${money(cardCharge)}</span></div>` : '';
+    const bankRow       = bankCharge > 0     ? `<div class="summary-row service"><span>🏦 Bank Charges</span><span>${money(bankCharge)}</span></div>` : '';
+
+    const createdAt = o.created_at || o.createdAt;
+    const dateStr = createdAt ? new Date(createdAt).toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+    const timeStr = createdAt ? new Date(createdAt).toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' }) : '-';
+    const restaurantName = restaurantBrand.name || currentUser?.restaurant_name || 'Your Restaurant';
+    const logoHtml = restaurantBrand.logo ? `<img class="brand-logo" src="${esc(restaurantBrand.logo)}" alt="${esc(restaurantName)}" onerror="this.style.display='none';">` : '';
+
+    const paymentRows = `<div class="payment-section"><div class="payment-row"><span>Payment</span><span>${o.payment_status === 'paid' ? esc(o.payment_method || 'Paid') : 'UNPAID (' + esc(o.payment_timing || 'PAY_LATER') + ')'}</span></div>${o.payment_status === 'paid' && o.paid_amount ? `<div class="payment-row"><span>Paid</span><span>${money(o.paid_amount)}</span></div>` : ''}</div>`;
+
+    const deliveryInfo = o.order_type === 'delivery'
+        ? `<div class="order-info" style="grid-template-columns:1fr">${o.customer_name ? `<div><strong>Customer</strong> ${esc(o.customer_name)}</div>` : ''}${o.delivery_phone ? `<div><strong>Phone</strong> ${esc(o.delivery_phone)}</div>` : ''}${o.delivery_address ? `<div><strong>Address</strong> ${esc(o.delivery_address)}</div>` : ''}${eta ? `<div><strong>ETA</strong> ${esc(eta)}</div>` : ''}</div><hr class="divider">`
+        : '';
+
+    /* ---------- ✅ FIX: proper Table/Type label with SPACE ---------- */
+    let typeLabel, locationValue;
+    if (o.order_type === 'delivery') {
+        typeLabel = 'Type';
+        locationValue = 'Delivery';
+    } else if (o.order_type === 'walk_in') {
+        typeLabel = 'Type';
+        locationValue = 'Walk-in';
+    } else {
+        typeLabel = 'Table';
+        locationValue = esc(o.table_no ?? '-');
+    }
+
+    const html = `
+        <html><head><style>
+            *{box-sizing:border-box}
+            html,body{margin:0;padding:0;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif}
+            .receipt{width:300px;margin:0 auto;padding:14px}
+            .brand-header{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:8px}
+            .brand-logo{width:60px;height:60px;object-fit:contain;margin:0 auto 6px auto}
+            .brand-name{margin:0;font-size:19px;font-weight:700}
+            .restaurant-header{text-align:center}
+            .restaurant-info{margin-top:4px;font-size:11px;color:#333}
+            .receipt-title{margin-top:8px;font-size:12px;font-weight:bold;letter-spacing:1px}
+            .divider{border:0;border-top:1px dashed #222;margin:9px 0}
+            .order-info{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:11px}
+            .order-info div:nth-child(even){text-align:right}
+            .items{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:4px}
+            .items th{padding:4px 0;border-bottom:1px dashed #222;font-size:11px}
+            .items td{padding:5px 0;font-size:11px}
+            .items th:nth-child(1),.items td:nth-child(1){width:44%;text-align:left}
+            .items th:nth-child(2),.items td:nth-child(2){width:14%;text-align:center}
+            .items th:nth-child(3),.items td:nth-child(3){width:21%;text-align:right}
+            .items th:nth-child(4),.items td:nth-child(4){width:21%;text-align:right}
+            .item-name{font-weight:600}
+            .summary-row{display:flex;justify-content:space-between;font-size:12px;margin:5px 0}
+            .discount{color:#16805b}
+            .grand-total{border-top:1px dashed #222;border-bottom:1px dashed #222;margin-top:8px;padding:8px 0;display:flex;justify-content:space-between;font-size:15px;font-weight:700}
+            .payment-section{margin-top:8px}
+            .payment-row{display:flex;justify-content:space-between;font-size:11px;margin:4px 0}
+            .payment-row span:last-child{font-weight:600}
+            .thank-you{text-align:center;margin-top:12px;font-size:12px;font-weight:bold}
+            .footer-text{text-align:center;margin-top:4px;font-size:10px;color:#555}
+            @page{size:80mm auto;margin:0}
+        </style></head>
+        <body onload="window.print();">
+            <div class="receipt">
+                <div class="brand-header">${logoHtml}<div class="brand-name">${esc(restaurantName)}</div></div>
+                <div class="restaurant-header">${restaurantBrand.address ? `<div class="restaurant-info">${esc(restaurantBrand.address)}</div>` : ''}${restaurantBrand.phone ? `<div class="restaurant-info">Tel: ${esc(restaurantBrand.phone)}</div>` : ''}<div class="receipt-title">${o.order_type === 'delivery' ? 'DELIVERY SLIP' : 'SALES RECEIPT'}</div></div>
+                <hr class="divider">
+                <div class="order-info"><div><strong>Order #</strong> ${esc(o.id)}</div>
+                <div><strong>${typeLabel} </strong>${locationValue}</div>
+                <div><strong>Date</strong> ${dateStr}</div><div><strong>Time</strong> ${timeStr}</div></div>
+                <hr class="divider">${deliveryInfo}
+                <table class="items"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead><tbody>${rows || '<tr><td colspan="4" style="text-align:center">No items</td></tr>'}</tbody></table>
+                <hr class="divider">
+                <div class="summary">
+                    <div class="summary-row"><span>Subtotal</span><span>${money(subtotal)}</span></div>
+                    ${discountRow}${gstRow}${taxRow}${serviceRow}${dineRow}${deliveryRow}${cardRow}${bankRow}
+                    <div class="grand-total"><span>Grand Total</span><span>${money(grandTotal)}</span></div>
+                </div>
+                ${paymentRows}
+                <div class="thank-you">Thank You!</div>
+                <div class="footer-text">We appreciate your visit.<br>Please visit us again.</div>
+            </div>
+        </body></html>
+    `;
+    const frame = document.getElementById('printFrame');
+    const doc = frame.contentWindow.document;
+    doc.open();
+    doc.write(html);
+    doc.close();
+    closeSlip();
+}
 
         // ✅ Update paid amount + hint when payment method changes in the Receive Payment modal
         function updatePaymentSurcharge() {
