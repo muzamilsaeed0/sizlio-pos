@@ -619,6 +619,11 @@
         }
         .offline-order-card .footer strong { font-size: 14px; }
 
+        .surcharge-hint {
+            display: block; margin-top: 5px; font-size: 11px;
+            color: var(--accent); font-weight: 600;
+        }
+
         @media(max-width:600px) {
             .modal-box-lg { max-width: 95%; padding: 14px; }
             .rider-summary-controls, .shift-filter-row { flex-direction: column; align-items: stretch; }
@@ -756,9 +761,10 @@
                 <div class="delivery" id="payNowFields">
                     <div class="field">
                         <label>Payment Method</label>
-                        <select id="payNowMethod">
+                        <select id="payNowMethod" onchange="renderCart()">
                             <option>Cash</option><option>Card</option><option>Bank</option><option>Online</option><option>Other</option>
                         </select>
+                        <small id="payNowMethodHint" class="surcharge-hint" style="display:none;"></small>
                     </div>
                 </div>
 
@@ -890,9 +896,10 @@
             </div>
             <div class="field">
                 <label>Payment Method</label>
-                <select id="paymentMethod">
+                <select id="paymentMethod" onchange="updatePaymentSurcharge()">
                     <option>Cash</option><option>Card</option><option>Bank</option><option>Online</option><option>Other</option>
                 </select>
+                <small id="paymentSurchargeHint" class="surcharge-hint" style="display:none;"></small>
             </div>
             <div class="field" style="margin-top:10px">
                 <label>Paid Amount</label>
@@ -988,6 +995,14 @@
             <div class="field" style="margin-top:10px">
                 <label>Default Dine-in Charges (Rs)</label>
                 <input id="settingsDine" type="number" min="0" step="0.01" value="0" />
+            </div>
+            <div class="field" style="margin-top:10px">
+                <label>💳 Default Card Charges % <small style="color:var(--muted);font-weight:400">(surcharge on card payments)</small></label>
+                <input id="settingsCardCharges" type="number" min="0" max="100" step="0.01" value="0" />
+            </div>
+            <div class="field" style="margin-top:10px">
+                <label>🏦 Default Bank Charges % <small style="color:var(--muted);font-weight:400">(surcharge on bank transfers)</small></label>
+                <input id="settingsBankCharges" type="number" min="0" max="100" step="0.01" value="0" />
             </div>
 
             <div class="modal-actions">
@@ -1158,6 +1173,8 @@
             document.getElementById('settingsTax').value = localStorage.getItem('counter_default_tax') || 0;
             document.getElementById('settingsDelivery').value = localStorage.getItem('counter_default_delivery') || 0;
             document.getElementById('settingsDine').value = localStorage.getItem('counter_default_dine') || 0;
+            document.getElementById('settingsCardCharges').value = localStorage.getItem('counter_default_card_charges') || 0;
+            document.getElementById('settingsBankCharges').value = localStorage.getItem('counter_default_bank_charges') || 0;
             document.getElementById('settingsModal').classList.add('show');
         }
 
@@ -1170,8 +1187,10 @@
             const tax = Number(document.getElementById('settingsTax').value || 0);
             const delivery = Number(document.getElementById('settingsDelivery').value || 0);
             const dine = Number(document.getElementById('settingsDine').value || 0);
+            const cardCharges = Number(document.getElementById('settingsCardCharges').value || 0);
+            const bankCharges = Number(document.getElementById('settingsBankCharges').value || 0);
 
-            if (gst < 0 || tax < 0 || delivery < 0 || dine < 0) {
+            if (gst < 0 || tax < 0 || delivery < 0 || dine < 0 || cardCharges < 0 || bankCharges < 0) {
                 alert('Values cannot be negative');
                 return;
             }
@@ -1180,6 +1199,8 @@
             localStorage.setItem('counter_default_tax', tax);
             localStorage.setItem('counter_default_delivery', delivery);
             localStorage.setItem('counter_default_dine', dine);
+            localStorage.setItem('counter_default_card_charges', cardCharges);
+            localStorage.setItem('counter_default_bank_charges', bankCharges);
 
             // ✅ Apply defaults to the active order form immediately
             resetChargesToDefaults();
@@ -1189,7 +1210,7 @@
             renderCart();
         }
 
-        // ✅ NEW: Re-load saved defaults from Settings into the order form fields.
+        // ✅ Re-load saved defaults from Settings into the order form fields.
         // Used on app start, after saving settings, and after placing an order.
         function resetChargesToDefaults() {
             const gst = localStorage.getItem('counter_default_gst') || 0;
@@ -1590,6 +1611,7 @@
             document.getElementById('payLaterBtn').classList.toggle('active', !isPayNow);
             document.getElementById('payNowBtn').classList.toggle('active', isPayNow);
             document.getElementById('payNowFields').classList.toggle('show', isPayNow);
+            renderCart();
         }
 
         async function apiFetch(url, options = {}) {
@@ -1788,6 +1810,32 @@
             renderCart();
         }
 
+        // ✅ Get card/bank surcharge percent for the current pay-now method
+        function getPaymentSurchargePercent(method) {
+            if (method === 'Card') {
+                return Number(localStorage.getItem('counter_default_card_charges') || 0);
+            }
+            if (method === 'Bank') {
+                return Number(localStorage.getItem('counter_default_bank_charges') || 0);
+            }
+            return 0;
+        }
+
+        // ✅ Update the small hint under the Pay Now payment method select
+        function updatePayNowMethodHint() {
+            const hint = document.getElementById('payNowMethodHint');
+            if (!hint) return;
+            if (!payNow) { hint.style.display = 'none'; return; }
+            const method = document.getElementById('payNowMethod')?.value || 'Cash';
+            const percent = getPaymentSurchargePercent(method);
+            if (percent > 0) {
+                hint.textContent = `⚠️ ${method} payment surcharge: ${percent}% will be added to the total.`;
+                hint.style.display = 'block';
+            } else {
+                hint.style.display = 'none';
+            }
+        }
+
         function calcPricing(subtotal) {
             const discountType = document.getElementById('discountType').value;
             const discountValue = Number(document.getElementById('discountValue').value || 0);
@@ -1812,13 +1860,36 @@
             const appliedDine = (orderType === 'dine_in') ? dineCharge : 0;
             const extraCharges = appliedDelivery + appliedDine;
 
-            const total = afterDiscount + gstAmount + taxAmount + extraCharges;
+            // ✅ Base bill before payment surcharge
+            const billBeforeSurcharge = afterDiscount + gstAmount + taxAmount + extraCharges;
+
+            // ✅ Card/Bank surcharge (only when Pay Now is active)
+            let cardChargeAmount = 0;
+            let bankChargeAmount = 0;
+            let cardPercent = 0;
+            let bankPercent = 0;
+            if (payNow) {
+                const method = document.getElementById('payNowMethod')?.value || 'Cash';
+                if (method === 'Card') {
+                    cardPercent = Number(localStorage.getItem('counter_default_card_charges') || 0);
+                    cardChargeAmount = billBeforeSurcharge * (cardPercent / 100);
+                } else if (method === 'Bank') {
+                    bankPercent = Number(localStorage.getItem('counter_default_bank_charges') || 0);
+                    bankChargeAmount = billBeforeSurcharge * (bankPercent / 100);
+                }
+            }
+
+            const total = billBeforeSurcharge + cardChargeAmount + bankChargeAmount;
 
             return {
                 discountAmount, gstAmount, taxAmount,
                 deliveryCharge: appliedDelivery,
                 dineCharge: appliedDine,
-                extraCharges, total
+                extraCharges,
+                cardChargeAmount, bankChargeAmount,
+                cardPercent, bankPercent,
+                billBeforeSurcharge,
+                total
             };
         }
 
@@ -1860,10 +1931,15 @@
             box.innerHTML = (dealRows + itemRows) || '<div class="empty">No items selected.</div>';
             const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0) + dealCart.reduce((sum, d) => sum + d.price * d.quantity, 0);
             const pricingResult = calcPricing(subtotal);
-            const { discountAmount, gstAmount, taxAmount, deliveryCharge, dineCharge, total } = pricingResult;
+            const {
+                discountAmount, gstAmount, taxAmount, deliveryCharge, dineCharge,
+                cardChargeAmount, bankChargeAmount, cardPercent, bankPercent, total
+            } = pricingResult;
 
             document.getElementById('subtotal').textContent = money(subtotal);
             document.getElementById('total').textContent = money(total);
+
+            updatePayNowMethodHint();
 
             const breakdown = document.getElementById('pricingBreakdown');
             if (breakdown) {
@@ -1882,6 +1958,13 @@
                 }
                 if (dineCharge > 0) {
                     lines.push(`<div class="summary-line"><span>🍽️ Dine-in Charges</span><span>${money(dineCharge)}</span></div>`);
+                }
+                // ✅ Card/Bank surcharge lines
+                if (cardChargeAmount > 0) {
+                    lines.push(`<div class="summary-line"><span>💳 Card Charges (${cardPercent}%)</span><span>${money(cardChargeAmount)}</span></div>`);
+                }
+                if (bankChargeAmount > 0) {
+                    lines.push(`<div class="summary-line"><span>🏦 Bank Charges (${bankPercent}%)</span><span>${money(bankChargeAmount)}</span></div>`);
                 }
                 breakdown.innerHTML = lines.join('');
             }
@@ -2061,7 +2144,11 @@
                 return status('GST / Tax percentage cannot exceed 100%.');
             }
 
-            const { total: finalTotalNow } = calcPricing(subtotalNow);
+            const pricingResult = calcPricing(subtotalNow);
+            const finalTotalNow = pricingResult.total;
+            const cardChargeAmount = pricingResult.cardChargeAmount;
+            const bankChargeAmount = pricingResult.bankChargeAmount;
+            const payNowMethodValue = payNow ? (document.getElementById('payNowMethod')?.value || 'Cash') : null;
 
             const payload = {
                 table_no: orderType === 'dine_in' ? table : 0,
@@ -2087,11 +2174,15 @@
                 delivery_phone: orderType === 'delivery' ? phone : null,
                 delivery_address: orderType === 'delivery' ? address : null,
                 payment_timing: payNow ? 'PAID_AT_ORDER' : (orderType === 'delivery' ? 'COD' : 'PAY_LATER'),
+                payment_method: payNowMethodValue,
                 paid_amount: payNow ? finalTotalNow : 0,
                 payment_status: payNow ? 'paid' : 'unpaid',
                 subtotal: Number(subtotalNow || 0),
                 delivery_charge: (orderType === 'delivery') ? Number(document.getElementById('deliveryCharge').value || 0) : 0,
                 dine_charge: (orderType === 'dine_in') ? Number(document.getElementById('dineCharge').value || 0) : 0,
+                // ✅ Payment surcharges
+                card_charge: Number(cardChargeAmount || 0),
+                bank_charge: Number(bankChargeAmount || 0),
                 total_amount: Number(finalTotalNow || 0),
                 created_at: new Date().toISOString(),
                 pricing
@@ -2308,13 +2399,17 @@
             const gst = Number(order.gst_amount || 0);
             const tax = Number(order.tax_amount || 0);
             const service = Number(order.service_charge || 0);
+            const cardCharge = Number(order.card_charge || 0);
+            const bankCharge = Number(order.bank_charge || 0);
             const subtotal = Number(order.subtotal || 0);
-            const total = Number(order.total_amount || subtotal - discount + gst + tax + service);
+            const total = Number(order.total_amount || subtotal - discount + gst + tax + service + cardCharge + bankCharge);
             const logo = restaurantBrand.logo ?
                 `<img src="${esc(normalizeLogoUrl(restaurantBrand.logo))}" class="logo" onerror="this.style.display='none'">` : '';
+            const cardRow = cardCharge > 0 ? `<div class="row"><span>Card Charges</span><span>${money(cardCharge)}</span></div>` : '';
+            const bankRow = bankCharge > 0 ? `<div class="row"><span>Bank Charges</span><span>${money(bankCharge)}</span></div>` : '';
             return `<!doctype html><html><head><meta charset="utf-8"><style>
                     @page{size:80mm auto;margin:0} *{box-sizing:border-box} body{margin:0;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif} .receipt{width:80mm;padding:5mm 4mm;margin:0 auto}.head{text-align:center}.logo{max-width:18mm;max-height:18mm;object-fit:contain}.name{font-size:18px;font-weight:800;margin:2mm 0}.small{font-size:10px;color:#333}.line{border-top:1px dashed #000;margin:2.5mm 0}table{width:100%;border-collapse:collapse;font-size:10px}th,td{padding:1.5mm 0;vertical-align:top}th:nth-child(1),td:nth-child(1){width:46%;text-align:left}th:not(:first-child),td:not(:first-child){text-align:right;white-space:nowrap}.variant{font-size:9px;color:#555;margin-top:1mm}.summary{font-size:11px}.row{display:flex;justify-content:space-between;padding:1mm 0}.grand{font-size:15px;font-weight:800;border-top:1px dashed #000;border-bottom:1px dashed #000;padding:2mm 0;margin-top:1mm}.footer{text-align:center;margin-top:4mm;font-size:10px}@media print{body{width:80mm}.receipt{width:80mm}}
-                </style></head><body><div class="receipt"><div class="head">${logo}<div class="name">${esc(restaurantName)}</div>${restaurantBrand.address?`<div class="small">${esc(restaurantBrand.address)}</div>`:''}${restaurantBrand.phone?`<div class="small">${esc(restaurantBrand.phone)}</div>`:''}<div style="font-weight:800;margin-top:2mm">${options.title || (isDelivery ? 'DELIVERY RECEIPT' : 'SALES RECEIPT')}</div></div><div class="line"></div><div class="small">Order: <b>${esc(order.id ?? order.local_id ?? 'Offline')}</b> &nbsp; ${isDelivery?'Delivery':`Table: ${esc(order.table_no ?? '-')}`}<br>${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}${order.customer_name?`<br>Customer: ${esc(order.customer_name)}`:''}${isDelivery && order.delivery_address?`<br>Address: ${esc(order.delivery_address)}`:''}</div><div class="line"></div><table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>${dealRows}${itemRows || '<tr><td colspan="4" style="text-align:center">No items</td></tr>'}</tbody></table><div class="line"></div><div class="summary"><div class="row"><span>Subtotal</span><b>${money(subtotal)}</b></div>${discount?`<div class="row"><span>Discount</span><span>- ${money(discount)}</span></div>`:''}${gst?`<div class="row"><span>GST</span><span>${money(gst)}</span></div>`:''}${tax?`<div class="row"><span>Tax</span><span>${money(tax)}</span></div>`:''}${service?`<div class="row"><span>Service</span><span>${money(service)}</span></div>`:''}<div class="row grand"><span>GRAND TOTAL</span><span>${money(total)}</span></div></div><div class="footer">Thank you! Please visit again.</div></div></body></html>`;
+                </style></head><body><div class="receipt"><div class="head">${logo}<div class="name">${esc(restaurantName)}</div>${restaurantBrand.address?`<div class="small">${esc(restaurantBrand.address)}</div>`:''}${restaurantBrand.phone?`<div class="small">${esc(restaurantBrand.phone)}</div>`:''}<div style="font-weight:800;margin-top:2mm">${options.title || (isDelivery ? 'DELIVERY RECEIPT' : 'SALES RECEIPT')}</div></div><div class="line"></div><div class="small">Order: <b>${esc(order.id ?? order.local_id ?? 'Offline')}</b> &nbsp; ${isDelivery?'Delivery':`Table: ${esc(order.table_no ?? '-')}`}<br>${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}${order.customer_name?`<br>Customer: ${esc(order.customer_name)}`:''}${isDelivery && order.delivery_address?`<br>Address: ${esc(order.delivery_address)}`:''}</div><div class="line"></div><table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>${dealRows}${itemRows || '<tr><td colspan="4" style="text-align:center">No items</td></tr>'}</tbody></table><div class="line"></div><div class="summary"><div class="row"><span>Subtotal</span><b>${money(subtotal)}</b></div>${discount?`<div class="row"><span>Discount</span><span>- ${money(discount)}</span></div>`:''}${gst?`<div class="row"><span>GST</span><span>${money(gst)}</span></div>`:''}${tax?`<div class="row"><span>Tax</span><span>${money(tax)}</span></div>`:''}${service?`<div class="row"><span>Service</span><span>${money(service)}</span></div>`:''}${cardRow}${bankRow}<div class="row grand"><span>GRAND TOTAL</span><span>${money(total)}</span></div></div><div class="footer">Thank you! Please visit again.</div></div></body></html>`;
         }
 
         async function printOfflineOrder(orderId) {
@@ -2594,7 +2689,7 @@
                 <span class="status-chip st-${esc(statusValue)}">${esc(getStatusLabel(statusValue, o.order_type, o.payment_status))}</span>
             </h4>
             <div class="meta">
-                Payment: <b>${esc(paymentStatus)}</b>
+                Payment: <b>${esc(paymentStatus)}</b>${o.payment_method ? ` (${esc(o.payment_method)})` : ''}
                 ${o.customer_name ? `<br>Customer: ${esc(o.customer_name)}` : ''}
                 ${delivery && o.delivery_phone ? `<br>Phone: ${esc(o.delivery_phone)}` : ''}
                 ${delivery && o.delivery_address ? `<br>Address: ${esc(o.delivery_address)}` : ''}
@@ -2702,10 +2797,14 @@
             const taxAmount = Number(o.tax_amount || 0);
             const tax = gstAmount + taxAmount;
             const serviceCharge = Number(o.service_charge || 0);
-            const grandTotal = o.total_amount !== undefined && o.total_amount !== null ? Number(o.total_amount) : (subtotal - discount + tax + serviceCharge);
+            const cardCharge = Number(o.card_charge || 0);
+            const bankCharge = Number(o.bank_charge || 0);
+            const grandTotal = o.total_amount !== undefined && o.total_amount !== null ? Number(o.total_amount) : (subtotal - discount + tax + serviceCharge + cardCharge + bankCharge);
             const discountRow = discount > 0 ? `<div class="summary-row discount"><span>Discount</span><span>- ${money(discount)}</span></div>` : '';
             const taxRow = tax > 0 ? `${gstAmount > 0 ? `<div class="summary-row tax"><span>GST</span><span>${money(gstAmount)}</span></div>` : ''}${taxAmount > 0 ? `<div class="summary-row tax"><span>Other Tax</span><span>${money(taxAmount)}</span></div>` : ''}` : '';
             const serviceRow = serviceCharge > 0 ? `<div class="summary-row service"><span>Service Charge</span><span>${money(serviceCharge)}</span></div>` : '';
+            const cardRow = cardCharge > 0 ? `<div class="summary-row"><span>💳 Card Charges</span><span>${money(cardCharge)}</span></div>` : '';
+            const bankRow = bankCharge > 0 ? `<div class="summary-row"><span>🏦 Bank Charges</span><span>${money(bankCharge)}</span></div>` : '';
             const createdAt = o.created_at || o.createdAt;
             const dateStr = createdAt ? new Date(createdAt).toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
             const timeStr = createdAt ? new Date(createdAt).toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' }) : '-';
@@ -2756,7 +2855,7 @@
                             <hr class="divider">${deliveryInfo}
                             <table class="items"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead><tbody>${rows || '<tr><td colspan="4" style="text-align:center">No items</td></tr>'}</tbody></table>
                             <hr class="divider">
-                            <div class="summary"><div class="summary-row"><span>Subtotal</span><span>${money(subtotal)}</span></div>${discountRow}${taxRow}${serviceRow}<div class="grand-total"><span>Grand Total</span><span>${money(grandTotal)}</span></div></div>
+                            <div class="summary"><div class="summary-row"><span>Subtotal</span><span>${money(subtotal)}</span></div>${discountRow}${taxRow}${serviceRow}${cardRow}${bankRow}<div class="grand-total"><span>Grand Total</span><span>${money(grandTotal)}</span></div></div>
                             ${paymentRows}
                             <div class="thank-you">Thank You!</div>
                             <div class="footer-text">We appreciate your visit.<br>Please visit us again.</div>
@@ -2771,18 +2870,52 @@
             closeSlip();
         }
 
+        // ✅ Update paid amount + hint when payment method changes in the Receive Payment modal
+        function updatePaymentSurcharge() {
+            const hint = document.getElementById('paymentSurchargeHint');
+            if (!paymentOrderId) {
+                if (hint) hint.style.display = 'none';
+                return;
+            }
+            const order = orders.find(x => Number(x.id) === Number(paymentOrderId));
+            if (!order) return;
+            const method = document.getElementById('paymentMethod').value;
+            const baseAmount = Number(order.total_amount || 0);
+            const percent = getPaymentSurchargePercent(method);
+            const surcharge = baseAmount * (percent / 100);
+            const finalAmount = baseAmount + surcharge;
+            document.getElementById('paidAmount').value = finalAmount.toFixed(2);
+            if (percent > 0) {
+                if (hint) {
+                    hint.textContent = `⚠️ ${method} surcharge: ${percent}% = ${money(surcharge)}`;
+                    hint.style.display = 'block';
+                }
+                document.getElementById('paymentInfo').textContent =
+                    `Order #${order.id} — Base ${money(baseAmount)} + ${method} Charges (${percent}%) = ${money(finalAmount)}`;
+            } else {
+                if (hint) hint.style.display = 'none';
+                document.getElementById('paymentInfo').textContent = `Order #${order.id} — Total ${money(baseAmount)}`;
+            }
+        }
+
         function openPayment(id) {
             const order = orders.find(x => Number(x.id) === Number(id));
             if (!order) return;
             paymentOrderId = Number(id);
+            // Reset to Cash by default and compute amount (no surcharge for Cash)
+            document.getElementById('paymentMethod').value = 'Cash';
             document.getElementById('paidAmount').value = Number(order.total_amount || 0).toFixed(2);
             document.getElementById('paymentInfo').textContent = `Order #${order.id} — Total ${money(order.total_amount)}`;
+            const hint = document.getElementById('paymentSurchargeHint');
+            if (hint) hint.style.display = 'none';
             document.getElementById('paymentModal').classList.add('show');
         }
 
         function closePayment() {
             paymentOrderId = null;
             document.getElementById('paymentModal').classList.remove('show');
+            const hint = document.getElementById('paymentSurchargeHint');
+            if (hint) hint.style.display = 'none';
         }
 
         async function confirmPayment() {
@@ -2792,10 +2925,22 @@
             if (!Number.isFinite(amount) || amount < 0) {
                 return alert('Invalid paid amount.');
             }
+            // Compute surcharge fields for the API
+            const order = orders.find(x => Number(x.id) === Number(paymentOrderId));
+            const baseAmount = Number(order?.total_amount || 0);
+            const percent = getPaymentSurchargePercent(method);
+            const surcharge = baseAmount * (percent / 100);
+            const cardCharge = method === 'Card' ? surcharge : 0;
+            const bankCharge = method === 'Bank' ? surcharge : 0;
             try {
                 const data = await apiFetch(`${API_BASE}/orders/${paymentOrderId}/pay`, {
                     method: 'PUT',
-                    body: JSON.stringify({ payment_method: method, paid_amount: amount })
+                    body: JSON.stringify({
+                        payment_method: method,
+                        paid_amount: amount,
+                        card_charge: cardCharge,
+                        bank_charge: bankCharge
+                    })
                 });
                 closePayment();
                 await loadOrders();
@@ -3015,7 +3160,7 @@
         async function startCounter() {
             setOrderType('dine_in');
 
-            // ✅ FIX: Load saved defaults into the order form on startup
+            // ✅ Load saved defaults into the order form on startup
             resetChargesToDefaults();
 
             renderCart();
@@ -3187,6 +3332,7 @@
         window.openPayment = openPayment;
         window.closePayment = closePayment;
         window.confirmPayment = confirmPayment;
+        window.updatePaymentSurcharge = updatePaymentSurcharge;
         window.editBill = editBill;
         window.outForDelivery = outForDelivery;
         window.markDelivered = markDelivered;
@@ -3209,9 +3355,6 @@
         window.loadMenu = loadMenu;
         window.loadDeals = loadDeals;
         window.loadShiftStatus = loadShiftStatus;
-       
-        
-
     </script>
 </body>
 </html>
