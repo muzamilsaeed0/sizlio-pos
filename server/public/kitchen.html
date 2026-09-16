@@ -1629,9 +1629,231 @@ async function toggleShiftDetail(shiftId, rowEl){
   }
   detailRow.style.display = 'table-row';
 }
-function printShiftReports(){
-  if(!shiftReportsData.length) return;
-  printShiftReportHtml(shiftReportsData, 'Shift Reports');
+async function printShiftReports(){
+  if(!shiftReportsData.length){
+    alert('No shifts to print.');
+    return;
+  }
+  
+  const btn = event?.target;
+  const originalText = btn?.textContent || 'Print This List';
+  if (btn) { btn.disabled = true; btn.textContent = 'Preparing...'; }
+  
+  try {
+    // ✅ Har shift ki full details fetch karein
+    const shiftsWithDetails = [];
+    for (const shift of shiftReportsData) {
+      try {
+        const sumRes = await apiFetch(`${API_BASE}/shifts/${shift.id}/summary`);
+        let orders = Array.isArray(sumRes.data?.orders) ? sumRes.data.orders : [];
+        
+        if (!orders.length) {
+          orders = await fetchOrdersForShift(shift);
+        }
+        
+        const ingredients = await calculateIngredientConsumption(orders);
+        
+        shiftsWithDetails.push({
+          ...shift,
+          detailOrders: orders,
+          detailIngredients: ingredients,
+          orders_count: orders.length || shift.orders_count
+        });
+      } catch (err) {
+        console.error('Detail fetch failed for shift', shift.id, err);
+        shiftsWithDetails.push({
+          ...shift,
+          detailOrders: [],
+          detailIngredients: []
+        });
+      }
+    }
+    
+    printFullShiftReportHtml(shiftsWithDetails);
+  } catch (err) {
+    console.error('printShiftReports:', err);
+    alert('Unable to prepare print.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = originalText; }
+  }
+} 
+
+function printFullShiftReportHtml(shifts){
+  const restaurantName = (restaurantBrand && restaurantBrand.name) || 'Your Restaurant';
+  
+  // Summary table rows
+  const summaryRows = shifts.map(s => `
+    <tr>
+      <td>${new Date(s.started_at).toLocaleDateString()}</td>
+      <td>${esc(s.full_name || s.username || 'Unknown')}</td>
+      <td>${new Date(s.started_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</td>
+      <td>${s.ended_at ? new Date(s.ended_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '-'}</td>
+      <td>${esc(s.status)}</td>
+      <td style="text-align:right">${s.orders_count || 0}</td>
+      <td style="text-align:right">${money(s.total_ingredient_cost || 0)}</td>
+    </tr>
+  `).join('');
+  
+  // Detailed sections for each shift
+  const detailSections = shifts.map(s => {
+    const orders = s.detailOrders || [];
+    const ingredients = s.detailIngredients || [];
+    
+    const ordersHtml = orders.map(o => {
+      const plainItems = Array.isArray(o.items) ? o.items : [];
+      const dealGroups = Array.isArray(o.deals) ? o.deals : [];
+      
+      let itemsHtml = '';
+      if (plainItems.length) {
+        itemsHtml += plainItems.map(item => `
+          <div class="order-line">
+            <span>${esc(item.name)}${item.variant_label ? ' (' + esc(item.variant_label) + ')' : ''}</span>
+            <span>×${esc(item.quantity)}</span>
+          </div>
+        `).join('');
+      }
+      
+      if (dealGroups.length) {
+        itemsHtml += dealGroups.map(deal => {
+          const dealItems = Array.isArray(deal.items) ? deal.items : [];
+          const dealItemsHtml = dealItems.map(item => `
+            <div class="order-line" style="padding-left:16px;color:#666;">
+              <span>↳ ${esc(item.name)}${item.variant_label ? ' (' + esc(item.variant_label) + ')' : ''}</span>
+              <span>×${esc(item.quantity)}</span>
+            </div>
+          `).join('');
+          return `
+            <div class="order-line" style="font-weight:700;border-top:1px solid #ddd;padding-top:4px;margin-top:4px;">
+              <span>🎁 ${esc(deal.deal_name)} ×${esc(deal.quantity)}</span>
+              <span></span>
+            </div>
+            ${dealItemsHtml}
+          `;
+        }).join('');
+      }
+      
+      // ✅ FIX: Proper label
+      const orderType = String(o.order_type || '').toLowerCase().trim();
+      const tableNoNum = Number(o.table_no);
+      
+      let tableLabel;
+      if (orderType === 'delivery') {
+        tableLabel = 'Delivery';
+      } else if (orderType === 'walk_in' || orderType === 'walkin') {
+        tableLabel = 'Walk-in';
+      } else if (Number.isFinite(tableNoNum) && tableNoNum > 0) {
+        tableLabel = `Table ${esc(tableNoNum)}`;
+      } else {
+        tableLabel = 'Order';
+      }
+      
+      return `
+        <div class="order-card">
+          <div class="order-head">
+            <span>#${o.id} — ${tableLabel}</span>
+            <span>${money(o.total_amount)}</span>
+          </div>
+          <div class="order-meta">
+            ${new Date(o.created_at).toLocaleString()}
+            · ${esc(o.payment_status)}${o.payment_method ? ' (' + esc(o.payment_method) + ')' : ''}
+          </div>
+          <div class="order-items">
+            ${itemsHtml || '<div style="color:#666;font-size:11px;">No items</div>'}
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    const ingredientsHtml = ingredients.length ? `
+      <div class="ingredient-section">
+        <h4>🧾 Ingredients Used</h4>
+        <div class="ingredient-grid">
+          ${ingredients.map(ing => `
+            <div class="ingredient-item">
+              <span>${esc(ing.name)}</span>
+              <span><strong>${ing.total_quantity.toFixed(3)} ${esc(ing.unit)}</strong> (${money(ing.total_cost)})</span>
+            </div>
+          `).join('')}
+        </div>
+        <div class="total-ingredient">
+          Total: <strong>${money(ingredients.reduce((sum, i) => sum + i.total_cost, 0))}</strong>
+        </div>
+      </div>
+    ` : '';
+    
+    return `
+      <div class="shift-detail">
+        <div class="shift-header">
+          <h3>Shift #${s.id} — ${esc(s.full_name || s.username || 'Unknown')}</h3>
+          <div class="shift-meta">
+            ${new Date(s.started_at).toLocaleString()} → ${s.ended_at ? new Date(s.ended_at).toLocaleString() : 'Active'}
+            · <strong>${orders.length} orders</strong>
+          </div>
+        </div>
+        <h4 style="margin:12px 0 8px;">📋 Orders Prepared (${orders.length})</h4>
+        ${ordersHtml || '<div style="color:#666;font-size:12px;">No orders</div>'}
+        ${ingredientsHtml}
+      </div>
+    `;
+  }).join('');
+  
+  const html = `
+    <html>
+    <head>
+    <style>
+      *{box-sizing:border-box}
+      body{font-family:Arial,Helvetica,sans-serif;padding:20px;color:#111;line-height:1.5}
+      h2{margin:0 0 4px}
+      h3{margin:0 0 4px;font-size:15px}
+      h4{margin:12px 0 8px;font-size:13px}
+      .sub{color:#555;font-size:12px;margin-bottom:20px}
+      .section-title{background:#f0f0f0;padding:8px 10px;border-radius:6px;font-weight:700;margin:20px 0 12px;font-size:14px}
+      table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px}
+      th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}
+      th{background:#f0f0f0}
+      .shift-detail{border:1px solid #ccc;border-radius:8px;padding:12px;margin-bottom:16px;page-break-inside:avoid}
+      .shift-header{border-bottom:2px solid #333;padding-bottom:8px;margin-bottom:8px}
+      .shift-meta{font-size:11px;color:#666;margin-top:4px}
+      .order-card{border:1px solid #ddd;border-radius:6px;padding:8px 10px;margin-bottom:8px;background:#fafafa;page-break-inside:avoid}
+      .order-head{display:flex;justify-content:space-between;font-weight:700;font-size:12px;margin-bottom:3px}
+      .order-meta{font-size:10px;color:#666;margin-bottom:5px}
+      .order-items{padding-left:8px;border-left:2px solid #c97b2e}
+      .order-line{display:flex;justify-content:space-between;padding:2px 0;font-size:11px;border-bottom:1px dashed #eee}
+      .order-line:last-child{border-bottom:none}
+      .ingredient-section{margin-top:10px;padding-top:8px;border-top:1px dashed #ccc}
+      .ingredient-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px}
+      .ingredient-item{display:flex;justify-content:space-between;padding:3px 6px;background:#f0f0f0;border-radius:3px}
+      .total-ingredient{text-align:right;font-size:11px;color:#666;margin-top:6px}
+      @media print {
+        body{padding:10px}
+        .shift-detail{page-break-inside:avoid}
+        .order-card{page-break-inside:avoid}
+      }
+    </style>
+    </head>
+    <body onload="window.print();">
+      <h2>${esc(restaurantName)}</h2>
+      <div class="sub">Shift Reports — printed ${new Date().toLocaleString()}</div>
+      
+      <div class="section-title">📊 Summary</div>
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Staff</th><th>Start</th><th>End</th><th>Status</th><th>Orders</th><th>Total Cost</th></tr>
+        </thead>
+        <tbody>${summaryRows}</tbody>
+      </table>
+      
+      <div class="section-title">📋 Detailed Reports</div>
+      ${detailSections}
+    </body>
+    </html>
+  `;
+  
+  const frame = document.getElementById('printFrame');
+  const doc = frame.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
 }
 
 function printShiftReportHtml(shifts, title){
