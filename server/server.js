@@ -247,3 +247,44 @@ server.listen(PORT, "0.0.0.0", () => {
   console.log(`Public URL: ${PUBLIC_URL}`);
 
 });
+
+
+// =====================================================
+// CONNECTED USERS TRACKER
+// =====================================================
+
+const connectedUsers = new Map();
+
+io.on("connection", (socket) => {
+
+  const roomName = `restaurant_${socket.user.restaurant_id}`;
+  socket.join(roomName);
+
+  // ✅ User ko online mark karein
+  connectedUsers.set(socket.user.id, {
+    id: socket.user.id,
+    role: socket.user.role,
+    restaurant_id: socket.user.restaurant_id,
+    connected_at: new Date(),
+    socket_id: socket.id
+  });
+
+  console.log(`✅ ONLINE: User ${socket.user.id} (${socket.user.role})`);
+
+  socket.on("disconnect", (reason) => {
+    // ✅ User ko offline mark karein
+    connectedUsers.delete(socket.user.id);
+    console.log(`❌ OFFLINE: User ${socket.user.id} | ${reason}`);
+  });
+
+});
+
+// ✅ API endpoint — kon online hai
+app.get("/api/admin/online-users", (req, res) => {
+  const online = Array.from(connectedUsers.values());
+  res.json({
+    success: true,
+    count: online.length,
+    users: online
+  });
+});
