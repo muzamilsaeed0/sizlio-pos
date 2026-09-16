@@ -1318,11 +1318,20 @@ function renderShiftOrdersWithIngredients(ordersList, ingredientSummary) {
       }).join('');
     }
 
-    const tableLabel = o.order_type === 'delivery'
-      ? 'Delivery'
-      : (o.table_no !== null && o.table_no !== undefined)
-        ? `Table ${esc(o.table_no)}`
-        : 'Order';
+    // ✅ FIXED: Proper label for walk-in, delivery, dine-in
+    const orderType = String(o.order_type || '').toLowerCase().trim();
+    const tableNoNum = Number(o.table_no);
+
+    let tableLabel;
+    if (orderType === 'delivery') {
+      tableLabel = '🚚 Delivery';
+    } else if (orderType === 'walk_in' || orderType === 'walkin') {
+      tableLabel = '🛍️ Walk-in';
+    } else if (Number.isFinite(tableNoNum) && tableNoNum > 0) {
+      tableLabel = `🍽️ Table ${esc(tableNoNum)}`;
+    } else {
+      tableLabel = '📋 Order';
+    }
 
     return `
       <div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:var(--bg);">
