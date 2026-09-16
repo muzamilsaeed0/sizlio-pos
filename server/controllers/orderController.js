@@ -166,8 +166,10 @@ exports.placeOrder = async (
     payment_timing = 'PAY_LATER',
     paid_amount = 0,
     deals = [],
-     delivery_charge = 0,  
-     dine_charge = 0 
+    delivery_charge = 0,
+    dine_charge = 0,
+    card_charge = 0,        // ✅ NEW
+    bank_charge = 0         // ✅ NEW
   } = req.body;
 
 
@@ -696,7 +698,9 @@ if (order_type === 'dine_in') {
         normalizedDeals,
         req.user?.id || null,             
         Number(delivery_charge || 0),    
-        Number(dine_charge || 0)         
+        Number(dine_charge || 0),
+        Number(card_charge || 0),        // ✅ NEW
+        Number(bank_charge || 0)         // ✅ NEW
       );
 
 
@@ -2985,6 +2989,30 @@ exports.pay = async (
   }
 
 
+  
+
+  
+
+
+  // ✅ NEW: Card / Bank surcharge amounts
+  const cardCharge = Number(req.body.card_charge || 0);
+  const bankCharge = Number(req.body.bank_charge || 0);
+
+  if (!Number.isFinite(cardCharge) || cardCharge < 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid card charge'
+    });
+  }
+
+  if (!Number.isFinite(bankCharge) || bankCharge < 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid bank charge'
+    });
+  }
+
+
   const restaurantId =
     getRestaurantId(req);
 
@@ -3018,7 +3046,10 @@ exports.pay = async (
 
         paidAmount,
 
-        req.user?.id || null
+        req.user?.id || null,
+
+        cardCharge,          // ✅ NEW
+        bankCharge           // ✅ NEW
 
       );
 
@@ -4587,42 +4618,48 @@ async function recalculateOrderPricing(orderId, restaurantId) {
       subtotal += Number(row.quantity) * Number(row.price);
     });
 
-    // Get discounts
+    // ✅ Card/bank bhi fetch karo
     const orderResult = await client.query(
-  `SELECT discount_type, discount_value, gst_percent, tax_percent,
-          delivery_charge, dine_charge
-   FROM orders WHERE id = $1`,
-  [orderId]
-);
-const order = orderResult.rows[0];
+      `SELECT discount_type, discount_value, gst_percent, tax_percent,
+              delivery_charge, dine_charge, card_charge, bank_charge
+       FROM orders WHERE id = $1 AND restaurant_id = $2`,
+      [orderId, restaurantId]
+    );
+    const order = orderResult.rows[0];
+    if (!order) {
+      await client.query('ROLLBACK');
+      return;
+    }
 
-let discountAmount = 0;
-if (order.discount_type === 'percent') {
-  discountAmount = subtotal * (order.discount_value / 100);
-} else if (order.discount_type === 'fixed') {
-  discountAmount = order.discount_value;
-}
-discountAmount = Math.min(discountAmount, subtotal);
+    let discountAmount = 0;
+    if (order.discount_type === 'percent') {
+      discountAmount = subtotal * (order.discount_value / 100);
+    } else if (order.discount_type === 'fixed') {
+      discountAmount = order.discount_value;
+    }
+    discountAmount = Math.min(discountAmount, subtotal);
 
-const afterDiscount = subtotal - discountAmount;
-const gstAmount = afterDiscount * (order.gst_percent / 100);
-const taxAmount = afterDiscount * (order.tax_percent / 100);
+    const afterDiscount = subtotal - discountAmount;
+    const gstAmount = afterDiscount * (order.gst_percent / 100);
+    const taxAmount = afterDiscount * (order.tax_percent / 100);
 
-// ✅ Include delivery/dine charges
-const deliveryCharge = Number(order.delivery_charge || 0);
-const dineCharge = Number(order.dine_charge || 0);
-const total = afterDiscount + gstAmount + taxAmount + deliveryCharge + dineCharge;
+    // ✅ Sab charges add karo
+    const deliveryCharge = Number(order.delivery_charge || 0);
+    const dineCharge = Number(order.dine_charge || 0);
+    const cardCharge = Number(order.card_charge || 0);
+    const bankCharge = Number(order.bank_charge || 0);
+    const total = afterDiscount + gstAmount + taxAmount + deliveryCharge + dineCharge + cardCharge + bankCharge;
 
-await client.query(
-  `UPDATE orders SET
-    subtotal = $1,
-    discount_amount = $2,
-    gst_amount = $3,
-    tax_amount = $4,
-    total_amount = $5
-   WHERE id = $6`,
-  [subtotal, discountAmount, gstAmount, taxAmount, total, orderId]
-);
+    await client.query(
+      `UPDATE orders SET
+        subtotal = $1,
+        discount_amount = $2,
+        gst_amount = $3,
+        tax_amount = $4,
+        total_amount = $5
+       WHERE id = $6 AND restaurant_id = $7`,
+      [subtotal, discountAmount, gstAmount, taxAmount, total, orderId, restaurantId]
+    );
 
     await client.query('COMMIT');
   } catch (err) {

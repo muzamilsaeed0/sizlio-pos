@@ -342,8 +342,10 @@ const createOrder = async (
   paidAmount = 0,
   deals = [],
   createdByUserId = null,
-  deliveryCharge = 0,   
-    dineCharge = 0  
+  deliveryCharge = 0,
+  dineCharge = 0,
+  cardCharge = 0,      // ✅ NEW
+  bankCharge = 0       // ✅ NEW
 ) => {
 
   const client =
@@ -670,8 +672,10 @@ const createOrder = async (
 
           created_by_user_id,
           paid_by_user_id,
-           delivery_charge,
-            dine_charge
+          delivery_charge,
+          dine_charge,
+          card_charge,
+          bank_charge
         )
 
         VALUES
@@ -700,7 +704,9 @@ const createOrder = async (
           $16,
           $17,
           $18,
-          $19
+          $19,
+          $20,
+          $21
         )
 
         RETURNING *
@@ -737,8 +743,10 @@ const createOrder = async (
           initialPaymentStatus === 'paid'
             ? createdByUserId
             : null,
-            Number(deliveryCharge || 0),  
-             Number(dineCharge || 0)  
+          Number(deliveryCharge || 0),
+          Number(dineCharge || 0),
+          Number(cardCharge || 0),     // ✅ NEW
+          Number(bankCharge || 0)      // ✅ NEW
         ]
       );
 
@@ -1149,10 +1157,11 @@ const createOrder = async (
       );
 
        // ✅ Final total with delivery/dine charges
-const finalDeliveryCharge = Number(deliveryCharge || 0);
-const finalDineCharge = Number(dineCharge || 0);
-const finalTotalAmount = calculated.totalAmount + finalDeliveryCharge + finalDineCharge;
-
+    const finalDeliveryCharge = Number(deliveryCharge || 0);
+    const finalDineCharge = Number(dineCharge || 0);
+    const finalCardCharge = Number(cardCharge || 0);     // ✅ NEW
+    const finalBankCharge = Number(bankCharge || 0);     // ✅ NEW
+    const finalTotalAmount = calculated.totalAmount + finalDeliveryCharge + finalDineCharge + finalCardCharge + finalBankCharge;
 
 
     // --------------------------------------------------
@@ -1191,12 +1200,14 @@ const finalTotalAmount = calculated.totalAmount + finalDeliveryCharge + finalDin
       discount_amount = $2,
       gst_amount = $3,
       tax_amount = $4,
-      total_amount = $5,   
-      payment_status = $6::varchar,
-      paid_amount = $7,
-      payment_method = CASE WHEN $6::varchar = 'paid' THEN 'Cash' ELSE NULL END,
-      paid_at = CASE WHEN $6::varchar = 'paid' THEN NOW() ELSE NULL END
-    WHERE id = $8 AND restaurant_id = $9
+      total_amount = $5,
+      card_charge = $6,
+      bank_charge = $7,
+      payment_status = $8::varchar,
+      paid_amount = $9,
+      payment_method = CASE WHEN $8::varchar = 'paid' THEN 'Cash' ELSE NULL END,
+      paid_at = CASE WHEN $8::varchar = 'paid' THEN NOW() ELSE NULL END
+    WHERE id = $10 AND restaurant_id = $11
     RETURNING *
     `,
     [
@@ -1204,13 +1215,16 @@ const finalTotalAmount = calculated.totalAmount + finalDeliveryCharge + finalDin
       calculated.discountAmount.toFixed(2),
       calculated.gstAmount.toFixed(2),
       calculated.taxAmount.toFixed(2),
-      finalTotalAmount.toFixed(2),   // ✅ Changed from calculated.totalAmount
+      finalTotalAmount.toFixed(2),
+      finalCardCharge.toFixed(2),     // ✅ NEW
+      finalBankCharge.toFixed(2),     // ✅ NEW
       initialPaymentStatus,
       finalPaidAmount.toFixed(2),
       order.id,
       restaurantId
     ]
   );
+   
 
 
     await client.query('COMMIT');
@@ -2320,33 +2334,23 @@ const updateOrderPricing = async (
     await client.query('BEGIN');
 
 
-    const orderResult =
+        const orderResult =
       await client.query(
         `
         SELECT
-
           id,
-
           subtotal,
-
           status,
-
           payment_status,
-
-          paid_amount
-
+          paid_amount,
+          card_charge,
+          bank_charge
         FROM orders
-
         WHERE id = $1
-
           AND restaurant_id = $2
-
         FOR UPDATE
         `,
-        [
-          id,
-          restaurantId
-        ]
+        [id, restaurantId]
       );
 
 
@@ -2542,7 +2546,9 @@ const dineCharge = Number(pricing.dine_charge || 0);
         taxPercent
       );
 
-      const finalTotal = calculated.totalAmount + deliveryCharge + dineCharge;
+      const existingCardCharge = Number(order.card_charge || 0);
+      const existingBankCharge = Number(order.bank_charge || 0);
+      const finalTotal = calculated.totalAmount + deliveryCharge + dineCharge + existingCardCharge + existingBankCharge;
 
 
     const result = await client.query(
@@ -2627,7 +2633,9 @@ const markPaid = async (
   restaurantId,
   paymentMethod = 'Cash',
   paidAmount = null,
-  paidByUserId = null
+  paidByUserId = null,
+  cardCharge = 0,      // ✅ NEW
+  bankCharge = 0       // ✅ NEW
 ) => {
 
   const client =
@@ -2819,35 +2827,32 @@ const markPaid = async (
     // MARK PAID
     // ==================================================
 
+    // ✅ Naye totals calculate karein
+    const addCard = Number(cardCharge) || 0;
+    const addBank = Number(bankCharge) || 0;
+    const newTotalAmount = totalAmount + addCard + addBank;
+
     const result =
       await client.query(
         `
         UPDATE orders
 
         SET
-
-          
-
           payment_status = 'paid',
-
           payment_method = $3,
-
           paid_amount = $4,
-
           paid_at = NOW(),
-
-          paid_by_user_id = $5
-
+          paid_by_user_id = $5,
+          card_charge = $6,
+          bank_charge = $7,
+          total_amount = $8
         WHERE id = $1
-
           AND restaurant_id = $2
-
           AND status IN (
             'served',
             'payment_pending',
             'delivered'
           )
-
           AND payment_status = 'unpaid'
 
         RETURNING *
@@ -2857,7 +2862,10 @@ const markPaid = async (
           restaurantId,
           paymentMethod,
           finalPaidAmount.toFixed(2),
-          paidByUserId
+          paidByUserId,
+          addCard.toFixed(2),        // ✅ NEW
+          addBank.toFixed(2),        // ✅ NEW
+          newTotalAmount.toFixed(2)  // ✅ NAYA total
         ]
       );
 
@@ -4034,9 +4042,11 @@ const recalculateOrderPricing = async (client, orderId, restaurantId) => {
   );
 
   // ✅ Charges add karo
-  const finalDeliveryCharge = Number(order.delivery_charge || 0);
+   const finalDeliveryCharge = Number(order.delivery_charge || 0);
   const finalDineCharge = Number(order.dine_charge || 0);
-  const finalTotal = calculated.totalAmount + finalDeliveryCharge + finalDineCharge;
+  const finalCardCharge = Number(order.card_charge || 0);
+  const finalBankCharge = Number(order.bank_charge || 0);
+  const finalTotal = calculated.totalAmount + finalDeliveryCharge + finalDineCharge + finalCardCharge + finalBankCharge;
 
   await client.query(
     `UPDATE orders SET
