@@ -7,12 +7,25 @@ const { Resend } = require("resend");
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // =====================================================
-// FROM ADDRESS
+// FROM ADDRESSES (with fallbacks)
 // =====================================================
 
-const FROM_ADDRESS =
+const FROM_NO_REPLY =
+  process.env.EMAIL_FROM_NO_REPLY ||
+  "Sizlio POS <no-reply@sizlio.com>";
+
+const FROM_SALES =
+  process.env.EMAIL_FROM_SALES ||
+  "Sizlio Sales <sales@sizlio.com>";
+
+// ✅ Support — agar set nahi hai to no-reply use kare
+const FROM_SUPPORT =
+  process.env.EMAIL_FROM_SUPPORT ||
+  FROM_NO_REPLY;
+
+const FROM_DEFAULT =
   process.env.EMAIL_FROM ||
-  "Sizlio POS <onboarding@resend.dev>";
+  FROM_NO_REPLY;
 
 // =====================================================
 // GET BASE URL
@@ -27,7 +40,7 @@ function getBaseUrl() {
 }
 
 // =====================================================
-// ROLE LOGIN URL WITH RESTAURANT ID
+// ROLE LOGIN URL
 // =====================================================
 
 function getLoginUrl(role, restaurantId) {
@@ -198,11 +211,12 @@ const sendRestaurantCredentials = async ({
 
           <p>
             Regards,<br>
-            <strong>Sizlio POS</strong>
+            <strong>Sizlio Team</strong>
           </p>
 
           <p style="font-size:12px;color:#6b7280;">
-            This is an automated email. Please do not reply.
+            This is an automated email. Please do not reply.<br>
+            For inquiries, contact <a href="mailto:sales@sizlio.com" style="color:#2563eb;">sales@sizlio.com</a>
           </p>
         </div>
 
@@ -212,7 +226,8 @@ const sendRestaurantCredentials = async ({
   `;
 
   const result = await resend.emails.send({
-    from: FROM_ADDRESS,
+    from: FROM_NO_REPLY,
+    reply_to: "sales@sizlio.com",
     to: restaurant.email,
     subject: `Sizlio POS - ${restaurant.name} Login Details`,
     html
@@ -224,6 +239,140 @@ const sendRestaurantCredentials = async ({
 
   return result;
 };
+
+// =====================================================
+// SEND ORDER CONFIRMATION
+// =====================================================
+
+const sendOrderConfirmation = async ({
+  to,
+  customerName,
+  orderId,
+  orderTotal,
+  restaurantName,
+  items
+}) => {
+
+  const itemsHtml = items.map(item => `
+    <tr>
+      <td style="padding:8px 0;border-bottom:1px solid #e5e7eb;">
+        ${escapeHtml(item.name)}${item.variant_label ? ` (${escapeHtml(item.variant_label)})` : ''}
+        × ${item.quantity}
+      </td>
+      <td style="padding:8px 0;border-bottom:1px solid #e5e7eb;text-align:right;">
+        Rs ${Number(item.price * item.quantity).toLocaleString()}
+      </td>
+    </tr>
+  `).join('');
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
+      <div style="max-width:600px;margin:30px auto;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <div style="background:#111827;color:#ffffff;padding:25px;text-align:center;">
+          <h1 style="margin:0;font-size:22px;">${escapeHtml(restaurantName)}</h1>
+          <p style="margin:7px 0 0;color:#d1d5db;font-size:14px;">Order Confirmation</p>
+        </div>
+        <div style="padding:30px;">
+          <p>Hi ${escapeHtml(customerName || 'Customer')},</p>
+          <p>Your order <strong>#${escapeHtml(orderId)}</strong> has been received successfully.</p>
+
+          <table cellpadding="0" cellspacing="0" style="width:100%;margin-top:20px;">
+            <thead>
+              <tr>
+                <th align="left" style="padding-bottom:8px;border-bottom:2px solid #111827;">Item</th>
+                <th align="right" style="padding-bottom:8px;border-bottom:2px solid #111827;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>${itemsHtml}</tbody>
+          </table>
+
+          <div style="margin-top:20px;padding-top:15px;border-top:2px solid #111827;text-align:right;">
+            <strong style="font-size:18px;">Total: Rs ${Number(orderTotal).toLocaleString()}</strong>
+          </div>
+
+          <p style="margin-top:30px;font-size:13px;color:#6b7280;">
+            Thank you for ordering from ${escapeHtml(restaurantName)}!
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const result = await resend.emails.send({
+    from: FROM_NO_REPLY,
+    reply_to: "sales@sizlio.com",
+    to,
+    subject: `Order #${orderId} Confirmed - ${restaurantName}`,
+    html
+  });
+
+  if (result.error) {
+    throw new Error(result.error.message || "Resend API error");
+  }
+
+  return result;
+};
+
+// =====================================================
+// SEND PASSWORD RESET
+// Note: Uses FROM_SUPPORT which falls back to FROM_NO_REPLY
+// =====================================================
+
+const sendPasswordReset = async ({
+  to,
+  username,
+  resetUrl,
+  restaurantName
+}) => {
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
+      <div style="max-width:560px;margin:30px auto;background:#ffffff;border-radius:14px;overflow:hidden;">
+        <div style="background:#111827;color:#ffffff;padding:25px;text-align:center;">
+          <h1 style="margin:0;font-size:22px;">Password Reset</h1>
+        </div>
+        <div style="padding:30px;">
+          <p>Hi,</p>
+          <p>We received a request to reset the password for your account <strong>${escapeHtml(username)}</strong> at ${escapeHtml(restaurantName)}.</p>
+
+          <div style="text-align:center;margin:30px 0;">
+            <a href="${escapeAttribute(resetUrl)}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;">
+              Reset Password
+            </a>
+          </div>
+
+          <p style="font-size:13px;color:#6b7280;">
+            This link is valid for 30 minutes. If you didn't request this, please ignore this email.
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const result = await resend.emails.send({
+    from: FROM_SUPPORT,
+    reply_to: "sales@sizlio.com",
+    to,
+    subject: `Password Reset - ${restaurantName}`,
+    html
+  });
+
+  if (result.error) {
+    throw new Error(result.error.message || "Resend API error");
+  }
+
+  return result;
+};
+
+// =====================================================
+// ESCAPE HELPERS
+// =====================================================
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -239,5 +388,11 @@ function escapeAttribute(value) {
 }
 
 module.exports = {
-  sendRestaurantCredentials
+  sendRestaurantCredentials,
+  sendOrderConfirmation,
+  sendPasswordReset,
+  FROM_NO_REPLY,
+  FROM_SALES,
+  FROM_SUPPORT,
+  FROM_DEFAULT
 };
