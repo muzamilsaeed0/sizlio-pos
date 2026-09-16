@@ -122,13 +122,31 @@ exports.login = async (req, res) => {
     }
 
     // ==========================================
-    // SESSION & JWT
-    // ==========================================
-    const sessionId = crypto.randomBytes(16).toString('hex');
-    await pool.query(
-      `UPDATE users SET current_session = $1 WHERE id = $2`,
-      [sessionId, user.id]
-    );
+// SESSION & JWT + LOGIN TRACKING
+// ==========================================
+const sessionId = crypto.randomBytes(16).toString('hex');
+
+// ✅ Client IP nikalein (proxy-aware)
+const clientIp =
+  (req.headers['x-forwarded-for']?.split(',')[0].trim()) ||
+  req.headers['x-real-ip'] ||
+  req.connection?.remoteAddress ||
+  req.ip ||
+  'Unknown';
+
+// ✅ Device info (browser/OS)
+const userAgent = req.headers['user-agent'] || 'Unknown';
+
+// ✅ Session + Login tracking ek hi query mein
+await pool.query(
+  `UPDATE users 
+   SET current_session = $1,
+       last_login_at = NOW(),
+       last_login_ip = $2,
+       last_login_device = $3
+   WHERE id = $4`,
+  [sessionId, clientIp, userAgent, user.id]
+);
 
     const token = jwt.sign(
       {
