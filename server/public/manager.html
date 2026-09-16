@@ -91,7 +91,7 @@
 
     /* ========================= APP ========================= */
     #app-box {
-      max-width: 1100px; /* Updated for full screen */
+      max-width: 1100px;
       margin: auto;
       padding: 0 16px 60px;
     }
@@ -430,20 +430,6 @@
       </div>
     </div>
 
-    <!-- PAYMENT MODAL -->
-    <div class="modal-overlay" id="payment-modal">
-      <div class="modal-box">
-        <button class="modal-close-x" onclick="closePaymentModal()" aria-label="Close">&times;</button>
-        <h3>💳 Mark Payment</h3>
-        <p id="payment-order-info" style="font-size: 13px; margin-bottom: 12px; color: var(--text);"></p>
-        <label for="payment-method" style="display: block; font-size: 13px; margin-bottom: 4px;">Payment Method</label>
-        <select id="payment-method"><option value="Cash">Cash</option><option value="Card">Card</option><option value="Bank">Bank</option><option value="Online">Online</option><option value="Other">Other</option></select>
-        <button onclick="confirmPayment()">Confirm Payment</button>
-        <button style="background: transparent; color: var(--text); border: 1px solid var(--border);" onclick="closePaymentModal()">Cancel</button>
-        <p id="payment-msg" style="font-size: 12px; text-align: center;"></p>
-      </div>
-    </div>
-
     <!-- KITCHEN REQUESTS MODAL -->
     <div class="modal-overlay" id="kitchen-requests-modal">
       <div class="modal-box" style="max-width: 480px;">
@@ -461,10 +447,6 @@
       <div class="stat" onclick="openPage('sales.html?type=month')"><div class="label">Month's Orders</div><div class="value" id="month-count">-</div></div>
       <div class="stat" onclick="openPage('sales.html?type=month')"><div class="label">Month's Sales</div><div class="value" id="month-sales">-</div></div>
     </div>
-
-    <!-- PENDING PAYMENTS -->
-    <h2>Payment Pending</h2>
-    <div id="pending-list"></div>
 
     <!-- TABLE QR CODES -->
     <h2>Table QR Codes</h2>
@@ -639,9 +621,10 @@
     }
 
     /* LOAD EVERYTHING */
-    async function loadAll() { await loadBranding(); 
-      await Promise.all([loadSummary(), loadPending()]); 
-    await loadLocation();
+    async function loadAll() {
+      await loadBranding();
+      await loadSummary();
+      await loadLocation();
     }
     function toggleMenuSubmenu() { const submenu = document.getElementById("menu-submenu"); if (submenu) submenu.classList.toggle("open"); }
 
@@ -670,9 +653,7 @@ function renderCategories() {
   const list = document.getElementById("category-list");
   if (!categoriesCache.length) { list.innerHTML = '<div class="empty">No categories added yet.</div>'; return; }
   
-  // Get the current food type
   const type = foodType();
-  // Get predefined categories for this food type (if any)
   let predefinedCategories = [];
   if (type === "fast") {
     predefinedCategories = Object.keys(CATEGORY_GROUPS.fastFood);
@@ -681,10 +662,8 @@ function renderCategories() {
   } else if (type === "combo") {
     predefinedCategories = [...new Set([...Object.keys(CATEGORY_GROUPS.desi), ...Object.keys(CATEGORY_GROUPS.fastFood)])];
   }
-  // For "custom" type, predefinedCategories remains empty -> all categories are editable
   
   list.innerHTML = categoriesCache.map(category => {
-    // Check if this category is locked (part of predefined set)
     const isLocked = predefinedCategories.length > 0 && predefinedCategories.includes(category.name);
     const lockIcon = isLocked ? ' 🔒' : '';
     
@@ -716,7 +695,6 @@ function renderCategories() {
   const category = categoriesCache.find(item => Number(item.id) === Number(id));
   if (!category) return;
   
-  // ✅ Prevent editing locked categories
   const type = foodType();
   let predefinedCategories = [];
   if (type === "fast") predefinedCategories = Object.keys(CATEGORY_GROUPS.fastFood);
@@ -772,7 +750,6 @@ function renderCategories() {
   const category = categoriesCache.find(item => Number(item.id) === Number(id));
   if (!category) return;
   
-  // ✅ Prevent removing locked categories
   const type = foodType();
   let predefinedCategories = [];
   if (type === "fast") predefinedCategories = Object.keys(CATEGORY_GROUPS.fastFood);
@@ -958,74 +935,6 @@ function renderCategories() {
         document.getElementById("month-sales").innerText = "Rs " + Number(month.total_sales || 0).toLocaleString();
       } catch (error) { console.error("loadSummary:", error); }
     }
-
-    /* PENDING PAYMENTS */
-    async function loadPending() {
-      try {
-        const res = await fetch("/api/orders", { headers: authHeaders() });
-        if (checkUnauthorized(res)) return;
-        const result = await res.json();
-        const orders = Array.isArray(result.orders) ? result.orders : [];
-        const pending = orders.filter(order => order.status === "served" && order.payment_status !== "paid");
-        const list = document.getElementById("pending-list");
-        if (!pending.length) { list.innerHTML = '<div class="empty">No payments pending.</div>'; return; }
-        list.innerHTML = pending.map(order => `
-          <div class="row">
-            <div class="row-left">
-              <div class="row-title">Table ${escapeHtml(order.table_no)} · #${escapeHtml(order.id)}</div>
-            </div>
-            <div class="row-actions">
-              <button class="btn-edit" onclick="editBill(${Number(order.id)})">Edit Bill</button>
-              <button class="btn-print" onclick="printBill(${Number(order.id)})">Print Bill</button>
-              <button class="btn-pay" onclick="openPaymentModal(${Number(order.id)})">Mark Paid</button>
-            </div>
-          </div>
-        `).join("");
-      } catch (error) { console.error("loadPending:", error); }
-    }
-
-    async function markPaid(id, paymentMethod) {
-      try {
-        const res = await fetch(`/api/orders/${encodeURIComponent(id)}/pay`, { method: "PUT", headers: { ...authHeaders(), "Content-Type": "application/json" }, body: JSON.stringify({ payment_method: paymentMethod }) });
-        if (checkUnauthorized(res)) return;
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) { alert(data.message || "Unable to mark payment"); return; }
-        await Promise.all([loadPending(), loadSummary()]);
-      } catch (error) { alert("Server connection failed"); }
-    }
-
-    function openPaymentModal(id) {
-      const modal = document.getElementById("payment-modal");
-      const method = document.getElementById("payment-method");
-      const msg = document.getElementById("payment-msg");
-      const info = document.getElementById("payment-order-info");
-      if (!modal || !method || !msg || !info) return;
-      method.value = "Cash"; msg.innerText = ""; info.innerText = "Order #" + id;
-      modal.dataset.orderId = String(id);
-      modal.classList.add("open");
-    }
-    function closePaymentModal() {
-      const modal = document.getElementById("payment-modal");
-      if (!modal) return;
-      modal.classList.remove("open");
-      modal.dataset.orderId = "";
-      const msg = document.getElementById("payment-msg");
-      if (msg) msg.innerText = "";
-    }
-    async function confirmPayment() {
-      const modal = document.getElementById("payment-modal");
-      const method = document.getElementById("payment-method");
-      const msg = document.getElementById("payment-msg");
-      if (!modal || !method || !msg) return;
-      const id = Number(modal.dataset.orderId);
-      const paymentMethod = method.value;
-      if (!Number.isInteger(id) || id <= 0) { msg.style.color = "var(--danger)"; msg.innerText = "Invalid order."; return; }
-      if (!paymentMethod) { msg.style.color = "var(--danger)"; msg.innerText = "Please select payment method."; return; }
-      msg.style.color = "var(--text)"; msg.innerText = "Processing payment...";
-      try { await markPaid(id, paymentMethod); closePaymentModal(); } catch (error) { console.error("confirmPayment:", error); msg.style.color = "var(--danger)"; msg.innerText = "Payment failed."; }
-    }
-    function editBill(id) { window.location.href = "bill.html?id=" + encodeURIComponent(id) + "&edit=1"; }
-    function printBill(id) { window.location.href = "bill.html?id=" + encodeURIComponent(id); }
 
     /* MENU MANAGEMENT */
     async function loadMenu() {
@@ -1232,7 +1141,7 @@ function renderCategories() {
       } catch (error) { msg.style.color = "var(--danger)"; msg.innerText = "Server connection failed"; }
     }
 
-    /* THEME (Fixed to use manager_theme) */
+    /* THEME */
     function toggleTheme() {
       const light = document.getElementById("theme-toggle").checked;
       document.body.classList.toggle("light-theme", light);
@@ -1506,8 +1415,8 @@ async function loadLocation() {
     }
 
     /* SOCKET EVENTS */
-    socket.on("order_created", () => { if (!token) return; loadPending(); loadSummary(); });
-    socket.on("order_updated", () => { if (!token) return; loadPending(); loadSummary(); });
+    socket.on("order_created", () => { if (!token) return; loadSummary(); });
+    socket.on("order_updated", () => { if (!token) return; loadSummary(); });
     socket.on("kitchen_inventory_updated", () => { if (!token) return; const modal = document.getElementById("kitchen-requests-modal"); if (modal && modal.classList.contains("open")) loadKitchenRequests(); });
     socket.on("waiter_call", data => { if (!data) return; const notification = document.createElement("div"); notification.className = "notification"; notification.innerText = "📞 Table " + (data.table_no ?? "?") + " called waiter"; document.getElementById("notification-container").appendChild(notification); setTimeout(() => { notification.remove(); }, 10000); });
     socket.on("connect", () => { if (token) loadAll(); });
@@ -1522,7 +1431,6 @@ async function loadLocation() {
     document.getElementById("items-modal").addEventListener("click", event => { if (event.target.id === "items-modal") closeItemsModal(); });
     document.getElementById("category-modal").addEventListener("click", event => { if (event.target.id === "category-modal") closeCategoryModal(); });
     document.getElementById("deal-modal").addEventListener("click", event => { if (event.target.id === "deal-modal") closeDealModal(); });
-    document.getElementById("payment-modal").addEventListener("click", event => { if (event.target.id === "payment-modal") closePaymentModal(); });
     document.getElementById("kitchen-requests-modal").addEventListener("click", event => { if (event.target.id === "kitchen-requests-modal") closeKitchenRequestsModal(); });
 
     /* INITIALIZATION */
