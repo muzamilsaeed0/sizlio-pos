@@ -96,7 +96,11 @@ const getSalesDetails = async (
 
       o.delivery_charge,          
 
-      o.dine_charge, 
+      o.dine_charge,
+      
+      o.card_charge, 
+                     
+      o.bank_charge,
 
       o.total_amount::numeric(10,2) AS total,
 
