@@ -31,6 +31,7 @@ const {
   getMyDeliveryOrders,
   getDeliveryRiders,
   getRiderSummary,
+  getMyRiderSummary,    
   assignDeliveryRider,
   unassignDeliveryRider,
   autoAssignDeliveryRider,
@@ -97,6 +98,18 @@ router.get(
   getRiderSummary
 );
 
+// ======================================================
+// MY RIDER SUMMARY (for rider app)
+//
+// Logged-in rider ki apni summary (date/month/custom)
+// ======================================================
+
+router.get(
+  '/rider/my-summary',
+  authMiddleware,
+  authorize('delivery'),
+  getMyRiderSummary
+);
 
 // ======================================================
 // ASSIGN DELIVERY RIDER

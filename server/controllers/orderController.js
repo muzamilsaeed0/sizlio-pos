@@ -4715,3 +4715,109 @@ exports.handoverWalkIn = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+// ======================================================
+// RIDER'S OWN SUMMARY (for rider app)
+// ======================================================
+
+exports.getMyRiderSummary = async (req, res) => {
+  if (req.user?.role !== 'delivery') {
+    return res.status(403).json({
+      success: false,
+      message: 'Only delivery riders can view their summary'
+    });
+  }
+
+  const restaurantId = getRestaurantId(req);
+  const riderId = Number(req.user.id);
+
+  if (!isValidRestaurantId(restaurantId)) {
+    return res.status(401).json({
+      success: false,
+      message: 'Restaurant information is missing'
+    });
+  }
+
+  try {
+    const { date, from, to } = req.query;
+    const params = [restaurantId, riderId];
+    let dateCondition = '';
+
+    if (date) {
+      params.push(date);
+      dateCondition = `AND o.created_at::date = $${params.length}::date`;
+    } else if (from && to) {
+      params.push(from);
+      params.push(to);
+      dateCondition = `AND o.created_at >= $${params.length - 1}::date 
+                       AND o.created_at < ($${params.length}::date + INTERVAL '1 day')`;
+    }
+
+    const result = await pool.query(`
+      SELECT 
+        o.id, o.status, o.order_type, o.customer_name,
+        o.delivery_phone, o.delivery_address, o.total_amount,
+        o.created_at, o.delivered_at, o.completed_at,
+        o.payment_status, o.payment_method
+      FROM orders o
+      WHERE o.restaurant_id = $1
+        AND o.delivery_rider_id = $2
+        AND o.order_type = 'delivery'
+        ${dateCondition}
+      ORDER BY o.created_at DESC
+    `, params);
+
+    const orders = result.rows;
+
+    const deliveredOrders = orders.filter(o => 
+      o.status === 'delivered' || o.status === 'completed'
+    );
+    const activeOrders = orders.filter(o => 
+      ['ready_to_deliver', 'out_for_delivery'].includes(o.status)
+    );
+    const cancelledOrders = orders.filter(o => o.status === 'cancelled');
+
+    const totalSales = deliveredOrders.reduce(
+      (sum, o) => sum + Number(o.total_amount || 0), 0
+    );
+
+    const dailyMap = {};
+    orders.forEach(o => {
+      const day = new Date(o.created_at).toISOString().slice(0, 10);
+      if (!dailyMap[day]) {
+        dailyMap[day] = { date: day, count: 0, delivered: 0, sales: 0 };
+      }
+      dailyMap[day].count++;
+      if (o.status === 'delivered' || o.status === 'completed') {
+        dailyMap[day].delivered++;
+        dailyMap[day].sales += Number(o.total_amount || 0);
+      }
+    });
+
+    const daily = Object.values(dailyMap).sort((a, b) => 
+      b.date.localeCompare(a.date)
+    );
+
+    return res.json({
+      success: true,
+      data: {
+        orders,
+        stats: {
+          total_orders: orders.length,
+          delivered_count: deliveredOrders.length,
+          active_count: activeOrders.length,
+          cancelled_count: cancelledOrders.length,
+          total_sales: totalSales,
+          daily
+        }
+      }
+    });
+
+  } catch (err) {
+    console.error('getMyRiderSummary:', err);
+    return res.status(500).json({
+      success: false,
+      message: err.message || 'Internal Server Error'
+    });
+  }
+};

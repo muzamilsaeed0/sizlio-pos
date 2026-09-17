@@ -180,7 +180,6 @@ body{
   min-width:0;
 }
 
-/* ✅ NEW: Brand icon supports both emoji and uploaded logo */
 .brand-icon{
   width:43px;
   height:43px;
@@ -231,6 +230,7 @@ body{
   display:flex;
   align-items:center;
   gap:8px;
+  flex-wrap:wrap;
 }
 
 .online{
@@ -832,6 +832,158 @@ body{
 }
 
 /* =====================================================
+   SUMMARY BUTTON + MODAL
+===================================================== */
+.summary-btn{
+  border:1px solid var(--border);
+  background:linear-gradient(135deg,var(--green),var(--green2));
+  color:#052e16;
+  border-radius:10px;
+  padding:9px 14px;
+  font-weight:800;
+  font-size:13px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.summary-btn:hover{opacity:.9}
+
+.summary-modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.75);
+  z-index:100;
+  padding:16px;
+  overflow-y:auto;
+}
+.summary-modal.show{display:flex;align-items:flex-start;justify-content:center}
+
+.summary-box{
+  width:min(720px,100%);
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:22px;
+  position:relative;
+  margin-top:30px;
+}
+
+.summary-close{
+  position:absolute;top:14px;right:14px;
+  width:34px;height:34px;border-radius:50%;
+  border:1px solid var(--border);background:transparent;color:var(--text);
+  font-size:20px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.summary-close:hover{background:var(--red);color:#fff;border-color:var(--red)}
+
+.summary-title{font-size:20px;font-weight:800;margin-bottom:4px}
+.summary-subtitle{font-size:13px;color:var(--muted);margin-bottom:18px}
+
+.summary-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.summary-filter-btn{
+  padding:8px 14px;border-radius:10px;border:1px solid var(--border);
+  background:var(--panel2);color:var(--text);font-size:13px;
+  font-weight:700;cursor:pointer;
+}
+.summary-filter-btn.active{background:var(--green);color:#052e16;border-color:var(--green)}
+
+.summary-date-row{
+  display:none;gap:10px;flex-wrap:wrap;margin-bottom:16px;
+  padding:12px;background:var(--panel2);border-radius:12px;
+}
+.summary-date-row.show{display:flex}
+.summary-date-row .field{flex:1;min-width:140px}
+.summary-date-row label{
+  display:block;font-size:11px;color:var(--muted);font-weight:700;
+  text-transform:uppercase;margin-bottom:4px;
+}
+.summary-date-row input{
+  width:100%;height:40px;padding:0 10px;border:1px solid var(--border);
+  border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;
+}
+.summary-date-row button{
+  height:40px;padding:0 18px;border-radius:8px;border:0;
+  background:var(--green);color:#052e16;font-weight:700;cursor:pointer;
+  align-self:flex-end;
+}
+
+.summary-stats{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));
+  gap:10px;margin-bottom:18px;
+}
+.summary-stat{
+  background:var(--panel2);border:1px solid var(--border);
+  border-radius:12px;padding:12px;text-align:center;
+}
+.summary-stat .label{
+  font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;
+  letter-spacing:.4px;margin-bottom:6px;
+}
+.summary-stat .value{font-size:22px;font-weight:800;color:var(--text)}
+.summary-stat.green .value{color:var(--green)}
+.summary-stat.orange .value{color:var(--orange)}
+.summary-stat.blue .value{color:var(--blue)}
+.summary-stat.red .value{color:var(--red)}
+
+.summary-section-title{
+  font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:10px;padding-bottom:6px;
+  border-bottom:1px solid var(--border);
+}
+
+.daily-breakdown{
+  display:flex;flex-direction:column;gap:6px;
+  max-height:220px;overflow-y:auto;margin-bottom:18px;
+}
+.daily-row{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:10px;padding:10px 12px;background:var(--panel2);
+  border-radius:10px;border:1px solid var(--border);
+}
+.daily-row .date{font-size:13px;font-weight:700}
+.daily-row .count{font-size:12px;color:var(--muted)}
+.daily-row .sales{font-size:13px;font-weight:700;color:var(--green);white-space:nowrap}
+
+.summary-order-list{
+  display:flex;flex-direction:column;gap:6px;
+  max-height:340px;overflow-y:auto;
+}
+.summary-order{
+  padding:10px 12px;background:var(--panel2);border:1px solid var(--border);
+  border-radius:10px;display:flex;justify-content:space-between;gap:10px;
+}
+.summary-order .info{min-width:0;flex:1}
+.summary-order .id{font-size:13px;font-weight:700;margin-bottom:2px}
+.summary-order .cust{
+  font-size:12px;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.summary-order .meta{font-size:11px;color:var(--muted);margin-top:3px}
+.summary-order .amount{
+  font-size:13px;font-weight:700;color:var(--green);
+  white-space:nowrap;text-align:right;
+}
+.summary-order .status-tag{
+  font-size:10px;padding:2px 8px;border-radius:20px;
+  font-weight:700;display:inline-block;margin-top:4px;
+}
+.status-delivered{background:rgba(34,197,94,.15);color:#4ade80}
+.status-active{background:rgba(59,130,246,.15);color:#60a5fa}
+.status-cancelled{background:rgba(239,68,68,.15);color:#fca5a5}
+
+.summary-empty{
+  text-align:center;padding:30px 20px;
+  color:var(--muted);font-size:13px;
+}
+
+@media(max-width:600px){
+  .summary-box{padding:18px;margin-top:10px}
+  .summary-stats{grid-template-columns:repeat(2,1fr)}
+  .summary-btn{font-size:12px;padding:8px 10px}
+}
+
+/* =====================================================
    RESPONSIVE
 ===================================================== */
 
@@ -1002,7 +1154,6 @@ body{
 
       <div class="brand">
 
-        <!-- ✅ NEW: Brand icon can show logo image -->
         <div class="brand-icon" id="brandIcon">
           <span class="emoji-fallback" id="brandEmoji">🚴</span>
         </div>
@@ -1037,6 +1188,10 @@ body{
           onclick="toggleShift()"
         >
           START SHIFT
+        </button>
+
+        <button class="summary-btn" onclick="openRiderSummary()">
+          📊 Summary
         </button>
 
         <div class="online">
@@ -1149,6 +1304,45 @@ body{
 </div>
 
 
+<!-- =====================================================
+     RIDER SUMMARY MODAL
+===================================================== -->
+<div class="summary-modal" id="summaryModal">
+  <div class="summary-box">
+    <button class="summary-close" onclick="closeRiderSummary()" aria-label="Close">×</button>
+    
+    <div class="summary-title">📊 My Delivery Summary</div>
+    <div class="summary-subtitle" id="summarySubtitle">Loading...</div>
+    
+    <div class="summary-filters">
+      <button class="summary-filter-btn active" data-range="today" onclick="setSummaryRange('today')">Today</button>
+      <button class="summary-filter-btn" data-range="month" onclick="setSummaryRange('month')">This Month</button>
+      <button class="summary-filter-btn" data-range="custom" onclick="setSummaryRange('custom')">Custom Range</button>
+    </div>
+    
+    <div class="summary-date-row" id="summaryCustomDates">
+      <div class="field">
+        <label>From</label>
+        <input type="date" id="summaryFrom" />
+      </div>
+      <div class="field">
+        <label>To</label>
+        <input type="date" id="summaryTo" />
+      </div>
+      <button onclick="loadRiderSummary()">Apply</button>
+    </div>
+    
+    <div class="summary-stats" id="summaryStats"></div>
+    
+    <div class="summary-section-title">📅 Daily Breakdown</div>
+    <div class="daily-breakdown" id="dailyBreakdown"></div>
+    
+    <div class="summary-section-title">📋 Orders</div>
+    <div class="summary-order-list" id="summaryOrderList"></div>
+  </div>
+</div>
+
+
 <div id="toastContainer" class="toast-container"></div>
 
 
@@ -1194,7 +1388,6 @@ let token =
   localStorage.getItem('token') ||
   '';
 
-/* ✅ NEW: Restaurant branding state */
 let restaurantBrand = { name: '', logo: '' };
 
 
@@ -1317,7 +1510,6 @@ function authHeaders(){
   };
 }
 
-/* ✅ NEW: Normalize logo URL */
 function normalizeLogoUrl(value) {
   if (!value) return '';
   let url = String(value).trim();
@@ -1353,7 +1545,7 @@ function toast(message, type='success'){
 
 
 /* =====================================================
-   ✅ NEW: LOAD RESTAURANT BRANDING (name + logo)
+   LOAD RESTAURANT BRANDING
 ===================================================== */
 
 async function loadBranding(){
@@ -1383,13 +1575,11 @@ async function loadBranding(){
 }
 
 function renderBranding(){
-  // Update restaurant name
   const nameEl = document.getElementById('restaurantName');
   if(nameEl){
     nameEl.textContent = restaurantBrand.name || 'Restaurant';
   }
 
-  // Update brand icon — show logo if available
   const iconEl = document.getElementById('brandIcon');
   const emojiEl = document.getElementById('brandEmoji');
 
@@ -1404,7 +1594,6 @@ function renderBranding(){
       <span class="emoji-fallback" id="brandEmoji" style="display:none;">🚴</span>
     `;
   } else if(emojiEl){
-    // Just keep the emoji
     emojiEl.style.display = 'block';
   }
 }
@@ -1923,7 +2112,6 @@ async function initializeApp(){
     currentUser.username ||
     'Rider';
 
-  /* ✅ NEW: Load restaurant branding (name + logo) */
   await loadBranding();
 
   connectSocket();
@@ -2424,6 +2612,179 @@ function logout(){
 
 
 /* =====================================================
+   RIDER SUMMARY
+===================================================== */
+
+let summaryRange = 'today';
+
+function openRiderSummary(){
+  document.getElementById('summaryModal').classList.add('show');
+  summaryRange = 'today';
+  document.querySelectorAll('.summary-filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.range === 'today');
+  });
+  document.getElementById('summaryCustomDates').classList.remove('show');
+  loadRiderSummary();
+}
+
+function closeRiderSummary(){
+  document.getElementById('summaryModal').classList.remove('show');
+}
+
+function setSummaryRange(range){
+  summaryRange = range;
+  document.querySelectorAll('.summary-filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.range === range);
+  });
+  document.getElementById('summaryCustomDates').classList.toggle('show', range === 'custom');
+  
+  if (range !== 'custom') {
+    loadRiderSummary();
+  }
+}
+
+async function loadRiderSummary(){
+  if (!token) return;
+  
+  const subtitle = document.getElementById('summarySubtitle');
+  const statsEl = document.getElementById('summaryStats');
+  const dailyEl = document.getElementById('dailyBreakdown');
+  const ordersEl = document.getElementById('summaryOrderList');
+  
+  subtitle.textContent = 'Loading...';
+  statsEl.innerHTML = '';
+  dailyEl.innerHTML = '';
+  ordersEl.innerHTML = '<div class="summary-empty">Loading orders...</div>';
+  
+  const params = new URLSearchParams();
+  
+  if (summaryRange === 'today') {
+    const today = new Date().toISOString().slice(0, 10);
+    params.set('date', today);
+    subtitle.textContent = `Today — ${new Date().toLocaleDateString()}`;
+  } else if (summaryRange === 'month') {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const firstDay = `${year}-${month}-01`;
+    const today = new Date().toISOString().slice(0, 10);
+    params.set('from', firstDay);
+    params.set('to', today);
+    subtitle.textContent = `This Month — ${now.toLocaleString('en-US', { month: 'long', year: 'numeric' })}`;
+  } else {
+    const from = document.getElementById('summaryFrom').value;
+    const to = document.getElementById('summaryTo').value;
+    if (!from || !to) {
+      subtitle.textContent = 'Please select From and To dates';
+      ordersEl.innerHTML = '';
+      return;
+    }
+    if (from > to) {
+      subtitle.textContent = 'From date cannot be after To date';
+      ordersEl.innerHTML = '';
+      return;
+    }
+    params.set('from', from);
+    params.set('to', to);
+    subtitle.textContent = `${from} → ${to}`;
+  }
+  
+  try {
+    const res = await fetch(
+      `${API_BASE}/orders/rider/my-summary?${params.toString()}`,
+      { headers: authHeaders() }
+    );
+    
+    if (res.status === 401) {
+      logout();
+      return;
+    }
+    
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Could not load summary');
+    }
+    
+    const { orders, stats } = data.data;
+    
+    statsEl.innerHTML = `
+      <div class="summary-stat blue">
+        <div class="label">Total</div>
+        <div class="value">${stats.total_orders}</div>
+      </div>
+      <div class="summary-stat green">
+        <div class="label">Delivered</div>
+        <div class="value">${stats.delivered_count}</div>
+      </div>
+      <div class="summary-stat orange">
+        <div class="label">Active</div>
+        <div class="value">${stats.active_count}</div>
+      </div>
+      <div class="summary-stat red">
+        <div class="label">Cancelled</div>
+        <div class="value">${stats.cancelled_count}</div>
+      </div>
+      <div class="summary-stat green">
+        <div class="label">Sales</div>
+        <div class="value" style="font-size:16px;">${money(stats.total_sales)}</div>
+      </div>
+    `;
+    
+    if (stats.daily && stats.daily.length) {
+      dailyEl.innerHTML = stats.daily.map(day => `
+        <div class="daily-row">
+          <div>
+            <div class="date">${new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}</div>
+            <div class="count">${day.count} orders · ${day.delivered} delivered</div>
+          </div>
+          <div class="sales">${money(day.sales)}</div>
+        </div>
+      `).join('');
+    } else {
+      dailyEl.innerHTML = '<div class="summary-empty">No orders in this period</div>';
+    }
+    
+    if (orders.length) {
+      ordersEl.innerHTML = orders.map(o => {
+        const statusClass = 
+          (o.status === 'delivered' || o.status === 'completed') ? 'status-delivered' :
+          (o.status === 'cancelled') ? 'status-cancelled' : 'status-active';
+        
+        const statusLabel = 
+          (o.status === 'delivered' || o.status === 'completed') ? 'Delivered' :
+          (o.status === 'cancelled') ? 'Cancelled' : o.status.replace(/_/g, ' ');
+        
+        return `
+          <div class="summary-order">
+            <div class="info">
+              <div class="id">#${o.id} — ${esc(o.customer_name || 'Customer')}</div>
+              <div class="cust">${esc(o.delivery_address || 'No address')}</div>
+              <div class="meta">
+                ${new Date(o.created_at).toLocaleString([], { 
+                  day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' 
+                })}
+              </div>
+              <span class="status-tag ${statusClass}">${statusLabel}</span>
+            </div>
+            <div class="amount">${money(o.total_amount)}</div>
+          </div>
+        `;
+      }).join('');
+    } else {
+      ordersEl.innerHTML = '<div class="summary-empty">No orders in this period</div>';
+    }
+    
+  } catch (err) {
+    console.error('loadRiderSummary:', err);
+    subtitle.textContent = 'Error loading summary';
+    statsEl.innerHTML = '';
+    dailyEl.innerHTML = '';
+    ordersEl.innerHTML = `<div class="summary-empty">${esc(err.message)}</div>`;
+  }
+}
+
+
+/* =====================================================
    KEYBOARD LOGIN
 ===================================================== */
 
@@ -2453,6 +2814,15 @@ document.addEventListener('touchstart', function initAudioOnce(){
   initAudio();
   document.removeEventListener('touchstart', initAudioOnce);
 }, { once: true });
+
+
+/* =====================================================
+   EXPOSE TO WINDOW
+===================================================== */
+window.openRiderSummary = openRiderSummary;
+window.closeRiderSummary = closeRiderSummary;
+window.setSummaryRange = setSummaryRange;
+window.loadRiderSummary = loadRiderSummary;
 
 
 /* =====================================================
