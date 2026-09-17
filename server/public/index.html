@@ -19,16 +19,17 @@
   --text: #F5F7FA;
   --text-2: #C7CEDB;
   --muted: #7A8699;
-  --accent: #F5B843;
-  --accent-2: #FFD87A;
-  --accent-dark: #D89820;
-  --green: #2DD4A7;
-  --green-dark: #16A382;
+  --accent: #E8AC3E;
+  --accent-2: #F6CE7E;
+  --accent-dark: #C08A22;
+  --green: #29C29A;
+  --green-dark: #159678;
   --blue: #4A9EFF;
   --red: #FF6B5B;
   --purple: #A78BFA;
-  --glow-accent: rgba(245,184,67,0.4);
-  --glow-green: rgba(45,212,167,0.4);
+  --glow-accent: rgba(232,172,62,0.35);
+  --glow-green: rgba(41,194,154,0.35);
+  --logo-navy: #0E1420;
 }
 html { scroll-behavior: smooth; }
 body {
@@ -130,27 +131,39 @@ button { font-family: inherit; }
   gap: 20px;
   flex-wrap: wrap;
 }
-.logo { display: flex; align-items: center; gap: 11px; font-family: 'Poppins', sans-serif; }
+.logo { display: flex; align-items: center; gap: 12px; font-family: 'Poppins', sans-serif; }
 .logo-mark {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--accent), var(--green));
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: linear-gradient(150deg, var(--accent-2) 0%, var(--accent) 55%, var(--green) 130%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
-  font-weight: 900;
-  color: #05070B;
-  box-shadow: 0 4px 20px rgba(245,184,67,0.3);
+  flex-shrink: 0;
+  box-shadow:
+    0 6px 18px rgba(232,172,62,0.28),
+    inset 0 1px 0 rgba(255,255,255,0.45),
+    inset 0 -8px 14px rgba(0,0,0,0.12);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
+.logo:hover .logo-mark {
+  transform: translateY(-1px) rotate(-2deg);
+  box-shadow:
+    0 10px 26px rgba(232,172,62,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.5),
+    inset 0 -8px 14px rgba(0,0,0,0.12);
+}
+.logo-mark svg { width: 24px; height: 24px; position: relative; z-index: 1; }
 .logo-text {
-  font-size: 23px;
-  font-weight: 900;
-  letter-spacing: -0.7px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
   color: var(--text);
 }
-.logo-text span { color: var(--accent); }
+.logo-text span { color: var(--accent-2); font-weight: 900; }
+.footer-brand .logo-text { font-size: 23px; }
 .nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .nav a {
   font-size: 14px;
@@ -1068,7 +1081,13 @@ section { padding: 100px 0; position: relative; }
 <header class="header">
   <div class="container header-inner">
     <a href="#" class="logo">
-      <div class="logo-mark">S</div>
+      <div class="logo-mark">
+        <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 9.5C9 7.6 11 6.2 14 6.2s5 1.4 5 3.1c0 1.9-2.3 2.7-5 3.2-2.9.5-5 1.4-5 3.3 0 1.7 2 3.1 5 3.1s5-1.4 5-3.1"
+                stroke="#0E1420" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="21.4" cy="7.4" r="2" fill="#0E1420"/>
+        </svg>
+      </div>
       <div class="logo-text">Siz<span>lio</span></div>
     </a>
     <nav class="nav">
@@ -1577,7 +1596,13 @@ section { padding: 100px 0; position: relative; }
     <div class="footer-grid">
       <div class="footer-brand">
         <a href="#" class="logo">
-          <div class="logo-mark">S</div>
+          <div class="logo-mark">
+            <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 9.5C9 7.6 11 6.2 14 6.2s5 1.4 5 3.1c0 1.9-2.3 2.7-5 3.2-2.9.5-5 1.4-5 3.3 0 1.7 2 3.1 5 3.1s5-1.4 5-3.1"
+                    stroke="#0E1420" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="21.4" cy="7.4" r="2" fill="#0E1420"/>
+            </svg>
+          </div>
           <div class="logo-text">Siz<span>lio</span></div>
         </a>
         <p>
