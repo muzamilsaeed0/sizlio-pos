@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>About Sizlio – Sizlio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #05070B; --bg-2: #0A0E15; --panel: #10151D; --panel-2: #161C26;
+  --border: #1F2734; --border-2: #2A3444; --text: #F5F7FA; --text-2: #C7CEDB; --muted: #7A8699;
+  --accent: #E8AC3E; --accent-2: #F6CE7E; --green: #29C29A; --green-dark: #159678; --logo-navy: #0E1420;
+}
+body { font-family: 'Inter', -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+body::before { content:''; position:fixed; inset:0; background: radial-gradient(circle at 20% 0%, rgba(232,172,62,0.06) 0%, transparent 45%), radial-gradient(circle at 80% 50%, rgba(41,194,154,0.05) 0%, transparent 50%); pointer-events:none; z-index:-1; }
+a { text-decoration:none; color:inherit; }
+.container { max-width: 780px; margin: 0 auto; padding: 0 24px; }
+.header { position: sticky; top:0; z-index:100; background: rgba(5,7,11,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(31,39,52,0.6); padding: 16px 0; }
+.header .container { display:flex; align-items:center; justify-content:space-between; max-width:1240px; }
+.logo { display:flex; align-items:center; gap:12px; font-family:'Poppins',sans-serif; }
+.logo-mark { width:40px; height:40px; border-radius:12px; background: linear-gradient(150deg, var(--accent-2) 0%, var(--accent) 55%, var(--green) 130%); display:flex; align-items:center; justify-content:center; box-shadow: 0 6px 18px rgba(232,172,62,0.28), inset 0 1px 0 rgba(255,255,255,0.45); }
+.logo-mark svg { width:22px; height:22px; }
+.logo-text { font-size:20px; font-weight:800; letter-spacing:-0.5px; color:var(--text); }
+.logo-text span { color: var(--accent-2); font-weight:900; }
+.back-link { font-size:13.5px; font-weight:600; color: var(--muted); display:flex; align-items:center; gap:6px; transition: color 0.2s; }
+.back-link:hover { color: var(--accent); }
+.page-head { padding: 64px 0 32px; text-align:center; }
+.page-label { display:inline-block; color: var(--accent); font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:2.5px; margin-bottom:16px; padding:6px 16px; background: rgba(232,172,62,0.08); border:1px solid rgba(232,172,62,0.2); border-radius:20px; }
+.page-title { font-family:'Poppins',sans-serif; font-size: clamp(28px,4vw,42px); font-weight:800; letter-spacing:-1px; margin-bottom:14px; color:#fff; }
+.page-sub { color: var(--muted); font-size:15.5px; }
+.content { padding: 10px 0 90px; }
+.content h2 { font-family:'Poppins',sans-serif; font-size:20px; font-weight:700; margin: 34px 0 12px; color: var(--text); }
+.content h2:first-child { margin-top:0; }
+.content p { color: var(--text-2); font-size:15px; margin-bottom:14px; }
+.content ul { color: var(--text-2); font-size:15px; margin: 0 0 14px 22px; }
+.content li { margin-bottom:8px; }
+.card { background: linear-gradient(160deg, var(--panel), var(--bg-2)); border:1px solid var(--border); border-radius:18px; padding:26px 24px; margin-bottom:16px; }
+.card h3 { font-family:'Poppins',sans-serif; font-size:16px; font-weight:700; margin-bottom:8px; color: var(--text); }
+.card p { color: var(--muted); font-size:14px; margin-bottom:0; }
+.contact-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:16px; margin-top:28px; }
+.contact-item { background: linear-gradient(160deg, var(--panel), var(--bg-2)); border:1px solid var(--border); border-radius:18px; padding:26px 20px; text-align:center; }
+.contact-item .icon { font-size:26px; margin-bottom:10px; }
+.contact-item h3 { font-family:'Poppins',sans-serif; font-size:14.5px; font-weight:700; margin-bottom:6px; color: var(--text); }
+.contact-item a.link { color: var(--accent); font-size:13.5px; font-weight:600; }
+.btn { display:inline-flex; align-items:center; gap:8px; padding:13px 26px; border-radius:12px; font-weight:700; font-size:14.5px; border:none; cursor:pointer; margin-top:8px; }
+.btn-green { background: linear-gradient(135deg, var(--green), var(--green-dark)); color:#fff; box-shadow: 0 4px 20px rgba(41,194,154,0.25); }
+.footer { border-top:1px solid var(--border); padding: 30px 0; text-align:center; color: var(--muted); font-size:13px; }
+@media (max-width:620px){ .contact-grid{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="container">
+    <a href="index.html" class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 9.5C9 7.6 11 6.2 14 6.2s5 1.4 5 3.1c0 1.9-2.3 2.7-5 3.2-2.9.5-5 1.4-5 3.3 0 1.7 2 3.1 5 3.1s5-1.4 5-3.1" stroke="#0E1420" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="21.4" cy="7.4" r="2" fill="#0E1420"/>
+        </svg>
+      </div>
+      <div class="logo-text">Siz<span>lio</span></div>
+    </a>
+    <a href="index.html" class="back-link">← Back to Home</a>
+  </div>
+</header>
+
+<section class="page-head">
+  <div class="container">
+    <span class="page-label">🏢 About Us</span>
+    <h1 class="page-title">About Sizlio</h1>
+    <p class="page-sub">Built in Pakistan, for Pakistani restaurants.</p>
+  </div>
+</section>
+
+<section class="content">
+  <div class="container">
+
+    <p>Sizlio is a complete restaurant management platform built specifically for the way restaurants in Pakistan actually operate — unreliable internet, busy dine-in counters, growing delivery demand, and teams that need every screen to stay in sync.</p>
+    <p>We started Sizlio after watching restaurant owners juggle separate tools for billing, kitchen orders, delivery riders, and stock — with orders getting lost between them. Our goal was simple: one connected system that keeps working even when the internet doesn't.</p>
+
+    <h2>What we believe</h2>
+    <div class="card">
+      <h3>🔄 Offline-first, always</h3>
+      <p>Your counter should never stop taking orders just because the internet dropped. Everything syncs automatically the moment connection returns.</p>
+    </div>
+    <div class="card">
+      <h3>🧩 One system, not six</h3>
+      <p>Counter, Kitchen, Waiter, Rider, QR Ordering and Inventory should talk to each other — not live in six different apps.</p>
+    </div>
+    <div class="card">
+      <h3>🤝 Built with real restaurant owners</h3>
+      <p>Every feature comes from conversations with cafés, desi restaurants, and fast-food chains across Pakistan.</p>
+    </div>
+
+    <h2>Where we're headed</h2>
+    <p>We're continuing to build out multi-branch support, deeper reporting, and more integrations — always with the same offline-resilient foundation.</p>
+
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">© 2026 Sizlio. All rights reserved.</div>
+</footer>
+</body>
+</html>

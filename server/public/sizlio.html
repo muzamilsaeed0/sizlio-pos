@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sizlio – Smart Restaurant Management for Pakistan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #05070B;
+  --bg-2: #0A0E15;
+  --panel: #10151D;
+  --panel-2: #161C26;
+  --border: #1F2734;
+  --border-2: #2A3444;
+  --text: #F5F7FA;
+  --text-2: #C7CEDB;
+  --muted: #7A8699;
+  --accent: #E8AC3E;
+  --accent-2: #F6CE7E;
+  --accent-dark: #C08A22;
+  --green: #29C29A;
+  --green-dark: #159678;
+  --blue: #4A9EFF;
+  --red: #FF6B5B;
+  --purple: #A78BFA;
+  --glow-accent: rgba(232,172,62,0.35);
+  --glow-green: rgba(41,194,154,0.35);
+  --logo-navy: #0E1420;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.65;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(245,184,67,0.06) 0%, transparent 45%),
+    radial-gradient(circle at 80% 50%, rgba(45,212,167,0.05) 0%, transparent 50%),
+    radial-gradient(circle at 50% 100%, rgba(74,158,255,0.04) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+}
+a { text-decoration: none; color: inherit; }
+img { max-width: 100%; display: block; }
+button { font-family: inherit; }
+.container { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 15px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #0A0E15;
+  box-shadow: 0 4px 20px rgba(245,184,67,0.25);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(245,184,67,0.4);
+}
+.btn-green {
+  background: linear-gradient(135deg, var(--green), var(--green-dark));
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(45,212,167,0.25);
+}
+.btn-green:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(45,212,167,0.4);
+}
+.btn-outline {
+  background: rgba(255,255,255,0.02);
+  color: var(--text);
+  border: 1.5px solid var(--border-2);
+  backdrop-filter: blur(10px);
+}
+.btn-outline:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(245,184,67,0.05);
+}
+.btn-sm { padding: 10px 20px; font-size: 14px; border-radius: 10px; }
+
+/* ============================================
+   HEADER
+   ============================================ */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: rgba(5,7,11,0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(31,39,52,0.6);
+  padding: 14px 0;
+  transition: all 0.3s;
+}
+.header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.logo { display: flex; align-items: center; gap: 12px; font-family: 'Poppins', sans-serif; }
+.logo-mark {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: linear-gradient(150deg, var(--accent-2) 0%, var(--accent) 55%, var(--green) 130%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow:
+    0 6px 18px rgba(232,172,62,0.28),
+    inset 0 1px 0 rgba(255,255,255,0.45),
+    inset 0 -8px 14px rgba(0,0,0,0.12);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.logo:hover .logo-mark {
+  transform: translateY(-1px) rotate(-2deg);
+  box-shadow:
+    0 10px 26px rgba(232,172,62,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.5),
+    inset 0 -8px 14px rgba(0,0,0,0.12);
+}
+.logo-mark svg { width: 24px; height: 24px; position: relative; z-index: 1; }
+.logo-text {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  color: var(--text);
+}
+.logo-text span { color: var(--accent-2); font-weight: 900; }
+.footer-brand .logo-text { font-size: 23px; }
+.nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.nav a {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  transition: all 0.2s;
+  padding: 8px 14px;
+  border-radius: 8px;
+  position: relative;
+}
+.nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+.nav .btn { margin-left: 8px; }
+
+/* ============================================
+   HERO
+   ============================================ */
+.hero { padding: 90px 0 70px; position: relative; overflow: hidden; }
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 70px;
+  align-items: center;
+  position: relative;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  background: rgba(45,212,167,0.08);
+  color: var(--green);
+  padding: 8px 18px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid rgba(45,212,167,0.25);
+  margin-bottom: 26px;
+  backdrop-filter: blur(10px);
+}
+.hero-badge .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 12px var(--green);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+.hero h1 {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(36px, 5vw, 62px);
+  font-weight: 900;
+  line-height: 1.08;
+  letter-spacing: -2px;
+  margin-bottom: 24px;
+  color: #fff;
+}
+.hero h1 .accent {
+  color: var(--accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero h1 .green {
+  color: var(--green);
+  background: linear-gradient(135deg, var(--green), #6EE7B7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero p {
+  font-size: 17px;
+  color: var(--text-2);
+  margin-bottom: 36px;
+  max-width: 560px;
+  line-height: 1.7;
+}
+.hero-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 36px; }
+.hero-badges { display: flex; flex-wrap: wrap; gap: 9px; }
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(22,28,38,0.8);
+  border: 1px solid var(--border);
+  padding: 8px 15px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  transition: all 0.25s;
+  backdrop-filter: blur(10px);
+}
+.badge-pill:hover {
+  border-color: var(--accent);
+  color: var(--text);
+  transform: translateY(-2px);
+}
+
+/* ---------- Hero Visual ---------- */
+.hero-visual {
+  position: relative;
+  padding: 28px;
+  background: linear-gradient(160deg, rgba(22,28,38,0.9), rgba(10,14,21,0.95));
+  border: 1px solid var(--border);
+  border-radius: 26px;
+  box-shadow:
+    0 30px 90px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+}
+.hero-visual::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(245,184,67,0.1) 60deg, transparent 120deg);
+  animation: rotate 12s linear infinite;
+  pointer-events: none;
+}
+@keyframes rotate {
+  to { transform: rotate(360deg); }
+}
+.hero-visual > * { position: relative; z-index: 1; }
+.hero-visual-title {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 800;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.screens-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.screen-item {
+  background: rgba(10,14,21,0.8);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 14px;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+}
+.screen-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(245,184,67,0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.screen-item:hover {
+  border-color: var(--accent);
+  transform: translateY(-4px);
+  box-shadow: 0 15px 40px rgba(245,184,67,0.15);
+}
+.screen-item:hover::before { opacity: 1; }
+.screen-item .icon { font-size: 28px; margin-bottom: 8px; display: block; }
+.screen-item .name { font-size: 12.5px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+.screen-item .tag {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 10px;
+  letter-spacing: 0.6px;
+  display: inline-block;
+}
+.tag-offline { background: rgba(45,212,167,0.15); color: var(--green); }
+.tag-online { background: rgba(122,134,153,0.12); color: var(--muted); }
+.hero-visual-note {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.hero-visual-note .dot { color: var(--green); }
+
+/* ============================================
+   TRUST BAR
+   ============================================ */
+.trust {
+  padding: 36px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+  background: rgba(10,14,21,0.4);
+}
+.trust-label {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+.trust-logos {
+  display: flex;
+  justify-content: center;
+  gap: 48px;
+  flex-wrap: wrap;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--muted);
+  opacity: 0.6;
+  transition: all 0.3s;
+}
+.trust-logos span { transition: all 0.25s; cursor: default; }
+.trust-logos span:hover { opacity: 1; color: var(--accent); transform: translateY(-2px); }
+
+/* ============================================
+   SECTIONS
+   ============================================ */
+section { padding: 100px 0; position: relative; }
+.section-head {
+  text-align: center;
+  max-width: 760px;
+  margin: 0 auto 60px;
+}
+.section-label {
+  display: inline-block;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  margin-bottom: 16px;
+  padding: 6px 16px;
+  background: rgba(245,184,67,0.08);
+  border: 1px solid rgba(245,184,67,0.2);
+  border-radius: 20px;
+}
+.section-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(30px, 4vw, 46px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -1.2px;
+  margin-bottom: 16px;
+  color: #fff;
+}
+.section-sub {
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+/* ============================================
+   FEATURES
+   ============================================ */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.feature-card {
+  background: linear-gradient(160deg, var(--panel), var(--bg-2));
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 30px 26px;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), var(--green), transparent);
+  opacity: 0;
+  transition: opacity 0.35s;
+}
+.feature-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(245,184,67,0.15), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.35s;
+  pointer-events: none;
+}
+.feature-card:hover {
+  border-color: rgba(245,184,67,0.4);
+  transform: translateY(-6px);
+  box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+}
+.feature-card:hover::before { opacity: 1; }
+.feature-card:hover::after { opacity: 1; }
+.feature-card > * { position: relative; z-index: 1; }
+.feature-card .icon {
+  font-size: 32px;
+  margin-bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: rgba(245,184,67,0.08);
+  border: 1px solid rgba(245,184,67,0.2);
+  border-radius: 14px;
+  transition: all 0.3s;
+}
+.feature-card:hover .icon {
+  background: rgba(245,184,67,0.15);
+  transform: scale(1.05);
+}
+.feature-card h3 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+.feature-card p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.65;
+  margin-bottom: 16px;
+}
+.feature-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+.feature-tag.offline { background: rgba(45,212,167,0.12); color: var(--green); }
+.feature-tag.online { background: rgba(122,134,153,0.12); color: var(--muted); }
+.feature-tag.auto { background: rgba(245,184,67,0.12); color: var(--accent); }
+
+/* ============================================
+   OFFLINE BLOCK
+   ============================================ */
+.offline-block {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(45,212,167,0.1), transparent 50%),
+    linear-gradient(160deg, var(--panel), var(--bg-2));
+  border: 1px solid rgba(45,212,167,0.3);
+  border-radius: 28px;
+  padding: 60px 45px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+}
+.offline-block::before {
+  content: '🔄';
+  position: absolute;
+  top: -50px;
+  right: -20px;
+  font-size: 280px;
+  opacity: 0.03;
+  pointer-events: none;
+  transform: rotate(-15deg);
+}
+.offline-block h2 {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(26px, 3.5vw, 40px);
+  font-weight: 800;
+  margin-bottom: 18px;
+  letter-spacing: -0.8px;
+  color: #fff;
+}
+.offline-block h2 span {
+  background: linear-gradient(135deg, var(--green), #6EE7B7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.offline-block > p {
+  color: var(--text-2);
+  max-width: 680px;
+  margin: 0 auto 40px;
+  font-size: 16.5px;
+  line-height: 1.7;
+}
+.offline-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+.flow-step {
+  background: rgba(10,14,21,0.7);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 24px;
+  min-width: 150px;
+  text-align: center;
+  transition: all 0.3s;
+  backdrop-filter: blur(10px);
+}
+.flow-step:hover { transform: translateY(-4px); border-color: var(--border-2); }
+.flow-step .emoji { font-size: 30px; display: block; margin-bottom: 8px; }
+.flow-step .title { font-size: 13.5px; font-weight: 700; margin-bottom: 5px; color: var(--text); }
+.flow-step .sub { font-size: 11.5px; color: var(--muted); }
+.flow-step.highlight {
+  border-color: var(--green);
+  background: rgba(45,212,167,0.08);
+  box-shadow: 0 8px 30px rgba(45,212,167,0.15);
+}
+.flow-step.highlight .sub { color: var(--green); font-weight: 700; }
+.flow-arrow { color: var(--muted); font-size: 22px; opacity: 0.5; }
+
+/* ============================================
+   QR SECTION
+   ============================================ */
+.qr-block { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+.qr-text h2 {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(28px, 3.5vw, 40px);
+  font-weight: 800;
+  margin-bottom: 20px;
+  letter-spacing: -0.8px;
+  line-height: 1.15;
+  color: #fff;
+}
+.qr-text p { color: var(--text-2); font-size: 16px; margin-bottom: 26px; line-height: 1.7; }
+.qr-benefits { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+.qr-benefits li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14.5px;
+  color: var(--text-2);
+  transition: all 0.2s;
+}
+.qr-benefits li:hover { color: var(--text); transform: translateX(4px); }
+.qr-benefits li .check {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(45,212,167,0.15);
+  color: var(--green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 900;
+  flex-shrink: 0;
+  margin-top: 2px;
+  border: 1px solid rgba(45,212,167,0.3);
+}
+.qr-visual {
+  background: linear-gradient(160deg, var(--panel), var(--bg-2));
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 45px 35px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+  overflow: hidden;
+}
+.qr-visual::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(245,184,67,0.1), transparent 60%);
+  pointer-events: none;
+}
+.qr-code-mock {
+  width: 220px;
+  height: 220px;
+  margin: 0 auto 20px;
+  background: #fff;
+  border-radius: 18px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 70px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+  position: relative;
+  animation: qrFloat 4s ease-in-out infinite;
+}
+@keyframes qrFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.qr-code-mock::before {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border: 3px dashed #111;
+  border-radius: 12px;
+  opacity: 0.15;
+}
+.qr-caption { font-size: 13.5px; color: var(--muted); font-weight: 500; }
+.qr-visual > * { position: relative; z-index: 1; }
+
+/* ============================================
+   HOW IT WORKS
+   ============================================ */
+.steps-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; margin-top: 40px; }
+.step-box {
+  background: linear-gradient(160deg, var(--panel), var(--bg-2));
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 32px 24px;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s;
+  overflow: hidden;
+}
+.step-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+.step-box:hover {
+  border-color: rgba(245,184,67,0.4);
+  transform: translateY(-6px);
+  box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+}
+.step-num {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #0A0E15;
+  font-weight: 900;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+  font-family: 'Poppins', sans-serif;
+  box-shadow: 0 8px 24px rgba(245,184,67,0.3);
+}
+.step-box h4 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+.step-box p { color: var(--muted); font-size: 13.5px; line-height: 1.6; }
+
+/* ============================================
+   PRICING PLANS
+   ============================================ */
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 26px;
+  margin-top: 40px;
+  align-items: stretch;
+}
+.plan-card {
+  background: linear-gradient(160deg, var(--panel), var(--bg-2));
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 40px 32px;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.plan-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--border-2), transparent);
+  transition: all 0.35s;
+}
+.plan-card:hover {
+  border-color: rgba(245,184,67,0.35);
+  transform: translateY(-6px);
+  box-shadow: 0 30px 70px rgba(0,0,0,0.5);
+}
+.plan-card:hover::before {
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+.plan-card.popular {
+  border-color: var(--accent);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(245,184,67,0.12), transparent 60%),
+    linear-gradient(160deg, var(--panel), var(--bg-2));
+  box-shadow: 0 20px 60px rgba(245,184,67,0.15);
+}
+.plan-card.popular::before {
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+.plan-card.popular::after {
+  content: '⭐ MOST POPULAR';
+  position: absolute;
+  top: 22px;
+  right: -34px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #0A0E15;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  padding: 6px 42px;
+  transform: rotate(45deg);
+  box-shadow: 0 4px 15px rgba(245,184,67,0.4);
+}
+.plan-tier {
+  font-family: 'Poppins', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+.plan-tagline {
+  color: var(--muted);
+  font-size: 13.5px;
+  margin-bottom: 26px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.6;
+}
+.plan-limits-heading {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  margin-bottom: 18px;
+}
+.plan-limits { list-style: none; display: flex; flex-direction: column; gap: 4px; margin-bottom: 24px; }
+.plan-limits li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  padding: 11px 0;
+  border-bottom: 1px dashed rgba(255,255,255,0.05);
+}
+.plan-limits li:last-child { border-bottom: none; }
+.plan-limits li .role {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-2);
+  font-weight: 600;
+}
+.plan-limits li .role .icon {
+  font-size: 17px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+}
+.plan-limits li .count {
+  background: rgba(245,184,67,0.12);
+  color: var(--accent);
+  font-weight: 800;
+  font-size: 13px;
+  padding: 5px 12px;
+  border-radius: 10px;
+  min-width: 40px;
+  text-align: center;
+  border: 1px solid rgba(245,184,67,0.15);
+}
+.plan-features-note {
+  background: rgba(45,212,167,0.06);
+  border-left: 3px solid var(--green);
+  padding: 14px 16px;
+  border-radius: 10px;
+  margin-bottom: 26px;
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.65;
+}
+.plan-features-note strong { color: var(--green); }
+.plan-card .btn { width: 100%; justify-content: center; margin-top: auto; }
+
+/* ============================================
+   TESTIMONIALS
+   ============================================ */
+.testimonials-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px; }
+.testimonial {
+  background: linear-gradient(160deg, var(--panel), var(--bg-2));
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 32px 30px;
+  position: relative;
+  transition: all 0.3s;
+  overflow: hidden;
+}
+.testimonial::before {
+  content: '"';
+  position: absolute;
+  top: -10px;
+  right: 24px;
+  font-size: 100px;
+  color: var(--accent);
+  opacity: 0.1;
+  font-family: Georgia, serif;
+  line-height: 1;
+}
+.testimonial:hover {
+  border-color: rgba(245,184,67,0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+}
+.testimonial-quote {
+  font-size: 15.5px;
+  color: var(--text-2);
+  line-height: 1.75;
+  margin-bottom: 24px;
+  font-style: italic;
+  position: relative;
+  z-index: 1;
+}
+.testimonial-author { display: flex; align-items: center; gap: 14px; }
+.testimonial-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--green));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: #0A0E15;
+  font-size: 16px;
+  box-shadow: 0 6px 20px rgba(245,184,67,0.25);
+}
+.testimonial-name { font-weight: 700; font-size: 14.5px; color: var(--text); }
+.testimonial-role { color: var(--muted); font-size: 12.5px; }
+
+/* ============================================
+   FINAL CTA
+   ============================================ */
+.final-cta {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(245,184,67,0.12), transparent 60%),
+    linear-gradient(160deg, var(--panel), var(--bg-2));
+  border: 1px solid rgba(245,184,67,0.25);
+  border-radius: 30px;
+  padding: 70px 45px;
+  text-align: center;
+  margin: 40px 0;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+}
+.final-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 100%, rgba(45,212,167,0.08), transparent 50%);
+  pointer-events: none;
+}
+.final-cta > * { position: relative; z-index: 1; }
+.final-cta h2 {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(28px, 3.5vw, 44px);
+  font-weight: 800;
+  margin-bottom: 18px;
+  letter-spacing: -1px;
+  color: #fff;
+  line-height: 1.15;
+}
+.final-cta p {
+  color: var(--text-2);
+  font-size: 17px;
+  max-width: 560px;
+  margin: 0 auto 36px;
+  line-height: 1.7;
+}
+.final-cta-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+/* ============================================
+   FOOTER
+   ============================================ */
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 60px 0 30px;
+  margin-top: 40px;
+  background: rgba(10,14,21,0.4);
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 50px;
+  margin-bottom: 50px;
+}
+.footer-brand p {
+  color: var(--muted);
+  font-size: 13.5px;
+  margin-top: 18px;
+  line-height: 1.75;
+  max-width: 320px;
+}
+.footer-col h5 {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text);
+  margin-bottom: 18px;
+}
+.footer-col a {
+  display: block;
+  color: var(--muted);
+  font-size: 13.5px;
+  padding: 7px 0;
+  transition: all 0.2s;
+}
+.footer-col a:hover { color: var(--accent); transform: translateX(4px); }
+.footer-bottom {
+  border-top: 1px solid var(--border);
+  padding-top: 26px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 13px;
+}
+.footer-contact { display: flex; gap: 24px; flex-wrap: wrap; }
+.footer-contact span { transition: color 0.2s; cursor: pointer; }
+.footer-contact span:hover { color: var(--accent); }
+
+/* ============================================
+   SCROLL REVEAL
+   ============================================ */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 992px) {
+  .hero { padding: 60px 0 50px; }
+  .hero-grid { grid-template-columns: 1fr; gap: 50px; }
+  .hero h1 { font-size: 42px; }
+  .features-grid { grid-template-columns: repeat(2, 1fr); }
+  .qr-block { grid-template-columns: 1fr; gap: 45px; }
+  .steps-grid { grid-template-columns: repeat(2, 1fr); }
+  .plans-grid { grid-template-columns: 1fr; max-width: 480px; margin-left: auto; margin-right: auto; }
+  .testimonials-grid { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 35px; }
+  section { padding: 70px 0; }
+}
+
+@media (max-width: 620px) {
+  .header-inner { flex-direction: column; align-items: stretch; gap: 14px; }
+  .nav { justify-content: center; gap: 4px; }
+  .nav a { font-size: 13px; padding: 6px 10px; }
+  .nav .btn { margin-left: 0; width: 100%; justify-content: center; }
+  .hero { padding: 40px 0 30px; }
+  .hero h1 { font-size: 32px; letter-spacing: -1px; }
+  .hero p { font-size: 15px; }
+  .hero-visual { padding: 20px; }
+  .screens-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .screen-item { padding: 14px 10px; }
+  .screen-item .icon { font-size: 22px; }
+  .features-grid { grid-template-columns: 1fr; }
+  .feature-card { padding: 24px 20px; }
+  .steps-grid { grid-template-columns: 1fr; }
+  .flow-arrow { transform: rotate(90deg); }
+  .offline-flow { flex-direction: column; }
+  .offline-block { padding: 40px 24px; }
+  .footer-grid { grid-template-columns: 1fr; }
+  .final-cta { padding: 50px 26px; }
+  .testimonial { padding: 26px 22px; }
+  .plan-card { padding: 32px 24px; }
+  .plan-card.popular::after { right: -38px; }
+  section { padding: 55px 0; }
+  .section-title { letter-spacing: -0.8px; }
+  .trust-logos { gap: 24px; font-size: 14px; }
+  .qr-visual { padding: 35px 22px; }
+  .qr-code-mock { width: 180px; height: 180px; font-size: 55px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== HEADER ===================== -->
+<header class="header">
+  <div class="container header-inner">
+    <a href="#" class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 9.5C9 7.6 11 6.2 14 6.2s5 1.4 5 3.1c0 1.9-2.3 2.7-5 3.2-2.9.5-5 1.4-5 3.3 0 1.7 2 3.1 5 3.1s5-1.4 5-3.1"
+                stroke="#0E1420" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="21.4" cy="7.4" r="2" fill="#0E1420"/>
+        </svg>
+      </div>
+      <div class="logo-text">Siz<span>lio</span></div>
+    </a>
+    <nav class="nav">
+      <a href="#features">Features</a>
+      <a href="#offline">Offline</a>
+      <a href="#qr">QR Ordering</a>
+      <a href="#how">How It Works</a>
+      <a href="#plans">Plans</a>
+      <a href="https://wa.me/923019128606?text=Hi!%20I'd%20like%20to%20book%20a%20demo%20of%20Sizlio." target="_blank" rel="noopener" class="btn btn-primary btn-sm">Book Demo</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero">
+  <div class="container hero-grid">
+    <div class="reveal">
+      <div class="hero-badge">
+        <span class="dot"></span> Counter works fully offline
+      </div>
+      <h1>
+        Restaurant operations,<br>
+        <span class="accent">fully connected.</span>
+      </h1>
+      <p>
+        Counter, Kitchen, Waiter, Rider, QR Ordering, Inventory — all in one system.
+        Built for Pakistani restaurants with real-world offline resilience.
+      </p>
+      <div class="hero-cta">
+        <a href="#cta" class="btn btn-primary">🚀 Start Free Trial</a>
+        <a href="#features" class="btn btn-outline">See All Features</a>
+      </div>
+      <div class="hero-badges">
+        <span class="badge-pill">🔄 Offline POS</span>
+        <span class="badge-pill">📱 QR Menu</span>
+        <span class="badge-pill">🍳 Kitchen Display</span>
+        <span class="badge-pill">🚴 Rider App</span>
+        <span class="badge-pill">📦 Inventory</span>
+      </div>
+    </div>
+
+    <div class="hero-visual reveal">
+      <div class="hero-visual-title">One system — every screen</div>
+      <div class="screens-grid">
+        <div class="screen-item">
+          <span class="icon">🖥️</span>
+          <div class="name">Counter POS</div>
+          <span class="tag tag-offline">Offline</span>
+        </div>
+        <div class="screen-item">
+          <span class="icon">📲</span>
+          <div class="name">QR Order</div>
+          <span class="tag tag-online">Online</span>
+        </div>
+        <div class="screen-item">
+          <span class="icon">🍳</span>
+          <div class="name">Kitchen</div>
+          <span class="tag tag-online">Online</span>
+        </div>
+        <div class="screen-item">
+          <span class="icon">📱</span>
+          <div class="name">Waiter</div>
+          <span class="tag tag-online">Online</span>
+        </div>
+        <div class="screen-item">
+          <span class="icon">🚴</span>
+          <div class="name">Rider</div>
+          <span class="tag tag-online">Online</span>
+        </div>
+        <div class="screen-item">
+          <span class="icon">📊</span>
+          <div class="name">Status Board</div>
+          <span class="tag tag-online">Online</span>
+        </div>
+        <div class="screen-item">
+          <span class="icon">🏚️</span>
+          <div class="name">Warehouse</div>
+          <span class="tag tag-online">Online</span>
+        </div>
+        <div class="screen-item">
+          <span class="icon">🔄</span>
+          <div class="name">Auto Sync</div>
+          <span class="tag tag-offline">Auto</span>
+        </div>
+      </div>
+      <div class="hero-visual-note">
+        <span class="dot">●</span> Counter keeps working without internet
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TRUST BAR ===================== -->
+<div class="trust">
+  <div class="container">
+    <div class="trust-label">Built for Pakistani restaurants</div>
+    <div class="trust-logos">
+      <span>🍔 Fast Food</span>
+      <span>🍕 Pizza</span>
+      <span>☕ Cafés</span>
+      <span>🍛 Desi</span>
+      <span>🌯 Takeaway</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== FEATURES ===================== -->
+<section id="features">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="section-label">⚡ Complete Platform</span>
+      <h2 class="section-title">Everything your restaurant needs</h2>
+      <p class="section-sub">One connected system replacing 6+ separate tools.</p>
+    </div>
+
+    <div class="features-grid">
+
+      <div class="feature-card reveal">
+        <div class="icon">🖥️</div>
+        <h3>Counter POS</h3>
+        <p>Dine-in, delivery, table management, discounts, GST, deals, split payments, editable bills. Works fully offline with auto-sync.</p>
+        <span class="feature-tag offline">✓ Offline</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <div class="icon">📲</div>
+        <h3>QR Table Ordering</h3>
+        <p>Every table gets a unique QR code. Customers scan, browse menu, order directly, call waiter. No app install needed.</p>
+        <span class="feature-tag online">Online</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <div class="icon">🍳</div>
+        <h3>Kitchen Display (KDS)</h3>
+        <p>Live order queue for chefs. Accept, set prep time, mark ready. Auto-print tickets on new orders and additions.</p>
+        <span class="feature-tag online">Online</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <div class="icon">📱</div>
+        <h3>Waiter App</h3>
+        <p>Take orders on phone, get ready notifications, serve orders, and receive customer waiter-calls instantly.</p>
+        <span class="feature-tag online">Online</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <div class="icon">🚴</div>
+        <h3>Delivery Rider App</h3>
+        <p>Auto-assign least-loaded rider. Shift on/off, out-for-delivery tracking, call customer, mark delivered.</p>
+        <span class="feature-tag online">Online</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <div class="icon">📊</div>
+        <h3>Live Status Board</h3>
+        <p>Hall display showing live order status — customers and staff see exactly where each order stands.</p>
+        <span class="feature-tag online">Online</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <div class="icon">🏚️</div>
+        <h3>Warehouse Inventory</h3>
+        <p>Central stock management with purchase tracking, bulk purchase helper, low-stock alerts, and full transaction history.</p>
+        <span class="feature-tag online">Online</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <div class="icon">🍳</div>
+        <h3>Kitchen Inventory</h3>
+        <p>Real-time kitchen stock levels. Kitchen requests stock from warehouse, manager approves, both stay synced.</p>
+        <span class="feature-tag online">Online</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <div class="icon">📝</div>
+        <h3>Recipe Ingredients</h3>
+        <p>Link ingredients to menu items (with variants). When orders are served, kitchen stock auto-deducts.</p>
+        <span class="feature-tag auto">⚡ Auto-deduct</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <div class="icon">📈</div>
+        <h3>Sales Dashboard</h3>
+        <p>Daily, monthly, custom-range reports. Top-selling items, payment summary, print & CSV export.</p>
+        <span class="feature-tag online">Online</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <div class="icon">🕐</div>
+        <h3>Shift Reports</h3>
+        <p>Every staff shift tracked — orders handled, sales, items prepared, ingredients consumed, with full audit.</p>
+        <span class="feature-tag online">Online</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <div class="icon">🔄</div>
+        <h3>Auto Sync & Backup</h3>
+        <p>Every order, transaction, and stock change saves automatically. Data synced across all devices in real-time.</p>
+        <span class="feature-tag offline">✓ Auto</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===================== OFFLINE ===================== -->
+<section id="offline">
+  <div class="container">
+    <div class="offline-block reveal">
+      <h2>Internet gaya? <span>Counter nahi rukta.</span></h2>
+      <p>
+        Counter orders continue without internet. They save locally and auto-sync to
+        Kitchen, Rider, and Inventory when connection returns.
+      </p>
+      <div class="offline-flow">
+        <div class="flow-step highlight">
+          <span class="emoji">🖥️</span>
+          <div class="title">Counter Order</div>
+          <div class="sub">Works offline</div>
+        </div>
+        <span class="flow-arrow">➜</span>
+        <div class="flow-step">
+          <span class="emoji">💾</span>
+          <div class="title">Local Save</div>
+          <div class="sub">IndexedDB storage</div>
+        </div>
+        <span class="flow-arrow">➜</span>
+        <div class="flow-step highlight">
+          <span class="emoji">☁️</span>
+          <div class="title">Auto Sync</div>
+          <div class="sub">When online</div>
+        </div>
+        <span class="flow-arrow">➜</span>
+        <div class="flow-step">
+          <span class="emoji">🍳📱🚴</span>
+          <div class="title">Kitchen · Waiter · Rider</div>
+          <div class="sub">Updated instantly</div>
+        </div>
+      </div>
+      <div style="margin-top: 32px; font-size: 13.5px; color: var(--muted);">
+        💡 Offline print supported — receipts print even when internet is down.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== QR ORDERING ===================== -->
+<section id="qr">
+  <div class="container qr-block">
+    <div class="qr-text reveal">
+      <span class="section-label">📲 QR Table Ordering</span>
+      <h2>Let customers order from their phones.</h2>
+      <p>
+        Every table gets its own QR code. Customers scan with their phone camera,
+        browse your live menu, place orders, and call the waiter — all without downloading anything.
+      </p>
+      <ul class="qr-benefits">
+        <li><span class="check">✓</span><span>Reduces waiter workload and travel time</span></li>
+        <li><span class="check">✓</span><span>Faster order-to-kitchen flow</span></li>
+        <li><span class="check">✓</span><span>Menu updates instantly — no reprinting</span></li>
+        <li><span class="check">✓</span><span>Call Waiter button for customer convenience</span></li>
+        <li><span class="check">✓</span><span>Works with deals, variants, and live pricing</span></li>
+      </ul>
+    </div>
+    <div class="qr-visual reveal">
+      <div class="qr-code-mock">📱</div>
+      <div style="font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--text);">Table 5</div>
+      <div class="qr-caption">Scan to view menu & order</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== HOW IT WORKS ===================== -->
+<section id="how">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="section-label">📋 How It Works</span>
+      <h2 class="section-title">From order to serving — smooth flow</h2>
+      <p class="section-sub">Every step connected, every screen in sync.</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-box reveal">
+        <div class="step-num">1</div>
+        <h4>Order Received</h4>
+        <p>Customer orders via QR, waiter, counter, or phone. All channels merge into one queue.</p>
+      </div>
+      <div class="step-box reveal">
+        <div class="step-num">2</div>
+        <h4>Kitchen Prepares</h4>
+        <p>Chef accepts on Kitchen Display, sets prep time, tickets auto-print. Inventory checks ingredient availability.</p>
+      </div>
+      <div class="step-box reveal">
+        <div class="step-num">3</div>
+        <h4>Serve or Deliver</h4>
+        <p>Waiter gets ready notification. Delivery orders auto-assign to the least-loaded rider on shift.</p>
+      </div>
+      <div class="step-box reveal">
+        <div class="step-num">4</div>
+        <h4>Complete & Track</h4>
+        <p>Payment collected, inventory auto-deducted via recipes, shift reports generated automatically.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PLANS ===================== -->
+<section id="plans">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="section-label">📦 Choose Your Plan</span>
+      <h2 class="section-title">Plans for every restaurant size</h2>
+      <p class="section-sub">
+        All plans include every feature. Plans differ only in the number of staff accounts you can create.
+      </p>
+    </div>
+
+    <div class="plans-grid">
+
+      <!-- BASIC -->
+      <div class="plan-card reveal">
+        <div class="plan-tier">Basic</div>
+        <div class="plan-tagline">Small cafés & single-counter setups</div>
+
+        <div class="plan-limits-heading">Staff Account Limits</div>
+        <ul class="plan-limits">
+          <li>
+            <span class="role"><span class="icon">🧑‍🍳</span> Waiter</span>
+            <span class="count">2</span>
+          </li>
+          <li>
+            <span class="role"><span class="icon">🧾</span> Counter</span>
+            <span class="count">1</span>
+          </li>
+          <li>
+            <span class="role"><span class="icon">🖥️</span> Display</span>
+            <span class="count">1</span>
+          </li>
+          <li>
+            <span class="role"><span class="icon">👤</span> Manager</span>
+            <span class="count">1</span>
+          </li>
+          <li>
+            <span class="role"><span class="icon">🍳</span> Kitchen</span>
+            <span class="count">1</span>
+          </li>
+          <li>
+            <span class="role"><span class="icon">🏍️</span> Rider</span>
+            <span class="count">2</span>
+          </li>
+        </ul>
+
+        <div class="plan-features-note">
+          <strong>✓ All features included</strong> — Counter POS, QR Ordering, Kitchen Display, Waiter App, Rider App, Warehouse & Kitchen Inventory, Recipe Management, Sales & Shift Reports.
+        </div>
+
+        <a href="#cta" class="btn btn-outline">Start Free Trial</a>
+      </div>
+
+      <!-- STANDARD -->
+      <div class="plan-card popular reveal">
+        <div class="plan-tier">Standard</div>
+        <div class="plan-tagline">Growing restaurants with moderate traffic</div>
+
+        <div class="plan-limits-heading">Staff Account Limits</div>
+        <ul class="plan-limits">
+          <li>
+            <span class="role"><span class="icon">🧑‍🍳</span> Waiter</span>
+            <span class="count">3</span>
+          </li>
+          <li>
+            <span class="role"><span class="icon">🧾</span> Counter</span>
+            <span class="count">1</span>
+          </li>
+          <li>
+            <span class="role"><span class="icon">🖥️</span> Display</span>
+            <span class="count">1</span>
+          </li>
+          <li>
+            <span class="role"><span class="icon">👤</span> Manager</span>
+            <span class="count">1</span>
+          </li>
+          <li>
+            <span class="role"><span class="icon">🍳</span> Kitchen</span>
+            <span class="count">1</span>
+          </li>
+          <li>
+            <span class="role"><span class="icon">🏍️</span> Rider</span>
+            <span class="count">3</span>
+          </li>
+        </ul>
+
+        <div class="plan-features-note">
+          <strong>✓ All features included</strong> — Counter POS, QR Ordering, Kitchen Display, Waiter App, Rider App, Warehouse & Kitchen Inventory, Recipe Management, Sales & Shift Reports.
+        </div>
+
+        <a href="#cta" class="btn btn-primary">Start Free Trial</a>
+      </div>
+
+      <!-- PREMIUM -->
+      <div class="plan-card reveal">
+        <div class="plan-tier">Premium</div>
+        <div class="plan-tagline">Busy restaurants & multi-shift operations</div>
+
+        <div class="plan-limits-heading">Staff Account Limits</div>
+        <ul class="plan-limits">
+          <li>
+            <span class="role"><span class="icon">🧑‍🍳</span> Waiter</span>
+            <span class="count">4</span>
+          </li>
+          <li>
+            <span class="role"><span class="icon">🧾</span> Counter</span>
+            <span class="count">2</span>
+          </li>
+          <li>
+            <span class="role"><span class="icon">🖥️</span> Display</span>
+            <span class="count">2</span>
+          </li>
+          <li>
+            <span class="role"><span class="icon">👤</span> Manager</span>
+            <span class="count">1</span>
+          </li>
+          <li>
+            <span class="role"><span class="icon">🍳</span> Kitchen</span>
+            <span class="count">2</span>
+          </li>
+          <li>
+            <span class="role"><span class="icon">🏍️</span> Rider</span>
+            <span class="count">4</span>
+          </li>
+        </ul>
+
+        <div class="plan-features-note">
+          <strong>✓ All features included</strong> — Counter POS, QR Ordering, Kitchen Display, Waiter App, Rider App, Warehouse & Kitchen Inventory, Recipe Management, Sales & Shift Reports.
+        </div>
+
+        <a href="#cta" class="btn btn-outline">Contact Sales</a>
+      </div>
+
+    </div>
+
+    <p style="text-align:center; color:var(--muted); font-size:14px; margin-top:32px;" class="reveal">
+      💬 Custom limits available for multi-branch restaurants — contact us for a custom quote.
+    </p>
+  </div>
+</section>
+
+<!-- ===================== TESTIMONIALS ===================== -->
+<section>
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="section-label">💬 Reviews</span>
+      <h2 class="section-title">What restaurant owners say</h2>
+    </div>
+    <div class="testimonials-grid">
+      <div class="testimonial reveal">
+        <p class="testimonial-quote">
+          "Pehle order miss ho jaate the aur riders confuse rehte the. Ab QR ordering se customers khud order karte hain,
+          aur kitchen display par sab clear hai. Offline mode ne internet outage mein bhi humein bacha liya."
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">ZA</div>
+          <div>
+            <div class="testimonial-name">Zain Ahmed</div>
+            <div class="testimonial-role">Café Owner · Khanewal</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial reveal">
+        <p class="testimonial-quote">
+          "Recipe-based inventory deduction ne humara manual stock counting khatam kar diya. Ab jab order serve hota hai,
+          kitchen stock automatically kam ho jata hai. Best decision for our restaurant."
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">AK</div>
+          <div>
+            <div class="testimonial-name">Ayesha Khan</div>
+            <div class="testimonial-role">Restaurant Manager · Lahore</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CTA ===================== -->
+<section id="cta">
+  <div class="container">
+    <div class="final-cta reveal">
+      <h2>Ready to streamline your restaurant?</h2>
+      <p>Start with a free 7-day trial. No credit card required. Setup completed in 24 hours.</p>
+      <div class="final-cta-btns">
+        <a href="#" class="btn btn-primary">🚀 Start Free Trial</a>
+        <a href="tel:+923019128606" class="btn btn-outline">📞 +92-301-9128606</a>
+        <a href="https://wa.me/923019128606" class="btn btn-green">📱 WhatsApp</a>
+      </div>
+      <div style="margin-top: 24px; font-size: 13.5px; color: var(--muted);">
+        ⚡ Free training included · Works with your existing thermal printer
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="#" class="logo">
+          <div class="logo-mark">
+            <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 9.5C9 7.6 11 6.2 14 6.2s5 1.4 5 3.1c0 1.9-2.3 2.7-5 3.2-2.9.5-5 1.4-5 3.3 0 1.7 2 3.1 5 3.1s5-1.4 5-3.1"
+                    stroke="#0E1420" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="21.4" cy="7.4" r="2" fill="#0E1420"/>
+            </svg>
+          </div>
+          <div class="logo-text">Siz<span>lio</span></div>
+        </a>
+        <p>
+          Complete restaurant management — Counter POS, QR Ordering, Kitchen Display,
+          Waiter & Rider Apps, Inventory, and Reports. Built for Pakistani restaurants.
+        </p>
+      </div>
+      <div class="footer-col">
+        <h5>Product</h5>
+        <a href="#features">All Features</a>
+        <a href="#offline">Offline Mode</a>
+        <a href="#qr">QR Ordering</a>
+        <a href="#plans">Plans</a>
+      </div>
+      <div class="footer-col">
+        <h5>Support</h5>
+        <a href="https://claude.ai/artifact/35zuom7gYtggbBKsyTaBb8" target="_blank" rel="noopener">Help Center</a>
+        <a href="https://wa.me/923019128606" target="_blank" rel="noopener">WhatsApp Support</a>
+        <a href="mailto:sales@sizlio.com">Email Us</a>
+        <a href="https://wa.me/923019128606?text=Hi!%20I'd%20like%20to%20request%20a%20feature." target="_blank" rel="noopener">Request Feature</a>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <a href="https://claude.ai/artifact/REDUNKuhmbqk2u6hYXXnHe" target="_blank" rel="noopener">About</a>
+        <a href="https://claude.ai/artifact/7W3Vx5w8DF9kHBWb8woC9o" target="_blank" rel="noopener">Contact</a>
+        <a href="https://claude.ai/artifact/XEMNS1NBjDDnzFxQ3UtsgZ" target="_blank" rel="noopener">Privacy Policy</a>
+        <a href="https://claude.ai/artifact/Nae3DLHEfDNFYP7Fd7K8XL" target="_blank" rel="noopener">Terms of Service</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 Sizlio. All rights reserved.</div>
+      <div class="footer-contact">
+        <span>📧 sales@sizlio.com</span>
+        <span>📱 +92-301-9128606</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ============================================
+   SCROLL REVEAL
+   ============================================ */
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, {
+  threshold: 0.1,
+  rootMargin: '0px 0px -50px 0px'
+});
+
+document.querySelectorAll('.reveal').forEach((el) => {
+  revealObserver.observe(el);
+});
+
+/* ============================================
+   HEADER SCROLL EFFECT
+   ============================================ */
+let lastScroll = 0;
+const header = document.querySelector('.header');
+
+window.addEventListener('scroll', () => {
+  const currentScroll = window.pageYOffset;
+
+  if (currentScroll > 50) {
+    header.style.background = 'rgba(5,7,11,0.92)';
+    header.style.boxShadow = '0 4px 30px rgba(0,0,0,0.3)';
+  } else {
+    header.style.background = 'rgba(5,7,11,0.75)';
+    header.style.boxShadow = 'none';
+  }
+
+  lastScroll = currentScroll;
+}, { passive: true });
+
+/* ============================================
+   SMOOTH SCROLL FOR NAV LINKS
+   ============================================ */
+document.querySelectorAll('a[href^="#"]').forEach((link) => {
+  link.addEventListener('click', (e) => {
+    const href = link.getAttribute('href');
+    if (!href || href.length <= 1) return; // bare "#" — no target section, do nothing safely
+    const target = document.querySelector(href);
+    if (target) {
+      e.preventDefault();
+      const offset = 80;
+      const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - offset;
+      window.scrollTo({
+        top: targetPosition,
+        behavior: 'smooth'
+      });
+    }
+  });
+});
+</script>
+
+</body>
+</html>
