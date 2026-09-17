@@ -1096,7 +1096,7 @@ section { padding: 100px 0; position: relative; }
       <a href="#qr">QR Ordering</a>
       <a href="#how">How It Works</a>
       <a href="#plans">Plans</a>
-      <a href="#cta" class="btn btn-primary btn-sm">Book Demo</a>
+      <a href="https://wa.me/923019128606?text=Hi!%20I'd%20like%20to%20book%20a%20demo%20of%20Sizlio." target="_blank" rel="noopener" class="btn btn-primary btn-sm">Book Demo</a>
     </nav>
   </div>
 </header>
@@ -1619,17 +1619,17 @@ section { padding: 100px 0; position: relative; }
       </div>
       <div class="footer-col">
         <h5>Support</h5>
-        <a href="#">Help Center</a>
-        <a href="#">WhatsApp Support</a>
-        <a href="#">Email Us</a>
-        <a href="#">Request Feature</a>
+        <a href="https://claude.ai/artifact/35zuom7gYtggbBKsyTaBb8" target="_blank" rel="noopener">Help Center</a>
+        <a href="https://wa.me/923019128606" target="_blank" rel="noopener">WhatsApp Support</a>
+        <a href="mailto:sales@sizlio.com">Email Us</a>
+        <a href="https://wa.me/923019128606?text=Hi!%20I'd%20like%20to%20request%20a%20feature." target="_blank" rel="noopener">Request Feature</a>
       </div>
       <div class="footer-col">
         <h5>Company</h5>
-        <a href="#">About</a>
-        <a href="#">Contact</a>
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms of Service</a>
+        <a href="https://claude.ai/artifact/REDUNKuhmbqk2u6hYXXnHe" target="_blank" rel="noopener">About</a>
+        <a href="https://claude.ai/artifact/7W3Vx5w8DF9kHBWb8woC9o" target="_blank" rel="noopener">Contact</a>
+        <a href="https://claude.ai/artifact/XEMNS1NBjDDnzFxQ3UtsgZ" target="_blank" rel="noopener">Privacy Policy</a>
+        <a href="https://claude.ai/artifact/Nae3DLHEfDNFYP7Fd7K8XL" target="_blank" rel="noopener">Terms of Service</a>
       </div>
     </div>
     <div class="footer-bottom">
@@ -1687,7 +1687,9 @@ window.addEventListener('scroll', () => {
    ============================================ */
 document.querySelectorAll('a[href^="#"]').forEach((link) => {
   link.addEventListener('click', (e) => {
-    const target = document.querySelector(link.getAttribute('href'));
+    const href = link.getAttribute('href');
+    if (!href || href.length <= 1) return; // bare "#" — no target section, do nothing safely
+    const target = document.querySelector(href);
     if (target) {
       e.preventDefault();
       const offset = 80;
