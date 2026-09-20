@@ -1839,10 +1839,10 @@ async function printStaffPerformance() {
     return `
       <tr>
         <td>${date}</td>
-        <td>${emoji} ${esc(s.full_name || s.username || "Unknown")}<br><span style="font-size:10px;color:#666;">@${esc(s.username || "")}</span></td>
+        <td>${emoji} ${escapeHtml(s.full_name || s.username || "Unknown")}<br><span style="font-size:10px;color:#666;">@${escapeHtml(s.username || "")}</span></td>
         <td>${start}</td>
         <td>${end}</td>
-        <td>${esc(s.status || "")}</td>
+        <td>${escapeHtml(s.status || "")}</td>
         <td style="text-align:right">${Number(s.orders_count || 0)}</td>
         <td style="text-align:right">Rs ${Number(s.total_sales || 0).toLocaleString()}</td>
         <td style="text-align:right">Rs ${Number(s.total_collected || 0).toLocaleString()}</td>
@@ -1854,7 +1854,7 @@ async function printStaffPerformance() {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Staff Performance — ${esc(restaurantName)}</title>
+      <title>Staff Performance — ${escapeHtml(restaurantName)}</title>
       <style>
         * { box-sizing: border-box; }
         body {
@@ -1883,10 +1883,10 @@ async function printStaffPerformance() {
     </head>
     <body onload="window.print();">
       <h1>📈 Staff Performance</h1>
-      <div class="sub">${esc(restaurantName)} — printed ${new Date().toLocaleString()}</div>
+      <div class="sub">${escapeHtml(restaurantName)} — printed ${new Date().toLocaleString()}</div>
 
       <div class="filters">
-        <strong>Filters:</strong> ${esc(filterText)}
+        <strong>Filters:</strong> ${escapeHtml(filterText)}
       </div>
 
       <h2>Summary by Role</h2>
