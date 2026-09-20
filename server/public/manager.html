@@ -209,6 +209,51 @@
       cursor: pointer;
     }
 
+    /* Staff Performance filters */
+    .staff-perf-filters {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .staff-perf-filters .field label {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .staff-perf-filters input,
+    .staff-perf-filters select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 12px;
+      margin: 0;
+    }
+    .staff-perf-quick {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .stat-filter-btn {
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .stat-filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+
     /* ========================= THEME ========================= */
     .theme-row { display: flex; justify-content: space-between; align-items: center; margin: 14px 0; }
     .switch { position: relative; width: 44px; height: 24px; }
@@ -305,6 +350,7 @@
       <button onclick="openPage('inventory.html')">📦 Inventory</button>
       <button onclick="openKitchenRequestsModal()">📥 Kitchen Requests</button>
       <button onclick="openFbrInvoicesModal()">🧾 FBR Invoices <span id="fbr-pending-badge" class="fbr-badge">0</span></button>
+      <button onclick="openStaffPerformance()">📈 Staff Performance</button>
       <button class="menu-parent" onclick="toggleMenuSubmenu()">🍔 Menu <span>▾</span></button>
       <div id="menu-submenu" class="menu-submenu">
         <button onclick="openMenuItems()">🍽️ Items</button>
@@ -476,6 +522,60 @@
           <button class="fbr-retry-all-btn" onclick="retryAllFbrInvoices()">🔄 Retry All Now</button>
         </div>
         <div id="fbr-invoices-list" style="max-height: 420px; overflow-y: auto;"></div>
+      </div>
+    </div>
+
+    <!-- STAFF PERFORMANCE MODAL -->
+    <div class="modal-overlay" id="staff-performance-modal">
+      <div class="modal-box" style="max-width: 900px;">
+        <button class="modal-close-x" onclick="closeStaffPerformance()" aria-label="Close">&times;</button>
+        <h3>📈 Staff Performance</h3>
+        <p style="color: var(--muted); font-size: 12px; margin: 0 0 12px;">
+          Rider, Kitchen, Counter — sab ki shift performance.
+        </p>
+
+        <!-- Filters -->
+        <div class="staff-perf-filters">
+          <div class="field">
+            <label>Role</label>
+            <select id="staff-perf-role">
+              <option value="all">All Roles</option>
+              <option value="delivery">🚴 Rider</option>
+              <option value="kitchen">🍳 Kitchen</option>
+              <option value="counter">💰 Counter</option>
+              <option value="waiter">🍽️ Waiter</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>From</label>
+            <input id="staff-perf-from" type="date">
+          </div>
+          <div class="field">
+            <label>To</label>
+            <input id="staff-perf-to" type="date">
+          </div>
+          <div class="field">
+            <label>Username</label>
+            <input id="staff-perf-username" placeholder="e.g. rider1">
+          </div>
+          <div class="field" style="display:flex;align-items:flex-end;">
+            <button onclick="loadStaffPerformance()" style="width:100%;padding:9px 16px;border-radius:6px;border:0;background:var(--accent);color:#14181c;font-weight:700;font-size:12px;cursor:pointer;margin:0;">Apply</button>
+          </div>
+        </div>
+
+        <!-- Quick filters -->
+        <div class="staff-perf-quick">
+          <button class="stat-filter-btn" onclick="setStaffPerfRange('today')">Today</button>
+          <button class="stat-filter-btn" onclick="setStaffPerfRange('week')">This Week</button>
+          <button class="stat-filter-btn" onclick="setStaffPerfRange('month')">This Month</button>
+          <button class="stat-filter-btn" onclick="setStaffPerfRange('clear')">Clear</button>
+        </div>
+
+        <!-- Totals -->
+        <div id="staff-perf-totals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px;"></div>
+
+        <!-- Shifts table -->
+        <div id="staff-perf-table-wrap" style="max-height:420px;overflow-y:auto;"></div>
       </div>
     </div>
 
@@ -1388,7 +1488,6 @@ function renderCategories() {
         const status = String(inv.status || "").toLowerCase();
         const color = statusColor[status] || "var(--muted)";
 
-        // Last error ko short karo
         let shortError = inv.last_error || "";
         try {
           const parsed = JSON.parse(shortError);
@@ -1495,6 +1594,169 @@ function renderCategories() {
           updateFbrBadge(data.invoices.length);
         }
       } catch (_) {}
+    }
+
+    /* =====================================================
+       STAFF PERFORMANCE
+       ===================================================== */
+
+    function openStaffPerformance() {
+      closeMenu();
+      document.getElementById("staff-performance-modal").classList.add("open");
+      const today = new Date().toISOString().slice(0, 10);
+      document.getElementById("staff-perf-from").value = today;
+      document.getElementById("staff-perf-to").value = today;
+      loadStaffPerformance();
+    }
+
+    function closeStaffPerformance() {
+      document.getElementById("staff-performance-modal").classList.remove("open");
+    }
+
+    function setStaffPerfRange(range) {
+      const from = document.getElementById("staff-perf-from");
+      const to = document.getElementById("staff-perf-to");
+      const today = new Date();
+
+      if (range === "today") {
+        const d = today.toISOString().slice(0, 10);
+        from.value = d;
+        to.value = d;
+      } else if (range === "week") {
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 6);
+        from.value = weekAgo.toISOString().slice(0, 10);
+        to.value = today.toISOString().slice(0, 10);
+      } else if (range === "month") {
+        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        from.value = monthStart.toISOString().slice(0, 10);
+        to.value = today.toISOString().slice(0, 10);
+      } else {
+        from.value = "";
+        to.value = "";
+      }
+
+      loadStaffPerformance();
+    }
+
+    async function loadStaffPerformance() {
+      const wrap = document.getElementById("staff-perf-table-wrap");
+      const totals = document.getElementById("staff-perf-totals");
+
+      wrap.innerHTML = '<div class="empty">Loading performance...</div>';
+      totals.innerHTML = "";
+
+      const role = document.getElementById("staff-perf-role").value;
+      const from = document.getElementById("staff-perf-from").value;
+      const to = document.getElementById("staff-perf-to").value;
+      const username = document.getElementById("staff-perf-username").value.trim();
+
+      const params = new URLSearchParams();
+      if (role && role !== "all") params.set("role", role);
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
+      if (username) params.set("username", username);
+
+      try {
+        const res = await fetch(`/api/shifts/all?${params.toString()}`, { headers: authHeaders() });
+        if (checkUnauthorized(res)) return;
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok || !data.success) {
+          wrap.innerHTML = `<div class="empty">${escapeHtml(data.message || "Unable to load")}</div>`;
+          return;
+        }
+
+        renderStaffPerformanceTotals(data.totals_by_role);
+        renderStaffPerformanceTable(data.shifts || []);
+
+      } catch (err) {
+        console.error("loadStaffPerformance:", err);
+        wrap.innerHTML = '<div class="empty">Server connection failed.</div>';
+      }
+    }
+
+    function renderStaffPerformanceTotals(totalsByRole) {
+      const box = document.getElementById("staff-perf-totals");
+      if (!totalsByRole) return;
+
+      const roles = [
+        { key: "rider", label: "🚴 Rider", color: "#3b82f6" },
+        { key: "kitchen", label: "🍳 Kitchen", color: "#f59e0b" },
+        { key: "counter", label: "💰 Counter", color: "#22c55e" },
+        { key: "waiter", label: "🍽️ Waiter", color: "#a855f7" }
+      ];
+
+      box.innerHTML = roles.map(r => {
+        const t = totalsByRole[r.key] || { shifts: 0, orders: 0, sales: 0, collected: 0 };
+        return `
+          <div style="padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--bg);">
+            <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.3px;">${r.label}</div>
+            <div style="font-size:20px;font-weight:800;color:${r.color};margin-top:4px;">${Number(t.orders || 0)}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;">${Number(t.shifts || 0)} shifts · Rs ${Number(t.sales || 0).toLocaleString()}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderStaffPerformanceTable(shifts) {
+      const wrap = document.getElementById("staff-perf-table-wrap");
+
+      if (!shifts.length) {
+        wrap.innerHTML = '<div class="empty">No shifts found for this filter.</div>';
+        return;
+      }
+
+      const roleEmoji = {
+        delivery: "🚴",
+        kitchen: "🍳",
+        counter: "💰",
+        waiter: "🍽️",
+        manager: "👔"
+      };
+
+      const rows = shifts.map((s, idx) => {
+        const emoji = roleEmoji[s.role] || "👤";
+        const startDate = new Date(s.started_at).toLocaleDateString();
+        const startTime = new Date(s.started_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        const endTime = s.ended_at ? new Date(s.ended_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "-";
+
+        return `
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:10px 8px;">${escapeHtml(startDate)}</td>
+            <td style="padding:10px 8px;">${emoji} ${escapeHtml(s.full_name || s.username || "Unknown")}<br><span style="font-size:10px;color:var(--muted);">@${escapeHtml(s.username || "")}</span></td>
+            <td style="padding:10px 8px;">${startTime}</td>
+            <td style="padding:10px 8px;">${endTime}</td>
+            <td style="padding:10px 8px;">
+              <span style="padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;background:${s.status === "active" ? "rgba(34,197,94,0.15)" : "rgba(148,163,184,0.15)"};color:${s.status === "active" ? "#22c55e" : "#94a3b8"};">
+                ${escapeHtml(s.status)}
+              </span>
+            </td>
+            <td style="padding:10px 8px;text-align:right;font-weight:700;">${Number(s.orders_count || 0)}</td>
+            <td style="padding:10px 8px;text-align:right;">Rs ${Number(s.total_sales || 0).toLocaleString()}</td>
+            <td style="padding:10px 8px;text-align:right;color:#22c55e;">Rs ${Number(s.total_collected || 0).toLocaleString()}</td>
+          </tr>
+        `;
+      }).join("");
+
+      wrap.innerHTML = `
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead>
+            <tr style="background:var(--bg);border-bottom:2px solid var(--border);">
+              <th style="padding:10px 8px;text-align:left;font-size:10px;color:var(--muted);text-transform:uppercase;">Date</th>
+              <th style="padding:10px 8px;text-align:left;font-size:10px;color:var(--muted);text-transform:uppercase;">Staff</th>
+              <th style="padding:10px 8px;text-align:left;font-size:10px;color:var(--muted);text-transform:uppercase;">Start</th>
+              <th style="padding:10px 8px;text-align:left;font-size:10px;color:var(--muted);text-transform:uppercase;">End</th>
+              <th style="padding:10px 8px;text-align:left;font-size:10px;color:var(--muted);text-transform:uppercase;">Status</th>
+              <th style="padding:10px 8px;text-align:right;font-size:10px;color:var(--muted);text-transform:uppercase;">Orders</th>
+              <th style="padding:10px 8px;text-align:right;font-size:10px;color:var(--muted);text-transform:uppercase;">Sales</th>
+              <th style="padding:10px 8px;text-align:right;font-size:10px;color:var(--muted);text-transform:uppercase;">Collected</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
     }
 
     /* BRANDING + SUBSCRIPTION */
@@ -1643,6 +1905,7 @@ async function loadLocation() {
     document.getElementById("deal-modal").addEventListener("click", event => { if (event.target.id === "deal-modal") closeDealModal(); });
     document.getElementById("kitchen-requests-modal").addEventListener("click", event => { if (event.target.id === "kitchen-requests-modal") closeKitchenRequestsModal(); });
     document.getElementById("fbr-invoices-modal").addEventListener("click", event => { if (event.target.id === "fbr-invoices-modal") closeFbrInvoicesModal(); });
+    document.getElementById("staff-performance-modal").addEventListener("click", event => { if (event.target.id === "staff-performance-modal") closeStaffPerformance(); });
 
     /* INITIALIZATION */
     window.addEventListener("load", async () => {

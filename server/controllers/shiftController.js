@@ -3,7 +3,8 @@ const {
   startShift,
   endShift,
   getShiftSummary,
-  listShifts
+  listShifts,
+  getAllShiftsForManager   // ✅ NEW
 } = require('../models/shiftModel');
 
 // Only managers (and admins, if that role exists in your system) can
@@ -219,6 +220,65 @@ exports.list = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Server error'
+    });
+  }
+};
+
+// ======================================================
+// MANAGER — ALL STAFF SHIFTS
+//
+// Rider, Kitchen, Counter, Waiter — sab ki shift
+// summaries with orders count, sales, collected.
+//
+// Filters (query params):
+//   - date     (YYYY-MM-DD)              exact day
+//   - from,to  (YYYY-MM-DD)              date range
+//   - role     'delivery' | 'kitchen' | 'counter' | 'waiter'
+//   - username (partial match)
+// ======================================================
+exports.getAllShiftsForManager = async (req, res) => {
+  try {
+
+    // Only manager / admin can access
+    if (!canViewAllShifts(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only managers can view all staff shifts'
+      });
+    }
+
+    const restaurantId = Number(req.user?.restaurant_id);
+
+    if (!Number.isInteger(restaurantId) || restaurantId <= 0) {
+      return res.status(401).json({
+        success: false,
+        message: 'Restaurant information is missing'
+      });
+    }
+
+    const { date, from, to, role, username } = req.query;
+
+    const result = await getAllShiftsForManager(restaurantId, {
+      date,
+      from,
+      to,
+      role,
+      username
+    });
+
+    return res.json({
+      success: true,
+      count: result.shifts.length,
+      shifts: result.shifts,
+      totals_by_role: result.totals_by_role
+    });
+
+  } catch (err) {
+    console.error('getAllShiftsForManager:', err);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Could not load shifts'
     });
   }
 };
