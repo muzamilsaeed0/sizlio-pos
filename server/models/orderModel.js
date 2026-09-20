@@ -5664,6 +5664,47 @@ END AS shift_active,
 
 };
 
+// ======================================================
+// GET ORDER BY ID (for FBR submission)
+// ======================================================
+
+const getOrderById = async (orderId, restaurantId = null) => {
+  let query = `SELECT * FROM orders WHERE id = $1`;
+  const params = [orderId];
+
+  if (restaurantId) {
+    query += ` AND restaurant_id = $2`;
+    params.push(restaurantId);
+  }
+
+  const result = await pool.query(query, params);
+  return result.rows[0] || null;
+};
+
+// ======================================================
+// GET ORDER ITEMS BY ORDER ID (for FBR submission)
+// ======================================================
+
+const getOrderItemsByOrderId = async (orderId) => {
+  const result = await pool.query(
+    `SELECT
+       oi.id,
+       oi.menu_item_id,
+       oi.variant_id,
+       oi.quantity,
+       m.name,
+       COALESCE(miv.price, m.price) AS price,
+       miv.label AS variant_label
+     FROM order_items oi
+     INNER JOIN menu_items m ON m.id = oi.menu_item_id
+     LEFT JOIN menu_item_variants miv ON miv.id = oi.variant_id
+     WHERE oi.order_id = $1
+     ORDER BY oi.id`,
+    [orderId]
+  );
+  return result.rows;
+};
+
 module.exports = {
 
   createOrder,
@@ -5689,6 +5730,10 @@ module.exports = {
   markCompleted,
 
   markServed,
+
+  getOrderById,          
+       
+  getOrderItemsByOrderId,
 
   markWalkInHandedOver,
 
