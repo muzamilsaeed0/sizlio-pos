@@ -368,9 +368,15 @@ const getAllShiftsForManager = async (restaurantId, filters = {}) => {
         -- ✅ Rider ke liye: assigned delivery orders count karo
         --    Baaki roles ke liye: created_by_user_id
         AND (
+          -- 🚴 Rider: jo orders usne deliver kiye
           (u.role = 'delivery' AND delivery_rider_id = s.user_id)
-          OR
-          (u.role <> 'delivery' AND created_by_user_id = s.user_id)
+
+          -- 💰 Counter / 🍽️ Waiter: jo orders unhone banaye
+          OR (u.role IN ('counter', 'waiter') AND created_by_user_id = s.user_id)
+
+          -- 🍳 Kitchen: koi user filter nahi — shift ke doran ke SAARE orders
+          -- (kyunki kitchen staff order create nahi karte, sirf prepare karte hain)
+          OR (u.role = 'kitchen')
         )
 
     ) o_stats ON true
