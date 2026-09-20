@@ -18,6 +18,8 @@ async function getFbrConfig(restaurantId) {
 
 /** Save/update a restaurant's FBR credentials (called once during setup). */
 async function saveFbrConfig(restaurantId, cfg) {
+  cfg = cfg || {}; // ✅ SAFETY
+
   const { rows } = await pool.query(
     `UPDATE restaurants SET
        fbr_enabled = $2,
@@ -32,13 +34,13 @@ async function saveFbrConfig(restaurantId, cfg) {
      RETURNING id`,
     [
       restaurantId,
-      cfg.fbr_enabled,
-      cfg.fbr_pos_registration_no,
-      cfg.fbr_api_token,
-      cfg.fbr_seller_ntn_cnic,
-      cfg.fbr_seller_business_name,
-      cfg.fbr_seller_province,
-      cfg.fbr_seller_address,
+      cfg.fbr_enabled || false,
+      cfg.fbr_pos_registration_no || null,
+      cfg.fbr_api_token || null,
+      cfg.fbr_seller_ntn_cnic || null,
+      cfg.fbr_seller_business_name || null,
+      cfg.fbr_seller_province || null,
+      cfg.fbr_seller_address || null,
       cfg.fbr_environment || 'sandbox',
     ]
   );

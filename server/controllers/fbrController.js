@@ -10,7 +10,13 @@ const { getOrderById, getOrderItemsByOrderId } = require('../models/orderModel')
 exports.saveConfig = async (req, res) => {
   try {
     const { restaurantId } = req.params;
-    const saved = await fbrModel.saveFbrConfig(restaurantId, req.body);
+
+    // ✅ SAFETY: agar body undefined ho to empty object use karo
+    const body = req.body || {};
+
+    console.log('📥 saveConfig body:', body); // debug ke liye
+
+    const saved = await fbrModel.saveFbrConfig(restaurantId, body);
     res.json({ success: true, restaurant: saved });
   } catch (err) {
     console.error('saveConfig:', err);
