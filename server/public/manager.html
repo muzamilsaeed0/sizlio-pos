@@ -574,6 +574,11 @@
         <!-- Totals -->
         <div id="staff-perf-totals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px;"></div>
 
+        <!-- Export buttons -->
+<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+  <button onclick="printStaffPerformance()" style="padding:9px 16px;border-radius:8px;border:0;background:var(--accent);color:#14181c;font-weight:700;font-size:12px;cursor:pointer;">🖨️ Print</button>
+  <button onclick="exportStaffPerformanceCSV()" style="padding:9px 16px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-weight:700;font-size:12px;cursor:pointer;">📥 Export CSV</button>
+</div>
         <!-- Shifts table -->
         <div id="staff-perf-table-wrap" style="max-height:420px;overflow-y:auto;"></div>
       </div>
@@ -1668,6 +1673,13 @@ function renderCategories() {
           return;
         }
 
+        // ✅ Store data for export
+lastStaffPerformanceData = {
+  shifts: data.shifts || [],
+  totalsByRole: data.totals_by_role || null,
+  filters: { date: null, from, to, role, username }
+};
+
         renderStaffPerformanceTotals(data.totals_by_role);
         renderStaffPerformanceTable(data.shifts || []);
 
@@ -1758,6 +1770,266 @@ function renderCategories() {
         </table>
       `;
     }
+
+
+    /* =====================================================
+   STAFF PERFORMANCE — PRINT & CSV EXPORT
+   ===================================================== */
+
+// Store last loaded data for export
+let lastStaffPerformanceData = {
+  shifts: [],
+  totalsByRole: null,
+  filters: {}
+};
+
+// Update this in loadStaffPerformance after success
+// (already added below in the override)
+
+async function printStaffPerformance() {
+  if (!lastStaffPerformanceData.shifts.length) {
+    alert("Koi data nahi hai print karne ke liye. Pehle filter apply karo.");
+    return;
+  }
+
+  const { shifts, totalsByRole, filters } = lastStaffPerformanceData;
+
+  const restaurantName = (restaurantInfo && restaurantInfo.name) || "Restaurant";
+
+  // Filter summary text
+  let filterText = "All shifts";
+  if (filters.date) filterText = `Date: ${filters.date}`;
+  else if (filters.from && filters.to) filterText = `${filters.from} → ${filters.to}`;
+  if (filters.role && filters.role !== "all") filterText += ` · Role: ${filters.role}`;
+  if (filters.username) filterText += ` · User: ${filters.username}`;
+
+  const roleEmoji = {
+    delivery: "🚴",
+    kitchen: "🍳",
+    counter: "💰",
+    waiter: "🍽️",
+    manager: "👔"
+  };
+
+  // Totals section rows
+  const totalsRows = [
+    { key: "rider", label: "🚴 Rider" },
+    { key: "kitchen", label: "🍳 Kitchen" },
+    { key: "counter", label: "💰 Counter" }
+  ].map(r => {
+    const t = (totalsByRole && totalsByRole[r.key]) || { shifts: 0, orders: 0, sales: 0, collected: 0 };
+    return `
+      <tr>
+        <td>${r.label}</td>
+        <td style="text-align:right">${Number(t.shifts || 0)}</td>
+        <td style="text-align:right">${Number(t.orders || 0)}</td>
+        <td style="text-align:right">Rs ${Number(t.sales || 0).toLocaleString()}</td>
+        <td style="text-align:right">Rs ${Number(t.collected || 0).toLocaleString()}</td>
+      </tr>
+    `;
+  }).join("");
+
+  // Shifts table rows
+  const shiftRows = shifts.map(s => {
+    const emoji = roleEmoji[s.role] || "👤";
+    const date = new Date(s.started_at).toLocaleDateString();
+    const start = new Date(s.started_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const end = s.ended_at ? new Date(s.ended_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "-";
+
+    return `
+      <tr>
+        <td>${date}</td>
+        <td>${emoji} ${esc(s.full_name || s.username || "Unknown")}<br><span style="font-size:10px;color:#666;">@${esc(s.username || "")}</span></td>
+        <td>${start}</td>
+        <td>${end}</td>
+        <td>${esc(s.status || "")}</td>
+        <td style="text-align:right">${Number(s.orders_count || 0)}</td>
+        <td style="text-align:right">Rs ${Number(s.total_sales || 0).toLocaleString()}</td>
+        <td style="text-align:right">Rs ${Number(s.total_collected || 0).toLocaleString()}</td>
+      </tr>
+    `;
+  }).join("");
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Staff Performance — ${esc(restaurantName)}</title>
+      <style>
+        * { box-sizing: border-box; }
+        body {
+          font-family: Arial, Helvetica, sans-serif;
+          padding: 20px;
+          color: #111;
+          background: #fff;
+          font-size: 12px;
+        }
+        h1 { margin: 0 0 4px; font-size: 22px; }
+        h2 { margin: 20px 0 10px; font-size: 15px; border-bottom: 2px solid #333; padding-bottom: 6px; }
+        .sub { color: #666; font-size: 12px; margin-bottom: 6px; }
+        .filters { background: #f5f5f5; padding: 10px 12px; border-radius: 6px; font-size: 11px; color: #333; margin-bottom: 18px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 16px; }
+        th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; vertical-align: top; }
+        th { background: #f0f0f0; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .totals-table td { font-size: 12px; }
+        @media print {
+          body { padding: 10px; }
+          h1 { font-size: 18px; }
+          h2 { font-size: 13px; }
+          table { font-size: 10px; }
+          th, td { padding: 4px 6px; }
+        }
+      </style>
+    </head>
+    <body onload="window.print();">
+      <h1>📈 Staff Performance</h1>
+      <div class="sub">${esc(restaurantName)} — printed ${new Date().toLocaleString()}</div>
+
+      <div class="filters">
+        <strong>Filters:</strong> ${esc(filterText)}
+      </div>
+
+      <h2>Summary by Role</h2>
+      <table class="totals-table">
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th style="text-align:right">Shifts</th>
+            <th style="text-align:right">Orders</th>
+            <th style="text-align:right">Sales</th>
+            <th style="text-align:right">Collected</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${totalsRows}
+        </tbody>
+      </table>
+
+      <h2>All Shifts (${shifts.length})</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Staff</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Status</th>
+            <th style="text-align:right">Orders</th>
+            <th style="text-align:right">Sales</th>
+            <th style="text-align:right">Collected</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${shiftRows || '<tr><td colspan="8" style="text-align:center;color:#666;">No shifts found</td></tr>'}
+        </tbody>
+      </table>
+    </body>
+    </html>
+  `;
+
+  const printWindow = window.open("", "_blank", "width=900,height=700");
+  if (!printWindow) {
+    alert("Please allow pop-ups to print.");
+    return;
+  }
+  printWindow.document.write(html);
+  printWindow.document.close();
+}
+
+function exportStaffPerformanceCSV() {
+  if (!lastStaffPerformanceData.shifts.length) {
+    alert("Koi data nahi hai export karne ke liye. Pehle filter apply karo.");
+    return;
+  }
+
+  const { shifts, totalsByRole, filters } = lastStaffPerformanceData;
+
+  // Header
+  const headers = [
+    "Date",
+    "Staff Name",
+    "Username",
+    "Role",
+    "Start Time",
+    "End Time",
+    "Status",
+    "Orders",
+    "Total Sales",
+    "Total Collected"
+  ];
+
+  // Shift rows
+  const rows = shifts.map(s => {
+    const startDate = new Date(s.started_at).toLocaleDateString();
+    const startTime = new Date(s.started_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const endTime = s.ended_at ? new Date(s.ended_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "-";
+
+    return [
+      startDate,
+      s.full_name || "",
+      s.username || "",
+      s.role || "",
+      startTime,
+      endTime,
+      s.status || "",
+      Number(s.orders_count || 0),
+      Number(s.total_sales || 0).toFixed(2),
+      Number(s.total_collected || 0).toFixed(2)
+    ];
+  });
+
+  // Totals section
+  rows.push([]); // blank
+  rows.push(["", "", "", "", "", "", "", "", "", ""]);
+  rows.push(["SUMMARY BY ROLE", "", "", "", "", "", "", "", "", ""]);
+
+  const roles = [
+    { key: "rider", label: "Rider" },
+    { key: "kitchen", label: "Kitchen" },
+    { key: "counter", label: "Counter" }
+  ];
+
+  roles.forEach(r => {
+    const t = (totalsByRole && totalsByRole[r.key]) || { shifts: 0, orders: 0, sales: 0, collected: 0 };
+    rows.push([
+      r.label,
+      `${Number(t.shifts || 0)} shifts`,
+      "",
+      "",
+      "",
+      "",
+      "",
+      Number(t.orders || 0),
+      Number(t.sales || 0).toFixed(2),
+      Number(t.collected || 0).toFixed(2)
+    ]);
+  });
+
+  // Build CSV
+  const csvRows = [headers, ...rows];
+  const csv = csvRows.map(row =>
+    row.map(value => `"${String(value ?? "").replace(/"/g, '""')}"`).join(",")
+  ).join("\n");
+
+  // Download
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  // Filename
+  let fname = "staff-performance";
+  if (filters.date) fname += `-${filters.date}`;
+  else if (filters.from && filters.to) fname += `-${filters.from}_to_${filters.to}`;
+  else fname += `-${new Date().toISOString().slice(0, 10)}`;
+  fname += ".csv";
+
+  a.href = url;
+  a.download = fname;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
 
     /* BRANDING + SUBSCRIPTION */
     function normalizeLogoUrl(value) { if (!value) return ""; let url = String(value).trim(); if (/^https?:\/\//i.test(url) || url.startsWith("//") || url.startsWith("/")) return url; return "/" + url; }
