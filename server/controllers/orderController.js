@@ -26,7 +26,9 @@ const {
   assignDeliveryRider,
   unassignDeliveryRider,
   autoAssignDeliveryRider,
-  updateDealQuantity
+  updateDealQuantity,
+  getOrderById,              
+  getOrderItemsByOrderId 
 } = require('../models/orderModel');
 
 
@@ -3093,7 +3095,22 @@ exports.pay = async (
       );
 
     }
-    submitInvoiceForOrder(order.id, restaurantId).catch(err => console.error('FBR submission error:', err) );
+   // Order items bhi fetch karne padenge
+
+(async () => {
+  try {
+    const orderForFbr = await getOrderById(order.id);
+    const itemsForFbr = await getOrderItemsByOrderId(order.id);
+    
+    if (orderForFbr) {
+      await submitInvoiceForOrder(orderForFbr, itemsForFbr);
+    }
+  } catch (fbrErr) {
+    console.error('FBR submission error:', fbrErr);
+    // Payment flow pe koi asar nahi
+  }
+})();
+
 
 
 

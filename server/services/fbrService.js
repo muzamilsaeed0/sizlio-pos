@@ -45,8 +45,8 @@ function buildInvoicePayload(order, orderItems, restaurant) {
     invoiceRefNo: '',
     scenarioId: restaurant.fbr_environment === 'sandbox' ? 'SN001' : undefined, // sandbox test-scenario id; omit in production
     items: orderItems.map((item) => {
-      const excludingST = Number(item.unit_price) * Number(item.quantity);
-      const taxRate = item.tax_rate ?? 0; // e.g. 18 for 18%
+      const excludingST = Number(item.price) * Number(item.quantity);
+      const taxRate = Number(order.gst_percent || 0); // e.g. 18 for 18%
       const salesTax = Math.round((excludingST * taxRate) / 100 * 100) / 100;
 
       return {
