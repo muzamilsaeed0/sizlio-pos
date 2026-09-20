@@ -1,3 +1,4 @@
+const { submitInvoiceForOrder } = require('../services/fbrService');
 const pool = require('../config/db');
 
 const {
@@ -3072,6 +3073,10 @@ exports.pay = async (
       req,
       order
     );
+    
+
+   
+      
 
 
     const io =
@@ -3088,6 +3093,8 @@ exports.pay = async (
       );
 
     }
+    submitInvoiceForOrder(order.id, restaurantId).catch(err => console.error('FBR submission error:', err) );
+
 
 
     return res.status(200).json({

@@ -156,6 +156,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/menu', require('./routes/menuRoutes'));
 app.use('/api/deals', require('./routes/dealRoutes'));
 app.use('/api/menu-variants', require('./routes/menuVariantRoutes'));
+app.use('/api/fbr', require('./routes/fbrRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
@@ -240,6 +241,9 @@ const PUBLIC_URL =
 app.set("PUBLIC_URL", PUBLIC_URL);
 
 const PORT = process.env.PORT || 3000;
+
+const { startFbrRetryWorker } = require('./services/fbrRetryWorker');
+ startFbrRetryWorker();
 
 server.listen(PORT, "0.0.0.0", () => {
 
