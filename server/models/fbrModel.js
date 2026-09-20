@@ -105,6 +105,33 @@ async function getInvoiceByOrder(orderId) {
   return rows[0] || null;
 }
 
+/** Restaurant-wise pending/failed invoices with order info (for manager dashboard). */
+async function getPendingInvoicesForRestaurant(restaurantId) {
+  const { rows } = await pool.query(
+    `SELECT 
+       fi.id,
+       fi.order_id,
+       fi.status,
+       fi.retry_count,
+       fi.last_error,
+       fi.created_at,
+       fi.submitted_at,
+       o.customer_name,
+       o.total_amount,
+       o.order_type,
+       o.table_no
+     FROM fbr_invoices fi
+     INNER JOIN orders o ON o.id = fi.order_id
+     WHERE fi.restaurant_id = $1
+       AND fi.status IN ('pending', 'failed')
+       AND fi.retry_count < 5
+     ORDER BY fi.created_at DESC
+     LIMIT 100`,
+    [restaurantId]
+  );
+  return rows;
+}
+
 module.exports = {
   getFbrConfig,
   saveFbrConfig,
@@ -113,4 +140,5 @@ module.exports = {
   markInvoiceFailed,
   getPendingInvoices,
   getInvoiceByOrder,
+  getPendingInvoicesForRestaurant,
 };

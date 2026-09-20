@@ -395,6 +395,84 @@ body{
 
 
 /* =====================================================
+   FBR SECTION
+===================================================== */
+
+.fbr-section{
+
+    text-align:center;
+
+    padding:8px 0;
+
+}
+
+
+.fbr-badge{
+
+    font-size:11px;
+
+    font-weight:bold;
+
+    letter-spacing:1px;
+
+    margin-bottom:6px;
+
+    color:#16805b;
+
+}
+
+
+.fbr-invoice-no{
+
+    font-size:11px;
+
+    margin-bottom:8px;
+
+    word-break:break-all;
+
+}
+
+
+.fbr-qr{
+
+    width:110px;
+
+    height:110px;
+
+    object-fit:contain;
+
+    display:block;
+
+    margin:0 auto;
+
+}
+
+
+.fbr-note{
+
+    font-size:9px;
+
+    color:#555;
+
+    margin-top:6px;
+
+}
+
+
+.fbr-pending{
+
+    text-align:center;
+
+    font-size:10px;
+
+    color:#c97b2e;
+
+    padding:6px 0;
+
+}
+
+
+/* =====================================================
    PAYMENT
 ===================================================== */
 
@@ -782,6 +860,15 @@ body{
 
     }
 
+
+    .fbr-qr{
+
+        width:28mm;
+
+        height:28mm;
+
+    }
+
 }
 
 
@@ -867,6 +954,14 @@ let restaurantBrand = {
     logo:""
 
 };
+
+
+
+/* =====================================================
+   FBR INVOICE
+===================================================== */
+
+let fbrInvoice = null;
 
 
 
@@ -1171,6 +1266,88 @@ async function loadBranding(){
 
 
 /* =====================================================
+   LOAD FBR INVOICE STATUS
+===================================================== */
+
+async function loadFbrInvoice(id){
+
+    try{
+
+        const res =
+            await fetch(
+                "/api/fbr/status/" +
+                encodeURIComponent(id),
+                {
+                    headers:{
+                        "Authorization":
+                            "Bearer " + token
+                    }
+                }
+            );
+
+
+        // 404 = koi invoice log nahi hai
+        // (FBR disabled ya order pay nahi hua)
+        if(res.status === 404){
+
+            fbrInvoice = null;
+
+            return;
+
+        }
+
+
+        if(!res.ok){
+
+            console.warn(
+                "FBR status failed:",
+                res.status
+            );
+
+            fbrInvoice = null;
+
+            return;
+
+        }
+
+
+        const data =
+            await res.json();
+
+
+        if(
+            data &&
+            data.success &&
+            data.invoice
+        ){
+
+            fbrInvoice =
+                data.invoice;
+
+        }
+        else{
+
+            fbrInvoice = null;
+
+        }
+
+
+    }catch(error){
+
+        console.error(
+            "loadFbrInvoice:",
+            error
+        );
+
+        fbrInvoice = null;
+
+    }
+
+}
+
+
+
+/* =====================================================
    LOAD BILL
 ===================================================== */
 
@@ -1274,11 +1451,9 @@ async function loadBill(){
 
         currentOrder = order;
 
-        console.log("FULL ORDER:", order);
-        console.log("ORDER ITEMS:", order.items);
-        console.log("ORDER DEALS:", order.deals);
 
-
+        // ✅ FBR invoice status fetch karo
+        await loadFbrInvoice(orderId);
 
 
         editMode =
@@ -1481,7 +1656,7 @@ async function saveBillEdits() {
         }
       }
       
-      // ✅ DEALS update karo (Naya API call)
+      // ✅ DEALS update karo
       if (change.type === 'deal' && change.dealId) {
         const res = await fetch(`/api/orders/deals/${change.dealId}`, {
           method: "PUT",
@@ -1550,11 +1725,6 @@ function renderBill(order){
         ? order.deals
         : [];
 
-        console.log(
-    "RECEIPT DEALS:",
-    JSON.stringify(deals, null, 2)
-);
-
 
     /* =================================================
        ITEM TOTAL
@@ -1567,8 +1737,8 @@ function renderBill(order){
 
 
     /* =================================================
-   NORMAL ITEMS + DEALS
-================================================= */
+       NORMAL ITEMS
+    ================================================= */
 
 items.forEach(item => {
 
@@ -1587,17 +1757,6 @@ items.forEach(item => {
 
     const amount =
         price * quantity;
-
-    /*
-     * IMPORTANT:
-     * Deal ke andar ke order_items ko normal
-     * item list mein print nahi karna.
-     *
-     * getAllOrders() already filters:
-     * oi.order_deal_id IS NULL
-     *
-     * Isliye yahan sirf standalone items hain.
-     */
 
     subtotal += amount;
 
@@ -1692,11 +1851,6 @@ deals.forEach(deal => {
 
 let dealItems = deal.items;
 
-
-/*
- * PostgreSQL/API kabhi kabhi nested JSON
- * ko string ki form mein return kar sakta hai.
- */
 if (typeof dealItems === "string") {
 
     try {
@@ -1885,9 +2039,7 @@ if (Array.isArray(dealItems)) {
 
 
     /* =================================================
-       ✅ CARD / BANK CHARGES
-       Pehle server se lo. Agar server na bheje lekin
-       paid_amount > total_amount ho, to farq se derive karo.
+       CARD / BANK CHARGES
     ================================================= */
 
     let cardCharge =
@@ -1977,9 +2129,7 @@ if (Array.isArray(dealItems)) {
 
 
     /* =================================================
-       ✅ DERIVE CARD / BANK CHARGES
-       Agar dono zero hain lekin paid_amount > total_amount,
-       to difference ko payment method ke hisaab se assign karo.
+       DERIVE CARD / BANK CHARGES
     ================================================= */
 
     const methodLower =
@@ -2011,10 +2161,7 @@ if (Array.isArray(dealItems)) {
 
 
     /* =================================================
-       ✅ FINAL GRAND TOTAL
-       = base total + (derived or actual) surcharges
-       — sirf tab jab surcharge already base mein
-       include na ho (i.e. server ne total_amount mein add nahi kiya).
+       FINAL GRAND TOTAL
     ================================================= */
 
     const baseIncludesSurcharge =
@@ -2374,6 +2521,106 @@ if (Array.isArray(dealItems)) {
         :
 
         "";
+
+
+
+    /* =================================================
+       ✅ FBR SECTION
+    ================================================= */
+
+    let fbrSection = "";
+
+
+    if (fbrInvoice) {
+
+        const fbrStatus =
+            String(
+                fbrInvoice.status || ""
+            ).toLowerCase();
+
+
+        if (fbrStatus === "submitted") {
+
+            const invoiceNo =
+                fbrInvoice.fbr_invoice_number ||
+                "-";
+
+
+            const qrCode =
+                fbrInvoice.fbr_qr_code ||
+                "";
+
+
+            fbrSection = `
+
+                <hr class="divider">
+
+                <div class="fbr-section">
+
+                    <div class="fbr-badge">
+                        ✓ FBR VERIFIED INVOICE
+                    </div>
+
+                    <div class="fbr-invoice-no">
+                        <strong>Invoice #:</strong>
+                        ${escapeHtml(invoiceNo)}
+                    </div>
+
+                    ${
+                        qrCode
+
+                        ?
+
+                        `
+
+                        <img
+
+                            class="fbr-qr"
+
+                            src="${escapeHtml(
+                                qrCode
+                            )}"
+
+                            alt="FBR QR Code"
+
+                            onerror="
+                                this.style.display='none';
+                            "
+
+                        >
+
+                        `
+
+                        :
+
+                        ""
+                    }
+
+                    <div class="fbr-note">
+                        Scan to verify on FBR
+                    </div>
+
+                </div>
+
+            `;
+
+        }
+        else if (fbrStatus === "pending") {
+
+            fbrSection = `
+
+                <hr class="divider">
+
+                <div class="fbr-pending">
+                    ⏳ FBR Invoice: Processing...
+                </div>
+
+            `;
+
+        }
+        // failed → kuch mat dikhao
+
+    }
 
 
 
@@ -3038,6 +3285,9 @@ if (Array.isArray(dealItems)) {
 
         </div>
 
+
+
+        ${fbrSection}
 
 
         ${editPanel}

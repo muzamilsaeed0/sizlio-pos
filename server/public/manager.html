@@ -153,7 +153,7 @@
     .qr-controls { display: flex; gap: 8px; margin-bottom: 14px; }
 
     /* ========================= SIDE MENU ========================= */
-    .side-menu { position: fixed; top: 0; left: -260px; width: 240px; height: 100%; background: var(--panel); border-right: 1px solid var(--border); transition: left 0.2s; z-index: 1200; padding: 20px 0; }
+    .side-menu { position: fixed; top: 0; left: -260px; width: 240px; height: 100%; background: var(--panel); border-right: 1px solid var(--border); transition: left 0.2s; z-index: 1200; padding: 20px 0; overflow-y: auto; }
     .side-menu.open { left: 0; }
     .menu-heading { padding: 10px 20px 18px; font-size: 16px; font-weight: 700; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
     .side-menu button { display: block; width: 100%; text-align: left; padding: 14px 20px; color: var(--text); background: none; border: 0; font-size: 14px; }
@@ -166,6 +166,18 @@
     .menu-submenu button:hover { background: var(--bg); }
     .side-overlay { display: none; position: fixed; inset: 0; background: #0008; z-index: 1100; }
     .side-overlay.open { display: block; }
+
+    /* FBR badge */
+    .fbr-badge {
+      display: none;
+      background: var(--danger);
+      color: #fff;
+      border-radius: 10px;
+      padding: 1px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 6px;
+    }
 
     /* ========================= MODALS ========================= */
     .modal-overlay { display: none; position: fixed; inset: 0; background: #0009; z-index: 1500; align-items: center; justify-content: center; padding: 15px; }
@@ -184,6 +196,18 @@
     .modal-close-x:hover { background: var(--danger) !important; color: #fff !important; }
     .staff-modal-box h3 { padding-right: 40px; }
     .staff-close-btn { background: transparent !important; color: var(--text) !important; border: 1px solid var(--border) !important; }
+
+    /* FBR retry all button */
+    .fbr-retry-all-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 0;
+      background: var(--accent);
+      color: #14181c;
+      font-weight: 700;
+      cursor: pointer;
+    }
 
     /* ========================= THEME ========================= */
     .theme-row { display: flex; justify-content: space-between; align-items: center; margin: 14px 0; }
@@ -280,6 +304,7 @@
       <button onclick="openPage('sales.html?type=today')">📊 Sales</button>
       <button onclick="openPage('inventory.html')">📦 Inventory</button>
       <button onclick="openKitchenRequestsModal()">📥 Kitchen Requests</button>
+      <button onclick="openFbrInvoicesModal()">🧾 FBR Invoices <span id="fbr-pending-badge" class="fbr-badge">0</span></button>
       <button class="menu-parent" onclick="toggleMenuSubmenu()">🍔 Menu <span>▾</span></button>
       <div id="menu-submenu" class="menu-submenu">
         <button onclick="openMenuItems()">🍽️ Items</button>
@@ -436,6 +461,21 @@
         <button class="modal-close-x" onclick="closeKitchenRequestsModal()" aria-label="Close">&times;</button>
         <h3>📥 Kitchen Stock Requests</h3>
         <div id="kitchen-requests-list" style="max-height: 420px; overflow-y: auto;"></div>
+      </div>
+    </div>
+
+    <!-- FBR INVOICES MODAL -->
+    <div class="modal-overlay" id="fbr-invoices-modal">
+      <div class="modal-box" style="max-width: 520px;">
+        <button class="modal-close-x" onclick="closeFbrInvoicesModal()" aria-label="Close">&times;</button>
+        <h3>🧾 FBR Invoices</h3>
+        <p style="color: var(--muted); font-size: 12px; margin: 0 0 12px;">
+          Pending aur failed invoices. Retry manually karo ya auto-retry worker ka wait karo (har 5 min).
+        </p>
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+          <button class="fbr-retry-all-btn" onclick="retryAllFbrInvoices()">🔄 Retry All Now</button>
+        </div>
+        <div id="fbr-invoices-list" style="max-height: 420px; overflow-y: auto;"></div>
       </div>
     </div>
 
@@ -625,6 +665,7 @@
       await loadBranding();
       await loadSummary();
       await loadLocation();
+      await refreshFbrBadge();
     }
     function toggleMenuSubmenu() { const submenu = document.getElementById("menu-submenu"); if (submenu) submenu.classList.toggle("open"); }
 
@@ -1289,6 +1330,173 @@ function renderCategories() {
       } catch (error) { alert("Server connection failed"); }
     }
 
+    /* =====================================================
+       FBR INVOICES
+       ===================================================== */
+
+    function openFbrInvoicesModal() {
+      closeMenu();
+      document.getElementById("fbr-invoices-modal").classList.add("open");
+      loadFbrInvoices();
+    }
+
+    function closeFbrInvoicesModal() {
+      document.getElementById("fbr-invoices-modal").classList.remove("open");
+    }
+
+    async function loadFbrInvoices() {
+      const list = document.getElementById("fbr-invoices-list");
+      list.innerHTML = '<div class="empty">Loading FBR invoices...</div>';
+
+      try {
+        const res = await fetch("/api/fbr/pending", { headers: authHeaders() });
+
+        if (checkUnauthorized(res)) return;
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok || !data.success) {
+          list.innerHTML = `<div class="empty">${escapeHtml(data.message || "Unable to load FBR invoices")}</div>`;
+          updateFbrBadge(0);
+          return;
+        }
+
+        const invoices = Array.isArray(data.invoices) ? data.invoices : [];
+        updateFbrBadge(invoices.length);
+        renderFbrInvoices(invoices);
+
+      } catch (error) {
+        console.error("loadFbrInvoices:", error);
+        list.innerHTML = '<div class="empty">Server connection failed.</div>';
+      }
+    }
+
+    function renderFbrInvoices(invoices) {
+      const list = document.getElementById("fbr-invoices-list");
+
+      if (!invoices.length) {
+        list.innerHTML = '<div class="empty">🎉 No pending FBR invoices.</div>';
+        return;
+      }
+
+      const statusColor = {
+        pending: "var(--accent)",
+        failed: "var(--danger)"
+      };
+
+      list.innerHTML = invoices.map(inv => {
+        const status = String(inv.status || "").toLowerCase();
+        const color = statusColor[status] || "var(--muted)";
+
+        // Last error ko short karo
+        let shortError = inv.last_error || "";
+        try {
+          const parsed = JSON.parse(shortError);
+          shortError = parsed?.fault?.message || parsed?.message || shortError;
+        } catch (_) {}
+        if (shortError.length > 120) shortError = shortError.slice(0, 120) + "…";
+
+        return `
+          <div class="row">
+            <div class="row-left">
+              <div class="row-title">Order #${Number(inv.order_id)} — ${escapeHtml(inv.customer_name || "Walk-in")}</div>
+              <div class="row-sub" style="color: ${color}; font-weight: 600;">
+                ${escapeHtml(status.toUpperCase())} · Retry: ${Number(inv.retry_count || 0)}/5
+              </div>
+              <div class="row-sub">
+                Rs ${Number(inv.total_amount || 0).toLocaleString()} · ${escapeHtml(inv.order_type || "")} ${inv.table_no ? "· Table " + Number(inv.table_no) : ""}
+              </div>
+              ${shortError ? `<div class="row-sub" style="color: var(--danger); font-size: 10px;">${escapeHtml(shortError)}</div>` : ""}
+            </div>
+            <div class="row-actions">
+              <button class="btn-success" onclick="retrySingleFbrInvoice(${Number(inv.order_id)})">Retry</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function updateFbrBadge(count) {
+      const badge = document.getElementById("fbr-pending-badge");
+      if (!badge) return;
+
+      if (count > 0) {
+        badge.innerText = count;
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+    }
+
+    async function retrySingleFbrInvoice(orderId) {
+      if (!confirm(`Retry FBR invoice for order #${orderId}?`)) return;
+
+      try {
+        const res = await fetch(`/api/fbr/submit/${encodeURIComponent(orderId)}`, {
+          method: "POST",
+          headers: authHeaders()
+        });
+
+        if (checkUnauthorized(res)) return;
+
+        const data = await res.json().catch(() => ({}));
+
+        if (data.success) {
+          alert(`✅ Invoice submitted for order #${orderId}`);
+        } else {
+          alert(`❌ Failed: ${data.error || data.message || "Unknown error"}`);
+        }
+
+        await loadFbrInvoices();
+        await refreshFbrBadge();
+
+      } catch (error) {
+        console.error("retrySingleFbrInvoice:", error);
+        alert("Server connection failed");
+      }
+    }
+
+    async function retryAllFbrInvoices() {
+      if (!confirm("Retry ALL pending FBR invoices now?")) return;
+
+      try {
+        const res = await fetch("/api/fbr/retry", {
+          method: "POST",
+          headers: authHeaders()
+        });
+
+        if (checkUnauthorized(res)) return;
+
+        const data = await res.json().catch(() => ({}));
+
+        if (data.success && Array.isArray(data.results)) {
+          const ok = data.results.filter(r => r.success).length;
+          const fail = data.results.length - ok;
+          alert(`Retry complete.\n✅ Success: ${ok}\n❌ Failed: ${fail}`);
+        } else {
+          alert(data.message || "Retry finished");
+        }
+
+        await loadFbrInvoices();
+        await refreshFbrBadge();
+
+      } catch (error) {
+        console.error("retryAllFbrInvoices:", error);
+        alert("Server connection failed");
+      }
+    }
+
+    async function refreshFbrBadge() {
+      try {
+        const res = await fetch("/api/fbr/pending", { headers: authHeaders() });
+        if (!res.ok) return;
+        const data = await res.json().catch(() => ({}));
+        if (data.success && Array.isArray(data.invoices)) {
+          updateFbrBadge(data.invoices.length);
+        }
+      } catch (_) {}
+    }
+
     /* BRANDING + SUBSCRIPTION */
     function normalizeLogoUrl(value) { if (!value) return ""; let url = String(value).trim(); if (/^https?:\/\//i.test(url) || url.startsWith("//") || url.startsWith("/")) return url; return "/" + url; }
     async function loadBranding() {
@@ -1411,12 +1619,14 @@ async function loadLocation() {
       document.getElementById("username").value = "";
       document.getElementById("password").value = "";
       document.getElementById("login-error").innerText = "";
+      updateFbrBadge(0);
       closeMenu();
     }
 
     /* SOCKET EVENTS */
     socket.on("order_created", () => { if (!token) return; loadSummary(); });
     socket.on("order_updated", () => { if (!token) return; loadSummary(); });
+    socket.on("order_paid", () => { if (!token) return; refreshFbrBadge(); });
     socket.on("kitchen_inventory_updated", () => { if (!token) return; const modal = document.getElementById("kitchen-requests-modal"); if (modal && modal.classList.contains("open")) loadKitchenRequests(); });
     socket.on("waiter_call", data => { if (!data) return; const notification = document.createElement("div"); notification.className = "notification"; notification.innerText = "📞 Table " + (data.table_no ?? "?") + " called waiter"; document.getElementById("notification-container").appendChild(notification); setTimeout(() => { notification.remove(); }, 10000); });
     socket.on("connect", () => { if (token) loadAll(); });
@@ -1432,6 +1642,7 @@ async function loadLocation() {
     document.getElementById("category-modal").addEventListener("click", event => { if (event.target.id === "category-modal") closeCategoryModal(); });
     document.getElementById("deal-modal").addEventListener("click", event => { if (event.target.id === "deal-modal") closeDealModal(); });
     document.getElementById("kitchen-requests-modal").addEventListener("click", event => { if (event.target.id === "kitchen-requests-modal") closeKitchenRequestsModal(); });
+    document.getElementById("fbr-invoices-modal").addEventListener("click", event => { if (event.target.id === "fbr-invoices-modal") closeFbrInvoicesModal(); });
 
     /* INITIALIZATION */
     window.addEventListener("load", async () => {

@@ -79,3 +79,31 @@ exports.retryNow = async (req, res) => {
     res.status(500).json({ success: false, message: 'Retry run failed' });
   }
 };
+
+/** GET /fbr/pending — list pending/failed FBR invoices for this restaurant. */
+exports.getPendingInvoices = async (req, res) => {
+  try {
+    const restaurantId = Number(req.user?.restaurant_id);
+
+    if (!Number.isInteger(restaurantId) || restaurantId <= 0) {
+      return res.status(401).json({
+        success: false,
+        message: 'Restaurant information is missing',
+      });
+    }
+
+    const invoices = await fbrModel.getPendingInvoicesForRestaurant(restaurantId);
+
+    return res.json({
+      success: true,
+      count: invoices.length,
+      invoices,
+    });
+  } catch (err) {
+    console.error('getPendingInvoices:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Could not fetch pending invoices',
+    });
+  }
+};
