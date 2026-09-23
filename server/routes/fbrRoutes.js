@@ -8,8 +8,9 @@ const { authMiddleware } = require('../middleware/authMiddleware');
 
 // Protected routes
 router.get('/pending', authMiddleware, fbrController.getPendingInvoices);
-router.get('/config/:restaurantId', authMiddleware, fbrController.getConfig);
-router.post('/config/:restaurantId', authMiddleware, fbrController.saveConfig);
+router.get('/config/:restaurantId', authMiddleware, authorize('manager','super_admin'), fbrController.getConfig);
+
+router.post('/config/:restaurantId', authMiddleware, authorize('manager','super_admin'), fbrController.saveConfig);
 router.post('/submit/:orderId', authMiddleware, fbrController.submitOrderInvoice);
 router.get('/status/:orderId', authMiddleware, fbrController.getInvoiceStatus);
 router.post('/retry', authMiddleware, fbrController.retryNow);
