@@ -3,1705 +3,663 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Sizlio – Smart Restaurant Management for Pakistan</title>
+<title>Sizlio — Offline Restaurant POS for Pakistan | FBR + Serve-tak KDS</title>
+<meta name="description" content="Offline Counter POS, Kitchen Display till Serve, QR Ordering, Waiter & Rider Apps, Recipe Inventory + FBR. Built for Pakistani restaurants." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-:root {
-  --bg: #05070B;
-  --bg-2: #0A0E15;
-  --panel: #10151D;
-  --panel-2: #161C26;
-  --border: #1F2734;
-  --border-2: #2A3444;
-  --text: #F5F7FA;
-  --text-2: #C7CEDB;
-  --muted: #7A8699;
-  --accent: #E8AC3E;
-  --accent-2: #F6CE7E;
-  --accent-dark: #C08A22;
-  --green: #29C29A;
-  --green-dark: #159678;
-  --blue: #4A9EFF;
-  --red: #FF6B5B;
-  --purple: #A78BFA;
-  --glow-accent: rgba(232,172,62,0.35);
-  --glow-green: rgba(41,194,154,0.35);
-  --logo-navy: #0E1420;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090B;--surface:#111113;--surface2:#18181B;
+  --border:rgba(255,255,255,0.08);--border-hover:rgba(255,255,255,0.14);
+  --text:#FAFAFA;--text2:#A1A1AA;--muted:#71717A;
+  --brand:#F59E0B;--brand-soft:rgba(245,158,11,0.12);--brand-glow:rgba(245,158,11,0.25);
+  --mint:#34D399;--mint-soft:rgba(52,211,153,0.12);
+  --blue:#60A5FA;--radius:16px;
 }
-html { scroll-behavior: smooth; }
-body {
-  font-family: 'Inter', -apple-system, system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.65;
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-  position: relative;
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);
+  line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;
 }
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   background:
-    radial-gradient(circle at 20% 0%, rgba(245,184,67,0.06) 0%, transparent 45%),
-    radial-gradient(circle at 80% 50%, rgba(45,212,167,0.05) 0%, transparent 50%),
-    radial-gradient(circle at 50% 100%, rgba(74,158,255,0.04) 0%, transparent 50%);
-  pointer-events: none;
-  z-index: -1;
+    radial-gradient(ellipse 80% 50% at 50% -20%,rgba(245,158,11,0.14),transparent),
+    radial-gradient(ellipse 50% 40% at 100% 40%,rgba(52,211,153,0.06),transparent);
 }
-a { text-decoration: none; color: inherit; }
-img { max-width: 100%; display: block; }
-button { font-family: inherit; }
-.container { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+body>*{position:relative;z-index:1}
+a{color:inherit;text-decoration:none}
+.container{width:min(1120px,calc(100% - 40px));margin-inline:auto}
 
-/* ============================================
-   BUTTONS
-   ============================================ */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 28px;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 15px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: 'Inter', sans-serif;
-  white-space: nowrap;
-  position: relative;
-  overflow: hidden;
+.nav{
+  position:sticky;top:0;z-index:50;backdrop-filter:blur(20px) saturate(180%);
+  background:rgba(9,9,11,0.78);border-bottom:1px solid var(--border);padding:14px 0;
 }
-.btn-primary {
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  color: #0A0E15;
-  box-shadow: 0 4px 20px rgba(245,184,67,0.25);
+.nav-inner{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem;letter-spacing:-0.03em}
+.logo-mark{
+  width:34px;height:34px;border-radius:9px;
+  background:linear-gradient(145deg,#FBBF24,#F59E0B 50%,#34D399);
+  display:grid;place-items:center;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.1),0 4px 12px var(--brand-glow);
 }
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 35px rgba(245,184,67,0.4);
+.logo-mark svg{width:18px;height:18px}
+.nav-links{display:flex;align-items:center;gap:2px}
+.nav-links a{font-size:0.875rem;font-weight:500;color:var(--text2);padding:8px 12px;border-radius:8px;transition:0.2s}
+.nav-links a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-family:inherit;font-weight:600;font-size:0.9rem;border:none;cursor:pointer;
+  border-radius:10px;transition:all 0.2s;white-space:nowrap;
 }
-.btn-green {
-  background: linear-gradient(135deg, var(--green), var(--green-dark));
-  color: #fff;
-  box-shadow: 0 4px 20px rgba(45,212,167,0.25);
+.btn-primary{
+  background:var(--brand);color:#09090B;padding:11px 20px;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.1) inset,0 4px 16px var(--brand-glow);
 }
-.btn-green:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 35px rgba(45,212,167,0.4);
-}
-.btn-outline {
-  background: rgba(255,255,255,0.02);
-  color: var(--text);
-  border: 1.5px solid var(--border-2);
-  backdrop-filter: blur(10px);
-}
-.btn-outline:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: rgba(245,184,67,0.05);
-}
-.btn-sm { padding: 10px 20px; font-size: 14px; border-radius: 10px; }
+.btn-primary:hover{transform:translateY(-1px);filter:brightness(1.05)}
+.btn-ghost{background:transparent;color:var(--text);padding:11px 18px;border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--border-hover);background:rgba(255,255,255,0.03)}
+.btn-sm{padding:8px 14px;font-size:0.8125rem}
 
-/* ============================================
-   HEADER
-   ============================================ */
-.header {
-  position: sticky;
-  top: 0;
-  z-index: 200;
-  background: rgba(5,7,11,0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(31,39,52,0.6);
-  padding: 14px 0;
-  transition: all 0.3s;
+.hero{padding:68px 0 56px}
+.hero-grid{display:grid;grid-template-columns:1.05fr 0.95fr;gap:44px;align-items:center}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;font-size:0.8125rem;font-weight:600;color:var(--mint);
+  background:var(--mint-soft);border:1px solid rgba(52,211,153,0.2);
+  padding:6px 12px 6px 10px;border-radius:100px;margin-bottom:18px;
 }
-.header-inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-.logo { display: flex; align-items: center; gap: 12px; font-family: 'Poppins', sans-serif; }
-.logo-mark {
-  position: relative;
-  width: 44px;
-  height: 44px;
-  border-radius: 13px;
-  background: linear-gradient(150deg, var(--accent-2) 0%, var(--accent) 55%, var(--green) 130%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow:
-    0 6px 18px rgba(232,172,62,0.28),
-    inset 0 1px 0 rgba(255,255,255,0.45),
-    inset 0 -8px 14px rgba(0,0,0,0.12);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.logo:hover .logo-mark {
-  transform: translateY(-1px) rotate(-2deg);
-  box-shadow:
-    0 10px 26px rgba(232,172,62,0.35),
-    inset 0 1px 0 rgba(255,255,255,0.5),
-    inset 0 -8px 14px rgba(0,0,0,0.12);
-}
-.logo-mark svg { width: 24px; height: 24px; position: relative; z-index: 1; }
-.logo-text {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.6px;
-  color: var(--text);
-}
-.logo-text span { color: var(--accent-2); font-weight: 900; }
-.footer-brand .logo-text { font-size: 23px; }
-.nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.nav a {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--muted);
-  transition: all 0.2s;
-  padding: 8px 14px;
-  border-radius: 8px;
-  position: relative;
-}
-.nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
-.nav .btn { margin-left: 8px; }
+.eyebrow-dot{width:6px;height:6px;border-radius:50%;background:var(--mint);box-shadow:0 0 8px var(--mint);animation:pulse 2s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.hero h1{font-size:clamp(2.15rem,4.8vw,3.35rem);font-weight:800;line-height:1.08;letter-spacing:-0.04em;margin-bottom:14px}
+.hero h1 em{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;color:var(--brand)}
+.hero-lead{font-size:1.05rem;color:var(--text2);max-width:28rem;margin-bottom:24px;line-height:1.65}
+.hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:28px}
+.hero-stats{display:flex;gap:24px;flex-wrap:wrap;padding-top:22px;border-top:1px solid var(--border)}
+.stat strong{display:block;font-size:1.2rem;font-weight:700;letter-spacing:-0.02em}
+.stat span{font-size:0.8rem;color:var(--muted)}
 
-/* ============================================
-   HERO
-   ============================================ */
-.hero { padding: 90px 0 70px; position: relative; overflow: hidden; }
-.hero-grid {
-  display: grid;
-  grid-template-columns: 1.15fr 1fr;
-  gap: 70px;
-  align-items: center;
-  position: relative;
+.preview{
+  background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:18px;
+  box-shadow:0 24px 64px rgba(0,0,0,0.45);position:relative;overflow:hidden;
 }
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  background: rgba(45,212,167,0.08);
-  color: var(--green);
-  padding: 8px 18px;
-  border-radius: 30px;
-  font-size: 13px;
-  font-weight: 700;
-  border: 1px solid rgba(45,212,167,0.25);
-  margin-bottom: 26px;
-  backdrop-filter: blur(10px);
+.preview::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(245,158,11,0.4),transparent)}
+.preview-bar{display:flex;gap:6px;margin-bottom:14px}
+.preview-bar span{width:8px;height:8px;border-radius:50%;background:var(--border-hover)}
+.preview-bar span:nth-child(1){background:#F87171}
+.preview-bar span:nth-child(2){background:#FBBF24}
+.preview-bar span:nth-child(3){background:#34D399}
+.preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.preview-tile{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 12px;transition:0.2s}
+.preview-tile:hover{border-color:var(--border-hover);transform:translateY(-2px)}
+.preview-tile .ico{font-size:1.25rem;margin-bottom:6px}
+.preview-tile .label{font-size:0.8rem;font-weight:600;margin-bottom:3px}
+.preview-tile .tag{font-size:0.68rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted)}
+.preview-tile .tag.on{color:var(--mint)}
+.preview-tile .tag.hot{color:var(--brand)}
+.preview-foot{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:0.72rem;color:var(--muted);text-align:center}
+
+section{padding:72px 0}
+.section-head{max-width:36rem;margin:0 auto 40px;text-align:center}
+.section-kicker{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--brand);margin-bottom:8px}
+.section-title{font-size:clamp(1.65rem,3.2vw,2.35rem);font-weight:800;letter-spacing:-0.03em;line-height:1.15;margin-bottom:10px}
+.section-desc{color:var(--text2);font-size:1.02rem}
+
+.bento{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:22px;transition:border-color 0.2s,transform 0.2s;
 }
-.hero-badge .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 12px var(--green);
-  animation: pulse 2s infinite;
+.card:hover{border-color:var(--border-hover);transform:translateY(-2px)}
+.card.span-2{grid-column:span 2}
+.card .ico{
+  width:38px;height:38px;border-radius:10px;background:var(--brand-soft);
+  display:grid;place-items:center;font-size:1.1rem;margin-bottom:12px;
 }
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.85); }
+.card.mint .ico{background:var(--mint-soft)}
+.card h3{font-size:1rem;font-weight:700;margin-bottom:5px;letter-spacing:-0.02em}
+.card p{font-size:0.875rem;color:var(--text2);line-height:1.55}
+.chip{
+  display:inline-block;margin-top:10px;font-size:0.68rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:0.05em;padding:3px 8px;border-radius:6px;
 }
-.hero h1 {
-  font-family: 'Poppins', sans-serif;
-  font-size: clamp(36px, 5vw, 62px);
-  font-weight: 900;
-  line-height: 1.08;
-  letter-spacing: -2px;
-  margin-bottom: 24px;
-  color: #fff;
+.chip-mint{background:var(--mint-soft);color:var(--mint)}
+.chip-brand{background:var(--brand-soft);color:var(--brand)}
+
+/* Compare table */
+.compare-wrap{
+  background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden;
 }
-.hero h1 .accent {
-  color: var(--accent);
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.compare-table{width:100%;border-collapse:collapse;font-size:0.875rem}
+.compare-table th,.compare-table td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--border)}
+.compare-table th{background:var(--surface2);font-weight:600;color:var(--text2);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em}
+.compare-table td:first-child{color:var(--text2);font-weight:500}
+.compare-table .yes{color:var(--mint);font-weight:700}
+.compare-table .no{color:var(--muted)}
+.compare-table .highlight{background:rgba(245,158,11,0.06)}
+.compare-table .highlight td:nth-child(2){color:var(--brand);font-weight:700}
+
+.strip{
+  background:linear-gradient(135deg,rgba(52,211,153,0.08),rgba(245,158,11,0.06));
+  border:1px solid rgba(52,211,153,0.15);border-radius:20px;padding:32px 28px;
+  display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center;
 }
-.hero h1 .green {
-  color: var(--green);
-  background: linear-gradient(135deg, var(--green), #6EE7B7);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.strip h2{font-size:1.4rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:8px;line-height:1.25}
+.strip p{color:var(--text2);font-size:0.92rem;margin-bottom:14px}
+.flow{display:flex;flex-wrap:wrap;gap:6px}
+.flow-item{
+  font-size:0.72rem;font-weight:600;padding:5px 10px;border-radius:8px;
+  background:var(--surface2);border:1px solid var(--border);color:var(--text2);
 }
-.hero p {
-  font-size: 17px;
-  color: var(--text-2);
-  margin-bottom: 36px;
-  max-width: 560px;
-  line-height: 1.7;
+.flow-item.done{background:var(--mint-soft);border-color:rgba(52,211,153,0.3);color:var(--mint)}
+
+.why{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.why-item{
+  display:flex;gap:12px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px;
 }
-.hero-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 36px; }
-.hero-badges { display: flex; flex-wrap: wrap; gap: 9px; }
-.badge-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(22,28,38,0.8);
-  border: 1px solid var(--border);
-  padding: 8px 15px;
-  border-radius: 30px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-2);
-  transition: all 0.25s;
-  backdrop-filter: blur(10px);
+.why-num{
+  flex-shrink:0;width:26px;height:26px;border-radius:7px;background:var(--brand-soft);color:var(--brand);
+  font-size:0.78rem;font-weight:700;display:grid;place-items:center;
 }
-.badge-pill:hover {
-  border-color: var(--accent);
-  color: var(--text);
-  transform: translateY(-2px);
+.why-item h4{font-size:0.92rem;font-weight:700;margin-bottom:3px}
+.why-item p{font-size:0.82rem;color:var(--text2)}
+
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.step{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 16px;text-align:center}
+.step-n{
+  width:30px;height:30px;border-radius:50%;margin:0 auto 10px;background:var(--brand);color:#09090B;
+  font-weight:800;font-size:0.85rem;display:grid;place-items:center;
+}
+.step h3{font-size:0.9rem;font-weight:700;margin-bottom:4px}
+.step p{font-size:0.78rem;color:var(--muted)}
+
+.pricing{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-items:stretch}
+.plan{
+  background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:26px 22px;
+  display:flex;flex-direction:column;
+}
+.plan.featured{
+  border-color:rgba(245,158,11,0.4);
+  box-shadow:0 0 0 1px rgba(245,158,11,0.12),0 16px 40px rgba(0,0,0,0.3);position:relative;
+}
+.plan.featured::after{
+  content:'Popular';position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+  background:var(--brand);color:#09090B;font-size:0.68rem;font-weight:800;text-transform:uppercase;
+  letter-spacing:0.06em;padding:3px 10px;border-radius:100px;
+}
+.plan h3{font-size:1.1rem;font-weight:700;margin-bottom:3px}
+.plan .sub{font-size:0.82rem;color:var(--muted);margin-bottom:14px}
+.plan .limits{font-size:0.78rem;color:var(--text2);line-height:1.65;padding:10px;background:var(--surface2);border-radius:10px;margin-bottom:14px}
+.plan ul{list-style:none;flex:1;margin-bottom:18px}
+.plan li{font-size:0.82rem;color:var(--text2);padding:4px 0 4px 18px;position:relative}
+.plan li::before{content:'✓';position:absolute;left:0;color:var(--mint);font-weight:700}
+.plan .btn{width:100%}
+
+.reviews{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.quote{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px}
+.quote p{font-size:0.92rem;color:var(--text2);line-height:1.65;margin-bottom:16px;font-style:italic}
+.quote-author{display:flex;align-items:center;gap:10px}
+.avatar{
+  width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--mint));
+  display:grid;place-items:center;font-weight:800;font-size:0.78rem;color:#09090B;
+}
+.quote-author strong{display:block;font-size:0.88rem}
+.quote-author span{font-size:0.78rem;color:var(--muted)}
+
+.cta{
+  background:var(--surface);border:1px solid var(--border);border-radius:22px;
+  padding:44px 36px;text-align:center;position:relative;overflow:hidden;
+}
+.cta::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 80% at 50% 100%,rgba(245,158,11,0.12),transparent);pointer-events:none;
+}
+.cta h2{font-size:clamp(1.4rem,2.8vw,1.9rem);font-weight:800;letter-spacing:-0.03em;margin-bottom:8px}
+.cta p{color:var(--text2);margin-bottom:22px;font-size:0.98rem}
+.cta-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+
+footer{border-top:1px solid var(--border);padding:44px 0 24px;margin-top:20px}
+.footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:28px;margin-bottom:32px}
+.footer-brand p{font-size:0.85rem;color:var(--muted);margin-top:10px;max-width:250px;line-height:1.55}
+.footer-col h4{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:10px;font-weight:700}
+.footer-col a{display:block;font-size:0.85rem;color:var(--text2);padding:3px 0;transition:0.15s}
+.footer-col a:hover{color:var(--brand)}
+.footer-bottom{
+  border-top:1px solid var(--border);padding-top:18px;
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:0.8rem;color:var(--muted);
 }
 
-/* ---------- Hero Visual ---------- */
-.hero-visual {
-  position: relative;
-  padding: 28px;
-  background: linear-gradient(160deg, rgba(22,28,38,0.9), rgba(10,14,21,0.95));
-  border: 1px solid var(--border);
-  border-radius: 26px;
-  box-shadow:
-    0 30px 90px rgba(0,0,0,0.6),
-    inset 0 1px 0 rgba(255,255,255,0.05);
-  backdrop-filter: blur(20px);
-  overflow: hidden;
-}
-.hero-visual::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: conic-gradient(from 0deg, transparent 0deg, rgba(245,184,67,0.1) 60deg, transparent 120deg);
-  animation: rotate 12s linear infinite;
-  pointer-events: none;
-}
-@keyframes rotate {
-  to { transform: rotate(360deg); }
-}
-.hero-visual > * { position: relative; z-index: 1; }
-.hero-visual-title {
-  font-size: 11px;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  font-weight: 800;
-  margin-bottom: 20px;
-  text-align: center;
-}
-.screens-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.screen-item {
-  background: rgba(10,14,21,0.8);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 18px 14px;
-  text-align: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: default;
-  position: relative;
-  overflow: hidden;
-}
-.screen-item::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(245,184,67,0.1), transparent);
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-.screen-item:hover {
-  border-color: var(--accent);
-  transform: translateY(-4px);
-  box-shadow: 0 15px 40px rgba(245,184,67,0.15);
-}
-.screen-item:hover::before { opacity: 1; }
-.screen-item .icon { font-size: 28px; margin-bottom: 8px; display: block; }
-.screen-item .name { font-size: 12.5px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
-.screen-item .tag {
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  padding: 3px 9px;
-  border-radius: 10px;
-  letter-spacing: 0.6px;
-  display: inline-block;
-}
-.tag-offline { background: rgba(45,212,167,0.15); color: var(--green); }
-.tag-online { background: rgba(122,134,153,0.12); color: var(--muted); }
-.hero-visual-note {
-  margin-top: 18px;
-  text-align: center;
-  font-size: 12.5px;
-  color: var(--muted);
-  font-weight: 500;
-}
-.hero-visual-note .dot { color: var(--green); }
-
-/* ============================================
-   TRUST BAR
-   ============================================ */
-.trust {
-  padding: 36px 0;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  text-align: center;
-  background: rgba(10,14,21,0.4);
-}
-.trust-label {
-  color: var(--muted);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 2.5px;
-  font-weight: 800;
-  margin-bottom: 16px;
-}
-.trust-logos {
-  display: flex;
-  justify-content: center;
-  gap: 48px;
-  flex-wrap: wrap;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--muted);
-  opacity: 0.6;
-  transition: all 0.3s;
-}
-.trust-logos span { transition: all 0.25s; cursor: default; }
-.trust-logos span:hover { opacity: 1; color: var(--accent); transform: translateY(-2px); }
-
-/* ============================================
-   SECTIONS
-   ============================================ */
-section { padding: 100px 0; position: relative; }
-.section-head {
-  text-align: center;
-  max-width: 760px;
-  margin: 0 auto 60px;
-}
-.section-label {
-  display: inline-block;
-  color: var(--accent);
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 3px;
-  margin-bottom: 16px;
-  padding: 6px 16px;
-  background: rgba(245,184,67,0.08);
-  border: 1px solid rgba(245,184,67,0.2);
-  border-radius: 20px;
-}
-.section-title {
-  font-family: 'Poppins', sans-serif;
-  font-size: clamp(30px, 4vw, 46px);
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -1.2px;
-  margin-bottom: 16px;
-  color: #fff;
-}
-.section-sub {
-  color: var(--muted);
-  font-size: 17px;
-  line-height: 1.7;
-}
-
-/* ============================================
-   FEATURES
-   ============================================ */
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-.feature-card {
-  background: linear-gradient(160deg, var(--panel), var(--bg-2));
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 30px 26px;
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-.feature-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--accent), var(--green), transparent);
-  opacity: 0;
-  transition: opacity 0.35s;
-}
-.feature-card::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle, rgba(245,184,67,0.15), transparent 70%);
-  opacity: 0;
-  transition: opacity 0.35s;
-  pointer-events: none;
-}
-.feature-card:hover {
-  border-color: rgba(245,184,67,0.4);
-  transform: translateY(-6px);
-  box-shadow: 0 25px 60px rgba(0,0,0,0.5);
-}
-.feature-card:hover::before { opacity: 1; }
-.feature-card:hover::after { opacity: 1; }
-.feature-card > * { position: relative; z-index: 1; }
-.feature-card .icon {
-  font-size: 32px;
-  margin-bottom: 16px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  background: rgba(245,184,67,0.08);
-  border: 1px solid rgba(245,184,67,0.2);
-  border-radius: 14px;
-  transition: all 0.3s;
-}
-.feature-card:hover .icon {
-  background: rgba(245,184,67,0.15);
-  transform: scale(1.05);
-}
-.feature-card h3 {
-  font-family: 'Poppins', sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: var(--text);
-}
-.feature-card p {
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.65;
-  margin-bottom: 16px;
-}
-.feature-tag {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  padding: 4px 12px;
-  border-radius: 12px;
-}
-.feature-tag.offline { background: rgba(45,212,167,0.12); color: var(--green); }
-.feature-tag.online { background: rgba(122,134,153,0.12); color: var(--muted); }
-.feature-tag.auto { background: rgba(245,184,67,0.12); color: var(--accent); }
-
-/* ============================================
-   OFFLINE BLOCK
-   ============================================ */
-.offline-block {
-  background:
-    radial-gradient(circle at 20% 20%, rgba(45,212,167,0.1), transparent 50%),
-    linear-gradient(160deg, var(--panel), var(--bg-2));
-  border: 1px solid rgba(45,212,167,0.3);
-  border-radius: 28px;
-  padding: 60px 45px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.4);
-}
-.offline-block::before {
-  content: '🔄';
-  position: absolute;
-  top: -50px;
-  right: -20px;
-  font-size: 280px;
-  opacity: 0.03;
-  pointer-events: none;
-  transform: rotate(-15deg);
-}
-.offline-block h2 {
-  font-family: 'Poppins', sans-serif;
-  font-size: clamp(26px, 3.5vw, 40px);
-  font-weight: 800;
-  margin-bottom: 18px;
-  letter-spacing: -0.8px;
-  color: #fff;
-}
-.offline-block h2 span {
-  background: linear-gradient(135deg, var(--green), #6EE7B7);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.offline-block > p {
-  color: var(--text-2);
-  max-width: 680px;
-  margin: 0 auto 40px;
-  font-size: 16.5px;
-  line-height: 1.7;
-}
-.offline-flow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-top: 20px;
-}
-.flow-step {
-  background: rgba(10,14,21,0.7);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 20px 24px;
-  min-width: 150px;
-  text-align: center;
-  transition: all 0.3s;
-  backdrop-filter: blur(10px);
-}
-.flow-step:hover { transform: translateY(-4px); border-color: var(--border-2); }
-.flow-step .emoji { font-size: 30px; display: block; margin-bottom: 8px; }
-.flow-step .title { font-size: 13.5px; font-weight: 700; margin-bottom: 5px; color: var(--text); }
-.flow-step .sub { font-size: 11.5px; color: var(--muted); }
-.flow-step.highlight {
-  border-color: var(--green);
-  background: rgba(45,212,167,0.08);
-  box-shadow: 0 8px 30px rgba(45,212,167,0.15);
-}
-.flow-step.highlight .sub { color: var(--green); font-weight: 700; }
-.flow-arrow { color: var(--muted); font-size: 22px; opacity: 0.5; }
-
-/* ============================================
-   QR SECTION
-   ============================================ */
-.qr-block { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
-.qr-text h2 {
-  font-family: 'Poppins', sans-serif;
-  font-size: clamp(28px, 3.5vw, 40px);
-  font-weight: 800;
-  margin-bottom: 20px;
-  letter-spacing: -0.8px;
-  line-height: 1.15;
-  color: #fff;
-}
-.qr-text p { color: var(--text-2); font-size: 16px; margin-bottom: 26px; line-height: 1.7; }
-.qr-benefits { list-style: none; display: flex; flex-direction: column; gap: 14px; }
-.qr-benefits li {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  font-size: 14.5px;
-  color: var(--text-2);
-  transition: all 0.2s;
-}
-.qr-benefits li:hover { color: var(--text); transform: translateX(4px); }
-.qr-benefits li .check {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: rgba(45,212,167,0.15);
-  color: var(--green);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 900;
-  flex-shrink: 0;
-  margin-top: 2px;
-  border: 1px solid rgba(45,212,167,0.3);
-}
-.qr-visual {
-  background: linear-gradient(160deg, var(--panel), var(--bg-2));
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  padding: 45px 35px;
-  text-align: center;
-  position: relative;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.5);
-  overflow: hidden;
-}
-.qr-visual::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 50% 0%, rgba(245,184,67,0.1), transparent 60%);
-  pointer-events: none;
-}
-.qr-code-mock {
-  width: 220px;
-  height: 220px;
-  margin: 0 auto 20px;
-  background: #fff;
-  border-radius: 18px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 70px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-  position: relative;
-  animation: qrFloat 4s ease-in-out infinite;
-}
-@keyframes qrFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
-.qr-code-mock::before {
-  content: '';
-  position: absolute;
-  inset: 14px;
-  border: 3px dashed #111;
-  border-radius: 12px;
-  opacity: 0.15;
-}
-.qr-caption { font-size: 13.5px; color: var(--muted); font-weight: 500; }
-.qr-visual > * { position: relative; z-index: 1; }
-
-/* ============================================
-   HOW IT WORKS
-   ============================================ */
-.steps-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; margin-top: 40px; }
-.step-box {
-  background: linear-gradient(160deg, var(--panel), var(--bg-2));
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 32px 24px;
-  text-align: center;
-  position: relative;
-  transition: all 0.3s;
-  overflow: hidden;
-}
-.step-box::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-}
-.step-box:hover {
-  border-color: rgba(245,184,67,0.4);
-  transform: translateY(-6px);
-  box-shadow: 0 25px 60px rgba(0,0,0,0.5);
-}
-.step-num {
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  color: #0A0E15;
-  font-weight: 900;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 18px;
-  font-family: 'Poppins', sans-serif;
-  box-shadow: 0 8px 24px rgba(245,184,67,0.3);
-}
-.step-box h4 {
-  font-family: 'Poppins', sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: var(--text);
-}
-.step-box p { color: var(--muted); font-size: 13.5px; line-height: 1.6; }
-
-/* ============================================
-   PRICING PLANS
-   ============================================ */
-.plans-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 26px;
-  margin-top: 40px;
-  align-items: stretch;
-}
-.plan-card {
-  background: linear-gradient(160deg, var(--panel), var(--bg-2));
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  padding: 40px 32px;
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.plan-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, var(--border-2), transparent);
-  transition: all 0.35s;
-}
-.plan-card:hover {
-  border-color: rgba(245,184,67,0.35);
-  transform: translateY(-6px);
-  box-shadow: 0 30px 70px rgba(0,0,0,0.5);
-}
-.plan-card:hover::before {
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-}
-.plan-card.popular {
-  border-color: var(--accent);
-  background:
-    radial-gradient(circle at 50% 0%, rgba(245,184,67,0.12), transparent 60%),
-    linear-gradient(160deg, var(--panel), var(--bg-2));
-  box-shadow: 0 20px 60px rgba(245,184,67,0.15);
-}
-.plan-card.popular::before {
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-}
-.plan-card.popular::after {
-  content: '⭐ MOST POPULAR';
-  position: absolute;
-  top: 22px;
-  right: -34px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  color: #0A0E15;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 1px;
-  padding: 6px 42px;
-  transform: rotate(45deg);
-  box-shadow: 0 4px 15px rgba(245,184,67,0.4);
-}
-.plan-tier {
-  font-family: 'Poppins', sans-serif;
-  font-size: 24px;
-  font-weight: 800;
-  margin-bottom: 8px;
-  color: #fff;
-  letter-spacing: -0.5px;
-}
-.plan-tagline {
-  color: var(--muted);
-  font-size: 13.5px;
-  margin-bottom: 26px;
-  padding-bottom: 22px;
-  border-bottom: 1px solid var(--border);
-  line-height: 1.6;
-}
-.plan-limits-heading {
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--accent);
-  margin-bottom: 18px;
-}
-.plan-limits { list-style: none; display: flex; flex-direction: column; gap: 4px; margin-bottom: 24px; }
-.plan-limits li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 14px;
-  padding: 11px 0;
-  border-bottom: 1px dashed rgba(255,255,255,0.05);
-}
-.plan-limits li:last-child { border-bottom: none; }
-.plan-limits li .role {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--text-2);
-  font-weight: 600;
-}
-.plan-limits li .role .icon {
-  font-size: 17px;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255,255,255,0.03);
-  border-radius: 8px;
-}
-.plan-limits li .count {
-  background: rgba(245,184,67,0.12);
-  color: var(--accent);
-  font-weight: 800;
-  font-size: 13px;
-  padding: 5px 12px;
-  border-radius: 10px;
-  min-width: 40px;
-  text-align: center;
-  border: 1px solid rgba(245,184,67,0.15);
-}
-.plan-features-note {
-  background: rgba(45,212,167,0.06);
-  border-left: 3px solid var(--green);
-  padding: 14px 16px;
-  border-radius: 10px;
-  margin-bottom: 26px;
-  font-size: 12.5px;
-  color: var(--text-2);
-  line-height: 1.65;
-}
-.plan-features-note strong { color: var(--green); }
-.plan-card .btn { width: 100%; justify-content: center; margin-top: auto; }
-
-/* ============================================
-   TESTIMONIALS
-   ============================================ */
-.testimonials-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px; }
-.testimonial {
-  background: linear-gradient(160deg, var(--panel), var(--bg-2));
-  border: 1px solid var(--border);
-  border-radius: 22px;
-  padding: 32px 30px;
-  position: relative;
-  transition: all 0.3s;
-  overflow: hidden;
-}
-.testimonial::before {
-  content: '"';
-  position: absolute;
-  top: -10px;
-  right: 24px;
-  font-size: 100px;
-  color: var(--accent);
-  opacity: 0.1;
-  font-family: Georgia, serif;
-  line-height: 1;
-}
-.testimonial:hover {
-  border-color: rgba(245,184,67,0.3);
-  transform: translateY(-4px);
-  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-}
-.testimonial-quote {
-  font-size: 15.5px;
-  color: var(--text-2);
-  line-height: 1.75;
-  margin-bottom: 24px;
-  font-style: italic;
-  position: relative;
-  z-index: 1;
-}
-.testimonial-author { display: flex; align-items: center; gap: 14px; }
-.testimonial-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--green));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  color: #0A0E15;
-  font-size: 16px;
-  box-shadow: 0 6px 20px rgba(245,184,67,0.25);
-}
-.testimonial-name { font-weight: 700; font-size: 14.5px; color: var(--text); }
-.testimonial-role { color: var(--muted); font-size: 12.5px; }
-
-/* ============================================
-   FINAL CTA
-   ============================================ */
-.final-cta {
-  background:
-    radial-gradient(circle at 50% 0%, rgba(245,184,67,0.12), transparent 60%),
-    linear-gradient(160deg, var(--panel), var(--bg-2));
-  border: 1px solid rgba(245,184,67,0.25);
-  border-radius: 30px;
-  padding: 70px 45px;
-  text-align: center;
-  margin: 40px 0;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.5);
-}
-.final-cta::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 50% 100%, rgba(45,212,167,0.08), transparent 50%);
-  pointer-events: none;
-}
-.final-cta > * { position: relative; z-index: 1; }
-.final-cta h2 {
-  font-family: 'Poppins', sans-serif;
-  font-size: clamp(28px, 3.5vw, 44px);
-  font-weight: 800;
-  margin-bottom: 18px;
-  letter-spacing: -1px;
-  color: #fff;
-  line-height: 1.15;
-}
-.final-cta p {
-  color: var(--text-2);
-  font-size: 17px;
-  max-width: 560px;
-  margin: 0 auto 36px;
-  line-height: 1.7;
-}
-.final-cta-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
-
-/* ============================================
-   FOOTER
-   ============================================ */
-.footer {
-  border-top: 1px solid var(--border);
-  padding: 60px 0 30px;
-  margin-top: 40px;
-  background: rgba(10,14,21,0.4);
-}
-.footer-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 50px;
-  margin-bottom: 50px;
-}
-.footer-brand p {
-  color: var(--muted);
-  font-size: 13.5px;
-  margin-top: 18px;
-  line-height: 1.75;
-  max-width: 320px;
-}
-.footer-col h5 {
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--text);
-  margin-bottom: 18px;
-}
-.footer-col a {
-  display: block;
-  color: var(--muted);
-  font-size: 13.5px;
-  padding: 7px 0;
-  transition: all 0.2s;
-}
-.footer-col a:hover { color: var(--accent); transform: translateX(4px); }
-.footer-bottom {
-  border-top: 1px solid var(--border);
-  padding-top: 26px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  color: var(--muted);
-  font-size: 13px;
-}
-.footer-contact { display: flex; gap: 24px; flex-wrap: wrap; }
-.footer-contact span { transition: color 0.2s; cursor: pointer; }
-.footer-contact span:hover { color: var(--accent); }
-
-/* ============================================
-   SCROLL REVEAL
-   ============================================ */
-.reveal {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.reveal.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* ============================================
-   RESPONSIVE
-   ============================================ */
-@media (max-width: 992px) {
-  .hero { padding: 60px 0 50px; }
-  .hero-grid { grid-template-columns: 1fr; gap: 50px; }
-  .hero h1 { font-size: 42px; }
-  .features-grid { grid-template-columns: repeat(2, 1fr); }
-  .qr-block { grid-template-columns: 1fr; gap: 45px; }
-  .steps-grid { grid-template-columns: repeat(2, 1fr); }
-  .plans-grid { grid-template-columns: 1fr; max-width: 480px; margin-left: auto; margin-right: auto; }
-  .testimonials-grid { grid-template-columns: 1fr; }
-  .footer-grid { grid-template-columns: 1fr 1fr; gap: 35px; }
-  section { padding: 70px 0; }
-}
-
-@media (max-width: 620px) {
-  .header-inner { flex-direction: column; align-items: stretch; gap: 14px; }
-  .nav { justify-content: center; gap: 4px; }
-  .nav a { font-size: 13px; padding: 6px 10px; }
-  .nav .btn { margin-left: 0; width: 100%; justify-content: center; }
-  .hero { padding: 40px 0 30px; }
-  .hero h1 { font-size: 32px; letter-spacing: -1px; }
-  .hero p { font-size: 15px; }
-  .hero-visual { padding: 20px; }
-  .screens-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .screen-item { padding: 14px 10px; }
-  .screen-item .icon { font-size: 22px; }
-  .features-grid { grid-template-columns: 1fr; }
-  .feature-card { padding: 24px 20px; }
-  .steps-grid { grid-template-columns: 1fr; }
-  .flow-arrow { transform: rotate(90deg); }
-  .offline-flow { flex-direction: column; }
-  .offline-block { padding: 40px 24px; }
-  .footer-grid { grid-template-columns: 1fr; }
-  .final-cta { padding: 50px 26px; }
-  .testimonial { padding: 26px 22px; }
-  .plan-card { padding: 32px 24px; }
-  .plan-card.popular::after { right: -38px; }
-  section { padding: 55px 0; }
-  .section-title { letter-spacing: -0.8px; }
-  .trust-logos { gap: 24px; font-size: 14px; }
-  .qr-visual { padding: 35px 22px; }
-  .qr-code-mock { width: 180px; height: 180px; font-size: 55px; }
+@media(max-width:900px){
+  .hero-grid,.strip,.footer-grid{grid-template-columns:1fr}
+  .bento{grid-template-columns:1fr 1fr}
+  .card.span-2{grid-column:span 2}
+  .steps{grid-template-columns:1fr 1fr}
+  .pricing{grid-template-columns:1fr}
+  .nav-links a:not(.btn){display:none}
+  .compare-table{font-size:0.78rem}
+  .compare-table th,.compare-table td{padding:10px 10px}
+}
+@media(max-width:560px){
+  .bento,.why,.reviews,.steps{grid-template-columns:1fr}
+  .card.span-2{grid-column:span 1}
+  .hero{padding:44px 0 36px}
+  section{padding:52px 0}
+  .container{width:calc(100% - 28px)}
 }
 </style>
 </head>
 <body>
 
-<!-- ===================== HEADER ===================== -->
-<header class="header">
-  <div class="container header-inner">
-    <a href="#" class="logo">
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="/" class="logo">
       <div class="logo-mark">
-        <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M9 9.5C9 7.6 11 6.2 14 6.2s5 1.4 5 3.1c0 1.9-2.3 2.7-5 3.2-2.9.5-5 1.4-5 3.3 0 1.7 2 3.1 5 3.1s5-1.4 5-3.1"
-                stroke="#0E1420" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="21.4" cy="7.4" r="2" fill="#0E1420"/>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#09090B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
         </svg>
       </div>
-      <div class="logo-text">Siz<span>lio</span></div>
+      Sizlio
     </a>
-    <nav class="nav">
+    <div class="nav-links">
       <a href="#features">Features</a>
+      <a href="#compare">Compare</a>
       <a href="#offline">Offline</a>
-      <a href="#qr">QR Ordering</a>
-      <a href="#how">How It Works</a>
       <a href="#plans">Plans</a>
-      <a href="https://wa.me/923019128606?text=Hi!%20I'd%20like%20to%20book%20a%20demo%20of%20Sizlio." target="_blank" rel="noopener" class="btn btn-primary btn-sm">Book Demo</a>
-    </nav>
+      <a href="https://wa.me/923019128606?text=Hi!%20Sizlio%20demo%20chahiye." class="btn btn-primary btn-sm">Book demo</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container hero-grid">
+    <div>
+      <div class="eyebrow"><span class="eyebrow-dot"></span> Counter works fully offline</div>
+      <h1>Internet gaya?<br><em>Counter nahi rukta.</em></h1>
+      <p class="hero-lead">
+        Offline POS + Kitchen till <strong style="color:var(--text)">Serve</strong> + QR + Waiter + Rider +
+        Recipe inventory + <strong style="color:var(--brand)">FBR</strong> — ek system. Pakistani restaurants ke liye.
+      </p>
+      <div class="hero-actions">
+        <a href="#cta" class="btn btn-primary">Start free trial</a>
+        <a href="https://wa.me/923019128606?text=Hi!%20Sizlio%20demo%20chahiye." class="btn btn-ghost">WhatsApp demo</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><strong>Offline</strong><span>Counter always on</span></div>
+        <div class="stat"><strong>Serve-tak</strong><span>Full KDS status</span></div>
+        <div class="stat"><strong>FBR</strong><span>Invoice + retry</span></div>
+        <div class="stat"><strong>Rider</strong><span>Auto-assign</span></div>
+      </div>
+    </div>
+    <div class="preview">
+      <div class="preview-bar"><span></span><span></span><span></span></div>
+      <div class="preview-grid">
+        <div class="preview-tile"><div class="ico">🖥️</div><div class="label">Counter POS</div><div class="tag on">Offline</div></div>
+        <div class="preview-tile"><div class="ico">🍳</div><div class="label">Kitchen KDS</div><div class="tag hot">Serve-tak</div></div>
+        <div class="preview-tile"><div class="ico">📱</div><div class="label">Waiter App</div><div class="tag">Live sync</div></div>
+        <div class="preview-tile"><div class="ico">🚴</div><div class="label">Rider App</div><div class="tag hot">Auto-assign</div></div>
+        <div class="preview-tile"><div class="ico">📲</div><div class="label">QR Menu</div><div class="tag">No app</div></div>
+        <div class="preview-tile"><div class="ico">🧾</div><div class="label">FBR</div><div class="tag hot">Compliant</div></div>
+      </div>
+      <p class="preview-foot">Auto-sync when online · Offline print · Thermal printer ready</p>
+    </div>
   </div>
 </header>
 
-<!-- ===================== HERO ===================== -->
-<section class="hero">
-  <div class="container hero-grid">
-    <div class="reveal">
-      <div class="hero-badge">
-        <span class="dot"></span> Counter works fully offline
-      </div>
-      <h1>
-        Restaurant operations,<br>
-        <span class="accent">fully connected.</span>
-      </h1>
-      <p>
-        Counter, Kitchen, Waiter, Rider, QR Ordering, Inventory — all in one system.
-        Built for Pakistani restaurants with real-world offline resilience.
-      </p>
-      <div class="hero-cta">
-        <a href="#cta" class="btn btn-primary">🚀 Start Free Trial</a>
-        <a href="#features" class="btn btn-outline">See All Features</a>
-      </div>
-      <div class="hero-badges">
-        <span class="badge-pill">🔄 Offline POS</span>
-        <span class="badge-pill">📱 QR Menu</span>
-        <span class="badge-pill">🍳 Kitchen Display</span>
-        <span class="badge-pill">🚴 Rider App</span>
-        <span class="badge-pill">📦 Inventory</span>
-      </div>
-    </div>
-
-    <div class="hero-visual reveal">
-      <div class="hero-visual-title">One system — every screen</div>
-      <div class="screens-grid">
-        <div class="screen-item">
-          <span class="icon">🖥️</span>
-          <div class="name">Counter POS</div>
-          <span class="tag tag-offline">Offline</span>
-        </div>
-        <div class="screen-item">
-          <span class="icon">📲</span>
-          <div class="name">QR Order</div>
-          <span class="tag tag-online">Online</span>
-        </div>
-        <div class="screen-item">
-          <span class="icon">🍳</span>
-          <div class="name">Kitchen</div>
-          <span class="tag tag-online">Online</span>
-        </div>
-        <div class="screen-item">
-          <span class="icon">📱</span>
-          <div class="name">Waiter</div>
-          <span class="tag tag-online">Online</span>
-        </div>
-        <div class="screen-item">
-          <span class="icon">🚴</span>
-          <div class="name">Rider</div>
-          <span class="tag tag-online">Online</span>
-        </div>
-        <div class="screen-item">
-          <span class="icon">📊</span>
-          <div class="name">Status Board</div>
-          <span class="tag tag-online">Online</span>
-        </div>
-        <div class="screen-item">
-          <span class="icon">🏚️</span>
-          <div class="name">Warehouse</div>
-          <span class="tag tag-online">Online</span>
-        </div>
-        <div class="screen-item">
-          <span class="icon">🔄</span>
-          <div class="name">Auto Sync</div>
-          <span class="tag tag-offline">Auto</span>
-        </div>
-      </div>
-      <div class="hero-visual-note">
-        <span class="dot">●</span> Counter keeps working without internet
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===================== TRUST BAR ===================== -->
-<div class="trust">
-  <div class="container">
-    <div class="trust-label">Built for Pakistani restaurants</div>
-    <div class="trust-logos">
-      <span>🍔 Fast Food</span>
-      <span>🍕 Pizza</span>
-      <span>☕ Cafés</span>
-      <span>🍛 Desi</span>
-      <span>🌯 Takeaway</span>
-    </div>
-  </div>
-</div>
-
-<!-- ===================== FEATURES ===================== -->
+<!-- FEATURES -->
 <section id="features">
   <div class="container">
-    <div class="section-head reveal">
-      <span class="section-label">⚡ Complete Platform</span>
-      <h2 class="section-title">Everything your restaurant needs</h2>
-      <p class="section-sub">One connected system replacing 6+ separate tools.</p>
+    <div class="section-head">
+      <div class="section-kicker">Features</div>
+      <h2 class="section-title">Jo market mein kam systems dete hain</h2>
+      <p class="section-desc">Billing se lekar serve, delivery, stock aur FBR — connected chain.</p>
     </div>
-
-    <div class="features-grid">
-
-      <div class="feature-card reveal">
-        <div class="icon">🖥️</div>
-        <h3>Counter POS</h3>
-        <p>Dine-in, delivery, table management, discounts, GST, deals, split payments, editable bills. Works fully offline with auto-sync.</p>
-        <span class="feature-tag offline">✓ Offline</span>
+    <div class="bento">
+      <div class="card mint">
+        <div class="ico">🖥️</div>
+        <h3>Offline Counter POS</h3>
+        <p>Dine-in, delivery, tables, GST, deals, split bills. Net band ho to bhi orders chalte hain — local save + auto-sync.</p>
+        <span class="chip chip-mint">Offline-first</span>
       </div>
-
-      <div class="feature-card reveal">
-        <div class="icon">📲</div>
+      <div class="card">
+        <div class="ico">🍳</div>
+        <h3>KDS — Serve tak</h3>
+        <p>Pending → Preparing → Ready → <strong>Served</strong>. Auto-print. Sirf “ready” nahi — full service status.</p>
+        <span class="chip chip-brand">Serve-tak</span>
+      </div>
+      <div class="card">
+        <div class="ico">📲</div>
         <h3>QR Table Ordering</h3>
-        <p>Every table gets a unique QR code. Customers scan, browse menu, order directly, call waiter. No app install needed.</p>
-        <span class="feature-tag online">Online</span>
+        <p>Har table pe unique QR. Customer scan kare, order kare, waiter call kare — app install nahi.</p>
       </div>
-
-      <div class="feature-card reveal">
-        <div class="icon">🍳</div>
-        <h3>Kitchen Display (KDS)</h3>
-        <p>Live order queue for chefs. Accept, set prep time, mark ready. Auto-print tickets on new orders and additions.</p>
-        <span class="feature-tag online">Online</span>
-      </div>
-
-      <div class="feature-card reveal">
-        <div class="icon">📱</div>
+      <div class="card">
+        <div class="ico">📱</div>
         <h3>Waiter App</h3>
-        <p>Take orders on phone, get ready notifications, serve orders, and receive customer waiter-calls instantly.</p>
-        <span class="feature-tag online">Online</span>
+        <p>Phone pe order, ready notification, serve, customer waiter-call — floor pe control.</p>
       </div>
-
-      <div class="feature-card reveal">
-        <div class="icon">🚴</div>
-        <h3>Delivery Rider App</h3>
-        <p>Auto-assign least-loaded rider. Shift on/off, out-for-delivery tracking, call customer, mark delivered.</p>
-        <span class="feature-tag online">Online</span>
+      <div class="card">
+        <div class="ico">🚴</div>
+        <h3>Rider App</h3>
+        <p>Least-loaded rider auto-assign, shift, tracking, call customer, mark delivered.</p>
+        <span class="chip chip-brand">Auto-assign</span>
       </div>
-
-      <div class="feature-card reveal">
-        <div class="icon">📊</div>
+      <div class="card">
+        <div class="ico">📊</div>
         <h3>Live Status Board</h3>
-        <p>Hall display showing live order status — customers and staff see exactly where each order stands.</p>
-        <span class="feature-tag online">Online</span>
+        <p>Hall display — order kahan hai, staff aur customer dono dekh sakte hain.</p>
       </div>
-
-      <div class="feature-card reveal">
-        <div class="icon">🏚️</div>
-        <h3>Warehouse Inventory</h3>
-        <p>Central stock management with purchase tracking, bulk purchase helper, low-stock alerts, and full transaction history.</p>
-        <span class="feature-tag online">Online</span>
+      <div class="card span-2">
+        <div class="ico">📦</div>
+        <h3>Recipe Inventory (deduct at Serve)</h3>
+        <p>Warehouse + kitchen stock. Order place pe check, <strong>serve pe auto-deduct</strong>. Low-stock alerts, purchase history. Manual counting khatam.</p>
+        <span class="chip chip-mint">Deduct at Serve</span>
       </div>
-
-      <div class="feature-card reveal">
-        <div class="icon">🍳</div>
-        <h3>Kitchen Inventory</h3>
-        <p>Real-time kitchen stock levels. Kitchen requests stock from warehouse, manager approves, both stay synced.</p>
-        <span class="feature-tag online">Online</span>
+      <div class="card">
+        <div class="ico">🧾</div>
+        <h3>FBR Compliance</h3>
+        <p>Real-time invoice, FBR QR on receipt, sandbox + production, fail pe automatic retry.</p>
+        <span class="chip chip-brand">FBR Ready</span>
       </div>
-
-      <div class="feature-card reveal">
-        <div class="icon">📝</div>
-        <h3>Recipe Ingredients</h3>
-        <p>Link ingredients to menu items (with variants). When orders are served, kitchen stock auto-deducts.</p>
-        <span class="feature-tag auto">⚡ Auto-deduct</span>
+      <div class="card">
+        <div class="ico">📈</div>
+        <h3>Sales & Shift Reports</h3>
+        <p>Daily / monthly / custom. Top items, payments, shift audit, CSV export.</p>
       </div>
-
-      <div class="feature-card reveal">
-        <div class="icon">📈</div>
-        <h3>Sales Dashboard</h3>
-        <p>Daily, monthly, custom-range reports. Top-selling items, payment summary, print & CSV export.</p>
-        <span class="feature-tag online">Online</span>
+      <div class="card">
+        <div class="ico">🏷️</div>
+        <h3>Deals & Variants</h3>
+        <p>Menu variants, deals, discounts — counter, QR aur waiter pe same prices.</p>
       </div>
-
-      <div class="feature-card reveal">
-        <div class="icon">🕐</div>
-        <h3>Shift Reports</h3>
-        <p>Every staff shift tracked — orders handled, sales, items prepared, ingredients consumed, with full audit.</p>
-        <span class="feature-tag online">Online</span>
+      <div class="card">
+        <div class="ico">🖨️</div>
+        <h3>Thermal + Offline Print</h3>
+        <p>Existing thermal printer. Internet down ho to bhi receipt print.</p>
       </div>
-
-      <div class="feature-card reveal">
-        <div class="icon">🔄</div>
-        <h3>Auto Sync & Backup</h3>
-        <p>Every order, transaction, and stock change saves automatically. Data synced across all devices in real-time.</p>
-        <span class="feature-tag offline">✓ Auto</span>
-      </div>
-
     </div>
   </div>
 </section>
 
-<!-- ===================== OFFLINE ===================== -->
+<!-- COMPARE -->
+<section id="compare">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-kicker">Compare</div>
+      <h2 class="section-title">Sizlio vs typical restaurant POS</h2>
+      <p class="section-desc">Jo cheezein aksar alag tools ya extra charge hoti hain — yahan included.</p>
+    </div>
+    <div class="compare-wrap">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Capability</th>
+            <th>Sizlio</th>
+            <th>Typical cheap POS</th>
+            <th>Typical cloud POS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="highlight">
+            <td>Offline counter</td>
+            <td class="yes">✓ Full</td>
+            <td class="yes">Sometimes</td>
+            <td class="no">Often weak</td>
+          </tr>
+          <tr class="highlight">
+            <td>KDS status till Serve</td>
+            <td class="yes">✓ Serve-tak</td>
+            <td class="no">Usually till Ready</td>
+            <td class="no">Varies</td>
+          </tr>
+          <tr class="highlight">
+            <td>QR + Waiter + Rider</td>
+            <td class="yes">✓ All three</td>
+            <td class="no">Rare</td>
+            <td class="no">Partial</td>
+          </tr>
+          <tr class="highlight">
+            <td>Recipe stock at Serve</td>
+            <td class="yes">✓</td>
+            <td class="no">Basic / none</td>
+            <td class="no">Often basic</td>
+          </tr>
+          <tr class="highlight">
+            <td>FBR built-in</td>
+            <td class="yes">✓ + retry</td>
+            <td class="no">Add-on / none</td>
+            <td class="no">Often paid extra</td>
+          </tr>
+          <tr>
+            <td>Multi-terminal</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+            <td class="no">Often per-fee</td>
+          </tr>
+          <tr>
+            <td>Internet dependency</td>
+            <td class="yes">Counter offline</td>
+            <td class="yes">If desktop</td>
+            <td class="no">High</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- OFFLINE + KDS -->
 <section id="offline">
   <div class="container">
-    <div class="offline-block reveal">
-      <h2>Internet gaya? <span>Counter nahi rukta.</span></h2>
-      <p>
-        Counter orders continue without internet. They save locally and auto-sync to
-        Kitchen, Rider, and Inventory when connection returns.
-      </p>
-      <div class="offline-flow">
-        <div class="flow-step highlight">
-          <span class="emoji">🖥️</span>
-          <div class="title">Counter Order</div>
-          <div class="sub">Works offline</div>
-        </div>
-        <span class="flow-arrow">➜</span>
-        <div class="flow-step">
-          <span class="emoji">💾</span>
-          <div class="title">Local Save</div>
-          <div class="sub">IndexedDB storage</div>
-        </div>
-        <span class="flow-arrow">➜</span>
-        <div class="flow-step highlight">
-          <span class="emoji">☁️</span>
-          <div class="title">Auto Sync</div>
-          <div class="sub">When online</div>
-        </div>
-        <span class="flow-arrow">➜</span>
-        <div class="flow-step">
-          <span class="emoji">🍳📱🚴</span>
-          <div class="title">Kitchen · Waiter · Rider</div>
-          <div class="sub">Updated instantly</div>
-        </div>
+    <div class="strip">
+      <div>
+        <h2>Internet gaya?<br>Counter nahi rukta.</h2>
+        <p>Orders local save (IndexedDB), offline print, connection aate hi Kitchen / Waiter / Rider / Inventory pe auto-sync.</p>
+        <a href="#cta" class="btn btn-primary btn-sm">Start free trial</a>
       </div>
-      <div style="margin-top: 32px; font-size: 13.5px; color: var(--muted);">
-        💡 Offline print supported — receipts print even when internet is down.
+      <div>
+        <h2 style="font-size:1.1rem;margin-bottom:6px">KDS — Serve tak</h2>
+        <p style="margin-bottom:10px;font-size:0.85rem">Poora flow, sirf ready nahi:</p>
+        <div class="flow">
+          <span class="flow-item">Pending</span>
+          <span class="flow-item">Accepted</span>
+          <span class="flow-item">Preparing</span>
+          <span class="flow-item">Ready</span>
+          <span class="flow-item done">Served ✓</span>
+          <span class="flow-item">Completed</span>
+        </div>
+        <p style="margin-top:10px;font-size:0.78rem;color:var(--muted)">Delivery: Ready to deliver → Out → Delivered</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ===================== QR ORDERING ===================== -->
-<section id="qr">
-  <div class="container qr-block">
-    <div class="qr-text reveal">
-      <span class="section-label">📲 QR Table Ordering</span>
-      <h2>Let customers order from their phones.</h2>
-      <p>
-        Every table gets its own QR code. Customers scan with their phone camera,
-        browse your live menu, place orders, and call the waiter — all without downloading anything.
-      </p>
-      <ul class="qr-benefits">
-        <li><span class="check">✓</span><span>Reduces waiter workload and travel time</span></li>
-        <li><span class="check">✓</span><span>Faster order-to-kitchen flow</span></li>
-        <li><span class="check">✓</span><span>Menu updates instantly — no reprinting</span></li>
-        <li><span class="check">✓</span><span>Call Waiter button for customer convenience</span></li>
-        <li><span class="check">✓</span><span>Works with deals, variants, and live pricing</span></li>
-      </ul>
-    </div>
-    <div class="qr-visual reveal">
-      <div class="qr-code-mock">📱</div>
-      <div style="font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--text);">Table 5</div>
-      <div class="qr-caption">Scan to view menu & order</div>
-    </div>
-  </div>
-</section>
-
-<!-- ===================== HOW IT WORKS ===================== -->
-<section id="how">
-  <div class="container">
-    <div class="section-head reveal">
-      <span class="section-label">📋 How It Works</span>
-      <h2 class="section-title">From order to serving — smooth flow</h2>
-      <p class="section-sub">Every step connected, every screen in sync.</p>
-    </div>
-    <div class="steps-grid">
-      <div class="step-box reveal">
-        <div class="step-num">1</div>
-        <h4>Order Received</h4>
-        <p>Customer orders via QR, waiter, counter, or phone. All channels merge into one queue.</p>
-      </div>
-      <div class="step-box reveal">
-        <div class="step-num">2</div>
-        <h4>Kitchen Prepares</h4>
-        <p>Chef accepts on Kitchen Display, sets prep time, tickets auto-print. Inventory checks ingredient availability.</p>
-      </div>
-      <div class="step-box reveal">
-        <div class="step-num">3</div>
-        <h4>Serve or Deliver</h4>
-        <p>Waiter gets ready notification. Delivery orders auto-assign to the least-loaded rider on shift.</p>
-      </div>
-      <div class="step-box reveal">
-        <div class="step-num">4</div>
-        <h4>Complete & Track</h4>
-        <p>Payment collected, inventory auto-deducted via recipes, shift reports generated automatically.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===================== PLANS ===================== -->
-<section id="plans">
-  <div class="container">
-    <div class="section-head reveal">
-      <span class="section-label">📦 Choose Your Plan</span>
-      <h2 class="section-title">Plans for every restaurant size</h2>
-      <p class="section-sub">
-        All plans include every feature. Plans differ only in the number of staff accounts you can create.
-      </p>
-    </div>
-
-    <div class="plans-grid">
-
-      <!-- BASIC -->
-      <div class="plan-card reveal">
-        <div class="plan-tier">Basic</div>
-        <div class="plan-tagline">Small cafés & single-counter setups</div>
-
-        <div class="plan-limits-heading">Staff Account Limits</div>
-        <ul class="plan-limits">
-          <li>
-            <span class="role"><span class="icon">🧑‍🍳</span> Waiter</span>
-            <span class="count">2</span>
-          </li>
-          <li>
-            <span class="role"><span class="icon">🧾</span> Counter</span>
-            <span class="count">1</span>
-          </li>
-          <li>
-            <span class="role"><span class="icon">🖥️</span> Display</span>
-            <span class="count">1</span>
-          </li>
-          <li>
-            <span class="role"><span class="icon">👤</span> Manager</span>
-            <span class="count">1</span>
-          </li>
-          <li>
-            <span class="role"><span class="icon">🍳</span> Kitchen</span>
-            <span class="count">1</span>
-          </li>
-          <li>
-            <span class="role"><span class="icon">🏍️</span> Rider</span>
-            <span class="count">2</span>
-          </li>
-        </ul>
-
-        <div class="plan-features-note">
-          <strong>✓ All features included</strong> — Counter POS, QR Ordering, Kitchen Display, Waiter App, Rider App, Warehouse & Kitchen Inventory, Recipe Management, Sales & Shift Reports.
-        </div>
-
-        <a href="#cta" class="btn btn-outline">Start Free Trial</a>
-      </div>
-
-      <!-- STANDARD -->
-      <div class="plan-card popular reveal">
-        <div class="plan-tier">Standard</div>
-        <div class="plan-tagline">Growing restaurants with moderate traffic</div>
-
-        <div class="plan-limits-heading">Staff Account Limits</div>
-        <ul class="plan-limits">
-          <li>
-            <span class="role"><span class="icon">🧑‍🍳</span> Waiter</span>
-            <span class="count">3</span>
-          </li>
-          <li>
-            <span class="role"><span class="icon">🧾</span> Counter</span>
-            <span class="count">1</span>
-          </li>
-          <li>
-            <span class="role"><span class="icon">🖥️</span> Display</span>
-            <span class="count">1</span>
-          </li>
-          <li>
-            <span class="role"><span class="icon">👤</span> Manager</span>
-            <span class="count">1</span>
-          </li>
-          <li>
-            <span class="role"><span class="icon">🍳</span> Kitchen</span>
-            <span class="count">1</span>
-          </li>
-          <li>
-            <span class="role"><span class="icon">🏍️</span> Rider</span>
-            <span class="count">3</span>
-          </li>
-        </ul>
-
-        <div class="plan-features-note">
-          <strong>✓ All features included</strong> — Counter POS, QR Ordering, Kitchen Display, Waiter App, Rider App, Warehouse & Kitchen Inventory, Recipe Management, Sales & Shift Reports.
-        </div>
-
-        <a href="#cta" class="btn btn-primary">Start Free Trial</a>
-      </div>
-
-      <!-- PREMIUM -->
-      <div class="plan-card reveal">
-        <div class="plan-tier">Premium</div>
-        <div class="plan-tagline">Busy restaurants & multi-shift operations</div>
-
-        <div class="plan-limits-heading">Staff Account Limits</div>
-        <ul class="plan-limits">
-          <li>
-            <span class="role"><span class="icon">🧑‍🍳</span> Waiter</span>
-            <span class="count">4</span>
-          </li>
-          <li>
-            <span class="role"><span class="icon">🧾</span> Counter</span>
-            <span class="count">2</span>
-          </li>
-          <li>
-            <span class="role"><span class="icon">🖥️</span> Display</span>
-            <span class="count">2</span>
-          </li>
-          <li>
-            <span class="role"><span class="icon">👤</span> Manager</span>
-            <span class="count">1</span>
-          </li>
-          <li>
-            <span class="role"><span class="icon">🍳</span> Kitchen</span>
-            <span class="count">2</span>
-          </li>
-          <li>
-            <span class="role"><span class="icon">🏍️</span> Rider</span>
-            <span class="count">4</span>
-          </li>
-        </ul>
-
-        <div class="plan-features-note">
-          <strong>✓ All features included</strong> — Counter POS, QR Ordering, Kitchen Display, Waiter App, Rider App, Warehouse & Kitchen Inventory, Recipe Management, Sales & Shift Reports.
-        </div>
-
-        <a href="#cta" class="btn btn-outline">Contact Sales</a>
-      </div>
-
-    </div>
-
-    <p style="text-align:center; color:var(--muted); font-size:14px; margin-top:32px;" class="reveal">
-      💬 Custom limits available for multi-branch restaurants — contact us for a custom quote.
-    </p>
-  </div>
-</section>
-
-<!-- ===================== TESTIMONIALS ===================== -->
+<!-- WHY -->
 <section>
   <div class="container">
-    <div class="section-head reveal">
-      <span class="section-label">💬 Reviews</span>
-      <h2 class="section-title">What restaurant owners say</h2>
+    <div class="section-head">
+      <div class="section-kicker">Why Sizlio</div>
+      <h2 class="section-title">Real Pakistan restaurant problems</h2>
     </div>
-    <div class="testimonials-grid">
-      <div class="testimonial reveal">
-        <p class="testimonial-quote">
-          "Pehle order miss ho jaate the aur riders confuse rehte the. Ab QR ordering se customers khud order karte hain,
-          aur kitchen display par sab clear hai. Offline mode ne internet outage mein bhi humein bacha liya."
-        </p>
-        <div class="testimonial-author">
-          <div class="testimonial-avatar">ZA</div>
-          <div>
-            <div class="testimonial-name">Zain Ahmed</div>
-            <div class="testimonial-role">Café Owner · Khanewal</div>
-          </div>
+    <div class="why">
+      <div class="why-item">
+        <div class="why-num">1</div>
+        <div>
+          <h4>Net / load-shedding</h4>
+          <p>Counter offline chalega. Sync baad mein automatic.</p>
         </div>
       </div>
-      <div class="testimonial reveal">
-        <p class="testimonial-quote">
-          "Recipe-based inventory deduction ne humara manual stock counting khatam kar diya. Ab jab order serve hota hai,
-          kitchen stock automatically kam ho jata hai. Best decision for our restaurant."
-        </p>
-        <div class="testimonial-author">
-          <div class="testimonial-avatar">AK</div>
-          <div>
-            <div class="testimonial-name">Ayesha Khan</div>
-            <div class="testimonial-role">Restaurant Manager · Lahore</div>
-          </div>
+      <div class="why-item">
+        <div class="why-num">2</div>
+        <div>
+          <h4>Order miss / rider confuse</h4>
+          <p>QR + Waiter + Rider + Status Board — ek queue.</p>
+        </div>
+      </div>
+      <div class="why-item">
+        <div class="why-num">3</div>
+        <div>
+          <h4>Manual stock counting</h4>
+          <p>Recipe se serve pe deduct. Kitchen stock updated.</p>
+        </div>
+      </div>
+      <div class="why-item">
+        <div class="why-num">4</div>
+        <div>
+          <h4>FBR stress</h4>
+          <p>Built-in submission, QR on receipt, retry on fail.</p>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ===================== CTA ===================== -->
+<!-- HOW -->
+<section id="how">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-kicker">Flow</div>
+      <h2 class="section-title">Order se serve — connected</h2>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-n">1</div><h3>Order in</h3><p>QR, waiter, counter, phone — ek queue</p></div>
+      <div class="step"><div class="step-n">2</div><h3>Kitchen</h3><p>Accept, prep, tickets, stock check</p></div>
+      <div class="step"><div class="step-n">3</div><h3>Serve / Deliver</h3><p>Waiter notify · Rider auto-assign</p></div>
+      <div class="step"><div class="step-n">4</div><h3>Close</h3><p>Pay, inventory deduct, shift report</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PLANS -->
+<section id="plans">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-kicker">Plans</div>
+      <h2 class="section-title">Same features. Staff limits differ.</h2>
+      <p class="section-desc">Har plan mein full product — Offline, KDS Serve-tak, QR, Rider, Inventory, FBR.</p>
+    </div>
+    <div class="pricing">
+      <div class="plan">
+        <h3>Basic</h3>
+        <p class="sub">Small café / single counter</p>
+        <div class="limits">Waiter 2 · Counter 1 · Display 1<br>Manager 1 · Kitchen 1 · Rider 2</div>
+        <ul>
+          <li>Offline Counter POS</li>
+          <li>KDS Serve-tak</li>
+          <li>QR + Waiter + Rider</li>
+          <li>Recipe inventory</li>
+          <li>FBR compliance</li>
+          <li>Reports</li>
+        </ul>
+        <a href="#cta" class="btn btn-ghost">Start free trial</a>
+      </div>
+      <div class="plan featured">
+        <h3>Standard</h3>
+        <p class="sub">Growing restaurants</p>
+        <div class="limits">Waiter 3 · Counter 1 · Display 1<br>Manager 1 · Kitchen 1 · Rider 3</div>
+        <ul>
+          <li>Everything in Basic</li>
+          <li>More staff capacity</li>
+          <li>Priority support</li>
+          <li>Free training</li>
+        </ul>
+        <a href="#cta" class="btn btn-primary">Start free trial</a>
+      </div>
+      <div class="plan">
+        <h3>Premium</h3>
+        <p class="sub">Busy / multi-shift</p>
+        <div class="limits">Waiter 4 · Counter 2 · Display 2<br>Manager 1 · Kitchen 2 · Rider 4</div>
+        <ul>
+          <li>Everything in Standard</li>
+          <li>Higher limits</li>
+          <li>Multi-branch options</li>
+          <li>Custom limits</li>
+        </ul>
+        <a href="https://wa.me/923019128606?text=Premium%20plan" class="btn btn-ghost">Contact sales</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REVIEWS -->
+<section>
+  <div class="container">
+    <div class="section-head">
+      <div class="section-kicker">Reviews</div>
+      <h2 class="section-title">Restaurant owners</h2>
+    </div>
+    <div class="reviews">
+      <div class="quote">
+        <p>“Pehle order miss ho jaate the. Ab QR se customers khud order karte hain, kitchen display clear hai. Offline mode ne outage mein bacha liya.”</p>
+        <div class="quote-author">
+          <div class="avatar">ZA</div>
+          <div><strong>Zain Ahmed</strong><span>Café Owner · Khanewal</span></div>
+        </div>
+      </div>
+      <div class="quote">
+        <p>“Recipe inventory ne manual counting khatam kar di. Jab order serve hota hai, kitchen stock automatically kam ho jata hai.”</p>
+        <div class="quote-author">
+          <div class="avatar">AK</div>
+          <div><strong>Ayesha Khan</strong><span>Restaurant Manager · Lahore</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="cta">
   <div class="container">
-    <div class="final-cta reveal">
-      <h2>Ready to streamline your restaurant?</h2>
-      <p>Start with a free 7-day trial. No credit card required. Setup completed in 24 hours.</p>
-      <div class="final-cta-btns">
-        <a href="#" class="btn btn-primary">🚀 Start Free Trial</a>
-        <a href="tel:+923019128606" class="btn btn-outline">📞 +92-301-9128606</a>
-        <a href="https://wa.me/923019128606" class="btn btn-green">📱 WhatsApp</a>
-      </div>
-      <div style="margin-top: 24px; font-size: 13.5px; color: var(--muted);">
-        ⚡ Free training included · Works with your existing thermal printer
+    <div class="cta">
+      <h2>Restaurant streamline karna hai?</h2>
+      <p>7-day free trial · No card · Setup \~24 hrs · Free training · Thermal printer ready</p>
+      <div class="cta-actions">
+        <a href="https://wa.me/923019128606?text=Hi!%20Sizlio%20free%20trial%20shuru%20karna%20hai." class="btn btn-primary">Start free trial</a>
+        <a href="tel:+923019128606" class="btn btn-ghost">+92 301 9128606</a>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ===================== FOOTER ===================== -->
-<footer class="footer">
+<footer>
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <a href="#" class="logo">
+        <a href="/" class="logo">
           <div class="logo-mark">
-            <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 9.5C9 7.6 11 6.2 14 6.2s5 1.4 5 3.1c0 1.9-2.3 2.7-5 3.2-2.9.5-5 1.4-5 3.3 0 1.7 2 3.1 5 3.1s5-1.4 5-3.1"
-                    stroke="#0E1420" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="21.4" cy="7.4" r="2" fill="#0E1420"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#09090B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
           </div>
-          <div class="logo-text">Siz<span>lio</span></div>
+          Sizlio
         </a>
-        <p>
-          Complete restaurant management — Counter POS, QR Ordering, Kitchen Display,
-          Waiter & Rider Apps, Inventory, and Reports. Built for Pakistani restaurants.
-        </p>
+        <p>Offline POS, Serve-tak KDS, QR, Waiter, Rider, Inventory, FBR — Pakistani restaurants ke liye.</p>
       </div>
       <div class="footer-col">
-        <h5>Product</h5>
-        <a href="#features">All Features</a>
-        <a href="#offline">Offline Mode</a>
-        <a href="#qr">QR Ordering</a>
+        <h4>Product</h4>
+        <a href="#features">Features</a>
+        <a href="#compare">Compare</a>
+        <a href="#offline">Offline</a>
         <a href="#plans">Plans</a>
       </div>
       <div class="footer-col">
-        <h5>Support</h5>
-        <a href="help-center.html">Help Center</a>
-        <a href="https://wa.me/923019128606" target="_blank" rel="noopener">WhatsApp Support</a>
-        <a href="mailto:sales@sizlio.com">Email Us</a>
-        <a href="https://wa.me/923019128606?text=Hi!%20I'd%20like%20to%20request%20a%20feature." target="_blank" rel="noopener">Request Feature</a>
+        <h4>Support</h4>
+        <a href="/help-center.html">Help Center</a>
+        <a href="https://wa.me/923019128606">WhatsApp</a>
+        <a href="mailto:sales@sizlio.com">Email</a>
       </div>
       <div class="footer-col">
-        <h5>Company</h5>
-        <a href="about.html">About</a>
-        <a href="contact.html">Contact</a>
-        <a href="privacy-policy.html">Privacy Policy</a>
-        <a href="terms-of-service.html">Terms of Service</a>
+        <h4>Company</h4>
+        <a href="/about.html">About</a>
+        <a href="/contact.html">Contact</a>
+        <a href="/privacy-policy.html">Privacy</a>
+        <a href="/terms-of-service.html">Terms</a>
       </div>
     </div>
     <div class="footer-bottom">
-      <div>© 2026 Sizlio. All rights reserved.</div>
-      <div class="footer-contact">
-        <span>📧 sales@sizlio.com</span>
-        <span>📱 +92-301-9128606</span>
-      </div>
+      <span>© 2026 Sizlio</span>
+      <span>sales@sizlio.com · +92 301 9128606</span>
     </div>
   </div>
 </footer>
-
-<script>
-/* ============================================
-   SCROLL REVEAL
-   ============================================ */
-const revealObserver = new IntersectionObserver((entries) => {
-  entries.forEach((entry) => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('visible');
-      revealObserver.unobserve(entry.target);
-    }
-  });
-}, {
-  threshold: 0.1,
-  rootMargin: '0px 0px -50px 0px'
-});
-
-document.querySelectorAll('.reveal').forEach((el) => {
-  revealObserver.observe(el);
-});
-
-/* ============================================
-   HEADER SCROLL EFFECT
-   ============================================ */
-let lastScroll = 0;
-const header = document.querySelector('.header');
-
-window.addEventListener('scroll', () => {
-  const currentScroll = window.pageYOffset;
-
-  if (currentScroll > 50) {
-    header.style.background = 'rgba(5,7,11,0.92)';
-    header.style.boxShadow = '0 4px 30px rgba(0,0,0,0.3)';
-  } else {
-    header.style.background = 'rgba(5,7,11,0.75)';
-    header.style.boxShadow = 'none';
-  }
-
-  lastScroll = currentScroll;
-}, { passive: true });
-
-/* ============================================
-   SMOOTH SCROLL FOR NAV LINKS
-   ============================================ */
-document.querySelectorAll('a[href^="#"]').forEach((link) => {
-  link.addEventListener('click', (e) => {
-    const href = link.getAttribute('href');
-    if (!href || href.length <= 1) return; // bare "#" — no target section, do nothing safely
-    const target = document.querySelector(href);
-    if (target) {
-      e.preventDefault();
-      const offset = 80;
-      const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - offset;
-      window.scrollTo({
-        top: targetPosition,
-        behavior: 'smooth'
-      });
-    }
-  });
-});
-</script>
 
 </body>
 </html>
