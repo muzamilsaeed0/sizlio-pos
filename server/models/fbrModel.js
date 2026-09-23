@@ -1,10 +1,6 @@
-// ADJUST THIS IMPORT to match however your project connects to Postgres
-// (e.g. '../config/db', '../db/pool', '../database'). Looking at your
-// existing models (orderModel.js etc.) — copy the exact same require line
-// they use for the pg pool/client.
 const pool = require('../config/db');
 
-/** Fetch a restaurant's FBR settings (credentials, seller info, environment). */
+/** Fetch a restaurant's FBR settings. */
 async function getFbrConfig(restaurantId) {
   const { rows } = await pool.query(
     `SELECT fbr_enabled, fbr_pos_registration_no, fbr_api_token,
@@ -16,9 +12,9 @@ async function getFbrConfig(restaurantId) {
   return rows[0] || null;
 }
 
-/** Save/update a restaurant's FBR credentials (called once during setup). */
+/** Save/update a restaurant's FBR credentials. */
 async function saveFbrConfig(restaurantId, cfg) {
-  cfg = cfg || {}; // ✅ SAFETY
+  cfg = cfg || {};
 
   const { rows } = await pool.query(
     `UPDATE restaurants SET
@@ -58,7 +54,7 @@ async function createInvoiceLog(orderId, restaurantId, requestPayload) {
   return rows[0].id;
 }
 
-/** Mark an invoice log row as submitted (success) with FBR's response. */
+/** Mark an invoice log row as submitted. */
 async function markInvoiceSubmitted(invoiceLogId, fbrInvoiceNumber, fbrQrCode, responsePayload) {
   await pool.query(
     `UPDATE fbr_invoices SET
@@ -72,7 +68,7 @@ async function markInvoiceSubmitted(invoiceLogId, fbrInvoiceNumber, fbrQrCode, r
   );
 }
 
-/** Mark an invoice log row as failed, bump retry_count, store the error. */
+/** Mark an invoice log row as failed, bump retry_count. */
 async function markInvoiceFailed(invoiceLogId, errorMessage) {
   await pool.query(
     `UPDATE fbr_invoices SET
@@ -84,7 +80,7 @@ async function markInvoiceFailed(invoiceLogId, errorMessage) {
   );
 }
 
-/** Invoices still needing submission (failed or stuck pending) — used by the retry worker. */
+/** Global pending invoices (used by retry worker for ALL restaurants). */
 async function getPendingInvoices(maxRetries = 5) {
   const { rows } = await pool.query(
     `SELECT * FROM fbr_invoices
@@ -96,7 +92,7 @@ async function getPendingInvoices(maxRetries = 5) {
   return rows;
 }
 
-/** Look up the FBR invoice status for a given order (for receipt printing / status checks). */
+/** Look up the FBR invoice status for a given order. */
 async function getInvoiceByOrder(orderId) {
   const { rows } = await pool.query(
     `SELECT * FROM fbr_invoices WHERE order_id = $1 ORDER BY id DESC LIMIT 1`,
@@ -105,17 +101,19 @@ async function getInvoiceByOrder(orderId) {
   return rows[0] || null;
 }
 
-/** Restaurant-wise pending/failed invoices with order info (for manager dashboard). */
+/** Restaurant-wise pending/failed invoices with order info. */
 async function getPendingInvoicesForRestaurant(restaurantId) {
   const { rows } = await pool.query(
     `SELECT 
        fi.id,
        fi.order_id,
+       fi.restaurant_id,          -- ✅ ADD (retry ke liye zaroori)
        fi.status,
        fi.retry_count,
        fi.last_error,
        fi.created_at,
        fi.submitted_at,
+       fi.request_payload,        -- ✅ ADD (retry ke liye zaroori)
        o.customer_name,
        o.total_amount,
        o.order_type,

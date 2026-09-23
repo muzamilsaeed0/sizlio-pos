@@ -1,11 +1,7 @@
-const axios = require('axios'); // npm install axios (if not already in package.json)
+const axios = require('axios');
 const fbrModel = require('../models/fbrModel');
 
 // ── Endpoints ────────────────────────────────────────────────────────────
-// PRAL provides separate sandbox and production base URLs when you register.
-// Put the real values in your .env once IRIS gives them to you — these are
-// placeholders based on PRAL's published pattern; confirm exact paths
-// against the Technical Specification PDF / your PRAL onboarding email.
 const FBR_SANDBOX_URL = process.env.FBR_SANDBOX_URL || 'https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata_sb';
 const FBR_PRODUCTION_URL = process.env.FBR_PRODUCTION_URL || 'https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata';
 
@@ -14,21 +10,6 @@ function endpointFor(environment) {
 }
 
 // ── Payload builder ──────────────────────────────────────────────────────
-/**
- * Maps one of your orders into FBR's Digital Invoicing JSON schema.
- *
- * `order`      — your order record (needs: id, order_date/created_at, total, discount, etc.)
- * `orderItems` — array of line items: { name, quantity, unit_price, hs_code?, tax_rate? }
- *                 (Adjust the field names below to match whatever your
- *                 orderModel actually returns — I don't have that exact
- *                 shape from your codebase.)
- * `restaurant` — the row returned by fbrModel.getFbrConfig()
- *
- * NOTE: field names here follow FBR's publicly documented Digital
- * Invoicing schema (sellerNTNCNIC, hsCode, uoM, saleType, etc). Cross-check
- * every field against the PRAL Technical Specification PDF for your
- * account before going live — schema versions do get revised.
- */
 function buildInvoicePayload(order, orderItems, restaurant) {
   return {
     invoiceType: 'Sale Invoice',
@@ -37,20 +18,20 @@ function buildInvoicePayload(order, orderItems, restaurant) {
     sellerBusinessName: restaurant.fbr_seller_business_name,
     sellerProvince: restaurant.fbr_seller_province,
     sellerAddress: restaurant.fbr_seller_address,
-    buyerRegistrationType: 'Unregistered', // most walk-in/dine-in customers won't have an NTN
+    buyerRegistrationType: 'Unregistered',
     buyerNTNCNIC: '',
     buyerBusinessName: order.customer_name || 'Walk-in Customer',
     buyerProvince: restaurant.fbr_seller_province,
     buyerAddress: '',
     invoiceRefNo: '',
-    scenarioId: restaurant.fbr_environment === 'sandbox' ? 'SN001' : undefined, // sandbox test-scenario id; omit in production
+    scenarioId: restaurant.fbr_environment === 'sandbox' ? 'SN001' : undefined,
     items: orderItems.map((item) => {
       const excludingST = Number(item.price) * Number(item.quantity);
-      const taxRate = Number(order.gst_percent || 0); // e.g. 18 for 18%
+      const taxRate = Number(order.gst_percent || 0);
       const salesTax = Math.round((excludingST * taxRate) / 100 * 100) / 100;
 
       return {
-        hsCode: item.hs_code || '9963.0000', // generic "food/restaurant services" HS code — confirm the correct one with FBR/your tax advisor
+        hsCode: item.hs_code || '9963.0000',
         productDescription: item.name,
         rate: `${taxRate}%`,
         uoM: 'Numbers, PCS',
@@ -82,22 +63,38 @@ async function submitToFbr(payload, restaurant) {
     },
     timeout: 15_000,
   });
-  return response.data; // expected to contain invoiceNumber / QR code per PRAL spec
+  return response.data;
 }
 
 /**
  * Main entry point — call this once an order is completed/paid.
- * Wire it into your existing order-completion flow, e.g. in
- * orderController.js right after an order's status becomes 'completed'/'paid'.
+ * Flexible: accepts either a full order object OR an orderId (number).
  */
-async function submitInvoiceForOrder(order, orderItems) {
+async function submitInvoiceForOrder(orderOrId, orderItems) {
+  let order;
+  let items;
+
+  // ✅ Flexible: agar orderId (number) diya gaya hai to khud fetch karo
+  if (typeof orderOrId === 'number' || typeof orderOrId === 'string') {
+    const { getOrderById, getOrderItemsByOrderId } = require('../models/orderModel');
+    order = await getOrderById(Number(orderOrId));
+    items = await getOrderItemsByOrderId(Number(orderOrId));
+  } else {
+    order = orderOrId;
+    items = orderItems;
+  }
+
+  if (!order) {
+    throw new Error('Order not found for FBR submission');
+  }
+
   const restaurant = await fbrModel.getFbrConfig(order.restaurant_id);
 
   if (!restaurant || !restaurant.fbr_enabled) {
     return { skipped: true, reason: 'FBR integration not enabled for this restaurant' };
   }
 
-  const payload = buildInvoicePayload(order, orderItems, restaurant);
+  const payload = buildInvoicePayload(order, items, restaurant);
   const invoiceLogId = await fbrModel.createInvoiceLog(order.id, order.restaurant_id, payload);
 
   try {
@@ -118,10 +115,18 @@ async function submitInvoiceForOrder(order, orderItems) {
 
 /**
  * Retry worker — call this on a schedule (see server/services/fbrRetryWorker.js)
- * to resubmit invoices that failed or got stuck (e.g. FBR was down, internet dropped).
+ * to resubmit invoices that failed or got stuck.
+ *
+ * @param {number|null} restaurantId
+ *   - null → ALL pending invoices (super_admin/global retry)
+ *   - number → sirf us restaurant ki pending invoices (manager-scoped retry)
  */
-async function retryPendingInvoices() {
-  const pending = await fbrModel.getPendingInvoices();
+async function retryPendingInvoices(restaurantId = null) {
+  // ✅ Restaurant-scoped retry
+  const pending = restaurantId
+    ? await fbrModel.getPendingInvoicesForRestaurant(restaurantId)
+    : await fbrModel.getPendingInvoices();
+
   const results = [];
 
   for (const invoice of pending) {

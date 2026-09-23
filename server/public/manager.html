@@ -179,6 +179,87 @@
       margin-left: 6px;
     }
 
+    /* FBR Settings */
+.fbr-toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.fbr-status-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-left: 8px;
+}
+.fbr-status-pill.on { background: rgba(47,163,125,0.2); color: var(--success); }
+.fbr-status-pill.off { background: rgba(156,163,175,0.15); color: var(--muted); }
+.fbr-status-pill.sandbox { background: rgba(227,162,59,0.2); color: var(--accent); }
+.fbr-hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 0 14px;
+  line-height: 1.45;
+}
+.fbr-form .field { margin-bottom: 10px; }
+.fbr-form .field label {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.fbr-form input,
+.fbr-form select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+}
+.fbr-form input:focus,
+.fbr-form select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.fbr-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.fbr-actions button {
+  flex: 1;
+  min-width: 120px;
+  padding: 11px;
+  border-radius: 8px;
+  border: 0;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+.btn-fbr-save { background: var(--accent); color: #14181c; }
+.btn-fbr-test { background: var(--success); color: #fff; }
+.btn-fbr-ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border) !important;
+}
+#fbr-settings-msg {
+  font-size: 12px;
+  text-align: center;
+  min-height: 18px;
+  margin-top: 10px;
+}
+
     /* ========================= MODALS ========================= */
     .modal-overlay { display: none; position: fixed; inset: 0; background: #0009; z-index: 1500; align-items: center; justify-content: center; padding: 15px; }
     .modal-overlay.open { display: flex; }
@@ -350,6 +431,7 @@
       <button onclick="openPage('inventory.html')">📦 Inventory</button>
       <button onclick="openKitchenRequestsModal()">📥 Kitchen Requests</button>
       <button onclick="openFbrInvoicesModal()">🧾 FBR Invoices <span id="fbr-pending-badge" class="fbr-badge">0</span></button>
+      <button onclick="openFbrSettingsModal()">🧾 FBR Setup</button>
       <button onclick="openStaffPerformance()">📈 Staff Performance</button>
       <button class="menu-parent" onclick="toggleMenuSubmenu()">🍔 Menu <span>▾</span></button>
       <div id="menu-submenu" class="menu-submenu">
@@ -363,50 +445,127 @@
     </div>
 
   
-    <!-- SETTINGS MODAL --> <div class="modal-overlay" id="settings-modal">
-       <div class="modal-box"> 
+    <!-- SETTINGS MODAL -->
+    <div class="modal-overlay" id="settings-modal">
+      <div class="modal-box"> 
         <button class="modal-close-x" onclick="closeSettings()" aria-label="Close">&times;</button>
-         <h3>Settings</h3> 
-         <input id="set-username" placeholder="New Username (optional)" autocomplete="username"> 
-         <input id="set-current-password" type="password" placeholder="Current Password" autocomplete="current-password">
-          <input id="set-new-password" type="password" placeholder="New Password (optional)" autocomplete="new-password"> 
-          <button onclick="saveSettings()">Save</button> 
-          <button style="background: transparent; color: var(--text); border: 1px solid var(--border);" onclick="closeSettings()">Cancel</button> 
-          <p id="settings-msg" style="font-size: 12px; text-align: center;"></p> 
-          <div class="theme-row">
-             <span>Dark / Light Theme</span>
-              <label class="switch">
-                 <input type="checkbox" id="theme-toggle" onchange="toggleTheme()"> 
-                 <span class="slider"></span>
-                 </label> 
-                </div>
-                 <div class="card" style="margin-top: 20px;"> 
-                  <div class="section-title">
-                     <h2>📍 Restaurant Location (GPS Lock)</h2>
-                     </div>
-                      <p style="color:var(--muted); font-size:13px; margin-bottom:14px;"> When the customer scans the QR code, the system will check whether they are inside the restaurant or not. Press "Get Current Location" — the manager must do this while sitting inside the restaurant.</p> 
-                      <div class="form-grid"> 
-                        <div class="field"> 
-                          <label>Latitude</label> 
-                          <input id="rest-lat" type="text" readonly placeholder="Click button below"> 
-                        </div>
-                         <div class="field">
-                           <label>Longitude</label>
-                            <input id="rest-lng" type="text" readonly placeholder="Click button below"> 
-                          </div> 
-                          <div class="field">
-                             <label>Allowed Radius (meters)</label> 
-                             <input id="rest-radius" type="number" value="100" min="20" max="500"> 
-                            </div> 
-                          </div>
-                           <div class="form-actions"> 
-                            <button style="background: var(--accent); color: #14181c; width: auto; flex: 1 1 160px; margin: 0;" onclick="getCurrentLocation()"> 📍 Get Current Location </button>
-                             <button style="background: var(--success); color: #fff; width: auto; flex: 1 1 160px; margin: 0;" onclick="saveLocation()"> 💾 Save Location </button> 
-                            </div> 
-                            <p id="location-msg" style="font-size:12px; text-align:center; margin-top:8px;"></p> 
-                                  </div> 
-                                </div>
-                                </div>
+        <h3>Settings</h3> 
+        <input id="set-username" placeholder="New Username (optional)" autocomplete="username"> 
+        <input id="set-current-password" type="password" placeholder="Current Password" autocomplete="current-password">
+        <input id="set-new-password" type="password" placeholder="New Password (optional)" autocomplete="new-password"> 
+        <button onclick="saveSettings()">Save</button> 
+        <button style="background: transparent; color: var(--text); border: 1px solid var(--border);" onclick="closeSettings()">Cancel</button> 
+        <p id="settings-msg" style="font-size: 12px; text-align: center;"></p> 
+        <div class="theme-row">
+          <span>Dark / Light Theme</span>
+          <label class="switch">
+            <input type="checkbox" id="theme-toggle" onchange="toggleTheme()"> 
+            <span class="slider"></span>
+          </label> 
+        </div>
+        <div class="card" style="margin-top: 20px;"> 
+          <div class="section-title">
+            <h2>📍 Restaurant Location (GPS Lock)</h2>
+          </div>
+          <p style="color:var(--muted); font-size:13px; margin-bottom:14px;"> When the customer scans the QR code, the system will check whether they are inside the restaurant or not. Press "Get Current Location" — the manager must do this while sitting inside the restaurant.</p> 
+          <div class="form-grid"> 
+            <div class="field"> 
+              <label>Latitude</label> 
+              <input id="rest-lat" type="text" readonly placeholder="Click button below"> 
+            </div>
+            <div class="field">
+              <label>Longitude</label>
+              <input id="rest-lng" type="text" readonly placeholder="Click button below"> 
+            </div> 
+            <div class="field">
+              <label>Allowed Radius (meters)</label> 
+              <input id="rest-radius" type="number" value="100" min="20" max="500"> 
+            </div> 
+          </div>
+          <div class="form-actions"> 
+            <button style="background: var(--accent); color: #14181c; width: auto; flex: 1 1 160px; margin: 0;" onclick="getCurrentLocation()"> 📍 Get Current Location </button>
+            <button style="background: var(--success); color: #fff; width: auto; flex: 1 1 160px; margin: 0;" onclick="saveLocation()"> 💾 Save Location </button> 
+          </div> 
+          <p id="location-msg" style="font-size:12px; text-align:center; margin-top:8px;"></p> 
+        </div>
+
+        <!-- ========== FBR TAX COMPLIANCE ========== -->
+        <div class="card" style="margin-top:16px;">
+          <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <h2>🧾 FBR Tax Compliance</h2>
+            <span id="fbr-status-pill" class="fbr-status-pill off">Off</span>
+          </div>
+
+          <p class="fbr-hint">
+            IRIS se POS Registration Number aur API token lo. Pehle <strong>Sandbox</strong> test karo, phir Production.
+            Token sirf manager ke paas rahe.
+          </p>
+
+          <div class="fbr-toggle-row">
+            <div>
+              <strong style="font-size:14px;">Enable FBR</strong>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px;">Paid/completed orders pe auto-submit</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="fbr-enabled" onchange="onFbrToggle()">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div id="fbr-form-wrap" class="fbr-form" style="display:none;">
+            <div class="form-grid">
+              <div class="field">
+                <label>Environment</label>
+                <select id="fbr-environment">
+                  <option value="sandbox">Sandbox (test)</option>
+                  <option value="production">Production (live)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>POS Registration No</label>
+                <input type="text" id="fbr-pos-reg" placeholder="FBR POS ID" autocomplete="off">
+              </div>
+              <div class="field">
+                <label>API Token (Bearer)</label>
+                <input type="password" id="fbr-api-token" placeholder="Paste token from IRIS" autocomplete="new-password">
+              </div>
+              <div class="field">
+                <label>Seller NTN / CNIC</label>
+                <input type="text" id="fbr-seller-ntn" placeholder="1234567-8">
+              </div>
+              <div class="field">
+                <label>Seller Business Name</label>
+                <input type="text" id="fbr-seller-name" placeholder="As registered with FBR">
+              </div>
+              <div class="field">
+                <label>Province</label>
+                <select id="fbr-seller-province">
+                  <option value="">Select</option>
+                  <option value="Punjab">Punjab</option>
+                  <option value="Sindh">Sindh</option>
+                  <option value="Khyber Pakhtunkhwa">Khyber Pakhtunkhwa</option>
+                  <option value="Balochistan">Balochistan</option>
+                  <option value="Islamabad Capital Territory">Islamabad</option>
+                  <option value="Gilgit-Baltistan">Gilgit-Baltistan</option>
+                  <option value="Azad Jammu and Kashmir">AJK</option>
+                </select>
+              </div>
+              <div class="field" style="grid-column:1/-1;">
+                <label>Seller Address</label>
+                <input type="text" id="fbr-seller-address" placeholder="Outlet address">
+              </div>
+            </div>
+
+            <div class="fbr-actions">
+              <button type="button" class="btn-fbr-save" onclick="saveFbrSettings()">💾 Save FBR Settings</button>
+              <button type="button" class="btn-fbr-test" onclick="testFbrConnection()">🔗 Test / Reload</button>
+              <button type="button" class="btn-fbr-ghost" onclick="openFbrInvoicesModal()">📋 Pending Invoices</button>
+            </div>
+            <p id="fbr-settings-msg"></p>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- STAFF MODAL -->
     <div class="modal-overlay" id="staff-modal">
@@ -543,7 +702,6 @@
               <option value="delivery">🚴 Rider</option>
               <option value="kitchen">🍳 Kitchen</option>
               <option value="counter">💰 Counter</option>
-              
             </select>
           </div>
           <div class="field">
@@ -575,10 +733,10 @@
         <div id="staff-perf-totals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px;"></div>
 
         <!-- Export buttons -->
-<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-  <button onclick="printStaffPerformance()" style="padding:9px 16px;border-radius:8px;border:0;background:var(--accent);color:#14181c;font-weight:700;font-size:12px;cursor:pointer;">🖨️ Print</button>
-  <button onclick="exportStaffPerformanceCSV()" style="padding:9px 16px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-weight:700;font-size:12px;cursor:pointer;">📥 Export CSV</button>
-</div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+          <button onclick="printStaffPerformance()" style="padding:9px 16px;border-radius:8px;border:0;background:var(--accent);color:#14181c;font-weight:700;font-size:12px;cursor:pointer;">🖨️ Print</button>
+          <button onclick="exportStaffPerformanceCSV()" style="padding:9px 16px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-weight:700;font-size:12px;cursor:pointer;">📥 Export CSV</button>
+        </div>
         <!-- Shifts table -->
         <div id="staff-perf-table-wrap" style="max-height:420px;overflow-y:auto;"></div>
       </div>
@@ -628,92 +786,92 @@
     /* MENU DATA */
 
     const CATEGORY_GROUPS = {
-  fastFood: {
-    "Burgers": ["Zinger Burger", "Chicken Burger", 
-    "Beef Burger", "Double Patty Burger", 
-    "Crispy Chicken Burger", "Mushroom Swiss Burger", 
-    "Veggie Burger"],
+      fastFood: {
+        "Burgers": ["Zinger Burger", "Chicken Burger", 
+        "Beef Burger", "Double Patty Burger", 
+        "Crispy Chicken Burger", "Mushroom Swiss Burger", 
+        "Veggie Burger"],
 
-    "Pizza": 
-    ["Chicken Fajita Pizza", 
-    "Pepperoni Pizza", 
-    "BBQ Chicken Pizza",
-     "Cheese Lover Pizza",
-      "Veggie Pizza", 
-      "Spicy Chicken Pizza",
-       "Tandoori Pizza",
-        "Margherita Pizza"],
+        "Pizza": 
+        ["Chicken Fajita Pizza", 
+        "Pepperoni Pizza", 
+        "BBQ Chicken Pizza",
+         "Cheese Lover Pizza",
+          "Veggie Pizza", 
+          "Spicy Chicken Pizza",
+           "Tandoori Pizza",
+            "Margherita Pizza"],
 
-    "Sandwiches & Wraps":
-     ["Chicken Shawarma", "Chicken Wrap", "Club Sandwich", "Grilled Sandwich", "Chicken Mayo Sandwich", "Turkey Sandwich"],
-    "Broast & Fried Chicken": 
-    ["Chicken Broast", 
-    "Fried Chicken", 
-    "Chicken Wings", 
-    "Chicken Nuggets", 
-    "Chicken Popcorn", 
-    "Hot Wings", 
-    "Chicken Tenders"],
+        "Sandwiches & Wraps":
+         ["Chicken Shawarma", "Chicken Wrap", "Club Sandwich", "Grilled Sandwich", "Chicken Mayo Sandwich", "Turkey Sandwich"],
+        "Broast & Fried Chicken": 
+        ["Chicken Broast", 
+        "Fried Chicken", 
+        "Chicken Wings", 
+        "Chicken Nuggets", 
+        "Chicken Popcorn", 
+        "Hot Wings", 
+        "Chicken Tenders"],
 
-    "Fries":
-     ["French Fries", 
-     "Masala Fries", 
-     "Loaded Fries", 
-     "Cheese Fries", 
-     "Potato Wedges", 
-     "Sweet Potato Fries"],
-     
-    "Pasta": 
-    ["Alfredo Pasta", 
-    "Arrabbiata Pasta", 
-    "Chicken Pasta", 
-    "Creamy Pasta", 
-    "Red Sauce Pasta", 
-    "Garlic Butter Pasta"],
+        "Fries":
+         ["French Fries", 
+         "Masala Fries", 
+         "Loaded Fries", 
+         "Cheese Fries", 
+         "Potato Wedges", 
+         "Sweet Potato Fries"],
+         
+        "Pasta": 
+        ["Alfredo Pasta", 
+        "Arrabbiata Pasta", 
+        "Chicken Pasta", 
+        "Creamy Pasta", 
+        "Red Sauce Pasta", 
+        "Garlic Butter Pasta"],
 
-    "Snacks": 
-    ["Chicken Samosa",
-     "Spin Rolls",
-      "Onion Rings", 
-      "Mozzarella Sticks", 
-      "Cheesy Fries",
-      "Chicken Rolls", 
-      "Potato Wedges", 
-      "Garlic Bread"],
+        "Snacks": 
+        ["Chicken Samosa",
+         "Spin Rolls",
+          "Onion Rings", 
+          "Mozzarella Sticks", 
+          "Cheesy Fries",
+          "Chicken Rolls", 
+          "Potato Wedges", 
+          "Garlic Bread"],
 
-    "Drinks": 
-    ["Mineral Water", 
-    "Soft Drinks",
-     "Fresh Lime", 
-     "Mint Margarita", 
-     "Lemonade", 
-     "Tea", 
-     "Green Tea", 
-     "Coffee", 
-     "Sprite", 
-     "Coke", 
-     "Pepsi", 
-     "Milkshake (Chocolate)", 
-     "Milkshake (Strawberry)", 
-     "Milkshake (Vanilla)", 
-     "Orange Juice", 
-     "Apple Juice", 
-     "Mango Juice", 
-     "Strawberry Juice"]
+        "Drinks": 
+        ["Mineral Water", 
+        "Soft Drinks",
+         "Fresh Lime", 
+         "Mint Margarita", 
+         "Lemonade", 
+         "Tea", 
+         "Green Tea", 
+         "Coffee", 
+         "Sprite", 
+         "Coke", 
+         "Pepsi", 
+         "Milkshake (Chocolate)", 
+         "Milkshake (Strawberry)", 
+         "Milkshake (Vanilla)", 
+         "Orange Juice", 
+         "Apple Juice", 
+         "Mango Juice", 
+         "Strawberry Juice"]
 
-  },
-  desi: {
-    "Karahi": ["Chicken Karahi", "Mutton Karahi", "White Karahi", "Achari Karahi", "Mutton White Karahi", "Chicken Lahori Karahi", "Beef Karahi"],
-    "Handi": ["Chicken Handi", "Chicken Cheese Handi", "Chicken Malai Handi", "Mutton Handi", "Beef Handi"],
-    "BBQ": ["Chicken Tikka", "Chicken Boti", "Chicken Seekh Kabab", "Beef Seekh Kabab", "Malai Boti", "Reshmi Kabab", "Chapli Kabab", "Afghani Tikka", "Beef Bihari Kabab", "Mutton Tikka", "Shami Kabab"],
-    "Rice": ["Chicken Biryani", "Beef Biryani", "Chicken Pulao", "Plain Rice", "Mutton Biryani", "Fish Biryani", "Zarda (Sweet Rice)", "Vegetable Pulao"],
-    "Daal & Sabzi": ["Daal Mash", "Daal Chana", "Mix Sabzi", "Aloo Gosht", "Chana Masala", "Bhindi Gosht", "Palak Gosht", "Tarka Daal", "Daal Moong", "Aloo Matar"],
-    "Roti": ["Tandoori Roti", "Naan", "Garlic Naan", "Roghni Naan", "Paratha", "Butter Naan", "Aloo Paratha", "Plain Roti"],
-    "Salad & Raita": ["Green Salad", "Russian Salad", "Mint Raita", "Zeera Raita", "Cucumber Raita", "Fruit Salad"],
-    "Dessert": ["Kheer", "Gulab Jamun", "Gajar Halwa", "Ice Cream", "Firni", "Jalebi", "Rabri", "Fruit Chaat", "Barfi", "Halwa Puri"],
-    "Drinks": ["Mineral Water", "Soft Drinks", "Fresh Lime", "Mint Margarita", "Lemonade", "Tea", "Green Tea", "Coffee", "Pepsi", "Coke", "Sprite", "7Up", "Lassi (Sweet)", "Lassi (Salty)", "Chaach", "Mango Lassi"]
-  }
-};
+      },
+      desi: {
+        "Karahi": ["Chicken Karahi", "Mutton Karahi", "White Karahi", "Achari Karahi", "Mutton White Karahi", "Chicken Lahori Karahi", "Beef Karahi"],
+        "Handi": ["Chicken Handi", "Chicken Cheese Handi", "Chicken Malai Handi", "Mutton Handi", "Beef Handi"],
+        "BBQ": ["Chicken Tikka", "Chicken Boti", "Chicken Seekh Kabab", "Beef Seekh Kabab", "Malai Boti", "Reshmi Kabab", "Chapli Kabab", "Afghani Tikka", "Beef Bihari Kabab", "Mutton Tikka", "Shami Kabab"],
+        "Rice": ["Chicken Biryani", "Beef Biryani", "Chicken Pulao", "Plain Rice", "Mutton Biryani", "Fish Biryani", "Zarda (Sweet Rice)", "Vegetable Pulao"],
+        "Daal & Sabzi": ["Daal Mash", "Daal Chana", "Mix Sabzi", "Aloo Gosht", "Chana Masala", "Bhindi Gosht", "Palak Gosht", "Tarka Daal", "Daal Moong", "Aloo Matar"],
+        "Roti": ["Tandoori Roti", "Naan", "Garlic Naan", "Roghni Naan", "Paratha", "Butter Naan", "Aloo Paratha", "Plain Roti"],
+        "Salad & Raita": ["Green Salad", "Russian Salad", "Mint Raita", "Zeera Raita", "Cucumber Raita", "Fruit Salad"],
+        "Dessert": ["Kheer", "Gulab Jamun", "Gajar Halwa", "Ice Cream", "Firni", "Jalebi", "Rabri", "Fruit Chaat", "Barfi", "Halwa Puri"],
+        "Drinks": ["Mineral Water", "Soft Drinks", "Fresh Lime", "Mint Margarita", "Lemonade", "Tea", "Green Tea", "Coffee", "Pepsi", "Coke", "Sprite", "7Up", "Lassi (Sweet)", "Lassi (Salty)", "Chaach", "Mango Lassi"]
+      }
+    };
 
     const MASTER_MENU = Object.entries({ ...CATEGORY_GROUPS.desi, ...CATEGORY_GROUPS.fastFood }).flatMap(([category, names]) => names.map(name => ({ name, category })));
 
@@ -795,38 +953,38 @@
       } catch (error) { list.innerHTML = '<div class="empty">Server connection failed.</div>'; }
     }
 
-function renderCategories() {
-  const list = document.getElementById("category-list");
-  if (!categoriesCache.length) { list.innerHTML = '<div class="empty">No categories added yet.</div>'; return; }
-  
-  const type = foodType();
-  let predefinedCategories = [];
-  if (type === "fast") {
-    predefinedCategories = Object.keys(CATEGORY_GROUPS.fastFood);
-  } else if (type === "desi") {
-    predefinedCategories = Object.keys(CATEGORY_GROUPS.desi);
-  } else if (type === "combo") {
-    predefinedCategories = [...new Set([...Object.keys(CATEGORY_GROUPS.desi), ...Object.keys(CATEGORY_GROUPS.fastFood)])];
-  }
-  
-  list.innerHTML = categoriesCache.map(category => {
-    const isLocked = predefinedCategories.length > 0 && predefinedCategories.includes(category.name);
-    const lockIcon = isLocked ? ' 🔒' : '';
-    
-    return `
-      <div class="row">
-        <div class="row-left">
-          <div class="row-title">${escapeHtml(category.name)}${lockIcon}</div>
-          ${isLocked ? `<div class="row-sub" style="color: var(--muted);">System-defined category (cannot be renamed or removed)</div>` : ''}
-        </div>
-        <div class="row-actions">
-          ${!isLocked ? `<button class="btn-edit" onclick="editCategory(${Number(category.id)})">Rename</button>` : ''}
-          ${!isLocked ? `<button class="btn-danger" onclick="removeCategory(${Number(category.id)})">Remove</button>` : ''}
-        </div>
-      </div>
-    `;
-  }).join("");
-}
+    function renderCategories() {
+      const list = document.getElementById("category-list");
+      if (!categoriesCache.length) { list.innerHTML = '<div class="empty">No categories added yet.</div>'; return; }
+      
+      const type = foodType();
+      let predefinedCategories = [];
+      if (type === "fast") {
+        predefinedCategories = Object.keys(CATEGORY_GROUPS.fastFood);
+      } else if (type === "desi") {
+        predefinedCategories = Object.keys(CATEGORY_GROUPS.desi);
+      } else if (type === "combo") {
+        predefinedCategories = [...new Set([...Object.keys(CATEGORY_GROUPS.desi), ...Object.keys(CATEGORY_GROUPS.fastFood)])];
+      }
+      
+      list.innerHTML = categoriesCache.map(category => {
+        const isLocked = predefinedCategories.length > 0 && predefinedCategories.includes(category.name);
+        const lockIcon = isLocked ? ' 🔒' : '';
+        
+        return `
+          <div class="row">
+            <div class="row-left">
+              <div class="row-title">${escapeHtml(category.name)}${lockIcon}</div>
+              ${isLocked ? `<div class="row-sub" style="color: var(--muted);">System-defined category (cannot be renamed or removed)</div>` : ''}
+            </div>
+            <div class="row-actions">
+              ${!isLocked ? `<button class="btn-edit" onclick="editCategory(${Number(category.id)})">Rename</button>` : ''}
+              ${!isLocked ? `<button class="btn-danger" onclick="removeCategory(${Number(category.id)})">Remove</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
 
     function populateCategoryAddSelect() {
       const select = document.getElementById("new-category-select");
@@ -838,22 +996,21 @@ function renderCategories() {
     }
 
     function editCategory(id) {
-  const category = categoriesCache.find(item => Number(item.id) === Number(id));
-  if (!category) return;
-  
-  const type = foodType();
-  let predefinedCategories = [];
-  if (type === "fast") predefinedCategories = Object.keys(CATEGORY_GROUPS.fastFood);
-  else if (type === "desi") predefinedCategories = Object.keys(CATEGORY_GROUPS.desi);
-  else if (type === "combo") predefinedCategories = [...new Set([...Object.keys(CATEGORY_GROUPS.desi), ...Object.keys(CATEGORY_GROUPS.fastFood)])];
-  if (predefinedCategories.includes(category.name)) {
-    document.getElementById("category-msg").style.color = "var(--danger)";
-    document.getElementById("category-msg").innerText = "This is a system-defined category and cannot be renamed.";
-    return;
-  }
-  
+      const category = categoriesCache.find(item => Number(item.id) === Number(id));
+      if (!category) return;
+      
+      const type = foodType();
+      let predefinedCategories = [];
+      if (type === "fast") predefinedCategories = Object.keys(CATEGORY_GROUPS.fastFood);
+      else if (type === "desi") predefinedCategories = Object.keys(CATEGORY_GROUPS.desi);
+      else if (type === "combo") predefinedCategories = [...new Set([...Object.keys(CATEGORY_GROUPS.desi), ...Object.keys(CATEGORY_GROUPS.fastFood)])];
+      if (predefinedCategories.includes(category.name)) {
+        document.getElementById("category-msg").style.color = "var(--danger)";
+        document.getElementById("category-msg").innerText = "This is a system-defined category and cannot be renamed.";
+        return;
+      }
+      
       editingCategoryId = id;
-  
 
       const currentName = normalizeFoodType(category.name);
       const takenNames = categoriesCache.filter(item => Number(item.id) !== Number(id)).map(item => normalizeFoodType(item.name));
@@ -892,21 +1049,21 @@ function renderCategories() {
       } catch (error) { msg.style.color = "var(--danger)"; msg.innerText = "Server connection failed"; }
     }
 
-   async function removeCategory(id) {
-  const category = categoriesCache.find(item => Number(item.id) === Number(id));
-  if (!category) return;
-  
-  const type = foodType();
-  let predefinedCategories = [];
-  if (type === "fast") predefinedCategories = Object.keys(CATEGORY_GROUPS.fastFood);
-  else if (type === "desi") predefinedCategories = Object.keys(CATEGORY_GROUPS.desi);
-  else if (type === "combo") predefinedCategories = [...new Set([...Object.keys(CATEGORY_GROUPS.desi), ...Object.keys(CATEGORY_GROUPS.fastFood)])];
-  if (predefinedCategories.includes(category.name)) {
-    alert("This is a system-defined category and cannot be removed.");
-    return;
-  }
-  
-  if (!confirm("Remove this category?")) return;
+    async function removeCategory(id) {
+      const category = categoriesCache.find(item => Number(item.id) === Number(id));
+      if (!category) return;
+      
+      const type = foodType();
+      let predefinedCategories = [];
+      if (type === "fast") predefinedCategories = Object.keys(CATEGORY_GROUPS.fastFood);
+      else if (type === "desi") predefinedCategories = Object.keys(CATEGORY_GROUPS.desi);
+      else if (type === "combo") predefinedCategories = [...new Set([...Object.keys(CATEGORY_GROUPS.desi), ...Object.keys(CATEGORY_GROUPS.fastFood)])];
+      if (predefinedCategories.includes(category.name)) {
+        alert("This is a system-defined category and cannot be removed.");
+        return;
+      }
+      
+      if (!confirm("Remove this category?")) return;
 
       try {
         const res = await fetch(`/api/categories/${encodeURIComponent(id)}`, { method: "DELETE", headers: authHeaders() });
@@ -1265,11 +1422,7 @@ function renderCategories() {
     }
 
     /* SETTINGS */
-    function openSettings() { closeMenu();
-       document.getElementById("settings-modal").classList.add("open"); 
-       document.getElementById("settings-msg").innerText = ""; 
-      loadLocation();
-      }
+    // Note: openSettings is defined below with FBR settings loading
     function closeSettings() { document.getElementById("settings-modal").classList.remove("open"); ["set-username", "set-current-password", "set-new-password"].forEach(id => { document.getElementById(id).value = ""; }); }
     async function saveSettings() {
       const username = document.getElementById("set-username").value.trim();
@@ -1601,6 +1754,137 @@ function renderCategories() {
       } catch (_) {}
     }
 
+    /* ========================= FBR SETTINGS ========================= */
+
+    function onFbrToggle() {
+      const on = document.getElementById("fbr-enabled").checked;
+      document.getElementById("fbr-form-wrap").style.display = on ? "block" : "none";
+      updateFbrStatusPill(on, document.getElementById("fbr-environment")?.value);
+    }
+
+    function updateFbrStatusPill(enabled, env) {
+      const pill = document.getElementById("fbr-status-pill");
+      if (!pill) return;
+      pill.className = "fbr-status-pill";
+      if (!enabled) {
+        pill.classList.add("off");
+        pill.textContent = "Off";
+      } else if (env === "sandbox") {
+        pill.classList.add("sandbox");
+        pill.textContent = "Sandbox";
+      } else {
+        pill.classList.add("on");
+        pill.textContent = "Live";
+      }
+    }
+
+    async function loadFbrSettings() {
+      if (!restaurantId) return;
+      const msg = document.getElementById("fbr-settings-msg");
+      try {
+        const res = await fetch(`/api/fbr/config/${encodeURIComponent(restaurantId)}`, {
+          headers: authHeaders()
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          if (msg) msg.innerText = data.message || "Could not load FBR config";
+          return;
+        }
+
+        const cfg = data.config || data || {};
+        const enabled = !!(cfg.fbr_enabled);
+        document.getElementById("fbr-enabled").checked = enabled;
+        document.getElementById("fbr-form-wrap").style.display = enabled ? "block" : "none";
+        document.getElementById("fbr-environment").value = cfg.fbr_environment || "sandbox";
+        document.getElementById("fbr-pos-reg").value = cfg.fbr_pos_registration_no || "";
+        document.getElementById("fbr-api-token").value = cfg.fbr_api_token || "";
+        document.getElementById("fbr-seller-ntn").value = cfg.fbr_seller_ntn_cnic || "";
+        document.getElementById("fbr-seller-name").value = cfg.fbr_seller_business_name || "";
+        document.getElementById("fbr-seller-province").value = cfg.fbr_seller_province || "";
+        document.getElementById("fbr-seller-address").value = cfg.fbr_seller_address || "";
+        updateFbrStatusPill(enabled, cfg.fbr_environment);
+      } catch (e) {
+        console.error("loadFbrSettings:", e);
+        if (msg) msg.innerText = "Network error loading FBR settings";
+      }
+    }
+
+    async function saveFbrSettings() {
+      const msg = document.getElementById("fbr-settings-msg");
+      msg.innerText = "Saving...";
+      msg.style.color = "var(--muted)";
+
+      const body = {
+        fbr_enabled: document.getElementById("fbr-enabled").checked,
+        fbr_environment: document.getElementById("fbr-environment").value || "sandbox",
+        fbr_pos_registration_no: document.getElementById("fbr-pos-reg").value.trim() || null,
+        fbr_api_token: document.getElementById("fbr-api-token").value.trim() || null,
+        fbr_seller_ntn_cnic: document.getElementById("fbr-seller-ntn").value.trim() || null,
+        fbr_seller_business_name: document.getElementById("fbr-seller-name").value.trim() || null,
+        fbr_seller_province: document.getElementById("fbr-seller-province").value || null,
+        fbr_seller_address: document.getElementById("fbr-seller-address").value.trim() || null
+      };
+
+      if (body.fbr_enabled) {
+        if (!body.fbr_api_token) {
+          msg.innerText = "API token required when FBR is enabled";
+          msg.style.color = "var(--danger)";
+          return;
+        }
+        if (!body.fbr_seller_ntn_cnic || !body.fbr_seller_business_name) {
+          msg.innerText = "Seller NTN and Business Name required";
+          msg.style.color = "var(--danger)";
+          return;
+        }
+      }
+
+      try {
+        const res = await fetch(`/api/fbr/config/${encodeURIComponent(restaurantId)}`, {
+          method: "POST",
+          headers: { ...authHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          msg.innerText = data.message || "Save failed";
+          msg.style.color = "var(--danger)";
+          return;
+        }
+        msg.innerText = "✓ FBR settings saved";
+        msg.style.color = "var(--success)";
+        updateFbrStatusPill(body.fbr_enabled, body.fbr_environment);
+        await refreshFbrBadge();
+      } catch (e) {
+        console.error("saveFbrSettings:", e);
+        msg.innerText = "Network error";
+        msg.style.color = "var(--danger)";
+      }
+    }
+
+    async function testFbrConnection() {
+      const msg = document.getElementById("fbr-settings-msg");
+      msg.innerText = "Loading config...";
+      msg.style.color = "var(--muted)";
+      await loadFbrSettings();
+      msg.innerText = "✓ Config reloaded. Use a test order (sandbox) to verify submit.";
+      msg.style.color = "var(--success)";
+    }
+
+    // Main openSettings — FBR settings ke saath
+    function openSettings() {
+      closeMenu();
+      document.getElementById("settings-modal").classList.add("open");
+      const sm = document.getElementById("settings-msg");
+      if (sm) sm.innerText = "";
+      if (typeof loadLocation === "function") loadLocation();
+      loadFbrSettings();
+    }
+
+    // FBR Setup menu button ke liye alias
+    function openFbrSettingsModal() {
+      openSettings();
+    }
+
     /* =====================================================
        STAFF PERFORMANCE
        ===================================================== */
@@ -1674,11 +1958,11 @@ function renderCategories() {
         }
 
         // ✅ Store data for export
-lastStaffPerformanceData = {
-  shifts: data.shifts || [],
-  totalsByRole: data.totals_by_role || null,
-  filters: { date: null, from, to, role, username }
-};
+        lastStaffPerformanceData = {
+          shifts: data.shifts || [],
+          totalsByRole: data.totals_by_role || null,
+          filters: { date: null, from, to, role, username }
+        };
 
         renderStaffPerformanceTotals(data.totals_by_role);
         renderStaffPerformanceTable(data.shifts || []);
@@ -1697,7 +1981,6 @@ lastStaffPerformanceData = {
         { key: "rider", label: "🚴 Rider", color: "#3b82f6" },
         { key: "kitchen", label: "🍳 Kitchen", color: "#f59e0b" },
         { key: "counter", label: "💰 Counter", color: "#22c55e" },
-       
       ];
 
       box.innerHTML = roles.map(r => {
@@ -1771,265 +2054,252 @@ lastStaffPerformanceData = {
       `;
     }
 
-
     /* =====================================================
-   STAFF PERFORMANCE — PRINT & CSV EXPORT
-   ===================================================== */
+       STAFF PERFORMANCE — PRINT & CSV EXPORT
+       ===================================================== */
 
-// Store last loaded data for export
-let lastStaffPerformanceData = {
-  shifts: [],
-  totalsByRole: null,
-  filters: {}
-};
+    // Store last loaded data for export
+    let lastStaffPerformanceData = {
+      shifts: [],
+      totalsByRole: null,
+      filters: {}
+    };
 
-// Update this in loadStaffPerformance after success
-// (already added below in the override)
+    async function printStaffPerformance() {
+      if (!lastStaffPerformanceData.shifts.length) {
+        alert("Koi data nahi hai print karne ke liye. Pehle filter apply karo.");
+        return;
+      }
 
-async function printStaffPerformance() {
-  if (!lastStaffPerformanceData.shifts.length) {
-    alert("Koi data nahi hai print karne ke liye. Pehle filter apply karo.");
-    return;
-  }
+      const { shifts, totalsByRole, filters } = lastStaffPerformanceData;
 
-  const { shifts, totalsByRole, filters } = lastStaffPerformanceData;
+      const restaurantName = (restaurantInfo && restaurantInfo.name) || "Restaurant";
 
-  const restaurantName = (restaurantInfo && restaurantInfo.name) || "Restaurant";
+      let filterText = "All shifts";
+      if (filters.date) filterText = `Date: ${filters.date}`;
+      else if (filters.from && filters.to) filterText = `${filters.from} → ${filters.to}`;
+      if (filters.role && filters.role !== "all") filterText += ` · Role: ${filters.role}`;
+      if (filters.username) filterText += ` · User: ${filters.username}`;
 
-  // Filter summary text
-  let filterText = "All shifts";
-  if (filters.date) filterText = `Date: ${filters.date}`;
-  else if (filters.from && filters.to) filterText = `${filters.from} → ${filters.to}`;
-  if (filters.role && filters.role !== "all") filterText += ` · Role: ${filters.role}`;
-  if (filters.username) filterText += ` · User: ${filters.username}`;
+      const roleEmoji = {
+        delivery: "🚴",
+        kitchen: "🍳",
+        counter: "💰",
+        waiter: "🍽️",
+        manager: "👔"
+      };
 
-  const roleEmoji = {
-    delivery: "🚴",
-    kitchen: "🍳",
-    counter: "💰",
-    waiter: "🍽️",
-    manager: "👔"
-  };
-
-  // Totals section rows
-  const totalsRows = [
-    { key: "rider", label: "🚴 Rider" },
-    { key: "kitchen", label: "🍳 Kitchen" },
-    { key: "counter", label: "💰 Counter" }
-  ].map(r => {
-    const t = (totalsByRole && totalsByRole[r.key]) || { shifts: 0, orders: 0, sales: 0, collected: 0 };
-    return `
-      <tr>
-        <td>${r.label}</td>
-        <td style="text-align:right">${Number(t.shifts || 0)}</td>
-        <td style="text-align:right">${Number(t.orders || 0)}</td>
-        <td style="text-align:right">Rs ${Number(t.sales || 0).toLocaleString()}</td>
-        <td style="text-align:right">Rs ${Number(t.collected || 0).toLocaleString()}</td>
-      </tr>
-    `;
-  }).join("");
-
-  // Shifts table rows
-  const shiftRows = shifts.map(s => {
-    const emoji = roleEmoji[s.role] || "👤";
-    const date = new Date(s.started_at).toLocaleDateString();
-    const start = new Date(s.started_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    const end = s.ended_at ? new Date(s.ended_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "-";
-
-    return `
-      <tr>
-        <td>${date}</td>
-        <td>${emoji} ${escapeHtml(s.full_name || s.username || "Unknown")}<br><span style="font-size:10px;color:#666;">@${escapeHtml(s.username || "")}</span></td>
-        <td>${start}</td>
-        <td>${end}</td>
-        <td>${escapeHtml(s.status || "")}</td>
-        <td style="text-align:right">${Number(s.orders_count || 0)}</td>
-        <td style="text-align:right">Rs ${Number(s.total_sales || 0).toLocaleString()}</td>
-        <td style="text-align:right">Rs ${Number(s.total_collected || 0).toLocaleString()}</td>
-      </tr>
-    `;
-  }).join("");
-
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Staff Performance — ${escapeHtml(restaurantName)}</title>
-      <style>
-        * { box-sizing: border-box; }
-        body {
-          font-family: Arial, Helvetica, sans-serif;
-          padding: 20px;
-          color: #111;
-          background: #fff;
-          font-size: 12px;
-        }
-        h1 { margin: 0 0 4px; font-size: 22px; }
-        h2 { margin: 20px 0 10px; font-size: 15px; border-bottom: 2px solid #333; padding-bottom: 6px; }
-        .sub { color: #666; font-size: 12px; margin-bottom: 6px; }
-        .filters { background: #f5f5f5; padding: 10px 12px; border-radius: 6px; font-size: 11px; color: #333; margin-bottom: 18px; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 16px; }
-        th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; vertical-align: top; }
-        th { background: #f0f0f0; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; }
-        .totals-table td { font-size: 12px; }
-        @media print {
-          body { padding: 10px; }
-          h1 { font-size: 18px; }
-          h2 { font-size: 13px; }
-          table { font-size: 10px; }
-          th, td { padding: 4px 6px; }
-        }
-      </style>
-    </head>
-    <body onload="window.print();">
-      <h1>📈 Staff Performance</h1>
-      <div class="sub">${escapeHtml(restaurantName)} — printed ${new Date().toLocaleString()}</div>
-
-      <div class="filters">
-        <strong>Filters:</strong> ${escapeHtml(filterText)}
-      </div>
-
-      <h2>Summary by Role</h2>
-      <table class="totals-table">
-        <thead>
+      const totalsRows = [
+        { key: "rider", label: "🚴 Rider" },
+        { key: "kitchen", label: "🍳 Kitchen" },
+        { key: "counter", label: "💰 Counter" }
+      ].map(r => {
+        const t = (totalsByRole && totalsByRole[r.key]) || { shifts: 0, orders: 0, sales: 0, collected: 0 };
+        return `
           <tr>
-            <th>Role</th>
-            <th style="text-align:right">Shifts</th>
-            <th style="text-align:right">Orders</th>
-            <th style="text-align:right">Sales</th>
-            <th style="text-align:right">Collected</th>
+            <td>${r.label}</td>
+            <td style="text-align:right">${Number(t.shifts || 0)}</td>
+            <td style="text-align:right">${Number(t.orders || 0)}</td>
+            <td style="text-align:right">Rs ${Number(t.sales || 0).toLocaleString()}</td>
+            <td style="text-align:right">Rs ${Number(t.collected || 0).toLocaleString()}</td>
           </tr>
-        </thead>
-        <tbody>
-          ${totalsRows}
-        </tbody>
-      </table>
+        `;
+      }).join("");
 
-      <h2>All Shifts (${shifts.length})</h2>
-      <table>
-        <thead>
+      const shiftRows = shifts.map(s => {
+        const emoji = roleEmoji[s.role] || "👤";
+        const date = new Date(s.started_at).toLocaleDateString();
+        const start = new Date(s.started_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        const end = s.ended_at ? new Date(s.ended_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "-";
+
+        return `
           <tr>
-            <th>Date</th>
-            <th>Staff</th>
-            <th>Start</th>
-            <th>End</th>
-            <th>Status</th>
-            <th style="text-align:right">Orders</th>
-            <th style="text-align:right">Sales</th>
-            <th style="text-align:right">Collected</th>
+            <td>${date}</td>
+            <td>${emoji} ${escapeHtml(s.full_name || s.username || "Unknown")}<br><span style="font-size:10px;color:#666;">@${escapeHtml(s.username || "")}</span></td>
+            <td>${start}</td>
+            <td>${end}</td>
+            <td>${escapeHtml(s.status || "")}</td>
+            <td style="text-align:right">${Number(s.orders_count || 0)}</td>
+            <td style="text-align:right">Rs ${Number(s.total_sales || 0).toLocaleString()}</td>
+            <td style="text-align:right">Rs ${Number(s.total_collected || 0).toLocaleString()}</td>
           </tr>
-        </thead>
-        <tbody>
-          ${shiftRows || '<tr><td colspan="8" style="text-align:center;color:#666;">No shifts found</td></tr>'}
-        </tbody>
-      </table>
-    </body>
-    </html>
-  `;
+        `;
+      }).join("");
 
-  const printWindow = window.open("", "_blank", "width=900,height=700");
-  if (!printWindow) {
-    alert("Please allow pop-ups to print.");
-    return;
-  }
-  printWindow.document.write(html);
-  printWindow.document.close();
-}
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Staff Performance — ${escapeHtml(restaurantName)}</title>
+          <style>
+            * { box-sizing: border-box; }
+            body {
+              font-family: Arial, Helvetica, sans-serif;
+              padding: 20px;
+              color: #111;
+              background: #fff;
+              font-size: 12px;
+            }
+            h1 { margin: 0 0 4px; font-size: 22px; }
+            h2 { margin: 20px 0 10px; font-size: 15px; border-bottom: 2px solid #333; padding-bottom: 6px; }
+            .sub { color: #666; font-size: 12px; margin-bottom: 6px; }
+            .filters { background: #f5f5f5; padding: 10px 12px; border-radius: 6px; font-size: 11px; color: #333; margin-bottom: 18px; }
+            table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 16px; }
+            th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; vertical-align: top; }
+            th { background: #f0f0f0; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; }
+            .totals-table td { font-size: 12px; }
+            @media print {
+              body { padding: 10px; }
+              h1 { font-size: 18px; }
+              h2 { font-size: 13px; }
+              table { font-size: 10px; }
+              th, td { padding: 4px 6px; }
+            }
+          </style>
+        </head>
+        <body onload="window.print();">
+          <h1>📈 Staff Performance</h1>
+          <div class="sub">${escapeHtml(restaurantName)} — printed ${new Date().toLocaleString()}</div>
 
-function exportStaffPerformanceCSV() {
-  if (!lastStaffPerformanceData.shifts.length) {
-    alert("Koi data nahi hai export karne ke liye. Pehle filter apply karo.");
-    return;
-  }
+          <div class="filters">
+            <strong>Filters:</strong> ${escapeHtml(filterText)}
+          </div>
 
-  const { shifts, totalsByRole, filters } = lastStaffPerformanceData;
+          <h2>Summary by Role</h2>
+          <table class="totals-table">
+            <thead>
+              <tr>
+                <th>Role</th>
+                <th style="text-align:right">Shifts</th>
+                <th style="text-align:right">Orders</th>
+                <th style="text-align:right">Sales</th>
+                <th style="text-align:right">Collected</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${totalsRows}
+            </tbody>
+          </table>
 
-  // Header
-  const headers = [
-    "Date",
-    "Staff Name",
-    "Username",
-    "Role",
-    "Start Time",
-    "End Time",
-    "Status",
-    "Orders",
-    "Total Sales",
-    "Total Collected"
-  ];
+          <h2>All Shifts (${shifts.length})</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Staff</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Status</th>
+                <th style="text-align:right">Orders</th>
+                <th style="text-align:right">Sales</th>
+                <th style="text-align:right">Collected</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${shiftRows || '<tr><td colspan="8" style="text-align:center;color:#666;">No shifts found</td></tr>'}
+            </tbody>
+          </table>
+        </body>
+        </html>
+      `;
 
-  // Shift rows
-  const rows = shifts.map(s => {
-    const startDate = new Date(s.started_at).toLocaleDateString();
-    const startTime = new Date(s.started_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    const endTime = s.ended_at ? new Date(s.ended_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "-";
+      const printWindow = window.open("", "_blank", "width=900,height=700");
+      if (!printWindow) {
+        alert("Please allow pop-ups to print.");
+        return;
+      }
+      printWindow.document.write(html);
+      printWindow.document.close();
+    }
 
-    return [
-      startDate,
-      s.full_name || "",
-      s.username || "",
-      s.role || "",
-      startTime,
-      endTime,
-      s.status || "",
-      Number(s.orders_count || 0),
-      Number(s.total_sales || 0).toFixed(2),
-      Number(s.total_collected || 0).toFixed(2)
-    ];
-  });
+    function exportStaffPerformanceCSV() {
+      if (!lastStaffPerformanceData.shifts.length) {
+        alert("Koi data nahi hai export karne ke liye. Pehle filter apply karo.");
+        return;
+      }
 
-  // Totals section
-  rows.push([]); // blank
-  rows.push(["", "", "", "", "", "", "", "", "", ""]);
-  rows.push(["SUMMARY BY ROLE", "", "", "", "", "", "", "", "", ""]);
+      const { shifts, totalsByRole, filters } = lastStaffPerformanceData;
 
-  const roles = [
-    { key: "rider", label: "Rider" },
-    { key: "kitchen", label: "Kitchen" },
-    { key: "counter", label: "Counter" }
-  ];
+      const headers = [
+        "Date",
+        "Staff Name",
+        "Username",
+        "Role",
+        "Start Time",
+        "End Time",
+        "Status",
+        "Orders",
+        "Total Sales",
+        "Total Collected"
+      ];
 
-  roles.forEach(r => {
-    const t = (totalsByRole && totalsByRole[r.key]) || { shifts: 0, orders: 0, sales: 0, collected: 0 };
-    rows.push([
-      r.label,
-      `${Number(t.shifts || 0)} shifts`,
-      "",
-      "",
-      "",
-      "",
-      "",
-      Number(t.orders || 0),
-      Number(t.sales || 0).toFixed(2),
-      Number(t.collected || 0).toFixed(2)
-    ]);
-  });
+      const rows = shifts.map(s => {
+        const startDate = new Date(s.started_at).toLocaleDateString();
+        const startTime = new Date(s.started_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        const endTime = s.ended_at ? new Date(s.ended_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "-";
 
-  // Build CSV
-  const csvRows = [headers, ...rows];
-  const csv = csvRows.map(row =>
-    row.map(value => `"${String(value ?? "").replace(/"/g, '""')}"`).join(",")
-  ).join("\n");
+        return [
+          startDate,
+          s.full_name || "",
+          s.username || "",
+          s.role || "",
+          startTime,
+          endTime,
+          s.status || "",
+          Number(s.orders_count || 0),
+          Number(s.total_sales || 0).toFixed(2),
+          Number(s.total_collected || 0).toFixed(2)
+        ];
+      });
 
-  // Download
-  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
+      rows.push([]);
+      rows.push(["", "", "", "", "", "", "", "", "", ""]);
+      rows.push(["SUMMARY BY ROLE", "", "", "", "", "", "", "", "", ""]);
 
-  // Filename
-  let fname = "staff-performance";
-  if (filters.date) fname += `-${filters.date}`;
-  else if (filters.from && filters.to) fname += `-${filters.from}_to_${filters.to}`;
-  else fname += `-${new Date().toISOString().slice(0, 10)}`;
-  fname += ".csv";
+      const roles = [
+        { key: "rider", label: "Rider" },
+        { key: "kitchen", label: "Kitchen" },
+        { key: "counter", label: "Counter" }
+      ];
 
-  a.href = url;
-  a.download = fname;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
+      roles.forEach(r => {
+        const t = (totalsByRole && totalsByRole[r.key]) || { shifts: 0, orders: 0, sales: 0, collected: 0 };
+        rows.push([
+          r.label,
+          `${Number(t.shifts || 0)} shifts`,
+          "",
+          "",
+          "",
+          "",
+          "",
+          Number(t.orders || 0),
+          Number(t.sales || 0).toFixed(2),
+          Number(t.collected || 0).toFixed(2)
+        ]);
+      });
+
+      const csvRows = [headers, ...rows];
+      const csv = csvRows.map(row =>
+        row.map(value => `"${String(value ?? "").replace(/"/g, '""')}"`).join(",")
+      ).join("\n");
+
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+
+      let fname = "staff-performance";
+      if (filters.date) fname += `-${filters.date}`;
+      else if (filters.from && filters.to) fname += `-${filters.from}_to_${filters.to}`;
+      else fname += `-${new Date().toISOString().slice(0, 10)}`;
+      fname += ".csv";
+
+      a.href = url;
+      a.download = fname;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
 
     /* BRANDING + SUBSCRIPTION */
     function normalizeLogoUrl(value) { if (!value) return ""; let url = String(value).trim(); if (/^https?:\/\//i.test(url) || url.startsWith("//") || url.startsWith("/")) return url; return "/" + url; }
@@ -2069,77 +2339,76 @@ function exportStaffPerformanceCSV() {
       daysElement.innerText = remainingDays + " day" + (remainingDays === 1 ? "" : "s") + " remaining";
     }
 
-
     function getCurrentLocation() {
-  const msg = document.getElementById('location-msg');
-  msg.style.color = 'var(--muted)';
-  msg.innerText = 'Getting location...';
-  
-  if (!navigator.geolocation) {
-    msg.style.color = 'var(--danger)';
-    msg.innerText = 'GPS is not supported on this device.';
-    return;
-  }
-  
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      document.getElementById('rest-lat').value = position.coords.latitude.toFixed(8);
-      document.getElementById('rest-lng').value = position.coords.longitude.toFixed(8);
-      msg.style.color = 'var(--success)';
-      msg.innerText = `✓ Location captured (Accuracy: ${Math.round(position.coords.accuracy)}m)`;
-    },
-    (error) => {
-      msg.style.color = 'var(--danger)';
-      msg.innerText = 'Unable to get location. Please allow GPS permission.';
-    },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-  );
-}
-
-async function saveLocation() {
-  const lat = document.getElementById('rest-lat').value;
-  const lng = document.getElementById('rest-lng').value;
-  const radius = document.getElementById('rest-radius').value;
-  const msg = document.getElementById('location-msg');
-  
-  if (!lat || !lng) {
-    msg.style.color = 'var(--danger)';
-    msg.innerText = 'Please capture location first.';
-    return;
-  }
-  
-  try {
-    const res = await fetch(`/api/restaurants/${restaurantId}/location`, {
-      method: 'PUT',
-      headers: authHeaders(),
-      body: JSON.stringify({
-        latitude: Number(lat),
-        longitude: Number(lng),
-        gps_radius_meters: Number(radius)
-      })
-    });
-    
-    const data = await res.json();
-    msg.style.color = data.success ? 'var(--success)' : 'var(--danger)';
-    msg.innerText = data.message || (data.success ? '✓ Location saved!' : 'Failed');
-  } catch (err) {
-    msg.style.color = 'var(--danger)';
-    msg.innerText = 'Server error';
-  }
-}
-
-// Load existing location on page load
-async function loadLocation() {
-  try {
-    const res = await fetch('/api/restaurants/me', { headers: authHeaders() });
-    const data = await res.json();
-    if (data.success && data.data) {
-      document.getElementById('rest-lat').value = data.data.latitude || '';
-      document.getElementById('rest-lng').value = data.data.longitude || '';
-      document.getElementById('rest-radius').value = data.data.gps_radius_meters || 100;
+      const msg = document.getElementById('location-msg');
+      msg.style.color = 'var(--muted)';
+      msg.innerText = 'Getting location...';
+      
+      if (!navigator.geolocation) {
+        msg.style.color = 'var(--danger)';
+        msg.innerText = 'GPS is not supported on this device.';
+        return;
+      }
+      
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          document.getElementById('rest-lat').value = position.coords.latitude.toFixed(8);
+          document.getElementById('rest-lng').value = position.coords.longitude.toFixed(8);
+          msg.style.color = 'var(--success)';
+          msg.innerText = `✓ Location captured (Accuracy: ${Math.round(position.coords.accuracy)}m)`;
+        },
+        (error) => {
+          msg.style.color = 'var(--danger)';
+          msg.innerText = 'Unable to get location. Please allow GPS permission.';
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
     }
-  } catch (err) {}
-}
+
+    async function saveLocation() {
+      const lat = document.getElementById('rest-lat').value;
+      const lng = document.getElementById('rest-lng').value;
+      const radius = document.getElementById('rest-radius').value;
+      const msg = document.getElementById('location-msg');
+      
+      if (!lat || !lng) {
+        msg.style.color = 'var(--danger)';
+        msg.innerText = 'Please capture location first.';
+        return;
+      }
+      
+      try {
+        const res = await fetch(`/api/restaurants/${restaurantId}/location`, {
+          method: 'PUT',
+          headers: authHeaders(),
+          body: JSON.stringify({
+            latitude: Number(lat),
+            longitude: Number(lng),
+            gps_radius_meters: Number(radius)
+          })
+        });
+        
+        const data = await res.json();
+        msg.style.color = data.success ? 'var(--success)' : 'var(--danger)';
+        msg.innerText = data.message || (data.success ? '✓ Location saved!' : 'Failed');
+      } catch (err) {
+        msg.style.color = 'var(--danger)';
+        msg.innerText = 'Server error';
+      }
+    }
+
+    // Load existing location on page load
+    async function loadLocation() {
+      try {
+        const res = await fetch('/api/restaurants/me', { headers: authHeaders() });
+        const data = await res.json();
+        if (data.success && data.data) {
+          document.getElementById('rest-lat').value = data.data.latitude || '';
+          document.getElementById('rest-lng').value = data.data.longitude || '';
+          document.getElementById('rest-radius').value = data.data.gps_radius_meters || 100;
+        }
+      } catch (err) {}
+    }
 
     /* LOGOUT */
     function logout() {
