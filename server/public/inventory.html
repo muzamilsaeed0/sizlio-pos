@@ -912,6 +912,12 @@
         <button
           class="theme-toggle-btn"
           type="button"
+          onclick="window.location.href='suppliers.html'">
+          🏢 Suppliers
+        </button>
+        <button
+          class="theme-toggle-btn"
+          type="button"
           id="theme-toggle-btn"
           onclick="toggleTheme()">
           🌙 Dark Mode
@@ -1113,12 +1119,12 @@
 </div>
 
             <div class="field">
-              <label for="supplier">Supplier</label>
-              <input
-                id="supplier"
-                type="text"
-                autocomplete="off">
-            </div>
+  <label for="supplier">Supplier</label>
+  <select id="supplier" style="width:100%; padding:11px 12px; border-radius:10px; border:1px solid var(--border); background:var(--page-bg); color:var(--text);">
+    <option value="">— No supplier —</option>
+    <option value="__new__">➕ Add new supplier...</option>
+  </select>
+</div>
 
           </div>
 
@@ -1188,6 +1194,13 @@
               gap:8px;
               flex-wrap:wrap;
             ">
+
+            <button
+              id="inventory-supplier-btn"
+              type="button"
+              class="btn btn-success">
+              📊 Supplier Summary
+            </button>
 
             <button
               id="inventory-print-btn"
@@ -1467,7 +1480,78 @@
   </div>
 
 
+  <!-- =================================================
+       SUPPLIER SUMMARY MODAL
+  ================================================== -->
+
+  <div id="supplier-modal" class="modal">
+    <div class="modal-content" style="width:min(900px, 100%);">
+
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">📊 Supplier-wise Item Summary</div>
+          <div style="color:#6b7280; margin-top:4px; font-size:13px;">
+            Har supplier ke items, stock value, aur totals.
+          </div>
+        </div>
+        <button class="close-btn" type="button" onclick="closeSupplierModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
+          <button
+            type="button"
+            class="btn btn-primary"
+            onclick="printAllSuppliers()">
+            🖨️ Print All
+          </button>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            onclick="exportSuppliersCSV()">
+            📥 Export All CSV
+          </button>
+        </div>
+
+        <div id="supplier-summary-list"></div>
+
+      </div>
+
+    </div>
+  </div>
+
+
   <script src="inventory.js"></script>
+
+  <!-- ================= QUICK ADD SUPPLIER MODAL ================= -->
+<div class="modal" id="quick-supplier-modal">
+  <div class="modal-content" style="max-width:480px;">
+    <div class="modal-header">
+      <div class="modal-title">➕ Quick Add Supplier</div>
+      <button class="close-btn" type="button" onclick="closeQuickSupplierModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field" style="margin-bottom:10px;">
+        <label>Supplier Name *</label>
+        <input id="quick-supplier-name" placeholder="e.g. Ali Traders">
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <label>Phone</label>
+        <input id="quick-supplier-phone" placeholder="03xxxxxxxxx">
+      </div>
+      <div class="field" style="margin-bottom:14px;">
+        <label>Email</label>
+        <input id="quick-supplier-email" type="email" placeholder="email@example.com">
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="button" onclick="saveQuickSupplier()" id="quick-supplier-save-btn">Save Supplier</button>
+        <button class="btn btn-secondary" type="button" onclick="closeQuickSupplierModal()">Cancel</button>
+      </div>
+      <p id="quick-supplier-msg" style="text-align:center; font-size:12px; margin-top:8px;"></p>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

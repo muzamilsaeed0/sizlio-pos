@@ -69,7 +69,8 @@ exports.addItem = async (req, res) => {
       stock_quantity = 0,
       minimum_stock = 0,
       purchase_price = 0,
-      supplier
+      supplier,
+      supplier_id
     } = req.body;
 
     // --------------------------------------------------
@@ -202,6 +203,10 @@ exports.addItem = async (req, res) => {
             ? String(supplier).trim()
             : null,
 
+        supplier_id:
+          supplier_id ? Number(supplier_id)
+            : null,
+
         restaurant_id:
           restaurantId
       });
@@ -282,7 +287,8 @@ console.log("RESTAURANT ID:", restaurantId);
       package_unit,
       minimum_stock,
       purchase_price,
-      supplier
+      supplier,
+      supplier_id
     } = req.body;
 
     // --------------------------------------------------
@@ -426,6 +432,13 @@ console.log("REQ BODY:", req.body);
       updateData.supplier =
         supplier
           ? String(supplier).trim()
+          : null;
+    }
+
+    if (supplier_id !== undefined) {
+      updateData.supplier_id =
+        supplier_id ? Number(supplier_id)
+
           : null;
     }
 
@@ -1058,6 +1071,31 @@ exports.getDashboard = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server Error'
+    });
+  }
+};
+
+// ======================================================
+// LIST INVENTORY FOR PURCHASE (dropdown)
+// GET /api/inventory/list-for-purchase
+// ======================================================
+
+exports.listForPurchase = async (req, res) => {
+  try {
+    const restaurantId = req.user.restaurant_id;
+
+    const items = await inventoryModel.listInventoryForPurchase(restaurantId);
+
+    res.json({
+      success: true,
+      data: items
+    });
+
+  } catch (error) {
+    console.error("listForPurchase:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error"
     });
   }
 };

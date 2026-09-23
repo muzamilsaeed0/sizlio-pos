@@ -46,6 +46,12 @@ router.get(
   inventoryController.getDashboard
 );
 
+router.get(
+  '/list-for-purchase',
+   authMiddleware,
+    inventoryController.listForPurchase
+  );
+
 router.put(
   "/:id",
   authMiddleware,

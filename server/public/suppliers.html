@@ -1,0 +1,2023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supplier Ledger</title>
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --bg: #f4f7fb;
+    --card: #fff;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --primary: #2563eb;
+    --success: #16a34a;
+    --danger: #dc2626;
+    --warning: #d97706;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+  }
+  body.dark-theme {
+    --bg: #14181c;
+    --card: #1f262c;
+    --text: #f6f3ec;
+    --muted: #9ca3af;
+    --border: #2a3138;
+    --gray-50: #262d34;
+    --gray-100: #2a3138;
+  }
+  body {
+    margin: 0;
+    font-family: Inter, system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+  }
+  button, input, select, textarea { font: inherit; cursor: pointer; }
+  input, select, textarea { cursor: text; }
+  .page { max-width: 1400px; margin: auto; padding: 20px; }
+  .header {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px; flex-wrap: wrap; margin-bottom: 20px;
+  }
+  h1 { margin: 0; font-size: 26px; }
+  .btn {
+    border: 0; border-radius: 9px; padding: 10px 15px;
+    font-weight: 700; font-size: 13px;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-secondary {
+    background: var(--gray-100); color: var(--text);
+  }
+  .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px; margin-bottom: 16px;
+  }
+  .grid-stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px; margin-bottom: 16px;
+  }
+  .stat {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px;
+  }
+  .stat-label { color: var(--muted); font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+  .stat-value { font-size: 20px; font-weight: 800; }
+
+  .controls {
+    display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;
+  }
+  .controls input, .controls select {
+    padding: 9px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg); color: var(--text);
+    min-width: 140px;
+  }
+  .controls input[type="search"] { flex: 1; min-width: 220px; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+  th {
+    font-size: 11px; color: var(--muted); text-transform: uppercase;
+    font-weight: 700; letter-spacing: 0.3px; background: var(--gray-50);
+  }
+  tr.row-click { cursor: pointer; }
+  tr.row-click:hover td { background: var(--gray-50); }
+
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700;
+  }
+  .badge-ok { background: #dcfce7; color: #166534; }
+  .badge-warn { background: #fef3c7; color: #92400e; }
+  .badge-danger { background: #fee2e2; color: #991b1b; }
+  .badge-info { background: #dbeafe; color: #1e40af; }
+
+  .modal {
+    display: none; position: fixed; inset: 0; z-index: 3000;
+    background: rgba(15,23,42,0.6); padding: 20px; overflow-y: auto;
+  }
+  .modal.show { display: block; }
+  .modal-box {
+    background: var(--card); border-radius: 16px;
+    max-width: 720px; width: 100%; margin: 4vh auto;
+    padding: 20px; position: relative;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+  }
+  .modal-box.wide { max-width: 900px; }
+  .modal-title { font-size: 18px; font-weight: 800; margin: 0 0 14px; }
+  .close-x {
+    position: absolute; top: 12px; right: 12px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text); font-size: 18px; cursor: pointer;
+  }
+  .close-x:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+  .form-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 10px; margin-bottom: 14px;
+  }
+  .form-grid .full { grid-column: 1 / -1; }
+  .field label {
+    display: block; font-size: 11px; font-weight: 700;
+    color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.3px; margin-bottom: 5px;
+  }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 10px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg);
+    color: var(--text); font-size: 13px;
+  }
+
+  .modal-actions {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .empty { text-align: center; padding: 30px; color: var(--muted); }
+
+  .ledger-summary {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px; margin-bottom: 14px;
+  }
+  .ledger-summary .cell {
+    padding: 10px 12px; background: var(--gray-50);
+    border-radius: 8px;
+  }
+  .ledger-summary .cell-label {
+    font-size: 10px; color: var(--muted); text-transform: uppercase;
+    font-weight: 700;
+  }
+  .ledger-summary .cell-value {
+    font-size: 16px; font-weight: 800; margin-top: 3px;
+  }
+
+  .tabs {
+    display: flex; gap: 4px; border-bottom: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+  .tab-btn {
+    background: none; border: 0; padding: 10px 14px;
+    border-radius: 8px 8px 0 0; font-weight: 700;
+    color: var(--muted); font-size: 13px;
+  }
+  .tab-btn.active {
+    color: var(--primary);
+    border-bottom: 2px solid var(--primary);
+  }
+
+  .ledger-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .ledger-table td.debit { color: var(--danger); font-weight: 700; }
+  .ledger-table td.credit { color: var(--success); font-weight: 700; }
+  .ledger-table td.balance { font-weight: 800; }
+
+  @media (max-width: 640px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .page { padding: 12px; }
+    h1 { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="header">
+    <div>
+      <h1>🏢 Supplier Ledger</h1>
+      <div style="color:var(--muted);font-size:13px;margin-top:4px;">
+        Purchases · Payments · Balances
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-secondary" onclick="window.location.href='inventory.html'">📦 Inventory</button>
+      <button class="btn btn-secondary" onclick="toggleTheme()">🌙 Theme</button>
+      <button class="btn btn-primary" onclick="openSupplierModal()">➕ Add Supplier</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid-stats" id="stats-grid">
+    <div class="stat">
+      <div class="stat-label">Total Suppliers</div>
+      <div class="stat-value" id="stat-total-suppliers">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Total Payable</div>
+      <div class="stat-value" id="stat-total-payable" style="color:var(--danger)">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Total Advance</div>
+      <div class="stat-value" id="stat-total-advance" style="color:var(--success)">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Overdue (90+ days)</div>
+      <div class="stat-value" id="stat-overdue" style="color:var(--warning)">—</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="suppliers" onclick="switchTab('suppliers')">All Suppliers</button>
+    <button class="tab-btn" data-tab="aging" onclick="switchTab('aging')">Aging Report</button>
+  </div>
+
+  <!-- Suppliers Tab -->
+  <div id="tab-suppliers">
+    <div class="card">
+      <div class="controls">
+        <input type="search" id="supplier-search" placeholder="Search by name or phone...">
+        <button class="btn btn-secondary" onclick="loadSuppliers()">🔄 Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Supplier</th>
+              <th>Contact</th>
+              <th style="text-align:right;">Purchases</th>
+              <th style="text-align:right;">Paid</th>
+              <th style="text-align:right;">Balance</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="suppliers-tbody">
+            <tr><td colspan="6" class="empty">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Aging Tab -->
+  <div id="tab-aging" style="display:none;">
+    <div class="card">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;">
+        <button class="btn btn-primary" onclick="printAgingReport()">🖨️ Print</button>
+        <button class="btn btn-secondary" onclick="exportAgingCSV()">📥 CSV</button>
+        <button class="btn btn-success" onclick="sendBulkWhatsAppReminders()">💬 Bulk WhatsApp Reminder</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px;"><input type="checkbox" id="aging-select-all" onchange="toggleAgingSelectAll(this)"></th>
+              <th>Supplier</th>
+              <th>Contact</th>
+              <th style="text-align:right;">Balance</th>
+              <th style="text-align:right;">Days Old</th>
+              <th>Bucket</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="aging-tbody">
+            <tr><td colspan="7" class="empty">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================= SUPPLIER FORM MODAL ================= -->
+<div class="modal" id="supplier-modal">
+  <div class="modal-box">
+    <button class="close-x" onclick="closeModal('supplier-modal')">×</button>
+    <h3 class="modal-title" id="supplier-modal-title">Add Supplier</h3>
+
+    <input type="hidden" id="supplier-id">
+
+    <div class="form-grid">
+      <div class="field full">
+        <label>Supplier Name *</label>
+        <input id="supplier-name" placeholder="e.g. Ali Traders">
+      </div>
+      <div class="field">
+        <label>Phone</label>
+        <input id="supplier-phone" placeholder="03xxxxxxxxx">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input id="supplier-email" type="email" placeholder="email@example.com">
+      </div>
+      <div class="field full">
+        <label>Address</label>
+        <input id="supplier-address" placeholder="Shop / street address">
+      </div>
+      <div class="field">
+        <label>Opening Balance (Rs)</label>
+        <input id="supplier-opening" type="number" step="0.01" value="0" placeholder="0">
+        <small style="color:var(--muted);font-size:11px;">Purana udhaar jo aap ne dena hai</small>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="saveSupplier()" id="supplier-save-btn">Save</button>
+      <button class="btn btn-secondary" onclick="closeModal('supplier-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= LEDGER MODAL ================= -->
+<div class="modal" id="ledger-modal">
+  <div class="modal-box wide">
+    <button class="close-x" onclick="closeModal('ledger-modal')">×</button>
+    <h3 class="modal-title" id="ledger-title">Supplier Ledger</h3>
+
+    <!-- Ledger summary -->
+    <div class="ledger-summary" id="ledger-summary"></div>
+
+    <!-- Ledger tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-ledger-tab="ledger" onclick="switchLedgerTab('ledger')">📒 Ledger</button>
+      <button class="tab-btn" data-ledger-tab="purchases" onclick="switchLedgerTab('purchases')">🛒 Purchases</button>
+      <button class="tab-btn" data-ledger-tab="payments" onclick="switchLedgerTab('payments')">💰 Payments</button>
+    </div>
+
+    <!-- Ledger tab -->
+    <div id="ledger-panel-ledger">
+      <div class="table-wrap">
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th style="text-align:right;">Debit</th>
+              <th style="text-align:right;">Credit</th>
+              <th style="text-align:right;">Balance</th>
+            </tr>
+          </thead>
+          <tbody id="ledger-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Purchases tab -->
+    <div id="ledger-panel-purchases" style="display:none;">
+      <div style="margin-bottom:10px;">
+        <button class="btn btn-success" onclick="openPurchaseModal()">➕ New Purchase</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Invoice #</th>
+              <th style="text-align:right;">Total</th>
+              <th style="text-align:right;">Paid</th>
+              <th style="text-align:right;">Pending</th>
+              <th>Note</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="purchases-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Payments tab -->
+    <div id="ledger-panel-payments" style="display:none;">
+      <div style="margin-bottom:10px;">
+        <button class="btn btn-primary" onclick="openPaymentModal()">➕ New Payment</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Method</th>
+              <th style="text-align:right;">Amount</th>
+              <th>Reference</th>
+              <th>Note</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="payments-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+  <button class="btn btn-primary" onclick="printLedger()">🖨️ Print Statement</button>
+  <button class="btn btn-success" onclick="shareWhatsApp()">💬 WhatsApp</button>
+  <button class="btn" onclick="shareStatementImage()" style="background:#8b5cf6;color:#fff;">📸 Share as Image</button>
+  <button class="btn btn-secondary" onclick="shareEmail()">✉️ Email</button>
+  <button class="btn btn-secondary" onclick="closeModal('ledger-modal')">Close</button>
+</div>
+  </div>
+</div>
+
+<!-- ================= PURCHASE MODAL ================= -->
+<div class="modal" id="purchase-modal">
+  <div class="modal-box">
+    <button class="close-x" onclick="closeModal('purchase-modal')">×</button>
+    <h3 class="modal-title">New Purchase</h3>
+
+    <div class="form-grid">
+      <div class="field">
+        <label>Date</label>
+        <input id="purchase-date" type="date">
+      </div>
+      <div class="field">
+        <label>Invoice #</label>
+        <input id="purchase-invoice" placeholder="INV-001">
+      </div>
+      <div class="field">
+        <label>Total Amount (Rs) *</label>
+        <input id="purchase-total" type="number" step="0.01" placeholder="0">
+      </div>
+      <div class="field">
+        <label>Paid Now (Rs)</label>
+        <input id="purchase-paid" type="number" step="0.01" value="0" placeholder="0">
+      </div>
+      <div class="field full">
+        <label>Note</label>
+        <textarea id="purchase-note" rows="2" placeholder="Optional"></textarea>
+      </div>
+    </div>
+
+    <!-- ✅ Item-wise detail for auto stock-in -->
+    <div style="background:var(--gray-50); padding:12px; border-radius:10px; margin-bottom:14px; border:1px dashed var(--border);">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+        <div>
+          <div style="font-weight:700; font-size:13px;">📦 Inventory Items (Optional)</div>
+          <div style="font-size:11px; color:var(--muted); margin-top:2px;">
+            Items add karo → inventory auto-increment ho jayega
+          </div>
+        </div>
+        <button type="button" class="btn btn-secondary" style="padding:6px 12px; font-size:12px;" onclick="addPurchaseItemRow()">➕ Add Item</button>
+      </div>
+      <div id="purchase-items-list"></div>
+
+      <!-- ✅ Summary at bottom -->
+      <div id="purchase-summary" style="margin-top:14px; padding:14px; background:var(--gray-50); border-radius:10px; border:1px solid var(--border); display:none;">
+        <div style="display:flex; justify-content:space-between; padding:5px 0; font-size:13px;">
+          <span style="color:var(--muted);">Items Subtotal</span>
+          <strong id="purchase-summary-subtotal">Rs 0.00</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:5px 0; font-size:13px;">
+          <span style="color:var(--muted);">Total Amount</span>
+          <strong id="purchase-summary-total" style="color:var(--danger);">Rs 0.00</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:5px 0; font-size:13px;">
+          <span style="color:var(--muted);">Paid</span>
+          <strong id="purchase-summary-paid" style="color:var(--success);">Rs 0.00</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:8px 0 0; font-size:14px; border-top:1px dashed var(--border); margin-top:6px;">
+          <span>Pending</span>
+          <strong id="purchase-summary-pending" style="color:var(--danger);">Rs 0.00</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-success" onclick="savePurchase()" id="purchase-save-btn">Save Purchase</button>
+      <button class="btn btn-secondary" onclick="closeModal('purchase-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= PAYMENT MODAL ================= -->
+<div class="modal" id="payment-modal">
+  <div class="modal-box">
+    <button class="close-x" onclick="closeModal('payment-modal')">×</button>
+    <h3 class="modal-title">New Payment</h3>
+
+    <div class="form-grid">
+      <div class="field">
+        <label>Date</label>
+        <input id="payment-date" type="date">
+      </div>
+      <div class="field">
+        <label>Method</label>
+        <select id="payment-method">
+          <option>Cash</option>
+          <option>Bank Transfer</option>
+          <option>Cheque</option>
+          <option>Online</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Amount (Rs) *</label>
+        <input id="payment-amount" type="number" step="0.01" placeholder="0">
+      </div>
+      <div class="field">
+        <label>Reference #</label>
+        <input id="payment-reference" placeholder="Cheque/Transaction #">
+      </div>
+      <div class="field full">
+        <label>Note</label>
+        <textarea id="payment-note" rows="2" placeholder="Optional"></textarea>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="savePayment()" id="payment-save-btn">Save Payment</button>
+      <button class="btn btn-secondary" onclick="closeModal('payment-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+<!-- html2canvas for statement image generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js">
+
+</script>
+
+<script>
+"use strict";
+
+/* =====================================================
+   STATE
+===================================================== */
+
+const token = localStorage.getItem("token");
+const API = "/api/suppliers";
+
+let suppliers = [];
+let agingData = [];
+let currentSupplier = null;
+let currentLedger = null;
+
+const API_BASE_HEADERS = () => ({
+  "Content-Type": "application/json",
+  "Authorization": "Bearer " + token
+});
+
+const esc = v => String(v ?? "")
+  .replaceAll("&", "&amp;")
+  .replaceAll("<", "&lt;")
+  .replaceAll(">", "&gt;")
+  .replaceAll('"', "&quot;")
+  .replaceAll("'", "&#039;");
+
+const money = v => "Rs " + Number(v || 0).toLocaleString("en-PK", {
+  minimumFractionDigits: 2, maximumFractionDigits: 2
+});
+const escapeHtml = esc;   
+
+const formatMoney = v => Number(v || 0).toLocaleString("en-PK", {
+  minimumFractionDigits: 2, maximumFractionDigits: 2
+});
+
+/* =====================================================
+   API HELPER
+===================================================== */
+
+async function apiFetch(url, options = {}) {
+  const res = await fetch(url, {
+    ...options,
+    headers: { ...API_BASE_HEADERS(), ...(options.headers || {}) }
+  });
+
+  if (res.status === 401) {
+    alert("Session expired. Please login again.");
+    window.location.href = "manager.html";
+    throw new Error("Unauthorized");
+  }
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || "Request failed");
+  return data;
+}
+
+/* =====================================================
+   THEME
+===================================================== */
+
+function toggleTheme() {
+  const dark = !document.body.classList.contains("dark-theme");
+  document.body.classList.toggle("dark-theme", dark);
+  localStorage.setItem("supplier_theme", dark ? "dark" : "light");
+}
+
+/* =====================================================
+   STATEMENT AS IMAGE
+===================================================== */
+
+let generatedImageBlob = null;
+let generatedImageDataUrl = null;
+
+/**
+ * Build clean statement HTML for image rendering.
+ */
+function buildStatementImageHtml(ledger) {
+  const { supplier, opening_balance, entries, total_debit, total_credit, closing_balance } = ledger;
+
+  const restaurantName = (typeof getRestaurantName === 'function')
+    ? getRestaurantName()
+    : "Restaurant";
+
+  // Entries rows
+  let rowsHtml = "";
+
+  rowsHtml += `
+    <tr style="background:#f9fafb;">
+      <td style="padding:8px;border-bottom:1px solid #e5e7eb;">—</td>
+      <td style="padding:8px;border-bottom:1px solid #e5e7eb;"><strong>Opening Balance</strong></td>
+      <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;">—</td>
+      <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;">—</td>
+      <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:800;">Rs ${formatMoney(opening_balance)}</td>
+    </tr>
+  `;
+
+  if (entries.length) {
+    rowsHtml += entries.map(e => {
+      const dateStr = new Date(e.txn_date).toLocaleDateString('en-GB', {
+        day: '2-digit', month: 'short', year: 'numeric'
+      });
+      const debit = Number(e.debit || 0);
+      const credit = Number(e.credit || 0);
+
+      return `
+        <tr>
+          <td style="padding:8px;border-bottom:1px solid #e5e7eb;font-size:12px;">${dateStr}</td>
+          <td style="padding:8px;border-bottom:1px solid #e5e7eb;font-size:12px;">
+            ${escapeHtml(e.description || '')}
+            ${e.note ? `<br><span style="color:#6b7280;font-size:11px;">${escapeHtml(e.note)}</span>` : ''}
+          </td>
+          <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;color:#dc2626;font-weight:700;font-size:12px;">
+            ${debit > 0 ? 'Rs ' + formatMoney(debit) : '—'}
+          </td>
+          <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;color:#16a34a;font-weight:700;font-size:12px;">
+            ${credit > 0 ? 'Rs ' + formatMoney(credit) : '—'}
+          </td>
+          <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:800;font-size:12px;">
+            Rs ${formatMoney(e.balance)}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } else {
+    rowsHtml += `<tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No entries</td></tr>`;
+  }
+
+  // Balance color
+  const balanceColor = closing_balance > 0 ? '#dc2626' : '#16a34a';
+  const balanceLabel = closing_balance > 0 ? 'Payable' : (closing_balance < 0 ? 'Advance' : 'Settled');
+
+  return `
+    <div style="font-family:Arial,Helvetica,sans-serif;color:#111827;background:#fff;width:800px;padding:30px;box-sizing:border-box;">
+
+      <!-- Header -->
+      <div style="text-align:center;padding-bottom:16px;border-bottom:3px solid #2563eb;margin-bottom:20px;">
+        <div style="font-size:22px;font-weight:800;color:#2563eb;margin-bottom:4px;">🏢 ${escapeHtml(restaurantName)}</div>
+        <div style="font-size:13px;color:#6b7280;">Supplier Statement</div>
+      </div>
+
+      <!-- Supplier info + closing balance -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:20px;">
+
+        <div style="flex:1;">
+          <div style="font-size:11px;color:#6b7280;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;margin-bottom:6px;">
+            Supplier
+          </div>
+          <div style="font-size:18px;font-weight:800;margin-bottom:6px;">${escapeHtml(supplier.name)}</div>
+          ${supplier.phone ? `<div style="font-size:12px;color:#4b5563;">📞 ${escapeHtml(supplier.phone)}</div>` : ''}
+          ${supplier.email ? `<div style="font-size:12px;color:#4b5563;">✉️ ${escapeHtml(supplier.email)}</div>` : ''}
+          ${supplier.address ? `<div style="font-size:12px;color:#4b5563;margin-top:2px;">📍 ${escapeHtml(supplier.address)}</div>` : ''}
+        </div>
+
+        <div style="text-align:right;background:#f9fafb;padding:14px 18px;border-radius:10px;border:1px solid #e5e7eb;min-width:200px;">
+          <div style="font-size:11px;color:#6b7280;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">
+            ${balanceLabel}
+          </div>
+          <div style="font-size:24px;font-weight:800;color:${balanceColor};margin-top:4px;">
+            Rs ${formatMoney(Math.abs(closing_balance))}
+          </div>
+          <div style="font-size:10px;color:#6b7280;margin-top:4px;">
+            ${new Date().toLocaleString('en-GB')}
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Summary row -->
+      <div style="display:flex;gap:10px;margin-bottom:20px;">
+        <div style="flex:1;padding:12px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca;">
+          <div style="font-size:10px;color:#991b1b;text-transform:uppercase;font-weight:700;">Opening</div>
+          <div style="font-size:15px;font-weight:800;color:#dc2626;margin-top:3px;">Rs ${formatMoney(opening_balance)}</div>
+        </div>
+        <div style="flex:1;padding:12px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca;">
+          <div style="font-size:10px;color:#991b1b;text-transform:uppercase;font-weight:700;">Total Purchases</div>
+          <div style="font-size:15px;font-weight:800;color:#dc2626;margin-top:3px;">Rs ${formatMoney(total_debit)}</div>
+        </div>
+        <div style="flex:1;padding:12px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;">
+          <div style="font-size:10px;color:#166534;text-transform:uppercase;font-weight:700;">Total Paid</div>
+          <div style="font-size:15px;font-weight:800;color:#16a34a;margin-top:3px;">Rs ${formatMoney(total_credit)}</div>
+        </div>
+      </div>
+
+      <!-- Ledger table -->
+      <table style="width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;">
+        <thead>
+          <tr style="background:#f3f4f6;">
+            <th style="padding:10px 8px;text-align:left;font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #d1d5db;">Date</th>
+            <th style="padding:10px 8px;text-align:left;font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #d1d5db;">Description</th>
+            <th style="padding:10px 8px;text-align:right;font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #d1d5db;">Debit</th>
+            <th style="padding:10px 8px;text-align:right;font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #d1d5db;">Credit</th>
+            <th style="padding:10px 8px;text-align:right;font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #d1d5db;">Balance</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+
+      <!-- Footer -->
+      <div style="text-align:center;font-size:10px;color:#9ca3af;padding-top:14px;border-top:1px dashed #d1d5db;">
+        Generated by Sizlio POS · ${new Date().toLocaleString('en-GB')}
+      </div>
+
+    </div>
+  `;
+}
+
+
+/**
+ * Main function — Generate statement image.
+ */
+async function shareStatementImage() {
+  if (!currentLedger) {
+    alert("Ledger not loaded");
+    return;
+  }
+
+  if (typeof html2canvas === 'undefined') {
+    alert("Image library not loaded. Please refresh page.");
+    return;
+  }
+
+  // Show loading
+  const btn = event?.target;
+  const originalText = btn?.innerText;
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = "⏳ Generating...";
+  }
+
+  try {
+    const container = document.getElementById("statement-image-area");
+    container.innerHTML = buildStatementImageHtml(currentLedger);
+
+    // Small delay to let fonts/images load
+    await new Promise(r => setTimeout(r, 200));
+
+    const canvas = await html2canvas(container, {
+      scale: 2,                    // high quality
+      backgroundColor: '#ffffff',
+      logging: false,
+      useCORS: true,
+      width: 800,
+      windowWidth: 800
+    });
+
+    generatedImageDataUrl = canvas.toDataURL('image/png');
+
+    // Convert to blob
+    generatedImageBlob = await new Promise(resolve => {
+      canvas.toBlob(blob => resolve(blob), 'image/png', 0.95);
+    });
+
+    // Show preview modal
+    showImagePreview(generatedImageDataUrl);
+
+  } catch (err) {
+    console.error('shareStatementImage:', err);
+    alert("Failed to generate image: " + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = originalText || "📸 Share as Image";
+    }
+  }
+}
+
+
+/**
+ * Show image preview modal.
+ */
+function showImagePreview(dataUrl) {
+  const container = document.getElementById("image-preview-container");
+  container.innerHTML = `
+    <img src="${dataUrl}" alt="Statement" style="width:100%;max-width:650px;display:block;margin:0 auto;border-radius:6px;">
+  `;
+  openModal("image-preview-modal");
+}
+
+
+/**
+ * Download image.
+ */
+function downloadStatementImage() {
+  if (!generatedImageDataUrl) return;
+
+  const supplierName = currentLedger?.supplier?.name || "statement";
+  const safeName = supplierName.replace(/[^a-z0-9]/gi, '_');
+  const dateStr = new Date().toISOString().slice(0, 10);
+
+  const link = document.createElement("a");
+  link.href = generatedImageDataUrl;
+  link.download = `${safeName}-statement-${dateStr}.png`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+
+/**
+ * Send image to WhatsApp.
+ * Uses Web Share API on mobile (direct image share).
+ * On desktop, downloads image and opens WhatsApp Web.
+ */
+async function sendImageToWhatsApp() {
+  if (!generatedImageBlob) {
+    alert("Generate image first");
+    return;
+  }
+
+  const supplierName = currentLedger?.supplier?.name || "Supplier";
+  const phone = currentLedger?.supplier?.phone || "";
+  const closing = currentLedger?.closing_balance || 0;
+
+  // Build message
+  const message = `📒 *Supplier Statement*\n` +
+    `_${supplierName}_\n` +
+    `📅 ${new Date().toLocaleDateString()}\n\n` +
+    `*Balance:* Rs ${Number(closing).toFixed(2)}\n\n` +
+    `_Please find the detailed statement attached._`;
+
+  // Try Web Share API (mobile) — supports files
+  if (navigator.canShare && navigator.canShare({ files: [new File([generatedImageBlob], 'statement.png', { type: 'image/png' })] })) {
+    try {
+      const file = new File([generatedImageBlob], `${supplierName}-statement.png`, { type: 'image/png' });
+
+      await navigator.share({
+        title: `Statement — ${supplierName}`,
+        text: message,
+        files: [file]
+      });
+
+      closeModal("image-preview-modal");
+      return;
+
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      console.warn('Share API failed, falling back:', err);
+    }
+  }
+
+  // Desktop fallback — download image, open WhatsApp Web
+  downloadStatementImage();
+
+  setTimeout(() => {
+    const phone2 = prompt(
+      `Image download ho gayi! ✅\n\n` +
+      `Ab WhatsApp pe bhejne ke liye:\n` +
+      `1. WhatsApp khulega\n` +
+      `2. Image attach karo (paperclip icon)\n\n` +
+      `WhatsApp number (with country code, e.g. 923001234567):\n` +
+      `(Leave blank for generic WhatsApp)`,
+      phone || ""
+    );
+
+    if (phone2 === null) return;
+
+    const cleanPhone = String(phone2).replace(/\D/g, "");
+    const encoded = encodeURIComponent(message);
+
+    const url = cleanPhone
+      ? `https://wa.me/${cleanPhone}?text=${encoded}`
+      : `https://wa.me/?text=${encoded}`;
+
+    window.open(url, "_blank");
+    closeModal("image-preview-modal");
+  }, 500);
+}
+
+
+/**
+ * Copy image to clipboard.
+ */
+async function copyImageToClipboard() {
+  if (!generatedImageBlob) {
+    alert("Generate image first");
+    return;
+  }
+
+  try {
+    if (!navigator.clipboard || !window.ClipboardItem) {
+      alert("Copy not supported on this browser. Please download instead.");
+      return;
+    }
+
+    await navigator.clipboard.write([
+      new ClipboardItem({ 'image/png': generatedImageBlob })
+    ]);
+
+    alert("✅ Image copied! Ab WhatsApp mein paste karo (Ctrl+V).");
+
+  } catch (err) {
+    console.error('copyImageToClipboard:', err);
+    alert("Copy failed. Please download instead.");
+  }
+}
+
+
+
+function initTheme() {
+  const dark = localStorage.getItem("supplier_theme") === "dark";
+  if (dark) document.body.classList.add("dark-theme");
+}
+
+/* =====================================================
+   TABS
+===================================================== */
+
+function switchTab(name) {
+  document.querySelectorAll(".tab-btn[data-tab]").forEach(b =>
+    b.classList.toggle("active", b.dataset.tab === name));
+
+  document.getElementById("tab-suppliers").style.display = name === "suppliers" ? "block" : "none";
+  document.getElementById("tab-aging").style.display = name === "aging" ? "block" : "none";
+
+  if (name === "aging") loadAging();
+}
+
+function switchLedgerTab(name) {
+  document.querySelectorAll(".tab-btn[data-ledger-tab]").forEach(b =>
+    b.classList.toggle("active", b.dataset.ledgerTab === name));
+
+  ["ledger", "purchases", "payments"].forEach(k =>
+    document.getElementById("ledger-panel-" + k).style.display = k === name ? "block" : "none");
+}
+
+/* =====================================================
+   MODALS
+===================================================== */
+
+function openModal(id) { document.getElementById(id).classList.add("show"); }
+function closeModal(id) { document.getElementById(id).classList.remove("show"); }
+
+document.querySelectorAll(".modal").forEach(m => {
+  m.addEventListener("click", e => {
+    if (e.target === m) m.classList.remove("show");
+  });
+});
+
+/* =====================================================
+   LOAD SUPPLIERS
+===================================================== */
+
+async function loadSuppliers() {
+  const q = document.getElementById("supplier-search").value.trim();
+  const url = q ? `${API}?search=${encodeURIComponent(q)}&active=true` : `${API}?active=true`;
+
+  const tbody = document.getElementById("suppliers-tbody");
+  tbody.innerHTML = `<tr><td colspan="6" class="empty">Loading...</td></tr>`;
+
+  try {
+    const data = await apiFetch(url);
+    suppliers = data.data || [];
+    renderSuppliers();
+    renderStats();
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty" style="color:var(--danger)">${esc(err.message)}</td></tr>`;
+  }
+}
+
+function renderSuppliers() {
+  const tbody = document.getElementById("suppliers-tbody");
+
+  if (!suppliers.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty">No suppliers yet. Click "Add Supplier".</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = suppliers.map(s => {
+    const balance = Number(s.balance || 0);
+    const balanceClass = balance > 0 ? "badge-danger" :
+                          balance < 0 ? "badge-info" : "badge-ok";
+    const balanceLabel = balance > 0 ? money(balance) :
+                          balance < 0 ? "Advance " + money(Math.abs(balance)) :
+                          "Settled";
+
+    return `
+      <tr class="row-click" onclick="openLedger(${s.id})">
+        <td><strong>${esc(s.name)}</strong></td>
+        <td>${esc(s.phone || "—")}<br><span style="color:var(--muted);font-size:11px;">${esc(s.email || "")}</span></td>
+        <td style="text-align:right;">${s.total_purchases || 0}</td>
+        <td style="text-align:right;">${money(s.total_paid_combined)}</td>
+        <td style="text-align:right;">
+          <span class="badge ${balanceClass}">${balanceLabel}</span>
+        </td>
+        <td onclick="event.stopPropagation()">
+          <button class="btn btn-secondary" style="padding:6px 10px;font-size:11px;" onclick="editSupplier(${s.id})">✏️</button>
+          <button class="btn btn-danger" style="padding:6px 10px;font-size:11px;" onclick="deleteSupplier(${s.id})">🗑️</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function renderStats() {
+  let totalPayable = 0, totalAdvance = 0;
+
+  suppliers.forEach(s => {
+    const b = Number(s.balance || 0);
+    if (b > 0) totalPayable += b;
+    else if (b < 0) totalAdvance += Math.abs(b);
+  });
+
+  document.getElementById("stat-total-suppliers").innerText = suppliers.length;
+  document.getElementById("stat-total-payable").innerText = money(totalPayable);
+  document.getElementById("stat-total-advance").innerText = money(totalAdvance);
+  document.getElementById("stat-overdue").innerText = "—"; // filled by aging
+}
+
+/* =====================================================
+   AGING REPORT
+===================================================== */
+
+async function loadAging() {
+  const tbody = document.getElementById("aging-tbody");
+  tbody.innerHTML = `<tr><td colspan="5" class="empty">Loading...</td></tr>`;
+
+  try {
+    const data = await apiFetch(`${API}/aging`);
+    agingData = data.data || [];
+
+    const overdue90 = agingData
+      .filter(r => r.bucket === "90+ days")
+      .reduce((s, r) => s + Number(r.balance || 0), 0);
+
+    document.getElementById("stat-overdue").innerText = money(overdue90);
+
+    if (!agingData.length) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty">No suppliers found.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = agingData.map(r => {
+      const bal = Number(r.balance || 0);
+      const canRemind = bal > 0 && r.phone;
+      let badgeClass = "badge-ok";
+      if (bal > 0) {
+        if (r.bucket === "90+ days") badgeClass = "badge-danger";
+        else if (r.bucket === "61-90 days" || r.bucket === "31-60 days") badgeClass = "badge-warn";
+        else badgeClass = "badge-info";
+      }
+
+      return `
+        <tr>
+          <td onclick="event.stopPropagation()">
+            ${bal > 0 ? `<input type="checkbox" class="aging-checkbox"
+              data-supplier-id="${r.id}"
+              data-supplier-name="${esc(r.name)}"
+              data-supplier-phone="${esc(r.phone || '')}"
+              data-supplier-balance="${bal}"
+              data-supplier-bucket="${esc(r.bucket)}">` : ''}
+          </td>
+          <td class="row-click" onclick="openLedger(${r.id})"><strong>${esc(r.name)}</strong></td>
+          <td class="row-click" onclick="openLedger(${r.id})">${esc(r.phone || "—")}</td>
+          <td class="row-click" onclick="openLedger(${r.id})" style="text-align:right;font-weight:700;">${money(bal)}</td>
+          <td class="row-click" onclick="openLedger(${r.id})" style="text-align:right;">${r.days_old || 0}</td>
+          <td class="row-click" onclick="openLedger(${r.id})"><span class="badge ${badgeClass}">${esc(r.bucket)}</span></td>
+          <td onclick="event.stopPropagation()">
+            ${canRemind ? `<button class="btn btn-success" style="padding:5px 9px;font-size:11px;" onclick="sendAgingReminder(${r.id})">💬 Remind</button>` : '<span style="color:var(--muted);font-size:11px;">—</span>'}
+          </td>
+        </tr>
+      `;
+    }).join("");
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty" style="color:var(--danger)">${esc(err.message)}</td></tr>`;
+  }
+}
+
+/* =====================================================
+   SUPPLIER CRUD
+===================================================== */
+
+function openSupplierModal() {
+  document.getElementById("supplier-modal-title").innerText = "Add Supplier";
+  document.getElementById("supplier-id").value = "";
+  ["name", "phone", "email", "address"].forEach(f =>
+    document.getElementById("supplier-" + f).value = "");
+  document.getElementById("supplier-opening").value = "0";
+  openModal("supplier-modal");
+}
+
+function editSupplier(id) {
+  const s = suppliers.find(x => Number(x.id) === Number(id));
+  if (!s) return;
+
+  document.getElementById("supplier-modal-title").innerText = "Edit Supplier";
+  document.getElementById("supplier-id").value = s.id;
+  document.getElementById("supplier-name").value = s.name || "";
+  document.getElementById("supplier-phone").value = s.phone || "";
+  document.getElementById("supplier-email").value = s.email || "";
+  document.getElementById("supplier-address").value = s.address || "";
+  document.getElementById("supplier-opening").value = s.opening_balance || 0;
+
+  openModal("supplier-modal");
+}
+
+async function saveSupplier() {
+  const id = document.getElementById("supplier-id").value;
+  const name = document.getElementById("supplier-name").value.trim();
+
+  if (!name) { alert("Supplier name is required"); return; }
+
+  const body = {
+    name,
+    phone: document.getElementById("supplier-phone").value.trim(),
+    email: document.getElementById("supplier-email").value.trim(),
+    address: document.getElementById("supplier-address").value.trim(),
+    opening_balance: Number(document.getElementById("supplier-opening").value || 0)
+  };
+
+  const btn = document.getElementById("supplier-save-btn");
+  btn.disabled = true;
+  btn.innerText = "Saving...";
+
+  try {
+    if (id) {
+      await apiFetch(`${API}/${id}`, { method: "PUT", body: JSON.stringify(body) });
+    } else {
+      await apiFetch(API, { method: "POST", body: JSON.stringify(body) });
+    }
+    closeModal("supplier-modal");
+    await loadSuppliers();
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Save";
+  }
+}
+
+async function deleteSupplier(id) {
+  if (!confirm("Delete this supplier and all their records?")) return;
+  try {
+    await apiFetch(`${API}/${id}`, { method: "DELETE" });
+    await loadSuppliers();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+/* =====================================================
+   LEDGER
+===================================================== */
+
+async function openLedger(id) {
+  currentSupplier = suppliers.find(s => Number(s.id) === Number(id)) || { id, name: "Supplier" };
+  document.getElementById("ledger-title").innerText = "📒 " + (currentSupplier.name || "Supplier");
+  switchLedgerTab("ledger");
+  openModal("ledger-modal");
+
+  await loadLedger();
+  await loadPurchases();
+  await loadPayments();
+}
+
+async function loadLedger() {
+  const tbody = document.getElementById("ledger-tbody");
+  tbody.innerHTML = `<tr><td colspan="5" class="empty">Loading...</td></tr>`;
+
+  try {
+    const data = await apiFetch(`${API}/${currentSupplier.id}/ledger`);
+    currentLedger = data.data;
+
+    const { supplier, opening_balance, entries, total_debit, total_credit, closing_balance } = currentLedger;
+
+    document.getElementById("ledger-summary").innerHTML = `
+      <div class="cell">
+        <div class="cell-label">Opening</div>
+        <div class="cell-value">${money(opening_balance)}</div>
+      </div>
+      <div class="cell">
+        <div class="cell-label">Total Purchases</div>
+        <div class="cell-value" style="color:var(--danger)">${money(total_debit)}</div>
+      </div>
+      <div class="cell">
+        <div class="cell-label">Total Paid</div>
+        <div class="cell-value" style="color:var(--success)">${money(total_credit)}</div>
+      </div>
+      <div class="cell">
+        <div class="cell-label">Closing Balance</div>
+        <div class="cell-value" style="color:${closing_balance > 0 ? 'var(--danger)' : 'var(--success)'}">
+          ${money(closing_balance)}
+        </div>
+      </div>
+    `;
+
+    if (!entries.length) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty">No entries yet.</td></tr>`;
+      return;
+    }
+
+    // Opening row
+    let rows = `
+      <tr style="background:var(--gray-50);">
+        <td colspan="4"><strong>Opening Balance</strong></td>
+        <td style="text-align:right;font-weight:800;">${money(opening_balance)}</td>
+      </tr>
+    `;
+
+    rows += entries.map(e => {
+      const desc = e.description || (e.type === "purchase" ? "Purchase" : "Payment");
+      return `
+        <tr>
+          <td>${new Date(e.txn_date).toLocaleDateString()}</td>
+          <td>${esc(desc)}${e.note ? `<br><span style="color:var(--muted);font-size:11px;">${esc(e.note)}</span>` : ""}</td>
+          <td class="num debit">${e.debit > 0 ? money(e.debit) : "—"}</td>
+          <td class="num credit">${e.credit > 0 ? money(e.credit) : "—"}</td>
+          <td class="num balance">${money(e.balance)}</td>
+        </tr>
+      `;
+    }).join("");
+
+    tbody.innerHTML = rows;
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty" style="color:var(--danger)">${esc(err.message)}</td></tr>`;
+  }
+}
+
+/* =====================================================
+   PURCHASES
+===================================================== */
+
+async function loadPurchases() {
+  const tbody = document.getElementById("purchases-tbody");
+  tbody.innerHTML = `<tr><td colspan="7" class="empty">Loading...</td></tr>`;
+
+  try {
+    const data = await apiFetch(`${API}/${currentSupplier.id}/purchases`);
+    const list = data.data || [];
+
+    if (!list.length) {
+      tbody.innerHTML = `<tr><td colspan="7" class="empty">No purchases yet.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map(p => {
+      const total = Number(p.total_amount || 0);
+      const paid = Number(p.paid_amount || 0);
+      const pending = total - paid;
+
+      return `
+        <tr>
+          <td>${new Date(p.purchase_date).toLocaleDateString()}</td>
+          <td>${esc(p.invoice_no || "—")}</td>
+          <td style="text-align:right;">${money(total)}</td>
+          <td style="text-align:right;color:var(--success);">${money(paid)}</td>
+          <td style="text-align:right;font-weight:700;color:${pending > 0 ? 'var(--danger)' : 'var(--muted)'};">${money(pending)}</td>
+          <td>${esc(p.note || "—")}</td>
+          <td>
+            <button class="btn btn-danger" style="padding:5px 9px;font-size:11px;"
+              onclick="deletePurchase(${p.id})">🗑️</button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty" style="color:var(--danger)">${esc(err.message)}</td></tr>`;
+  }
+}
+
+function openPurchaseModal() {
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById("purchase-date").value = today;
+  document.getElementById("purchase-invoice").value = "";
+  document.getElementById("purchase-total").value = "";
+  document.getElementById("purchase-paid").value = "0";
+  document.getElementById("purchase-note").value = "";
+  openModal("purchase-modal");
+}
+
+async function savePurchase() {
+  const total = Number(document.getElementById("purchase-total").value);
+  const paid = Number(document.getElementById("purchase-paid").value || 0);
+
+  if (!Number.isFinite(total) || total <= 0) { alert("Enter valid total amount"); return; }
+  if (paid > total) { alert("Paid amount cannot be more than total"); return; }
+
+  const body = {
+    purchase_date: document.getElementById("purchase-date").value,
+    invoice_no: document.getElementById("purchase-invoice").value.trim(),
+    total_amount: total,
+    paid_amount: paid,
+    note: document.getElementById("purchase-note").value.trim()
+  };
+
+  const btn = document.getElementById("purchase-save-btn");
+  btn.disabled = true;
+  btn.innerText = "Saving...";
+
+  try {
+    await apiFetch(`${API}/${currentSupplier.id}/purchases`, {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
+    closeModal("purchase-modal");
+    await loadLedger();
+    await loadPurchases();
+    await loadSuppliers();
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Save Purchase";
+  }
+}
+
+async function deletePurchase(id) {
+  if (!confirm("Delete this purchase?")) return;
+  try {
+    await apiFetch(`${API}/purchases/${id}`, { method: "DELETE" });
+    await loadLedger();
+    await loadPurchases();
+    await loadSuppliers();
+  } catch (err) { alert(err.message); }
+}
+
+/* =====================================================
+   PAYMENTS
+===================================================== */
+
+async function loadPayments() {
+  const tbody = document.getElementById("payments-tbody");
+  tbody.innerHTML = `<tr><td colspan="6" class="empty">Loading...</td></tr>`;
+
+  try {
+    const data = await apiFetch(`${API}/${currentSupplier.id}/payments`);
+    const list = data.data || [];
+
+    if (!list.length) {
+      tbody.innerHTML = `<tr><td colspan="6" class="empty">No payments yet.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map(p => `
+      <tr>
+        <td>${new Date(p.payment_date).toLocaleDateString()}</td>
+        <td>${esc(p.payment_method || "—")}</td>
+        <td style="text-align:right;color:var(--success);font-weight:700;">${money(p.amount)}</td>
+        <td>${esc(p.reference_no || "—")}</td>
+        <td>${esc(p.note || "—")}</td>
+        <td>
+          <button class="btn btn-danger" style="padding:5px 9px;font-size:11px;"
+            onclick="deletePayment(${p.id})">🗑️</button>
+        </td>
+      </tr>
+    `).join("");
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty" style="color:var(--danger)">${esc(err.message)}</td></tr>`;
+  }
+}
+
+function openPaymentModal() {
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById("payment-date").value = today;
+  document.getElementById("payment-method").value = "Cash";
+  document.getElementById("payment-amount").value = "";
+  document.getElementById("payment-reference").value = "";
+  document.getElementById("payment-note").value = "";
+  openModal("payment-modal");
+}
+
+async function savePayment() {
+  const amount = Number(document.getElementById("payment-amount").value);
+  if (!Number.isFinite(amount) || amount <= 0) { alert("Enter valid amount"); return; }
+
+  const body = {
+    payment_date: document.getElementById("payment-date").value,
+    amount,
+    payment_method: document.getElementById("payment-method").value,
+    reference_no: document.getElementById("payment-reference").value.trim(),
+    note: document.getElementById("payment-note").value.trim()
+  };
+
+  const btn = document.getElementById("payment-save-btn");
+  btn.disabled = true;
+  btn.innerText = "Saving...";
+
+  try {
+    await apiFetch(`${API}/${currentSupplier.id}/payments`, {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
+    closeModal("payment-modal");
+    await loadLedger();
+    await loadPayments();
+    await loadSuppliers();
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Save Payment";
+  }
+}
+
+async function deletePayment(id) {
+  if (!confirm("Delete this payment?")) return;
+  try {
+    await apiFetch(`${API}/payments/${id}`, { method: "DELETE" });
+    await loadLedger();
+    await loadPayments();
+    await loadSuppliers();
+  } catch (err) { alert(err.message); }
+}
+
+/* =====================================================
+   PRINT LEDGER STATEMENT
+===================================================== */
+
+function printLedger() {
+  if (!currentLedger) { alert("Ledger not loaded"); return; }
+
+  const { supplier, opening_balance, entries, total_debit, total_credit, closing_balance } = currentLedger;
+
+  const rows = entries.map(e => `
+    <tr>
+      <td>${new Date(e.txn_date).toLocaleDateString()}</td>
+      <td>${esc(e.description)}${e.note ? " — " + esc(e.note) : ""}</td>
+      <td style="text-align:right">${e.debit > 0 ? money(e.debit) : ""}</td>
+      <td style="text-align:right">${e.credit > 0 ? money(e.credit) : ""}</td>
+      <td style="text-align:right;font-weight:700">${money(e.balance)}</td>
+    </tr>
+  `).join("");
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${esc(supplier.name)} — Statement</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 24px; color: #111; }
+        h1 { margin: 0 0 4px; }
+        .meta { color: #666; font-size: 12px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { border: 1px solid #ccc; padding: 7px 8px; text-align: left; }
+        th { background: #f0f0f0; }
+        .totals { margin-top: 16px; padding: 14px; background: #f9f9f9; border-radius: 6px; }
+        .totals div { margin: 4px 0; font-size: 13px; }
+        .totals strong { display: inline-block; min-width: 130px; }
+        @media print { body { padding: 10px; } }
+      </style>
+    </head>
+    <body onload="window.print();">
+      <h1>🏢 ${esc(supplier.name)}</h1>
+      <div class="meta">
+        Supplier Statement · ${new Date().toLocaleString()}<br>
+        ${supplier.phone ? "📞 " + esc(supplier.phone) : ""}
+        ${supplier.email ? " · ✉️ " + esc(supplier.email) : ""}
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th style="text-align:right">Debit</th>
+            <th style="text-align:right">Credit</th>
+            <th style="text-align:right">Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="background:#f9f9f9;">
+            <td colspan="4"><strong>Opening Balance</strong></td>
+            <td style="text-align:right;font-weight:800;">${money(opening_balance)}</td>
+          </tr>
+          ${rows || '<tr><td colspan="5" style="text-align:center;color:#999;">No entries</td></tr>'}
+        </tbody>
+      </table>
+
+      <div class="totals">
+        <div><strong>Total Purchases:</strong> ${money(total_debit)}</div>
+        <div><strong>Total Paid:</strong> ${money(total_credit)}</div>
+        <div style="font-size:16px;margin-top:8px;">
+          <strong>Closing Balance:</strong> 
+          <span style="color:${closing_balance > 0 ? '#dc2626' : '#16a34a'};font-weight:800;">
+            ${money(closing_balance)}
+          </span>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const win = window.open("", "_blank", "width=900,height=800");
+  if (!win) { alert("Allow popups to print"); return; }
+  win.document.write(html);
+  win.document.close();
+}
+
+/* =====================================================
+   WHATSAPP SHARE
+===================================================== */
+
+function shareWhatsApp() {
+  if (!currentLedger) return;
+
+  const { supplier, opening_balance, total_debit, total_credit, closing_balance } = currentLedger;
+
+  const phone = prompt(`WhatsApp number for ${supplier.name} (with country code):`, supplier.phone || "");
+  if (phone === null) return;
+
+  let msg = `📒 *Supplier Statement*\n`;
+  msg += `_${supplier.name}_\n`;
+  msg += `📅 ${new Date().toLocaleDateString()}\n\n`;
+  msg += `Opening: Rs ${Number(opening_balance).toFixed(2)}\n`;
+  msg += `Total Purchases: Rs ${Number(total_debit).toFixed(2)}\n`;
+  msg += `Total Paid: Rs ${Number(total_credit).toFixed(2)}\n`;
+  msg += `━━━━━━━━━━━━━━━\n`;
+  msg += `*Closing Balance:* Rs ${Number(closing_balance).toFixed(2)}\n`;
+
+  const encoded = encodeURIComponent(msg);
+  const cleanPhone = String(phone || "").replace(/\D/g, "");
+
+  const url = cleanPhone
+    ? `https://wa.me/${cleanPhone}?text=${encoded}`
+    : `https://wa.me/?text=${encoded}`;
+
+  window.open(url, "_blank");
+}
+
+/* =====================================================
+   EMAIL SHARE
+===================================================== */
+
+function shareEmail() {
+  if (!currentLedger) return;
+
+  const { supplier, opening_balance, total_debit, total_credit, closing_balance, entries } = currentLedger;
+
+  const email = prompt(`Email for ${supplier.name}:`, supplier.email || "");
+  if (email === null) return;
+
+  const subject = `Supplier Statement — ${supplier.name} — ${new Date().toLocaleDateString()}`;
+
+  let body = `Supplier Statement\n`;
+  body += `=================\n\n`;
+  body += `Supplier: ${supplier.name}\n`;
+  body += `Date: ${new Date().toLocaleString()}\n\n`;
+  body += `Opening Balance: Rs ${Number(opening_balance).toFixed(2)}\n`;
+  body += `Total Purchases: Rs ${Number(total_debit).toFixed(2)}\n`;
+  body += `Total Paid: Rs ${Number(total_credit).toFixed(2)}\n`;
+  body += `Closing Balance: Rs ${Number(closing_balance).toFixed(2)}\n\n`;
+  body += `--- Recent Entries ---\n\n`;
+
+  entries.slice(-20).forEach(e => {
+    body += `${new Date(e.txn_date).toLocaleDateString()} | ${e.description}\n`;
+    if (e.debit > 0) body += `  Debit: Rs ${Number(e.debit).toFixed(2)}\n`;
+    if (e.credit > 0) body += `  Credit: Rs ${Number(e.credit).toFixed(2)}\n`;
+    body += `  Balance: Rs ${Number(e.balance).toFixed(2)}\n\n`;
+  });
+
+  window.location.href = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+/* =====================================================
+   INIT
+===================================================== */
+
+window.addEventListener("load", async () => {
+  initTheme();
+  await loadSuppliers();
+  await loadAging();
+});
+
+document.getElementById("supplier-search").addEventListener("input", () => {
+  clearTimeout(window._searchTimer);
+  window._searchTimer = setTimeout(loadSuppliers, 300);
+});
+
+// Expose for inline handlers
+window.openSupplierModal = openSupplierModal;
+window.editSupplier = editSupplier;
+window.deleteSupplier = deleteSupplier;
+window.saveSupplier = saveSupplier;
+window.openLedger = openLedger;
+window.switchTab = switchTab;
+window.switchLedgerTab = switchLedgerTab;
+window.openPurchaseModal = openPurchaseModal;
+window.savePurchase = savePurchase;
+window.deletePurchase = deletePurchase;
+window.openPaymentModal = openPaymentModal;
+window.savePayment = savePayment;
+window.deletePayment = deletePayment;
+window.closeModal = closeModal;
+window.printLedger = printLedger;
+window.shareWhatsApp = shareWhatsApp;
+window.shareEmail = shareEmail;
+window.toggleTheme = toggleTheme;
+window.shareStatementImage = shareStatementImage;
+window.downloadStatementImage = downloadStatementImage;
+window.sendImageToWhatsApp = sendImageToWhatsApp;
+window.copyImageToClipboard = copyImageToClipboard;
+
+/* =====================================================
+   PURCHASE ITEMS (auto stock-in)
+===================================================== */
+
+let purchaseItemsCache = [];
+let purchaseItemRowCounter = 0;
+
+async function loadPurchaseItemsCache() {
+  if (purchaseItemsCache.length) return;
+  try {
+    const res = await apiFetch('/api/inventory/list-for-purchase');
+    purchaseItemsCache = Array.isArray(res.data) ? res.data : [];
+  } catch (err) {
+    console.error("loadPurchaseItemsCache:", err);
+    purchaseItemsCache = [];
+  }
+}
+
+function addPurchaseItemRow() {
+  const rowId = ++purchaseItemRowCounter;
+  const optionsHtml = purchaseItemsCache.map(item => {
+    // Build package label
+    const pkgSize = Number(item.package_size || 0);
+    const pkgUnit = item.package_unit || "";
+    const pkgLabel = pkgSize > 0 && pkgUnit
+      ? ` ${pkgSize}${pkgUnit}`
+      : "";
+
+    return `<option value="${item.id}" data-price="${item.purchase_price || 0}">${esc(item.name)}${pkgLabel} (${esc(item.unit || '')})</option>`;
+  }).join('');
+
+  const rowHtml = `
+    <div class="purchase-item-row" data-row-id="${rowId}" style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:6px; margin-bottom:6px; align-items:end;">
+      <div>
+        <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px;">Item</label>
+        <select class="pi-item" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;">
+          <option value="">Select item...</option>
+          ${optionsHtml}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px;">Qty</label>
+        <input type="number" class="pi-qty" min="0.01" step="0.01" placeholder="0" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;">
+      </div>
+      <div>
+        <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px;">Price/Unit</label>
+        <input type="number" class="pi-price" min="0" step="0.01" placeholder="0" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;">
+      </div>
+      <div>
+        <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px;">Total</label>
+        <input type="text" class="pi-total" readonly style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--gray-100);color:var(--text);font-size:12px;" value="0">
+      </div>
+      <button type="button" class="btn btn-danger" style="padding:8px 10px;font-size:12px;" onclick="removePurchaseItemRow(${rowId})">🗑️</button>
+    </div>
+  `;
+
+  document.getElementById("purchase-items-list").insertAdjacentHTML('beforeend', rowHtml);
+
+  const row = document.querySelector(`[data-row-id="${rowId}"]`);
+  row.querySelector('.pi-item').addEventListener('change', e => {
+    const opt = e.target.selectedOptions[0];
+    const price = opt?.dataset?.price || 0;
+    if (price && !row.querySelector('.pi-price').value) {
+      row.querySelector('.pi-price').value = price;
+    }
+    recalcPurchaseRow(row);
+  });
+  row.querySelector('.pi-qty').addEventListener('input', () => recalcPurchaseRow(row));
+  row.querySelector('.pi-price').addEventListener('input', () => recalcPurchaseRow(row));
+}
+
+function removePurchaseItemRow(rowId) {
+  const row = document.querySelector(`[data-row-id="${rowId}"]`);
+  if (row) row.remove();
+  updatePurchaseTotalFromItems();
+}
+
+function recalcPurchaseRow(row) {
+  const qty = Number(row.querySelector('.pi-qty').value || 0);
+  const price = Number(row.querySelector('.pi-price').value || 0);
+  const total = qty * price;
+  row.querySelector('.pi-total').value = total.toFixed(2);
+  updatePurchaseTotalFromItems();
+}
+
+function updatePurchaseTotalFromItems() {
+  let sum = 0;
+  document.querySelectorAll('.purchase-item-row').forEach(row => {
+    sum += Number(row.querySelector('.pi-total').value || 0);
+  });
+
+  const totalField = document.getElementById('purchase-total');
+  const paidField = document.getElementById('purchase-paid');
+
+  // Auto-fill total if empty
+  if (sum > 0 && (!totalField.value || Number(totalField.value) === 0)) {
+    totalField.value = sum.toFixed(2);
+  }
+
+  const total = Number(totalField.value || 0);
+  const paid = Number(paidField.value || 0);
+  const pending = Math.max(0, total - paid);
+
+  // Update summary
+  const summary = document.getElementById('purchase-summary');
+  if (sum > 0) {
+    summary.style.display = 'block';
+  } else {
+    summary.style.display = 'none';
+  }
+
+  document.getElementById('purchase-summary-subtotal').innerText = 'Rs ' + sum.toFixed(2);
+  document.getElementById('purchase-summary-total').innerText = 'Rs ' + total.toFixed(2);
+  document.getElementById('purchase-summary-paid').innerText = 'Rs ' + paid.toFixed(2);
+  document.getElementById('purchase-summary-pending').innerText = 'Rs ' + pending.toFixed(2);
+}
+
+function collectPurchaseItems() {
+  const items = [];
+  document.querySelectorAll('.purchase-item-row').forEach(row => {
+    const inventoryId = Number(row.querySelector('.pi-item').value);
+    const qty = Number(row.querySelector('.pi-qty').value);
+    const price = Number(row.querySelector('.pi-price').value || 0);
+    if (inventoryId && qty > 0) {
+      items.push({
+        inventory_id: inventoryId,
+        quantity: qty,
+        unit_price: price
+      });
+    }
+  });
+  return items;
+}
+
+function resetPurchaseItems() {
+  const list = document.getElementById("purchase-items-list");
+  if (list) list.innerHTML = "";
+  purchaseItemRowCounter = 0;
+}
+
+// Hook into openPurchaseModal
+const _origOpenPurchaseModal = window.openPurchaseModal;
+window.openPurchaseModal = async function() {
+  await loadPurchaseItemsCache();
+  resetPurchaseItems();
+  if (_origOpenPurchaseModal) _origOpenPurchaseModal();
+  const totalField = document.getElementById('purchase-total');
+  const paidField = document.getElementById('purchase-paid');
+  
+  totalField.addEventListener('input', updatePurchaseTotalFromItems);
+  paidField.addEventListener('input', updatePurchaseTotalFromItems);
+  
+  // Reset summary
+  const summary = document.getElementById('purchase-summary');
+  if (summary) summary.style.display = 'none';
+};
+
+// Override savePurchase to include items
+window.savePurchase = async function() {
+  const items = collectPurchaseItems();
+  const total = Number(document.getElementById("purchase-total").value);
+  const paid = Number(document.getElementById("purchase-paid").value || 0);
+
+  if (!Number.isFinite(total) || total <= 0) { alert("Enter valid total amount"); return; }
+  if (paid > total) { alert("Paid amount cannot be more than total"); return; }
+
+  const body = {
+    purchase_date: document.getElementById("purchase-date").value,
+    invoice_no: document.getElementById("purchase-invoice").value.trim(),
+    total_amount: total,
+    paid_amount: paid,
+    note: document.getElementById("purchase-note").value.trim(),
+    items: items
+  };
+
+  const btn = document.getElementById("purchase-save-btn");
+  btn.disabled = true;
+  btn.innerText = "Saving...";
+
+  try {
+    await apiFetch(`${API}/${currentSupplier.id}/purchases`, {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
+    closeModal("purchase-modal");
+    resetPurchaseItems();
+    await loadLedger();
+    await loadPurchases();
+    await loadSuppliers();
+    if (items.length) {
+      alert(`✅ Purchase saved!\n✅ ${items.length} inventory items auto-updated`);
+    }
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Save Purchase";
+  }
+};
+
+window.addPurchaseItemRow = addPurchaseItemRow;
+window.removePurchaseItemRow = removePurchaseItemRow;
+
+/* =====================================================
+   AGING REPORT — PRINT / CSV / WHATSAPP
+===================================================== */
+
+function toggleAgingSelectAll(checkbox) {
+  document.querySelectorAll(".aging-checkbox").forEach(cb => cb.checked = checkbox.checked);
+}
+
+function getSelectedAgingSuppliers() {
+  const selected = [];
+  document.querySelectorAll(".aging-checkbox:checked").forEach(cb => {
+    selected.push({
+      id: Number(cb.dataset.supplierId),
+      name: cb.dataset.supplierName,
+      phone: cb.dataset.supplierPhone,
+      balance: Number(cb.dataset.supplierBalance),
+      bucket: cb.dataset.supplierBucket
+    });
+  });
+  return selected;
+}
+
+function sendAgingReminder(supplierId) {
+  const supplier = agingData.find(r => Number(r.id) === Number(supplierId));
+  if (!supplier) return;
+  if (!supplier.phone) { alert("No phone number. Edit supplier first."); return; }
+
+  const phone = prompt(`WhatsApp number for ${supplier.name}:`, supplier.phone || "");
+  if (phone === null) return;
+
+  const restaurantName = "Restaurant";
+  const balance = Number(supplier.balance || 0);
+
+  let msg = `🙏 *Payment Reminder*\n`;
+  msg += `📅 ${new Date().toLocaleDateString()}\n\n`;
+  msg += `Dear *${supplier.name}*,\n\n`;
+  msg += `Aap ka balance *Rs ${balance.toFixed(2)}* pending hai.`;
+  if (supplier.days_old > 0) msg += ` (${supplier.days_old} din se)`;
+  msg += `\n\nBaraye meharbani jald payment kar dein.\n\nShukriya! 🙏`;
+
+  const encoded = encodeURIComponent(msg);
+  const cleanPhone = String(phone).replace(/\D/g, "");
+  const url = cleanPhone
+    ? `https://wa.me/${cleanPhone}?text=${encoded}`
+    : `https://wa.me/?text=${encoded}`;
+  window.open(url, "_blank");
+}
+
+function sendBulkWhatsAppReminders() {
+  const selected = getSelectedAgingSuppliers();
+  if (!selected.length) {
+    alert("Pehle suppliers select karo (checkbox).");
+    return;
+  }
+
+  if (!confirm(`${selected.length} suppliers ko WhatsApp reminders bhejna hai?`)) return;
+
+  selected.forEach((supplier, index) => {
+    setTimeout(() => {
+      let msg = `🙏 *Payment Reminder*\n`;
+      msg += `📅 ${new Date().toLocaleDateString()}\n\n`;
+      msg += `Dear *${supplier.name}*,\n\n`;
+      msg += `Aap ka balance *Rs ${supplier.balance.toFixed(2)}* pending hai.`;
+      if (supplier.bucket && supplier.bucket !== "Settled") msg += ` (${supplier.bucket})`;
+      msg += `\n\nBaraye meharbani jald payment kar dein.\n\nShukriya! 🙏`;
+
+      const encoded = encodeURIComponent(msg);
+      const cleanPhone = String(supplier.phone).replace(/\D/g, "");
+      const url = cleanPhone
+        ? `https://wa.me/${cleanPhone}?text=${encoded}`
+        : `https://wa.me/?text=${encoded}`;
+      window.open(url, "_blank");
+    }, index * 800);
+  });
+}
+
+function printAgingReport() {
+  if (!agingData.length) { alert("No aging data to print."); return; }
+
+  const rows = agingData
+    .filter(r => Number(r.balance || 0) > 0)
+    .map(r => {
+      const bal = Number(r.balance || 0);
+      return `
+        <tr>
+          <td>${esc(r.name)}</td>
+          <td>${esc(r.phone || "—")}</td>
+          <td style="text-align:right;font-weight:700;color:#dc2626;">Rs ${bal.toFixed(2)}</td>
+          <td style="text-align:right;">${r.days_old || 0}</td>
+          <td>${esc(r.bucket)}</td>
+        </tr>
+      `;
+    }).join("");
+
+  const totalBalance = agingData
+    .filter(r => Number(r.balance || 0) > 0)
+    .reduce((s, r) => s + Number(r.balance || 0), 0);
+
+  const html = `
+    <!DOCTYPE html>
+    <html><head>
+      <title>Aging Report</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 24px; color: #111827; }
+        h1 { margin: 0 0 4px; font-size: 22px; }
+        .meta { color: #6b7280; font-size: 13px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 16px; }
+        th, td { padding: 9px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+        th { background: #f3f4f6; font-weight: 700; font-size: 11px; text-transform: uppercase; }
+        .total { padding: 14px 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; font-size: 16px; font-weight: 800; text-align: right; color: #dc2626; }
+        @media print { body { padding: 10px; } }
+      </style>
+    </head><body onload="window.print();">
+      <h1>📊 Aging Report</h1>
+      <div class="meta">Printed: ${new Date().toLocaleString()}</div>
+      <table>
+        <thead><tr><th>Supplier</th><th>Phone</th><th style="text-align:right">Balance</th><th style="text-align:right">Days Old</th><th>Bucket</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:#999;">No pending balances</td></tr>'}</tbody>
+      </table>
+      <div class="total">Total Payable: Rs ${totalBalance.toFixed(2)}</div>
+    </body></html>
+  `;
+
+  const win = window.open("", "_blank", "width=900,height=700");
+  if (!win) { alert("Allow popups"); return; }
+  win.document.write(html);
+  win.document.close();
+}
+
+function exportAgingCSV() {
+  if (!agingData.length) { alert("No aging data to export."); return; }
+
+  const rows = [["Supplier", "Phone", "Email", "Balance", "Days Old", "Bucket"]];
+
+  agingData.forEach(r => {
+    rows.push([
+      r.name || "", r.phone || "", r.email || "",
+      Number(r.balance || 0).toFixed(2),
+      r.days_old || 0, r.bucket || ""
+    ]);
+  });
+
+  const csv = rows.map(row =>
+    row.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")
+  ).join("\n");
+
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `aging-report-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+window.toggleAgingSelectAll = toggleAgingSelectAll;
+window.sendAgingReminder = sendAgingReminder;
+window.sendBulkWhatsAppReminders = sendBulkWhatsAppReminders;
+window.printAgingReport = printAgingReport;
+window.exportAgingCSV = exportAgingCSV;
+
+</script>
+<!-- ================= HIDDEN IMAGE RENDER AREA ================= -->
+<div id="statement-image-area" style="position:fixed; left:-99999px; top:0; width:800px; background:#fff; color:#111; padding:30px; font-family:Arial,Helvetica,sans-serif;">
+</div>
+
+<!-- ================= IMAGE PREVIEW MODAL ================= -->
+<div class="modal" id="image-preview-modal">
+  <div class="modal-box" style="max-width:700px;">
+    <button class="close-x" onclick="closeModal('image-preview-modal')">×</button>
+    <h3 class="modal-title">📸 Statement Image</h3>
+
+    <div style="text-align:center; margin-bottom:14px;">
+      <div id="image-preview-container" style="max-height:500px; overflow:auto; border:1px solid var(--border); border-radius:10px; padding:10px; background:#fff;">
+        <!-- Image will be inserted here -->
+      </div>
+    </div>
+
+    <div class="modal-actions" style="justify-content:center; flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="downloadStatementImage()">💾 Download</button>
+      <button class="btn btn-success" onclick="sendImageToWhatsApp()">💬 Send to WhatsApp</button>
+      <button class="btn btn-secondary" onclick="copyImageToClipboard()">📋 Copy</button>
+      <button class="btn btn-secondary" onclick="closeModal('image-preview-modal')">Close</button>
+    </div>
+
+    <p style="text-align:center; font-size:12px; color:var(--muted); margin-top:12px;">
+      To send the image on WhatsApp—press Download, then attach it in WhatsApp.Or press "Send to WhatsApp" (the Web Share API will work on mobile).
+    </p>
+  </div>
+</div>
+</body>
+</html>

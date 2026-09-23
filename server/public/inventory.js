@@ -8,6 +8,8 @@
 const token = localStorage.getItem("token");
 
 let editingId = null;
+let suppliersList = [];
+let quickSupplierCreated = false;
 let inventoryItems = [];
 
 let currentFilter = "all";
@@ -141,8 +143,6 @@ async function saveItem() {
       ? Number(packageSizeRaw)
       : null;
 
-  // FIX: Use parseFloat directly, NOT parseSmartQuantity for stock_quantity
-  // parseSmartQuantity is only for stock transaction modal
   const stockQuantityRaw =
     document.getElementById("stock_quantity")?.value;
 
@@ -163,10 +163,13 @@ async function saveItem() {
       document.getElementById("purchase_price")?.value
     );
 
-  const supplier =
-    document.getElementById("supplier")?.value.trim();
+const supplierIdRaw = document.getElementById("supplier")?.value || "";
+const supplier_id = supplierIdRaw && supplierIdRaw !== "__new__" ? Number(supplierIdRaw) : null;
 
-  // Validation
+
+const supplierObj = suppliersList.find(s => Number(s.id) === supplier_id);
+const supplier = supplierObj ? supplierObj.name : null;
+
   if (
     !name ||
     !category ||
@@ -199,13 +202,13 @@ async function saveItem() {
     stock_quantity,
     minimum_stock,
     purchase_price,
-    supplier
+    supplier,
+    supplier_id         
+ 
   };
 
-  // FIX: Clear editingId after save to prevent double submission
   const isEditing = Boolean(editingId);
 
-  // FIX: If editing, use the ID from editingId, don't create new
   const url = isEditing
     ? `/api/inventory/${editingId}`
     : "/api/inventory";
@@ -235,10 +238,8 @@ async function saveItem() {
         : "Inventory item added successfully.")
     );
 
-    // FIX: Reset form AFTER successful save
     clearInventoryForm();
     
-    // FIX: Reset editingId AFTER save to prevent double submission
     const savedId = editingId;
     editingId = null;
     setEditMode(false);
@@ -293,8 +294,7 @@ function clearInventoryForm() {
     "package_unit",
     "stock_quantity",
     "minimum_stock",
-    "purchase_price",
-    "supplier"
+    "purchase_price"
   ];
 
   fields.forEach(id => {
@@ -304,7 +304,9 @@ function clearInventoryForm() {
     }
   });
 
-  // Also clear bulk calculator fields
+  const supplierSelect = document.getElementById("supplier");
+if (supplierSelect) supplierSelect.value = "";
+
   const bulkQty = document.getElementById('bulk-qty');
   const bulkUnit = document.getElementById('bulk-unit');
   const bulkTotalPrice = document.getElementById('bulk-total-price');
@@ -329,7 +331,6 @@ function editItem(item) {
     return;
   }
 
-  // FIX: Always reset form first before editing
   clearInventoryForm();
 
   editingId = Number(item.id);
@@ -352,9 +353,29 @@ function editItem(item) {
   if (stock) stock.value = item.stock_quantity ?? "";
   if (minimum) minimum.value = item.minimum_stock ?? "";
   if (price) price.value = item.purchase_price ?? "";
-  if (supplier) supplier.value = item.supplier || "";
+  // Handle both legacy text AND new FK
+if (supplier) {
+  // Try to match by supplier_id first
+  if (item.supplier_id) {
+    supplier.value = String(item.supplier_id);
+  } else if (item.supplier) {
+    // Legacy: match by name
+    const match = suppliersList.find(s => s.name === item.supplier);
+    if (match) {
+      supplier.value = String(match.id);
+    } else {
+     
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = item.supplier + " (legacy)";
+      opt.selected = true;
+      supplier.appendChild(opt);
+    }
+  } else {
+    supplier.value = "";
+  }
+}
 
-  // FIX: Set edit mode AFTER filling values
   setEditMode(true);
 
   const form = document.getElementById("inventory-form");
@@ -372,18 +393,18 @@ function editItem(item) {
 ===================================================== */
 
 function cancelEdit() {
-  // FIX: Reset everything
   editingId = null;
   clearInventoryForm();
   setEditMode(false);
   
-  // Also reset any pending state
   const saveButton = document.getElementById("save-btn");
   if (saveButton) {
     saveButton.disabled = false;
     saveButton.innerText = "💾 Save Item";
   }
 }
+
+
 /* =====================================================
    LOAD INVENTORY
 ===================================================== */
@@ -400,7 +421,6 @@ async function loadItems() {
         "/api/inventory?status=all"
       );
 
-
     if (!data.success) {
 
       showInventoryError(
@@ -411,12 +431,10 @@ async function loadItems() {
       return;
     }
 
-
     inventoryItems =
       Array.isArray(data.data)
         ? data.data
         : [];
-
 
     renderInventory();
 
@@ -534,11 +552,6 @@ function isItemActive(item) {
 
 /* =====================================================
    KITCHEN-REQUEST TRANSACTION FILTER
-   Kitchen request approvals still deduct from the
-   actual stock quantity on the backend — this filter
-   only hides those specific transaction rows from the
-   Dashboard "Recent Transactions" list and the item
-   "History" modal, per business requirement.
 ===================================================== */
 
 function isKitchenRequestTransaction(transaction) {
@@ -551,14 +564,6 @@ function isKitchenRequestTransaction(transaction) {
     String(
       transaction.note || ""
     ).toLowerCase();
-
-  /*
-    ONLY hide customer-order fulfillment entries,
-    which always carry this exact note format:
-    "Order #269 served".
-    Everything else — kitchen stock transfers,
-    manual stock in/out, returns — must stay visible.
-  */
 
   if (/order\s*#\s*\d+\s*served/i.test(note)) {
     return true;
@@ -603,12 +608,6 @@ function renderInventory() {
   let filteredItems =
     [...inventoryItems];
 
-
-  /*
-    IMPORTANT:
-    If user selected Inactive filter,
-    inactive items must ALWAYS be visible.
-  */
 
   if (
     currentFilter !== "inactive" &&
@@ -1374,11 +1373,6 @@ function initializeInventoryControls() {
             "all";
 
 
-          /*
-            When Inactive filter is selected,
-            automatically enable inactive visibility.
-          */
-
           if (
             currentFilter === "inactive"
           ) {
@@ -1576,11 +1570,6 @@ async function deactivateItem(id) {
     );
 
 
-    /*
-      Automatically switch to inactive view
-      so user can immediately see where item went.
-    */
-
     showInactiveItems = true;
 
     currentFilter = "inactive";
@@ -1687,10 +1676,6 @@ async function activateItem(id) {
     );
 
 
-    /*
-      Return to normal active inventory.
-    */
-
     currentFilter = "all";
 
     showInactiveItems = false;
@@ -1733,122 +1718,6 @@ async function activateItem(id) {
       error.message ||
       "Unable to activate inventory item."
     );
-  }
-}
-
-
-/* =====================================================
-   EDIT ITEM
-===================================================== */
-
-function editItem(item) {
-
-  if (!item) {
-    return;
-  }
-
-
-  editingId =
-    Number(item.id);
-
-
-  const name =
-    document.getElementById("name");
-
-  const category =
-    document.getElementById("category");
-
-  const unit =
-    document.getElementById("unit");
-
-  const packageSize =
-    document.getElementById("package_size");
-
-  const packageUnit =
-    document.getElementById("package_unit");
-
-  const stock =
-    document.getElementById(
-      "stock_quantity"
-    );
-
-  const minimum =
-    document.getElementById(
-      "minimum_stock"
-    );
-
-  const price =
-    document.getElementById(
-      "purchase_price"
-    );
-
-  const supplier =
-    document.getElementById(
-      "supplier"
-    );
-
-
-  if (name) {
-    name.value =
-      item.name || "";
-  }
-
-  if (category) {
-    category.value =
-      item.category || "";
-  }
-
-  if (unit) {
-    unit.value =
-      item.unit || "";
-  }
-
-  if (packageSize) {
-    packageSize.value =
-      item.package_size ?? "";
-  }
-
-  if (packageUnit) {
-    packageUnit.value =
-      item.package_unit || "";
-  }
-
-  if (stock) {
-    stock.value =
-      item.stock_quantity ?? "";
-  }
-
-  if (minimum) {
-    minimum.value =
-      item.minimum_stock ?? "";
-  }
-
-  if (price) {
-    price.value =
-      item.purchase_price ?? "";
-  }
-
-  if (supplier) {
-    supplier.value =
-      item.supplier || "";
-  }
-
-
-  setEditMode(true);
-
-
-  const form =
-    document.getElementById(
-      "inventory-form"
-    );
-
-
-  if (form) {
-
-    form.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
   }
 }
 
@@ -2105,13 +1974,11 @@ function applyBulkCalc() {
   const baseQty = qty * multiplier;
   const pricePerUnit = totalPrice / baseQty;
 
-  // FIX: Directly set values without any extra conversion
   const stockField = document.getElementById('stock_quantity');
   const priceField = document.getElementById('purchase_price');
 
   if (stockField) {
     stockField.value = baseQty;
-    // Trigger change event so any listeners know value changed
     stockField.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
@@ -2120,7 +1987,6 @@ function applyBulkCalc() {
     priceField.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
-  // Show confirmation to user
   alert(`✅ Stock quantity set to: ${baseQty}\n✅ Price per unit: Rs ${pricePerUnit.toFixed(2)}`);
 }
 
@@ -2134,7 +2000,6 @@ function parseSmartQuantity(raw) {
 
   const str = String(raw).trim().toLowerCase();
   
-  // Check if it's a simple number first
   const simpleNumber = parseFloat(str);
   if (!isNaN(simpleNumber) && !str.match(/[a-z]/)) {
     return simpleNumber;
@@ -2363,13 +2228,6 @@ async function showHistory(
     }
 
 
-    /*
-      Kitchen-request-driven stock deductions are
-      excluded from the visible History list, per
-      business requirement. Stock quantity itself
-      is unaffected — this only hides the rows.
-    */
-
     const visibleTransactions =
       filterOutKitchenTransactions(
         Array.isArray(data.data)
@@ -2378,7 +2236,6 @@ async function showHistory(
       );
 
 
-    // Store currently opened audit data
     window.currentInventoryAudit = {
       id: Number(id),
       name: String(name || ""),
@@ -2711,13 +2568,6 @@ async function loadDashboard() {
     }
 
 
-    /*
-      Kitchen-request-driven stock deductions are
-      excluded from the visible Recent Transactions
-      list, per business requirement. Stock quantity
-      itself is unaffected — this only hides the rows.
-    */
-
     const visibleRecentTransactions =
       filterOutKitchenTransactions(
         data.recentTransactions
@@ -2993,7 +2843,6 @@ function formatMoney(value) {
 
 /* =====================================================
    SAFE HTML ESCAPE
-   FIXED
 ===================================================== */
 
 function escapeHtml(value) {
@@ -3056,6 +2905,11 @@ window.addEventListener(
         "stock-modal"
       );
 
+    const supplierModal =
+      document.getElementById(
+        "supplier-modal"
+      );
+
 
     if (
       event.target ===
@@ -3073,6 +2927,11 @@ window.addEventListener(
 
       closeStockModal();
     }
+
+    if (event.target === supplierModal) closeSupplierModal();
+
+const quickModal = document.getElementById("quick-supplier-modal");
+if (quickModal && event.target === quickModal) closeQuickSupplierModal();
   }
 );
 
@@ -3096,6 +2955,8 @@ document.addEventListener(
     closeHistory();
 
     closeStockModal();
+
+    closeSupplierModal();
   }
 );
 
@@ -3109,6 +2970,15 @@ async function initializeInventoryPage() {
   initializeTheme();
 
   initializeInventoryControls();
+
+  
+  await loadSuppliersForDropdown();
+
+  
+  const supplierSelect = document.getElementById("supplier");
+  if (supplierSelect) {
+    supplierSelect.addEventListener("change", handleSupplierChange);
+  }
 
   await loadItems();
 
@@ -3420,9 +3290,6 @@ function getVisibleInventoryItems() {
 
   let items = [...inventoryItems];
 
-  /*
-    Same visibility rules as renderInventory()
-  */
   if (
     currentFilter !== "inactive" &&
     !showInactiveItems
@@ -3433,7 +3300,6 @@ function getVisibleInventoryItems() {
       );
   }
 
-  /* SEARCH */
   if (search) {
     items =
       items.filter(item => {
@@ -3459,7 +3325,6 @@ function getVisibleInventoryItems() {
       });
   }
 
-  /* FILTER */
   if (currentFilter === "low") {
     items =
       items.filter(item => {
@@ -3516,11 +3381,6 @@ function updateInventoryTotalStock() {
 
   const items =
     getVisibleInventoryItems();
-
-  /*
-    Group quantities by unit so we don't
-    incorrectly add kg + litres + pieces.
-  */
 
   const totals = {};
 
@@ -3840,6 +3700,15 @@ document.addEventListener(
       return;
     }
 
+    if (
+      event.target.closest(
+        "#inventory-supplier-btn"
+      )
+    ) {
+      openSupplierModal();
+      return;
+    }
+
   }
 );
 
@@ -3850,6 +3719,7 @@ document.addEventListener(
 function setEditMode(isEditing) {
   const title = document.getElementById("inventory-form-title");
   const saveBtn = document.getElementById("save-btn");
+  const cancelBtn = document.getElementById("cancel-edit-btn");
 
   if (title) {
     title.innerText = isEditing ? "✏️ Edit Inventory Item" : "➕ Add Inventory Item";
@@ -3859,5 +3729,761 @@ function setEditMode(isEditing) {
     saveBtn.innerText = isEditing ? "🔄 Update Item" : "💾 Save Item";
   }
 
-  
+  if (cancelBtn) {
+    cancelBtn.style.display = isEditing ? "inline-block" : "none";
+  }
 }
+
+
+/* =====================================================
+   SUPPLIER-WISE SUMMARY
+===================================================== */
+
+let currentSupplierData = [];
+
+/**
+ * Build a formatted package label from an item.
+ */
+function getPackageLabel(item) {
+  const pkgSize = Number(item.package_size || 0);
+  const pkgUnit = item.package_unit || "";
+  if (pkgSize > 0 && pkgUnit) {
+    return `${formatNumber(pkgSize)} ${escapeHtml(pkgUnit)}`;
+  }
+  return "—";
+}
+
+/**
+ * Group active inventory items by supplier text field.
+ */
+function buildSupplierSummary() {
+
+  const items = getVisibleInventoryItems();
+
+  const grouped = {};
+
+  items.forEach(item => {
+
+    const rawSupplier = String(item.supplier || "").trim();
+    const supplier = rawSupplier || "— No Supplier —";
+
+    if (!grouped[supplier]) {
+      grouped[supplier] = {
+        supplier,
+        items: [],
+        itemCount: 0,
+        totalStockValue: 0,
+        stockByUnit: {}
+      };
+    }
+
+    const qty   = Number(item.stock_quantity || 0);
+    const price = Number(item.purchase_price || 0);
+    const unit  = String(item.unit || "unit");
+
+    grouped[supplier].items.push(item);
+    grouped[supplier].itemCount += 1;
+    grouped[supplier].totalStockValue += qty * price;
+    grouped[supplier].stockByUnit[unit] =
+      (grouped[supplier].stockByUnit[unit] || 0) + qty;
+
+  });
+
+  return Object
+    .values(grouped)
+    .sort((a, b) =>
+      a.supplier.localeCompare(b.supplier, undefined, { sensitivity: "base" })
+    );
+}
+
+
+/**
+ * Open supplier summary modal.
+ */
+function openSupplierModal() {
+
+  currentSupplierData = buildSupplierSummary();
+
+  renderSupplierSummary();
+
+  const modal = document.getElementById("supplier-modal");
+  if (modal) modal.style.display = "block";
+}
+
+function closeSupplierModal() {
+
+  const modal = document.getElementById("supplier-modal");
+  if (modal) modal.style.display = "none";
+}
+
+
+/**
+ * Render supplier list in modal.
+ */
+function renderSupplierSummary() {
+
+  const box = document.getElementById("supplier-summary-list");
+  if (!box) return;
+
+  if (!currentSupplierData.length) {
+    box.innerHTML = `
+      <div class="dashboard-empty">
+        No items with suppliers found.
+      </div>
+    `;
+    return;
+  }
+
+  box.innerHTML = currentSupplierData.map((supplier, index) => {
+
+    const stockStr = Object
+      .entries(supplier.stockByUnit)
+      .map(([unit, qty]) => `${formatNumber(qty)} ${escapeHtml(unit)}`)
+      .join(" · ");
+
+    return `
+      <div style="border:1px solid var(--border); border-radius:12px; margin-bottom:12px; overflow:hidden;">
+
+        <div
+          style="padding:14px 16px; background:var(--gray-50); display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+
+          <div style="flex:1; min-width:200px;">
+            <div style="font-weight:800; font-size:16px; color:var(--text-strong);">
+              🏢 ${escapeHtml(supplier.supplier)}
+            </div>
+            <div style="color:var(--text-muted); font-size:12px; margin-top:4px;">
+              ${supplier.itemCount} items &nbsp;·&nbsp; Stock: ${stockStr || "0"}
+            </div>
+            <div style="color:var(--success); font-weight:800; font-size:14px; margin-top:4px;">
+              Total Value: Rs ${formatMoney(supplier.totalStockValue)}
+            </div>
+          </div>
+
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button
+              type="button"
+              class="btn btn-primary"
+              style="padding:8px 12px; font-size:12px;"
+              onclick="printSingleSupplier(${index})">
+              🖨️ Print
+            </button>
+            <button
+              type="button"
+              class="btn btn-success"
+              style="padding:8px 12px; font-size:12px;"
+              onclick="shareSupplierWhatsApp(${index})">
+              💬 WhatsApp
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              style="padding:8px 12px; font-size:12px;"
+              onclick="shareSupplierEmail(${index})">
+              ✉️ Email
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              style="padding:8px 12px; font-size:12px;"
+              onclick="toggleSupplierExpand(${index})">
+              🔽 Detail
+            </button>
+          </div>
+
+        </div>
+
+        <div
+          id="supplier-detail-${index}"
+          style="display:none; padding:12px 16px; border-top:1px solid var(--border);">
+
+          <table style="width:100%; border-collapse:collapse; font-size:12px;">
+            <thead>
+              <tr style="background:var(--gray-50);">
+                <th style="padding:8px; text-align:left; border-bottom:1px solid var(--border);">Item</th>
+                <th style="padding:8px; text-align:left; border-bottom:1px solid var(--border);">Category</th>
+                <th style="padding:8px; text-align:left; border-bottom:1px solid var(--border);">Package</th>
+                <th style="padding:8px; text-align:right; border-bottom:1px solid var(--border);">Stock</th>
+                <th style="padding:8px; text-align:right; border-bottom:1px solid var(--border);">Price</th>
+                <th style="padding:8px; text-align:right; border-bottom:1px solid var(--border);">Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${supplier.items.map(item => {
+                const qty = Number(item.stock_quantity || 0);
+                const price = Number(item.purchase_price || 0);
+                const value = qty * price;
+                const packageLabel = getPackageLabel(item);
+                return `
+                  <tr>
+                    <td style="padding:8px; border-bottom:1px solid var(--border);">
+                      ${escapeHtml(item.name || "-")}
+                    </td>
+                    <td style="padding:8px; border-bottom:1px solid var(--border); color:var(--text-muted);">
+                      ${escapeHtml(item.category || "-")}
+                    </td>
+                    <td style="padding:8px; border-bottom:1px solid var(--border); color:var(--text-muted);">
+                      ${packageLabel}
+                    </td>
+                    <td style="padding:8px; text-align:right; border-bottom:1px solid var(--border);">
+                      ${formatNumber(qty)} ${escapeHtml(item.unit || "")}
+                    </td>
+                    <td style="padding:8px; text-align:right; border-bottom:1px solid var(--border);">
+                      Rs ${formatMoney(price)}
+                    </td>
+                    <td style="padding:8px; text-align:right; border-bottom:1px solid var(--border); font-weight:700;">
+                      Rs ${formatMoney(value)}
+                    </td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+
+        </div>
+
+      </div>
+    `;
+
+  }).join("");
+}
+
+
+function toggleSupplierExpand(index) {
+  const box = document.getElementById(`supplier-detail-${index}`);
+  if (!box) return;
+  box.style.display = box.style.display === "none" ? "block" : "none";
+}
+
+
+/* =====================================================
+   PRINT — SINGLE SUPPLIER
+===================================================== */
+
+function printSingleSupplier(index) {
+
+  const supplier = currentSupplierData[index];
+  if (!supplier) return;
+
+  const restaurantName = getRestaurantName();
+
+  const rows = supplier.items.map(item => {
+    const qty = Number(item.stock_quantity || 0);
+    const price = Number(item.purchase_price || 0);
+    const value = qty * price;
+    const packageLabel = getPackageLabel(item);
+    return `
+      <tr>
+        <td>${escapeHtml(item.name || "-")}</td>
+        <td>${escapeHtml(item.category || "-")}</td>
+        <td>${packageLabel}</td>
+        <td style="text-align:right;">
+          ${formatNumber(qty)} ${escapeHtml(item.unit || "")}
+        </td>
+        <td style="text-align:right;">Rs ${formatMoney(price)}</td>
+        <td style="text-align:right; font-weight:700;">
+          Rs ${formatMoney(value)}
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  const html = buildSupplierPrintHtml(
+    restaurantName,
+    supplier,
+    rows
+  );
+
+  openPrintWindow(html);
+}
+
+
+function printAllSuppliers() {
+
+  if (!currentSupplierData.length) {
+    alert("No suppliers to print.");
+    return;
+  }
+
+  const restaurantName = getRestaurantName();
+
+  const sections = currentSupplierData.map(supplier => {
+
+    const rows = supplier.items.map(item => {
+      const qty = Number(item.stock_quantity || 0);
+      const price = Number(item.purchase_price || 0);
+      const value = qty * price;
+      const packageLabel = getPackageLabel(item);
+      return `
+        <tr>
+          <td>${escapeHtml(item.name || "-")}</td>
+          <td>${escapeHtml(item.category || "-")}</td>
+          <td>${packageLabel}</td>
+          <td style="text-align:right;">
+            ${formatNumber(qty)} ${escapeHtml(item.unit || "")}
+          </td>
+          <td style="text-align:right;">Rs ${formatMoney(price)}</td>
+          <td style="text-align:right;">Rs ${formatMoney(value)}</td>
+        </tr>
+      `;
+    }).join("");
+
+    return `
+      <div class="supplier-block">
+        <h2>🏢 ${escapeHtml(supplier.supplier)}</h2>
+        <div class="sub">
+          ${supplier.itemCount} items &nbsp;·&nbsp;
+          Total Value: <strong>Rs ${formatMoney(supplier.totalStockValue)}</strong>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Category</th>
+              <th>Package</th>
+              <th style="text-align:right;">Stock</th>
+              <th style="text-align:right;">Price</th>
+              <th style="text-align:right;">Value</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  }).join("");
+
+  const grandTotal = currentSupplierData.reduce(
+    (sum, s) => sum + s.totalStockValue, 0
+  );
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Supplier-wise Summary — ${escapeHtml(restaurantName)}</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 24px; color: #111827; }
+        h1 { margin: 0 0 4px; }
+        .meta { color: #6b7280; font-size: 13px; margin-bottom: 24px; }
+        .supplier-block {
+          margin-bottom: 28px;
+          page-break-inside: avoid;
+          border: 1px solid #d1d5db;
+          border-radius: 8px;
+          padding: 14px 16px;
+        }
+        .supplier-block h2 { margin: 0 0 4px; font-size: 17px; }
+        .sub { color: #6b7280; font-size: 12px; margin-bottom: 12px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { padding: 7px 8px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+        th { background: #f3f4f6; font-weight: 700; }
+        .grand {
+          margin-top: 20px;
+          padding: 14px 16px;
+          background: #f0fdf4;
+          border: 1px solid #bbf7d0;
+          border-radius: 8px;
+          font-size: 15px;
+          font-weight: 800;
+          text-align: right;
+        }
+        @media print { body { padding: 10px; } }
+      </style>
+    </head>
+    <body onload="window.print();">
+      <h1>📊 Supplier-wise Stock Summary</h1>
+      <div class="meta">
+        ${escapeHtml(restaurantName)} &nbsp;·&nbsp;
+        Printed: ${new Date().toLocaleString()}
+      </div>
+
+      ${sections}
+
+      <div class="grand">
+        Total Inventory Value: Rs ${formatMoney(grandTotal)}
+      </div>
+    </body>
+    </html>
+  `;
+
+  openPrintWindow(html);
+}
+
+
+function buildSupplierPrintHtml(restaurantName, supplier, rows) {
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${escapeHtml(supplier.supplier)} — Supplier Statement</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 24px; color: #111827; }
+        h1 { margin: 0 0 4px; }
+        .meta { color: #6b7280; font-size: 13px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+        th { background: #f3f4f6; font-weight: 700; }
+        .summary {
+          margin-top: 18px;
+          padding: 14px 16px;
+          background: #f0fdf4;
+          border: 1px solid #bbf7d0;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 800;
+          text-align: right;
+        }
+        @media print { body { padding: 10px; } }
+      </style>
+    </head>
+    <body onload="window.print();">
+      <h1>🏢 ${escapeHtml(supplier.supplier)}</h1>
+      <div class="meta">
+        Supplier Statement &nbsp;·&nbsp;
+        ${escapeHtml(restaurantName)} &nbsp;·&nbsp;
+        Printed: ${new Date().toLocaleString()}
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Category</th>
+            <th>Package</th>
+            <th style="text-align:right;">Stock</th>
+            <th style="text-align:right;">Purchase Price</th>
+            <th style="text-align:right;">Stock Value</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+
+      <div class="summary">
+        Total Items: ${supplier.itemCount} &nbsp;·&nbsp;
+        Total Value: Rs ${formatMoney(supplier.totalStockValue)}
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+
+/* =====================================================
+   WHATSAPP SHARE
+===================================================== */
+
+function shareSupplierWhatsApp(index) {
+
+  const supplier = currentSupplierData[index];
+  if (!supplier) return;
+
+  const phone = prompt(
+    `Enter WhatsApp number for "${supplier.supplier}"\n` +
+    `(with country code, e.g. 923001234567)\n\n` +
+    `Leave blank to share as plain text:`,
+    ""
+  );
+
+  if (phone === null) return;
+
+  const restaurantName = getRestaurantName();
+
+  let message = `📦 *Supplier Stock Summary*\n`;
+  message += `_${restaurantName}_\n`;
+  message += `📅 ${new Date().toLocaleDateString()}\n\n`;
+  message += `*Supplier:* ${supplier.supplier}\n\n`;
+
+  supplier.items.forEach(item => {
+    const qty = Number(item.stock_quantity || 0);
+    const price = Number(item.purchase_price || 0);
+    const value = qty * price;
+    const pkgSize = Number(item.package_size || 0);
+    const pkgUnit = item.package_unit || "";
+    const pkgLabel = pkgSize > 0 && pkgUnit
+      ? ` [${formatNumber(pkgSize)}${pkgUnit}]`
+      : "";
+    message += `• ${item.name}${pkgLabel}: ${formatNumber(qty)} ${item.unit || ""} `;
+    message += `(Rs ${formatMoney(value)})\n`;
+  });
+
+  message += `\n━━━━━━━━━━━━━━━\n`;
+  message += `*Total Items:* ${supplier.itemCount}\n`;
+  message += `*Total Value:* Rs ${formatMoney(supplier.totalStockValue)}\n`;
+
+  const encoded = encodeURIComponent(message);
+
+  const url = phone
+    ? `https://wa.me/${String(phone).replace(/\D/g, "")}?text=${encoded}`
+    : `https://wa.me/?text=${encoded}`;
+
+  window.open(url, "_blank");
+}
+
+
+/* =====================================================
+   EMAIL SHARE
+===================================================== */
+
+function shareSupplierEmail(index) {
+
+  const supplier = currentSupplierData[index];
+  if (!supplier) return;
+
+  const email = prompt(
+    `Enter email for "${supplier.supplier}":`,
+    ""
+  );
+
+  if (email === null) return;
+
+  const restaurantName = getRestaurantName();
+
+  const subject = `Stock Summary — ${supplier.supplier} — ${new Date().toLocaleDateString()}`;
+
+  let body = `Supplier Stock Summary\n`;
+  body += `Restaurant: ${restaurantName}\n`;
+  body += `Date: ${new Date().toLocaleString()}\n\n`;
+  body += `Supplier: ${supplier.supplier}\n\n`;
+  body += `Items:\n`;
+  body += `-------------------------------------------\n`;
+
+  supplier.items.forEach(item => {
+    const qty = Number(item.stock_quantity || 0);
+    const price = Number(item.purchase_price || 0);
+    const value = qty * price;
+    const pkgSize = Number(item.package_size || 0);
+    const pkgUnit = item.package_unit || "";
+    const pkgLabel = pkgSize > 0 && pkgUnit
+      ? ` [${formatNumber(pkgSize)}${pkgUnit}]`
+      : "";
+    body += `${item.name}${pkgLabel} (${item.category || "-"})\n`;
+    body += `  Qty: ${formatNumber(qty)} ${item.unit || ""}\n`;
+    body += `  Price: Rs ${formatMoney(price)}\n`;
+    body += `  Value: Rs ${formatMoney(value)}\n\n`;
+  });
+
+  body += `-------------------------------------------\n`;
+  body += `Total Items: ${supplier.itemCount}\n`;
+  body += `Total Value: Rs ${formatMoney(supplier.totalStockValue)}\n`;
+
+  const url = `mailto:${encodeURIComponent(email)}` +
+    `?subject=${encodeURIComponent(subject)}` +
+    `&body=${encodeURIComponent(body)}`;
+
+  window.location.href = url;
+}
+
+
+/* =====================================================
+   EXPORT ALL SUPPLIERS CSV
+===================================================== */
+
+function exportSuppliersCSV() {
+
+  if (!currentSupplierData.length) {
+    alert("No suppliers to export.");
+    return;
+  }
+
+  const rows = [
+    [
+      "Supplier",
+      "Item",
+      "Category",
+      "Package Size",
+      "Package Unit",
+      "Stock Qty",
+      "Unit",
+      "Purchase Price",
+      "Stock Value"
+    ]
+  ];
+
+  currentSupplierData.forEach(supplier => {
+    supplier.items.forEach(item => {
+      const qty = Number(item.stock_quantity || 0);
+      const price = Number(item.purchase_price || 0);
+      const value = qty * price;
+      rows.push([
+        supplier.supplier,
+        item.name || "",
+        item.category || "",
+        Number(item.package_size || 0) || "",
+        item.package_unit || "",
+        qty,
+        item.unit || "",
+        price,
+        value
+      ]);
+    });
+    rows.push([
+      `${supplier.supplier} (TOTAL)`,
+      `${supplier.itemCount} items`,
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      supplier.totalStockValue
+    ]);
+    rows.push([]);
+  });
+
+  const csv = rows
+    .map(row => row.map(value => {
+      const text = String(value ?? "");
+      return `"${text.replace(/"/g, '""')}"`;
+    }).join(","))
+    .join("\n");
+
+  const blob = new Blob(["\uFEFF" + csv], {
+    type: "text/csv;charset=utf-8;"
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `supplier-summary-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+
+/* =====================================================
+   HELPERS
+===================================================== */
+
+function getRestaurantName() {
+  const header = document.querySelector(".brand-header .brand-name");
+  if (header) return header.innerText.trim();
+  return "Restaurant";
+}
+
+function openPrintWindow(html) {
+  const win = window.open("", "_blank", "width=1100,height=800");
+  if (!win) {
+    alert("Please allow pop-ups to print.");
+    return;
+  }
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+}
+
+/* =====================================================
+   SUPPLIER DROPDOWN
+===================================================== */
+
+async function loadSuppliersForDropdown(selectedId = null) {
+  const select = document.getElementById("supplier");
+  if (!select) return;
+
+  try {
+    const res = await fetch("/api/suppliers?active=true", {
+      headers: { "Authorization": "Bearer " + token }
+    });
+    const data = await res.json().catch(() => ({}));
+    suppliersList = Array.isArray(data.data) ? data.data : [];
+
+    // Rebuild dropdown
+    select.innerHTML = `
+      <option value="">— No supplier —</option>
+      <option value="__new__">➕ Add new supplier...</option>
+      ${suppliersList.map(s =>
+        `<option value="${s.id}" ${Number(s.id) === Number(selectedId) ? 'selected' : ''}>${escapeHtml(s.name)}${s.phone ? ' — ' + escapeHtml(s.phone) : ''}</option>`
+      ).join('')}
+    `;
+
+    // Preserve old text selection if we had a text value (legacy)
+    if (selectedId && !suppliersList.find(s => Number(s.id) === Number(selectedId))) {
+      const legacyOption = document.createElement("option");
+      legacyOption.value = "";
+      legacyOption.textContent = selectedId;
+      legacyOption.selected = true;
+      select.insertBefore(legacyOption, select.children[1]);
+    }
+
+  } catch (err) {
+    console.error("loadSuppliersForDropdown:", err);
+  }
+}
+
+function handleSupplierChange() {
+  const select = document.getElementById("supplier");
+  if (!select) return;
+
+  if (select.value === "__new__") {
+    // Reset to blank, then open modal
+    select.value = "";
+    openQuickSupplierModal();
+  }
+}
+
+function openQuickSupplierModal() {
+  ["quick-supplier-name", "quick-supplier-phone", "quick-supplier-email"]
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+  const msg = document.getElementById("quick-supplier-msg");
+  if (msg) msg.innerText = "";
+  document.getElementById("quick-supplier-modal").style.display = "block";
+  setTimeout(() => document.getElementById("quick-supplier-name")?.focus(), 100);
+}
+
+function closeQuickSupplierModal() {
+  document.getElementById("quick-supplier-modal").style.display = "none";
+}
+
+async function saveQuickSupplier() {
+  const name = document.getElementById("quick-supplier-name").value.trim();
+  if (!name) { alert("Supplier name required"); return; }
+
+  const body = {
+    name,
+    phone: document.getElementById("quick-supplier-phone").value.trim(),
+    email: document.getElementById("quick-supplier-email").value.trim()
+  };
+
+  const btn = document.getElementById("quick-supplier-save-btn");
+  btn.disabled = true;
+  btn.innerText = "Saving...";
+
+  try {
+    const res = await fetch("/api/suppliers", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || "Failed");
+    }
+
+    closeQuickSupplierModal();
+
+    // Reload dropdown with new supplier selected
+    await loadSuppliersForDropdown(data.data.id);
+
+    // Show success message
+    const msgEl = document.getElementById("supplier");
+    if (msgEl) msgEl.style.borderColor = "var(--success)";
+    setTimeout(() => { if (msgEl) msgEl.style.borderColor = "var(--border)"; }, 1000);
+
+  } catch (err) {
+    alert("Error: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Save Supplier";
+  }
+}
+
+
+window.handleSupplierChange = handleSupplierChange;
+window.openQuickSupplierModal = openQuickSupplierModal;
+window.closeQuickSupplierModal = closeQuickSupplierModal;
+window.saveQuickSupplier = saveQuickSupplier;

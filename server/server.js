@@ -157,6 +157,7 @@ app.use('/api/menu', require('./routes/menuRoutes'));
 app.use('/api/deals', require('./routes/dealRoutes'));
 app.use('/api/menu-variants', require('./routes/menuVariantRoutes'));
 app.use('/api/fbr', require('./routes/fbrRoutes'));
+app.use('/api/suppliers', require('./routes/supplierRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
