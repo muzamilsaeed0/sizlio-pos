@@ -1,53 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const fbrController = require('../controllers/fbrController');
 const { authMiddleware, authorize } = require('../middleware/authMiddleware');
+const userController = require('../controllers/userController');
 
-// ── Config (manager / super_admin only) ──────────────────────────────
-router.get(
-  '/config/:restaurantId',
-  authMiddleware,
-  authorize('manager', 'super_admin'),
-  fbrController.getConfig
-);
-
-router.post(
-  '/config/:restaurantId',
-  authMiddleware,
-  authorize('manager', 'super_admin'),
-  fbrController.saveConfig
-);
-
-// ── Pending list + manual retry queue (manager / super_admin) ────────
-router.get(
-  '/pending',
-  authMiddleware,
-  authorize('manager', 'super_admin'),
-  fbrController.getPendingInvoices
-);
-
-router.post(
-  '/retry',
-  authMiddleware,
-  authorize('manager', 'super_admin'),
-  fbrController.retryNow
-);
-
-// ── Per-order submit / status (manager, counter, super_admin) ────────
-// Counter is allowed so pay-screen manual resubmit works if needed.
-// Auto-submit from orderController still runs server-side (no HTTP role needed).
-router.post(
-  '/submit/:orderId',
-  authMiddleware,
-  authorize('manager', 'counter', 'super_admin'),
-  fbrController.submitOrderInvoice
-);
-
-router.get(
-  '/status/:orderId',
-  authMiddleware,
-  authorize('manager', 'counter', 'super_admin'),
-  fbrController.getInvoiceStatus
-);
+router.get('/', authMiddleware, authorize('manager'), userController.getStaff);
+router.post('/', authMiddleware, authorize('manager', 'super_admin'), userController.addStaff);
+router.put('/:id', authMiddleware, authorize('manager'), userController.editStaff);
+router.patch('/:id/deactivate', authMiddleware, authorize('manager'), userController.deactivateStaff);
+router.patch('/:id/activate', authMiddleware, authorize('manager'), userController.activateStaff);
 
 module.exports = router;
