@@ -169,7 +169,7 @@
 
     /* FBR badge */
     .fbr-badge {
-      display: none;
+      display: inline-block;
       background: var(--danger);
       color: #fff;
       border-radius: 10px;
@@ -178,87 +178,88 @@
       font-weight: 700;
       margin-left: 6px;
     }
+    .fbr-badge.hidden { display: none; }
 
     /* FBR Settings */
-.fbr-toggle-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 14px;
-  padding: 12px 14px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-}
-.fbr-status-pill {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 20px;
-  margin-left: 8px;
-}
-.fbr-status-pill.on { background: rgba(47,163,125,0.2); color: var(--success); }
-.fbr-status-pill.off { background: rgba(156,163,175,0.15); color: var(--muted); }
-.fbr-status-pill.sandbox { background: rgba(227,162,59,0.2); color: var(--accent); }
-.fbr-hint {
-  font-size: 12px;
-  color: var(--muted);
-  margin: 0 0 14px;
-  line-height: 1.45;
-}
-.fbr-form .field { margin-bottom: 10px; }
-.fbr-form .field label {
-  display: block;
-  font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 4px;
-  font-weight: 600;
-}
-.fbr-form input,
-.fbr-form select {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text);
-  font-size: 13px;
-}
-.fbr-form input:focus,
-.fbr-form select:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-.fbr-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 14px;
-}
-.fbr-actions button {
-  flex: 1;
-  min-width: 120px;
-  padding: 11px;
-  border-radius: 8px;
-  border: 0;
-  font-weight: 700;
-  font-size: 13px;
-  cursor: pointer;
-}
-.btn-fbr-save { background: var(--accent); color: #14181c; }
-.btn-fbr-test { background: var(--success); color: #fff; }
-.btn-fbr-ghost {
-  background: transparent;
-  color: var(--text);
-  border: 1px solid var(--border) !important;
-}
-#fbr-settings-msg {
-  font-size: 12px;
-  text-align: center;
-  min-height: 18px;
-  margin-top: 10px;
-}
+    .fbr-toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .fbr-status-pill {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-left: 8px;
+    }
+    .fbr-status-pill.on { background: rgba(47,163,125,0.2); color: var(--success); }
+    .fbr-status-pill.off { background: rgba(156,163,175,0.15); color: var(--muted); }
+    .fbr-status-pill.sandbox { background: rgba(227,162,59,0.2); color: var(--accent); }
+    .fbr-hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 14px;
+      line-height: 1.45;
+    }
+    .fbr-form .field { margin-bottom: 10px; }
+    .fbr-form .field label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .fbr-form input,
+    .fbr-form select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+    }
+    .fbr-form input:focus,
+    .fbr-form select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .fbr-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .fbr-actions button {
+      flex: 1;
+      min-width: 120px;
+      padding: 11px;
+      border-radius: 8px;
+      border: 0;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-fbr-save { background: var(--accent); color: #14181c; }
+    .btn-fbr-test { background: var(--success); color: #fff; }
+    .btn-fbr-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border) !important;
+    }
+    #fbr-settings-msg {
+      font-size: 12px;
+      text-align: center;
+      min-height: 18px;
+      margin-top: 10px;
+    }
 
     /* ========================= MODALS ========================= */
     .modal-overlay { display: none; position: fixed; inset: 0; background: #0009; z-index: 1500; align-items: center; justify-content: center; padding: 15px; }
@@ -277,6 +278,11 @@
     .modal-close-x:hover { background: var(--danger) !important; color: #fff !important; }
     .staff-modal-box h3 { padding-right: 40px; }
     .staff-close-btn { background: transparent !important; color: var(--text) !important; border: 1px solid var(--border) !important; }
+
+    /* FBR Setup modal */
+    #fbr-setup-modal .modal-box {
+      max-width: 640px;
+    }
 
     /* FBR retry all button */
     .fbr-retry-all-btn {
@@ -430,8 +436,7 @@
       <button onclick="openPage('sales.html?type=today')">📊 Sales</button>
       <button onclick="openPage('inventory.html')">📦 Inventory</button>
       <button onclick="openKitchenRequestsModal()">📥 Kitchen Requests</button>
-      <button onclick="openFbrInvoicesModal()">🧾 FBR Invoices <span id="fbr-pending-badge" class="fbr-badge">0</span></button>
-      <button onclick="openFbrSettingsModal()">🧾 FBR Setup</button>
+      <button onclick="openFbrSetupModal()">🧾 FBR Setup <span id="fbr-pending-badge" class="fbr-badge hidden">0</span></button>
       <button onclick="openStaffPerformance()">📈 Staff Performance</button>
       <button class="menu-parent" onclick="toggleMenuSubmenu()">🍔 Menu <span>▾</span></button>
       <div id="menu-submenu" class="menu-submenu">
@@ -488,82 +493,99 @@
           </div> 
           <p id="location-msg" style="font-size:12px; text-align:center; margin-top:8px;"></p> 
         </div>
+      </div>
+    </div>
 
-        <!-- ========== FBR TAX COMPLIANCE ========== -->
-        <div class="card" style="margin-top:16px;">
-          <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <h2>🧾 FBR Tax Compliance</h2>
-            <span id="fbr-status-pill" class="fbr-status-pill off">Off</span>
+    <!-- ================= FBR SETUP MODAL (with Pending Invoices integrated) ================= -->
+    <div class="modal-overlay" id="fbr-setup-modal">
+      <div class="modal-box" style="max-width:640px;">
+        <button class="modal-close-x" onclick="closeFbrSetupModal()" aria-label="Close">&times;</button>
+        <h3 style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <span>🧾 FBR Setup</span>
+          <span id="fbr-status-pill" class="fbr-status-pill off">Off</span>
+        </h3>
+
+        <p class="fbr-hint">
+          IRIS se POS Registration Number aur API token lo. Pehle <strong>Sandbox</strong> test karo, phir Production.
+          Token sirf manager ke paas rahe.
+        </p>
+
+        <div class="fbr-toggle-row">
+          <div>
+            <strong style="font-size:14px;">Enable FBR</strong>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px;">Paid/completed orders pe auto-submit</div>
           </div>
-
-          <p class="fbr-hint">
-            IRIS se POS Registration Number aur API token lo. Pehle <strong>Sandbox</strong> test karo, phir Production.
-            Token sirf manager ke paas rahe.
-          </p>
-
-          <div class="fbr-toggle-row">
-            <div>
-              <strong style="font-size:14px;">Enable FBR</strong>
-              <div style="font-size:12px;color:var(--muted);margin-top:2px;">Paid/completed orders pe auto-submit</div>
-            </div>
-            <label class="switch">
-              <input type="checkbox" id="fbr-enabled" onchange="onFbrToggle()">
-              <span class="slider"></span>
-            </label>
-          </div>
-
-          <div id="fbr-form-wrap" class="fbr-form" style="display:none;">
-            <div class="form-grid">
-              <div class="field">
-                <label>Environment</label>
-                <select id="fbr-environment">
-                  <option value="sandbox">Sandbox (test)</option>
-                  <option value="production">Production (live)</option>
-                </select>
-              </div>
-              <div class="field">
-                <label>POS Registration No</label>
-                <input type="text" id="fbr-pos-reg" placeholder="FBR POS ID" autocomplete="off">
-              </div>
-              <div class="field">
-                <label>API Token (Bearer)</label>
-                <input type="password" id="fbr-api-token" placeholder="Paste token from IRIS" autocomplete="new-password">
-              </div>
-              <div class="field">
-                <label>Seller NTN / CNIC</label>
-                <input type="text" id="fbr-seller-ntn" placeholder="1234567-8">
-              </div>
-              <div class="field">
-                <label>Seller Business Name</label>
-                <input type="text" id="fbr-seller-name" placeholder="As registered with FBR">
-              </div>
-              <div class="field">
-                <label>Province</label>
-                <select id="fbr-seller-province">
-                  <option value="">Select</option>
-                  <option value="Punjab">Punjab</option>
-                  <option value="Sindh">Sindh</option>
-                  <option value="Khyber Pakhtunkhwa">Khyber Pakhtunkhwa</option>
-                  <option value="Balochistan">Balochistan</option>
-                  <option value="Islamabad Capital Territory">Islamabad</option>
-                  <option value="Gilgit-Baltistan">Gilgit-Baltistan</option>
-                  <option value="Azad Jammu and Kashmir">AJK</option>
-                </select>
-              </div>
-              <div class="field" style="grid-column:1/-1;">
-                <label>Seller Address</label>
-                <input type="text" id="fbr-seller-address" placeholder="Outlet address">
-              </div>
-            </div>
-
-            <div class="fbr-actions">
-              <button type="button" class="btn-fbr-save" onclick="saveFbrSettings()">💾 Save FBR Settings</button>
-              <button type="button" class="btn-fbr-test" onclick="testFbrConnection()">🔗 Test / Reload</button>
-              <button type="button" class="btn-fbr-ghost" onclick="openFbrInvoicesModal()">📋 Pending Invoices</button>
-            </div>
-            <p id="fbr-settings-msg"></p>
-          </div>
+          <label class="switch">
+            <input type="checkbox" id="fbr-enabled" onchange="onFbrToggle()">
+            <span class="slider"></span>
+          </label>
         </div>
+
+        <div id="fbr-form-wrap" class="fbr-form" style="display:none;">
+          <div class="form-grid">
+            <div class="field">
+              <label>Environment</label>
+              <select id="fbr-environment">
+                <option value="sandbox">Sandbox (test)</option>
+                <option value="production">Production (live)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>POS Registration No</label>
+              <input type="text" id="fbr-pos-reg" placeholder="FBR POS ID" autocomplete="off">
+            </div>
+            <div class="field">
+              <label>API Token (Bearer)</label>
+              <input type="password" id="fbr-api-token" placeholder="Paste token from IRIS" autocomplete="new-password">
+            </div>
+            <div class="field">
+              <label>Seller NTN / CNIC</label>
+              <input type="text" id="fbr-seller-ntn" placeholder="1234567-8">
+            </div>
+            <div class="field">
+              <label>Seller Business Name</label>
+              <input type="text" id="fbr-seller-name" placeholder="As registered with FBR">
+            </div>
+            <div class="field">
+              <label>Province</label>
+              <select id="fbr-seller-province">
+                <option value="">Select</option>
+                <option value="Punjab">Punjab</option>
+                <option value="Sindh">Sindh</option>
+                <option value="Khyber Pakhtunkhwa">Khyber Pakhtunkhwa</option>
+                <option value="Balochistan">Balochistan</option>
+                <option value="Islamabad Capital Territory">Islamabad</option>
+                <option value="Gilgit-Baltistan">Gilgit-Baltistan</option>
+                <option value="Azad Jammu and Kashmir">AJK</option>
+              </select>
+            </div>
+            <div class="field" style="grid-column:1/-1;">
+              <label>Seller Address</label>
+              <input type="text" id="fbr-seller-address" placeholder="Outlet address">
+            </div>
+          </div>
+
+          <div class="fbr-actions">
+            <button type="button" class="btn-fbr-save" onclick="saveFbrSettings()">💾 Save FBR Settings</button>
+            <button type="button" class="btn-fbr-test" onclick="testFbrConnection()">🔗 Test / Reload</button>
+          </div>
+          <p id="fbr-settings-msg"></p>
+        </div>
+
+        <!-- ✅ Pending Invoices section (inside FBR Setup) -->
+        <div style="margin-top:22px; padding-top:16px; border-top:1px solid var(--border);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
+            <div>
+              <div style="font-size:15px;font-weight:800;">📋 Pending Invoices</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px;">
+                Failed/pending submissions. Auto-retry har 5 minute.
+              </div>
+            </div>
+            <button type="button" class="fbr-retry-all-btn" style="flex:0 0 auto;padding:8px 14px;font-size:12px;" onclick="retryAllFbrInvoices()">🔄 Retry All</button>
+          </div>
+          <div id="fbr-invoices-list" style="max-height:280px; overflow-y:auto;"></div>
+        </div>
+
       </div>
     </div>
 
@@ -669,21 +691,6 @@
       </div>
     </div>
 
-    <!-- FBR INVOICES MODAL -->
-    <div class="modal-overlay" id="fbr-invoices-modal">
-      <div class="modal-box" style="max-width: 520px;">
-        <button class="modal-close-x" onclick="closeFbrInvoicesModal()" aria-label="Close">&times;</button>
-        <h3>🧾 FBR Invoices</h3>
-        <p style="color: var(--muted); font-size: 12px; margin: 0 0 12px;">
-          Pending aur failed invoices. Retry manually karo ya auto-retry worker ka wait karo (har 5 min).
-        </p>
-        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-          <button class="fbr-retry-all-btn" onclick="retryAllFbrInvoices()">🔄 Retry All Now</button>
-        </div>
-        <div id="fbr-invoices-list" style="max-height: 420px; overflow-y: auto;"></div>
-      </div>
-    </div>
-
     <!-- STAFF PERFORMANCE MODAL -->
     <div class="modal-overlay" id="staff-performance-modal">
       <div class="modal-box" style="max-width: 900px;">
@@ -784,7 +791,6 @@
     let editingMenuItemId = null;
 
     /* MENU DATA */
-
     const CATEGORY_GROUPS = {
       fastFood: {
         "Burgers": ["Zinger Burger", "Chicken Burger", 
@@ -1422,7 +1428,6 @@
     }
 
     /* SETTINGS */
-    // Note: openSettings is defined below with FBR settings loading
     function closeSettings() { document.getElementById("settings-modal").classList.remove("open"); ["set-username", "set-current-password", "set-new-password"].forEach(id => { document.getElementById(id).value = ""; }); }
     async function saveSettings() {
       const username = document.getElementById("set-username").value.trim();
@@ -1438,6 +1443,14 @@
         msg.innerText = res.ok ? "Updated successfully." : (data.message || "Update failed");
         if (res.ok) setTimeout(closeSettings, 1200);
       } catch (error) { msg.style.color = "var(--danger)"; msg.innerText = "Server connection failed"; }
+    }
+
+    function openSettings() {
+      closeMenu();
+      document.getElementById("settings-modal").classList.add("open");
+      const sm = document.getElementById("settings-msg");
+      if (sm) sm.innerText = "";
+      if (typeof loadLocation === "function") loadLocation();
     }
 
     /* THEME */
@@ -1589,21 +1602,154 @@
     }
 
     /* =====================================================
-       FBR INVOICES
+       FBR SETUP (with Pending Invoices integrated)
        ===================================================== */
 
-    function openFbrInvoicesModal() {
+    function openFbrSetupModal() {
       closeMenu();
-      document.getElementById("fbr-invoices-modal").classList.add("open");
+      document.getElementById("fbr-setup-modal").classList.add("open");
+      loadFbrSettings();
       loadFbrInvoices();
     }
 
-    function closeFbrInvoicesModal() {
-      document.getElementById("fbr-invoices-modal").classList.remove("open");
+    function closeFbrSetupModal() {
+      document.getElementById("fbr-setup-modal").classList.remove("open");
     }
+
+    function onFbrToggle() {
+      const on = document.getElementById("fbr-enabled").checked;
+      document.getElementById("fbr-form-wrap").style.display = on ? "block" : "none";
+      updateFbrStatusPill(on, document.getElementById("fbr-environment")?.value);
+    }
+
+    function updateFbrStatusPill(enabled, env) {
+      const pill = document.getElementById("fbr-status-pill");
+      if (!pill) return;
+      pill.className = "fbr-status-pill";
+      if (!enabled) {
+        pill.classList.add("off");
+        pill.textContent = "Off";
+      } else if (env === "sandbox") {
+        pill.classList.add("sandbox");
+        pill.textContent = "Sandbox";
+      } else {
+        pill.classList.add("on");
+        pill.textContent = "Live";
+      }
+    }
+
+    async function loadFbrSettings() {
+      if (!restaurantId) return;
+      const msg = document.getElementById("fbr-settings-msg");
+      try {
+        const res = await fetch(`/api/fbr/config/${encodeURIComponent(restaurantId)}`, {
+          headers: authHeaders()
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          if (msg) msg.innerText = data.message || "Could not load FBR config";
+          return;
+        }
+
+        const cfg = data.config || data || {};
+        const enabled = !!(cfg.fbr_enabled);
+        document.getElementById("fbr-enabled").checked = enabled;
+        document.getElementById("fbr-form-wrap").style.display = enabled ? "block" : "none";
+        document.getElementById("fbr-environment").value = cfg.fbr_environment || "sandbox";
+        document.getElementById("fbr-pos-reg").value = cfg.fbr_pos_registration_no || "";
+       
+
+        // ✅ Token UI mein mat bharo
+        const hasToken = !!(cfg.fbr_has_token || (cfg.fbr_api_token && !String(cfg.fbr_api_token).includes("••")));
+        window.__fbrHasToken = hasToken;
+        const tokenEl = document.getElementById("fbr-api-token");
+        tokenEl.value = "";
+        tokenEl.placeholder = hasToken
+          ? "Token saved — leave blank to keep current"
+          : "Paste token from IRIS";
+
+
+        document.getElementById("fbr-seller-ntn").value = cfg.fbr_seller_ntn_cnic || "";
+        document.getElementById("fbr-seller-name").value = cfg.fbr_seller_business_name || "";
+        document.getElementById("fbr-seller-province").value = cfg.fbr_seller_province || "";
+        document.getElementById("fbr-seller-address").value = cfg.fbr_seller_address || "";
+        updateFbrStatusPill(enabled, cfg.fbr_environment);
+      } catch (e) {
+        console.error("loadFbrSettings:", e);
+        if (msg) msg.innerText = "Network error loading FBR settings";
+      }
+    }
+
+    async function saveFbrSettings() {
+      const msg = document.getElementById("fbr-settings-msg");
+      msg.innerText = "Saving...";
+      msg.style.color = "var(--muted)";
+
+      const tokenInput = document.getElementById("fbr-api-token").value.trim();
+
+      const body = {
+        fbr_enabled: document.getElementById("fbr-enabled").checked,
+        fbr_environment: document.getElementById("fbr-environment").value || "sandbox",
+        fbr_pos_registration_no: document.getElementById("fbr-pos-reg").value.trim() || null,
+        fbr_api_token: tokenInput || null, // blank = server purana token rakhega
+        fbr_seller_ntn_cnic: document.getElementById("fbr-seller-ntn").value.trim() || null,
+        fbr_seller_business_name: document.getElementById("fbr-seller-name").value.trim() || null,
+        fbr_seller_province: document.getElementById("fbr-seller-province").value || null,
+        fbr_seller_address: document.getElementById("fbr-seller-address").value.trim() || null,
+      };
+
+      if (body.fbr_enabled) {
+        if (!tokenInput && !window.__fbrHasToken) {
+          msg.innerText = "API token required when FBR is enabled";
+          msg.style.color = "var(--danger)";
+          return;
+        }
+        if (!body.fbr_seller_ntn_cnic || !body.fbr_seller_business_name) {
+          msg.innerText = "Seller NTN and Business Name required";
+          msg.style.color = "var(--danger)";
+          return;
+        }
+      }
+
+      try {
+        const res = await fetch(`/api/fbr/config/${encodeURIComponent(restaurantId)}`, {
+          method: "POST",
+          headers: { ...authHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          msg.innerText = data.message || "Save failed";
+          msg.style.color = "var(--danger)";
+          return;
+        }
+        msg.innerText = "✓ FBR settings saved";
+        msg.style.color = "var(--success)";
+        updateFbrStatusPill(body.fbr_enabled, body.fbr_environment);
+        await refreshFbrBadge();
+      } catch (e) {
+        console.error("saveFbrSettings:", e);
+        msg.innerText = "Network error";
+        msg.style.color = "var(--danger)";
+      }
+    }
+
+    async function testFbrConnection() {
+      const msg = document.getElementById("fbr-settings-msg");
+      msg.innerText = "Loading config...";
+      msg.style.color = "var(--muted)";
+      await loadFbrSettings();
+      msg.innerText = "✓ Config reloaded. Use a test order (sandbox) to verify submit.";
+      msg.style.color = "var(--success)";
+    }
+
+    /* =====================================================
+       FBR INVOICES (inside FBR Setup)
+       ===================================================== */
 
     async function loadFbrInvoices() {
       const list = document.getElementById("fbr-invoices-list");
+      if (!list) return;
       list.innerHTML = '<div class="empty">Loading FBR invoices...</div>';
 
       try {
@@ -1631,6 +1777,7 @@
 
     function renderFbrInvoices(invoices) {
       const list = document.getElementById("fbr-invoices-list");
+      if (!list) return;
 
       if (!invoices.length) {
         list.innerHTML = '<div class="empty">🎉 No pending FBR invoices.</div>';
@@ -1679,9 +1826,11 @@
 
       if (count > 0) {
         badge.innerText = count;
+        badge.classList.remove("hidden");
         badge.style.display = "inline-block";
       } else {
         badge.style.display = "none";
+        badge.classList.add("hidden");
       }
     }
 
@@ -1752,137 +1901,6 @@
           updateFbrBadge(data.invoices.length);
         }
       } catch (_) {}
-    }
-
-    /* ========================= FBR SETTINGS ========================= */
-
-    function onFbrToggle() {
-      const on = document.getElementById("fbr-enabled").checked;
-      document.getElementById("fbr-form-wrap").style.display = on ? "block" : "none";
-      updateFbrStatusPill(on, document.getElementById("fbr-environment")?.value);
-    }
-
-    function updateFbrStatusPill(enabled, env) {
-      const pill = document.getElementById("fbr-status-pill");
-      if (!pill) return;
-      pill.className = "fbr-status-pill";
-      if (!enabled) {
-        pill.classList.add("off");
-        pill.textContent = "Off";
-      } else if (env === "sandbox") {
-        pill.classList.add("sandbox");
-        pill.textContent = "Sandbox";
-      } else {
-        pill.classList.add("on");
-        pill.textContent = "Live";
-      }
-    }
-
-    async function loadFbrSettings() {
-      if (!restaurantId) return;
-      const msg = document.getElementById("fbr-settings-msg");
-      try {
-        const res = await fetch(`/api/fbr/config/${encodeURIComponent(restaurantId)}`, {
-          headers: authHeaders()
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          if (msg) msg.innerText = data.message || "Could not load FBR config";
-          return;
-        }
-
-        const cfg = data.config || data || {};
-        const enabled = !!(cfg.fbr_enabled);
-        document.getElementById("fbr-enabled").checked = enabled;
-        document.getElementById("fbr-form-wrap").style.display = enabled ? "block" : "none";
-        document.getElementById("fbr-environment").value = cfg.fbr_environment || "sandbox";
-        document.getElementById("fbr-pos-reg").value = cfg.fbr_pos_registration_no || "";
-        document.getElementById("fbr-api-token").value = cfg.fbr_api_token || "";
-        document.getElementById("fbr-seller-ntn").value = cfg.fbr_seller_ntn_cnic || "";
-        document.getElementById("fbr-seller-name").value = cfg.fbr_seller_business_name || "";
-        document.getElementById("fbr-seller-province").value = cfg.fbr_seller_province || "";
-        document.getElementById("fbr-seller-address").value = cfg.fbr_seller_address || "";
-        updateFbrStatusPill(enabled, cfg.fbr_environment);
-      } catch (e) {
-        console.error("loadFbrSettings:", e);
-        if (msg) msg.innerText = "Network error loading FBR settings";
-      }
-    }
-
-    async function saveFbrSettings() {
-      const msg = document.getElementById("fbr-settings-msg");
-      msg.innerText = "Saving...";
-      msg.style.color = "var(--muted)";
-
-      const body = {
-        fbr_enabled: document.getElementById("fbr-enabled").checked,
-        fbr_environment: document.getElementById("fbr-environment").value || "sandbox",
-        fbr_pos_registration_no: document.getElementById("fbr-pos-reg").value.trim() || null,
-        fbr_api_token: document.getElementById("fbr-api-token").value.trim() || null,
-        fbr_seller_ntn_cnic: document.getElementById("fbr-seller-ntn").value.trim() || null,
-        fbr_seller_business_name: document.getElementById("fbr-seller-name").value.trim() || null,
-        fbr_seller_province: document.getElementById("fbr-seller-province").value || null,
-        fbr_seller_address: document.getElementById("fbr-seller-address").value.trim() || null
-      };
-
-      if (body.fbr_enabled) {
-        if (!body.fbr_api_token) {
-          msg.innerText = "API token required when FBR is enabled";
-          msg.style.color = "var(--danger)";
-          return;
-        }
-        if (!body.fbr_seller_ntn_cnic || !body.fbr_seller_business_name) {
-          msg.innerText = "Seller NTN and Business Name required";
-          msg.style.color = "var(--danger)";
-          return;
-        }
-      }
-
-      try {
-        const res = await fetch(`/api/fbr/config/${encodeURIComponent(restaurantId)}`, {
-          method: "POST",
-          headers: { ...authHeaders(), "Content-Type": "application/json" },
-          body: JSON.stringify(body)
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          msg.innerText = data.message || "Save failed";
-          msg.style.color = "var(--danger)";
-          return;
-        }
-        msg.innerText = "✓ FBR settings saved";
-        msg.style.color = "var(--success)";
-        updateFbrStatusPill(body.fbr_enabled, body.fbr_environment);
-        await refreshFbrBadge();
-      } catch (e) {
-        console.error("saveFbrSettings:", e);
-        msg.innerText = "Network error";
-        msg.style.color = "var(--danger)";
-      }
-    }
-
-    async function testFbrConnection() {
-      const msg = document.getElementById("fbr-settings-msg");
-      msg.innerText = "Loading config...";
-      msg.style.color = "var(--muted)";
-      await loadFbrSettings();
-      msg.innerText = "✓ Config reloaded. Use a test order (sandbox) to verify submit.";
-      msg.style.color = "var(--success)";
-    }
-
-    // Main openSettings — FBR settings ke saath
-    function openSettings() {
-      closeMenu();
-      document.getElementById("settings-modal").classList.add("open");
-      const sm = document.getElementById("settings-msg");
-      if (sm) sm.innerText = "";
-      if (typeof loadLocation === "function") loadLocation();
-      loadFbrSettings();
-    }
-
-    // FBR Setup menu button ke liye alias
-    function openFbrSettingsModal() {
-      openSettings();
     }
 
     /* =====================================================
@@ -2058,7 +2076,6 @@
        STAFF PERFORMANCE — PRINT & CSV EXPORT
        ===================================================== */
 
-    // Store last loaded data for export
     let lastStaffPerformanceData = {
       shifts: [],
       totalsByRole: null,
@@ -2397,7 +2414,6 @@
       }
     }
 
-    // Load existing location on page load
     async function loadLocation() {
       try {
         const res = await fetch('/api/restaurants/me', { headers: authHeaders() });
@@ -2440,12 +2456,12 @@
 
     /* MODAL CLICK OUTSIDE */
     document.getElementById("settings-modal").addEventListener("click", event => { if (event.target.id === "settings-modal") closeSettings(); });
+    document.getElementById("fbr-setup-modal").addEventListener("click", event => { if (event.target.id === "fbr-setup-modal") closeFbrSetupModal(); });
     document.getElementById("staff-modal").addEventListener("click", event => { if (event.target.id === "staff-modal") closeStaffModal(); });
     document.getElementById("items-modal").addEventListener("click", event => { if (event.target.id === "items-modal") closeItemsModal(); });
     document.getElementById("category-modal").addEventListener("click", event => { if (event.target.id === "category-modal") closeCategoryModal(); });
     document.getElementById("deal-modal").addEventListener("click", event => { if (event.target.id === "deal-modal") closeDealModal(); });
     document.getElementById("kitchen-requests-modal").addEventListener("click", event => { if (event.target.id === "kitchen-requests-modal") closeKitchenRequestsModal(); });
-    document.getElementById("fbr-invoices-modal").addEventListener("click", event => { if (event.target.id === "fbr-invoices-modal") closeFbrInvoicesModal(); });
     document.getElementById("staff-performance-modal").addEventListener("click", event => { if (event.target.id === "staff-performance-modal") closeStaffPerformance(); });
 
     /* INITIALIZATION */
