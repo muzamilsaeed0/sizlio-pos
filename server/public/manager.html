@@ -1725,6 +1725,11 @@
         }
         msg.innerText = "✓ FBR settings saved";
         msg.style.color = "var(--success)";
+        if (tokenInput || window.__fbrHasToken) {
+          window.__fbrHasToken = true;
+        document.getElementById("fbr-api-token").value = "";  
+        document.getElementById("fbr-api-token").placeholder = "Token saved - leave blank to keep current";
+        }
         updateFbrStatusPill(body.fbr_enabled, body.fbr_environment);
         await refreshFbrBadge();
       } catch (e) {
