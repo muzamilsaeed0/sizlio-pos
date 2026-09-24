@@ -1,15 +1,95 @@
 // =====================================================
-// SERVICE WORKER — Push Notifications
+// SERVICE WORKER — Push Notifications + PWA Install
+// =====================================================
+
+const CACHE_NAME = 'sizlio-pwa-v1';
+const STATIC_ASSETS = [
+    '/rider',
+    '/waiter.html',
+    '/manifest.json',
+    '/manifest-waiter.json',
+    '/icon-192.png',
+    '/icon-512.png'
+];
+
+// =====================================================
+// INSTALL
 // =====================================================
 
 self.addEventListener('install', event => {
     console.log('SW installed');
-    self.skipWaiting();
+    event.waitUntil(
+        caches.open(CACHE_NAME).then(cache => {
+            return cache.addAll(STATIC_ASSETS).catch(err => {
+                console.warn('SW: Some assets failed to cache:', err);
+            });
+        }).then(() => self.skipWaiting())
+    );
 });
+
+// =====================================================
+// ACTIVATE
+// =====================================================
 
 self.addEventListener('activate', event => {
     console.log('SW activated');
-    event.waitUntil(self.clients.claim());
+    event.waitUntil(
+        caches.keys().then(keys => {
+            return Promise.all(
+                keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+            );
+        }).then(() => self.clients.claim())
+    );
+});
+
+// =====================================================
+// FETCH — offline support + PWA install requirement
+// =====================================================
+
+self.addEventListener('fetch', event => {
+    const url = new URL(event.request.url);
+
+    // Skip non-GET, API calls, and socket.io
+    if (
+        event.request.method !== 'GET' ||
+        url.pathname.startsWith('/api/') ||
+        url.pathname.startsWith('/socket.io/') ||
+        url.pathname.startsWith('/push/')
+    ) {
+        return;
+    }
+
+    event.respondWith(
+        fetch(event.request)
+            .then(response => {
+                // Cache successful responses
+                if (response.ok && response.type === 'basic') {
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then(cache => {
+                        cache.put(event.request, clone);
+                    });
+                }
+                return response;
+            })
+            .catch(() => {
+                // Offline — serve from cache
+                return caches.match(event.request).then(cached => {
+                    if (cached) return cached;
+
+                    // If navigation request, serve appropriate HTML
+                    if (event.request.mode === 'navigate') {
+                        if (url.pathname.includes('rider')) {
+                            return caches.match('/rider');
+                        }
+                        if (url.pathname.includes('waiter')) {
+                            return caches.match('/waiter.html');
+                        }
+                    }
+
+                    return new Response('Offline', { status: 503 });
+                });
+            })
+    );
 });
 
 // =====================================================
@@ -66,13 +146,11 @@ self.addEventListener('notificationclick', event => {
             type: 'window', 
             includeUncontrolled: true 
         }).then(clientList => {
-            // Focus existing rider window if open
             for (const client of clientList) {
                 if (client.url.includes('rider') && 'focus' in client) {
                     return client.focus();
                 }
             }
-            // Otherwise open new window
             if (clients.openWindow) {
                 return clients.openWindow(urlToOpen);
             }
