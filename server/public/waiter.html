@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Waiter</title>
+<link rel="manifest" href="/manifest-waiter.json">
+<meta name="theme-color" content="#E3A23B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Waiter">
+<link rel="apple-touch-icon" href="/waiter-192.png">
 <style>
   * { box-sizing: border-box; }
   body { font-family: 'Segoe UI', system-ui, sans-serif; background: #14181C; color: #F6F3EC; margin: 0; padding: 0; }
@@ -151,7 +156,36 @@
   .current-item .actions { display: flex; align-items: center; gap: 8px; }
   .current-item .variant-tag { color: #E3A23B; font-size: 11px; }
 
-  /* ===== TOAST NOTIFICATIONS (Top-center) ===== */
+  /* ===== TOP ACTION BAR ===== */
+  .top-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+  }
+  .btn-install {
+    background: #2FA37D;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    display: none;
+  }
+  .btn-install:hover { background: #34d399; }
+  .btn-logout {
+    background: #E15A4C;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  /* ===== TOAST NOTIFICATIONS ===== */
   #toast-container {
     position: fixed;
     top: 20px;
@@ -186,7 +220,7 @@
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
 
-  /* ===== CENTER STOCK ALERT (Overlay) ===== */
+  /* ===== CENTER STOCK ALERT ===== */
   #stock-alert-overlay {
     display: none;
     position: fixed;
@@ -250,10 +284,8 @@
 
   <div class="brand-header" id="brand-header" style="display:none;"></div>
 
-  <!-- TOAST CONTAINER (Top-center) -->
   <div id="toast-container"></div>
 
-  <!-- STOCK ALERT OVERLAY -->
   <div id="stock-alert-overlay">
     <div class="stock-alert-box">
       <div class="icon">⚠️</div>
@@ -280,8 +312,9 @@
 </div>
 
 <div id="app-box" style="display:none;">
-  <div style="display:flex; justify-content:flex-end; margin-bottom:15px;">
-    <button onclick="logout()" style="background:#E15A4C;color:white;border:none;padding:10px 16px;border-radius:8px;font-weight:bold;cursor:pointer;">Logout</button>
+  <div class="top-actions">
+    <button id="install-btn" class="btn-install" onclick="installPwa()">📲 Install App</button>
+    <button class="btn-logout" onclick="logout()">Logout</button>
   </div>
   <div id="pending-section"></div>
   <div id="ready-section"></div>
@@ -332,6 +365,79 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
 // ============================================================
+//  PWA — SERVICE WORKER + INSTALL
+// ============================================================
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (event) => {
+  console.log('🔥 Install prompt fired');
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  const btn = document.getElementById('install-btn');
+  if (btn) btn.style.display = 'inline-block';
+});
+
+window.addEventListener('appinstalled', () => {
+  console.log('[PWA] App installed');
+  deferredInstallPrompt = null;
+  const btn = document.getElementById('install-btn');
+  if (btn) btn.style.display = 'none';
+});
+
+function installPwa() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then((choice) => {
+      console.log('[PWA] User choice:', choice.outcome);
+      if (choice.outcome === 'accepted') {
+        const btn = document.getElementById('install-btn');
+        if (btn) btn.style.display = 'none';
+      }
+      deferredInstallPrompt = null;
+    });
+    return;
+  }
+
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (isIos) {
+    alert(
+      '📲 Install on iPhone:\n\n' +
+      '1. Safari ke Share button (⬆️) tap karo\n' +
+      '2. "Add to Home Screen" select karo\n' +
+      '3. "Add" dabao'
+    );
+    return;
+  }
+
+  alert(
+    '📲 Install App:\n\n' +
+    'Browser menu (⋮) → "Install App" ya "Add to Home Screen"'
+  );
+}
+
+function isStandalonePwa() {
+  return window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true;
+}
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+      .then(reg => console.log('[SW] Registered:', reg.scope))
+      .catch(err => console.error('[SW] Failed:', err));
+  });
+}
+
+// Hide install button if already installed
+window.addEventListener('DOMContentLoaded', () => {
+  if (isStandalonePwa()) {
+    const btn = document.getElementById('install-btn');
+    if (btn) btn.style.display = 'none';
+  }
+});
+
+// ============================================================
 //  GLOBALS
 // ============================================================
 let token = localStorage.getItem('waiter_token');
@@ -379,9 +485,6 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;');
 }
 
-// ============================================================
-//  TOAST NOTIFICATION (Top-center)
-// ============================================================
 function showToast(message, type = 'success', sub = '') {
   const container = document.getElementById('toast-container');
   const toast = document.createElement('div');
@@ -391,9 +494,6 @@ function showToast(message, type = 'success', sub = '') {
   setTimeout(() => { toast.remove(); }, 4000);
 }
 
-// ============================================================
-//  STOCK ALERT (Center overlay)
-// ============================================================
 function showStockAlert(message) {
   document.getElementById('stock-alert-msg').textContent = message;
   document.getElementById('stock-alert-overlay').classList.add('show');
@@ -620,7 +720,6 @@ function removeItem(id, variantId) {
   updateCartBar();
 }
 
-// ✅ NEW: Full remove item (Cross button)
 function removeItemFull(id, variantId) {
   variantId = variantId || null;
   cart = cart.filter(i => 
@@ -630,7 +729,6 @@ function removeItemFull(id, variantId) {
   updateCartBar();
 }
 
-// ✅ NEW: Full remove deal (Cross button)
 function removeDealFull(id) {
   dealCart = dealCart.filter(d => d.deal_id !== id);
   updateDealButtons();
@@ -736,7 +834,7 @@ function updateDealButtons() {
 }
 
 // ============================================================
-//  CART BAR (with × remove button)
+//  CART BAR
 // ============================================================
 function updateCartBar() {
   const cartItemsList = document.getElementById('cart-items-list');
@@ -753,7 +851,6 @@ function updateCartBar() {
 
   let html = '';
 
-  // ✅ Cart Items with × button
   cart.forEach(item => {
     const nameEsc = item.name.replace(/'/g, "\\'");
     const variantLabel = item.variant_label ? ` (${escapeHtml(item.variant_label)})` : '';
@@ -777,7 +874,6 @@ function updateCartBar() {
     `;
   });
 
-  // ✅ Deal Items with × button
   dealCart.forEach(deal => {
     const nameEsc = deal.name.replace(/'/g, "\\'");
     html += `
@@ -814,7 +910,7 @@ function changeTable(delta) {
 }
 
 // ============================================================
-//  PENDING ORDERS (with customer name + items detail)
+//  PENDING ORDERS
 // ============================================================
 async function loadPendingOrders() {
   const res = await fetch('/api/orders', { headers: authHeaders() });
@@ -846,7 +942,6 @@ async function loadPendingOrders() {
       }
       if (!itemsHtml) itemsHtml = '<em style="color:#6B7280;">No items</em>';
 
-      // ✅ FIX: table_no ko priority do — QR orders bhi sahi dikhein
       const orderType = String(o.order_type || '').toLowerCase();
       const tableNo = Number(o.table_no);
       let locationLabel = '';
@@ -854,7 +949,6 @@ async function loadPendingOrders() {
       if (orderType === 'delivery') {
         locationLabel = '🛵 Delivery';
       } else if (tableNo > 0) {
-        // Table number hai to dine-in (QR ya counter)
         locationLabel = `🍽️ Table ${escapeHtml(tableNo)}`;
       } else if (orderType === 'walk_in') {
         locationLabel = '🛍️ Walk-in';
@@ -862,7 +956,6 @@ async function loadPendingOrders() {
         locationLabel = '🍽️ Dine-in';
       }
 
-      // ✅ Customer name sirf tab dikhayein jab mojood ho
       const customerName = o.customer_name ? escapeHtml(o.customer_name) : '';
       const total = Number(o.total_amount || 0).toFixed(0);
 
@@ -905,7 +998,7 @@ async function acceptOrder(id) {
 }
 
 // ============================================================
-//  READY ORDERS (with customer name + items detail)
+//  READY ORDERS
 // ============================================================
 async function loadReadyOrders() {
   const res = await fetch('/api/orders', { headers: authHeaders() });
@@ -936,7 +1029,6 @@ async function loadReadyOrders() {
       }
       if (!itemsHtml) itemsHtml = '<em style="color:#6B7280;">No items</em>';
 
-      // ✅ FIX: table_no ko priority do — QR orders bhi sahi dikhein
       const orderType = String(o.order_type || '').toLowerCase();
       const tableNo = Number(o.table_no);
       let locationLabel = '';
@@ -951,7 +1043,6 @@ async function loadReadyOrders() {
         locationLabel = '🍽️ Dine-in';
       }
 
-      // ✅ Customer name sirf tab dikhayein jab mojood ho
       const customerName = o.customer_name ? escapeHtml(o.customer_name) : '';
       const total = Number(o.total_amount || 0).toFixed(0);
 
@@ -997,7 +1088,6 @@ async function serveOrder(id) {
     if (!res.ok) {
       const errMsg = data.message || data.error || 'Serve failed';
 
-      // Inventory / stock error
       if (
         data.error === 'INSUFFICIENT_KITCHEN_STOCK' ||
         data.error === 'KITCHEN_STOCK_NOT_FOUND' ||
