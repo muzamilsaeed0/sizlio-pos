@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Icon Generator - Rider App</title>
+<title>Icon Generator - Sizlio Apps</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -18,29 +18,66 @@
     .box {
         background: #1e293b;
         border-radius: 20px;
-        padding: 40px 30px;
-        max-width: 500px;
+        padding: 36px 28px;
+        max-width: 560px;
         width: 100%;
         text-align: center;
         border: 1px solid #334155;
     }
-    h1 { color: #22c55e; margin-bottom: 10px; font-size: 24px; }
-    p { color: #94a3b8; margin-bottom: 30px; font-size: 14px; line-height: 1.6; }
+    h1 { color: #22c55e; margin-bottom: 8px; font-size: 22px; }
+    p { color: #94a3b8; margin-bottom: 22px; font-size: 13px; line-height: 1.6; }
+
+    /* Preset Selector (Rider / Waiter) */
+    .preset-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 24px;
+        justify-content: center;
+    }
+    .preset-btn {
+        flex: 1;
+        background: #0f172a;
+        border: 2px solid #334155;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-weight: 800;
+        font-size: 14px;
+        color: #94a3b8;
+        cursor: pointer;
+        transition: all .15s;
+    }
+    .preset-btn:hover { border-color: #22c55e; color: white; }
+    .preset-btn.active {
+        border-color: #22c55e;
+        background: rgba(34,197,94,.1);
+        color: white;
+    }
+
+    .section-label {
+        display: block;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 10px;
+        text-align: left;
+    }
+
     .preview-row {
         display: flex;
         gap: 20px;
         justify-content: center;
-        margin-bottom: 30px;
+        margin-bottom: 26px;
         align-items: center;
     }
     .preview-item {
         text-align: center;
     }
     .preview-item canvas {
-        background: #22c55e;
         border-radius: 22%;
         display: block;
-        box-shadow: 0 8px 20px rgba(34,197,94,.3);
+        box-shadow: 0 8px 20px rgba(0,0,0,.4);
     }
     .preview-item span {
         display: block;
@@ -59,7 +96,7 @@
         font-size: 15px;
         cursor: pointer;
         width: 100%;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
     }
     .btn:hover { background: #4ade80; }
     .btn-secondary {
@@ -68,35 +105,37 @@
         border: 1px solid #334155;
     }
     .btn-secondary:hover { background: #334155; color: white; }
+
     .emoji-choice {
         display: flex;
         gap: 10px;
         justify-content: center;
-        margin-bottom: 25px;
+        margin-bottom: 22px;
         flex-wrap: wrap;
     }
     .emoji-choice button {
         background: #0f172a;
         border: 2px solid #334155;
         border-radius: 14px;
-        width: 60px;
-        height: 60px;
-        font-size: 28px;
+        width: 58px;
+        height: 58px;
+        font-size: 26px;
         cursor: pointer;
         transition: all .15s;
     }
     .emoji-choice button:hover { border-color: #22c55e; }
     .emoji-choice button.active { border-color: #22c55e; background: rgba(34,197,94,.1); }
+
     .color-choice {
         display: flex;
         gap: 10px;
         justify-content: center;
-        margin-bottom: 25px;
+        margin-bottom: 22px;
         flex-wrap: wrap;
     }
     .color-choice button {
-        width: 44px;
-        height: 44px;
+        width: 42px;
+        height: 42px;
         border-radius: 50%;
         border: 3px solid transparent;
         cursor: pointer;
@@ -104,17 +143,34 @@
     }
     .color-choice button:hover { transform: scale(1.1); }
     .color-choice button.active { border-color: white; transform: scale(1.1); }
+
+    .divider {
+        border-top: 1px solid #334155;
+        margin: 20px 0;
+    }
 </style>
 </head>
 <body>
 
 <div class="box">
-    <h1>🚴 Rider App Icons</h1>
+    <h1>🎨 App Icons Generator</h1>
     <p>
-        Icon banane ke liye emoji aur color select karein,<br>
-        phir "Download Icons" dabayein. Dono PNG files download hongi.
+        Rider ya Waiter app ka icon banao. Emoji + color select karo,<br>
+        phir "Download" dabao.
     </p>
 
+    <!-- PRESET SELECTOR -->
+    <span class="section-label">1. Kis app ke liye?</span>
+    <div class="preset-row">
+        <button class="preset-btn active" data-preset="rider" onclick="selectPreset('rider')">
+            🚴 Rider App
+        </button>
+        <button class="preset-btn" data-preset="waiter" onclick="selectPreset('waiter')">
+            🍽️ Waiter App
+        </button>
+    </div>
+
+    <!-- PREVIEWS -->
     <div class="preview-row">
         <div class="preview-item">
             <canvas id="preview192" width="192" height="192" style="width:96px;height:96px;"></canvas>
@@ -126,16 +182,24 @@
         </div>
     </div>
 
+    <!-- EMOJI CHOICE -->
+    <span class="section-label">2. Emoji choose karo</span>
     <div class="emoji-choice" id="emojiChoice">
         <button data-emoji="🚴" class="active">🚴</button>
         <button data-emoji="🛵">🛵</button>
-        <button data-emoji="📦">📦</button>
+        <button data-emoji="🍽️">🍽️</button>
+        <button data-emoji="🧑‍🍳">🧑‍🍳</button>
+        <button data-emoji="📋">📋</button>
         <button data-emoji="🍔">🍔</button>
         <button data-emoji="🏪">🏪</button>
+        <button data-emoji="📦">📦</button>
     </div>
 
+    <!-- COLOR CHOICE -->
+    <span class="section-label">3. Color choose karo</span>
     <div class="color-choice" id="colorChoice">
         <button data-color="#22c55e" style="background:#22c55e" class="active"></button>
+        <button data-color="#e3a23b" style="background:#e3a23b"></button>
         <button data-color="#3b82f6" style="background:#3b82f6"></button>
         <button data-color="#f59e0b" style="background:#f59e0b"></button>
         <button data-color="#ef4444" style="background:#ef4444"></button>
@@ -143,13 +207,21 @@
         <button data-color="#0f172a" style="background:#0f172a;border:3px solid #334155"></button>
     </div>
 
-    <button class="btn" onclick="downloadIcons()">⬇️ Download Icons (Both)</button>
-    <button class="btn btn-secondary" onclick="downloadIcon(192)">Download 192 only</button>
+    <div class="divider"></div>
+
+    <!-- DOWNLOAD BUTTONS -->
+    <button class="btn" onclick="downloadIcons()" id="downloadMainBtn">
+        ⬇️ Download Rider Icons (Both)
+    </button>
+    <button class="btn btn-secondary" onclick="downloadIcon(192)" id="downloadSmallBtn">
+        Download 192 only
+    </button>
 </div>
 
 <script>
     let currentEmoji = '🚴';
     let currentColor = '#22c55e';
+    let currentPreset = 'rider'; // 'rider' or 'waiter'
 
     function drawIcon(canvas, size) {
         const ctx = canvas.getContext('2d');
@@ -186,7 +258,49 @@
         drawIcon(document.getElementById('preview512'), 512);
     }
 
-    // Emoji selection
+    // ============================================================
+    // PRESET SELECTOR
+    // ============================================================
+    function selectPreset(preset) {
+        currentPreset = preset;
+
+        // Update preset button states
+        document.querySelectorAll('.preset-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.preset === preset);
+        });
+
+        // Pre-fill emoji + color for preset
+        if (preset === 'rider') {
+            currentEmoji = '🚴';
+            currentColor = '#22c55e';
+        } else if (preset === 'waiter') {
+            currentEmoji = '🍽️';
+            currentColor = '#e3a23b';
+        }
+
+        // Update emoji buttons
+        document.querySelectorAll('#emojiChoice button').forEach(b => {
+            b.classList.toggle('active', b.dataset.emoji === currentEmoji);
+        });
+
+        // Update color buttons
+        document.querySelectorAll('#colorChoice button').forEach(b => {
+            b.classList.toggle('active', b.dataset.color === currentColor);
+        });
+
+        // Update download button text
+        const label = preset === 'rider' ? 'Rider' : 'Waiter';
+        document.getElementById('downloadMainBtn').innerText =
+            `⬇️ Download ${label} Icons (Both)`;
+        document.getElementById('downloadSmallBtn').innerText =
+            `Download 192 only (${label})`;
+
+        refreshPreviews();
+    }
+
+    // ============================================================
+    // EMOJI SELECTION
+    // ============================================================
     document.getElementById('emojiChoice').addEventListener('click', (e) => {
         const btn = e.target.closest('button');
         if (!btn) return;
@@ -196,7 +310,9 @@
         refreshPreviews();
     });
 
-    // Color selection
+    // ============================================================
+    // COLOR SELECTION
+    // ============================================================
     document.getElementById('colorChoice').addEventListener('click', (e) => {
         const btn = e.target.closest('button');
         if (!btn) return;
@@ -206,6 +322,9 @@
         refreshPreviews();
     });
 
+    // ============================================================
+    // DOWNLOAD
+    // ============================================================
     function downloadIcon(size) {
         const canvas = document.createElement('canvas');
         canvas.width = size;
@@ -216,7 +335,9 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `icon-${size}.png`;
+            // ✅ Preset ke hisaab se filename
+            const prefix = currentPreset === 'waiter' ? 'waiter' : 'icon';
+            a.download = `${prefix}-${size}.png`;
             document.body.appendChild(a);
             a.click();
             a.remove();
