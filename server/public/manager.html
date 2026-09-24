@@ -445,6 +445,7 @@
         <button onclick="openMenuDeals()">🎁 Deals / Combos</button>
       </div>
       <button onclick="openStaffModal()">👥 Staff</button>
+      <button onclick="openPosSettings()">💵 POS Settings</button>
       <button onclick="openSettings()">⚙️ Settings</button>
       <button onclick="logout()" style="color: var(--danger);">🚪 Logout</button>
     </div>
@@ -496,7 +497,7 @@
       </div>
     </div>
 
-    <!-- ================= FBR SETUP MODAL (with Pending Invoices integrated) ================= -->
+    <!-- ================= FBR SETUP MODAL ================= -->
     <div class="modal-overlay" id="fbr-setup-modal">
       <div class="modal-box" style="max-width:640px;">
         <button class="modal-close-x" onclick="closeFbrSetupModal()" aria-label="Close">&times;</button>
@@ -572,7 +573,6 @@
           <p id="fbr-settings-msg"></p>
         </div>
 
-        <!-- ✅ Pending Invoices section (inside FBR Setup) -->
         <div style="margin-top:22px; padding-top:16px; border-top:1px solid var(--border);">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
             <div>
@@ -586,6 +586,97 @@
           <div id="fbr-invoices-list" style="max-height:280px; overflow-y:auto;"></div>
         </div>
 
+      </div>
+    </div>
+
+    <!-- ================= POS / COUNTER SETTINGS ================= -->
+    <div class="modal-overlay" id="pos-settings-modal">
+      <div class="modal-box" style="max-width:620px;">
+        <button class="modal-close-x" onclick="closePosSettings()" aria-label="Close">&times;</button>
+        <h3>💵 POS / Counter Settings</h3>
+
+        <p class="fbr-hint">
+          Ye settings Counter POS pe auto-apply hongi. Counter user inhe change nahi kar sakta.
+          Discount sirf pre-fill hota hai — counter staff bill ke waqt change kar sakta hai.
+        </p>
+
+        <!-- TAX / CHARGES -->
+        <div class="form-grid">
+          <div class="field">
+            <label>Default GST %</label>
+            <input id="pos-gst" type="number" min="0" max="100" step="0.01" value="0">
+          </div>
+          <div class="field">
+            <label>Default Other Tax %</label>
+            <input id="pos-tax" type="number" min="0" max="100" step="0.01" value="0">
+          </div>
+          <div class="field">
+            <label>Default Delivery Charges (Rs)</label>
+            <input id="pos-delivery" type="number" min="0" step="0.01" value="0">
+          </div>
+          <div class="field">
+            <label>Default Dine-in / Service Charges (Rs)</label>
+            <input id="pos-dine" type="number" min="0" step="0.01" value="0">
+          </div>
+          <div class="field">
+            <label>💳 Card Charges % <small style="color:var(--muted);font-weight:400;">(surcharge)</small></label>
+            <input id="pos-card" type="number" min="0" max="100" step="0.01" value="0">
+          </div>
+          <div class="field">
+            <label>🏦 Bank Charges % <small style="color:var(--muted);font-weight:400;">(surcharge)</small></label>
+            <input id="pos-bank" type="number" min="0" max="100" step="0.01" value="0">
+          </div>
+        </div>
+
+        <!-- DISCOUNT -->
+        <div style="border-top:1px solid var(--border); padding-top:14px; margin-top:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div>
+              <div style="font-weight:700;font-size:14px;">💰 Default Discount</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px;">
+                Counter screen pe pre-fill hoga
+              </div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="pos-discount-enabled">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label>Discount Type</label>
+              <select id="pos-discount-type">
+                <option value="none">None</option>
+                <option value="percent">Percent %</option>
+                <option value="fixed">Fixed Rs</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Discount Value</label>
+              <input id="pos-discount-value" type="number" min="0" step="0.01" value="0">
+            </div>
+            <div class="field" style="grid-column:1/-1;">
+              <label>Reason (optional)</label>
+              <input id="pos-discount-reason" maxlength="200" placeholder="e.g. Regular customer">
+            </div>
+          </div>
+        </div>
+
+        <!-- RAAST QR -->
+        <div style="border-top:1px solid var(--border); padding-top:14px; margin-top:14px;">
+          <div class="field">
+            <label>🔗 Raast QR String
+              <small style="color:var(--muted);font-weight:400;">(khali chhoro to QR payment disable)</small>
+            </label>
+            <input id="pos-raast-qr" type="text" placeholder="RAAST://PAY?...">
+          </div>
+        </div>
+
+        <div class="fbr-actions" style="margin-top:18px;">
+          <button type="button" class="btn-fbr-save" onclick="savePosSettings()">💾 Save Settings</button>
+          <button type="button" class="btn-fbr-ghost" onclick="closePosSettings()">Cancel</button>
+        </div>
+        <p id="pos-settings-msg" style="font-size:12px;text-align:center;min-height:18px;margin-top:10px;"></p>
       </div>
     </div>
 
@@ -700,7 +791,6 @@
           Rider, Kitchen, Counter — sab ki shift performance.
         </p>
 
-        <!-- Filters -->
         <div class="staff-perf-filters">
           <div class="field">
             <label>Role</label>
@@ -728,7 +818,6 @@
           </div>
         </div>
 
-        <!-- Quick filters -->
         <div class="staff-perf-quick">
           <button class="stat-filter-btn" onclick="setStaffPerfRange('today')">Today</button>
           <button class="stat-filter-btn" onclick="setStaffPerfRange('week')">This Week</button>
@@ -736,15 +825,12 @@
           <button class="stat-filter-btn" onclick="setStaffPerfRange('clear')">Clear</button>
         </div>
 
-        <!-- Totals -->
         <div id="staff-perf-totals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px;"></div>
 
-        <!-- Export buttons -->
         <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
           <button onclick="printStaffPerformance()" style="padding:9px 16px;border-radius:8px;border:0;background:var(--accent);color:#14181c;font-weight:700;font-size:12px;cursor:pointer;">🖨️ Print</button>
           <button onclick="exportStaffPerformanceCSV()" style="padding:9px 16px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-weight:700;font-size:12px;cursor:pointer;">📥 Export CSV</button>
         </div>
-        <!-- Shifts table -->
         <div id="staff-perf-table-wrap" style="max-height:420px;overflow-y:auto;"></div>
       </div>
     </div>
@@ -797,7 +883,6 @@
         "Beef Burger", "Double Patty Burger", 
         "Crispy Chicken Burger", "Mushroom Swiss Burger", 
         "Veggie Burger"],
-
         "Pizza": 
         ["Chicken Fajita Pizza", 
         "Pepperoni Pizza", 
@@ -807,7 +892,6 @@
           "Spicy Chicken Pizza",
            "Tandoori Pizza",
             "Margherita Pizza"],
-
         "Sandwiches & Wraps":
          ["Chicken Shawarma", "Chicken Wrap", "Club Sandwich", "Grilled Sandwich", "Chicken Mayo Sandwich", "Turkey Sandwich"],
         "Broast & Fried Chicken": 
@@ -818,7 +902,6 @@
         "Chicken Popcorn", 
         "Hot Wings", 
         "Chicken Tenders"],
-
         "Fries":
          ["French Fries", 
          "Masala Fries", 
@@ -826,7 +909,6 @@
          "Cheese Fries", 
          "Potato Wedges", 
          "Sweet Potato Fries"],
-         
         "Pasta": 
         ["Alfredo Pasta", 
         "Arrabbiata Pasta", 
@@ -834,7 +916,6 @@
         "Creamy Pasta", 
         "Red Sauce Pasta", 
         "Garlic Butter Pasta"],
-
         "Snacks": 
         ["Chicken Samosa",
          "Spin Rolls",
@@ -844,7 +925,6 @@
           "Chicken Rolls", 
           "Potato Wedges", 
           "Garlic Bread"],
-
         "Drinks": 
         ["Mineral Water", 
         "Soft Drinks",
@@ -864,7 +944,6 @@
          "Apple Juice", 
          "Mango Juice", 
          "Strawberry Juice"]
-
       },
       desi: {
         "Karahi": ["Chicken Karahi", "Mutton Karahi", "White Karahi", "Achari Karahi", "Mutton White Karahi", "Chicken Lahori Karahi", "Beef Karahi"],
@@ -1602,9 +1681,119 @@
     }
 
     /* =====================================================
-       FBR SETUP (with Pending Invoices integrated)
-       ===================================================== */
+       POS / COUNTER SETTINGS (Manager)
+    ===================================================== */
+    async function openPosSettings() {
+      closeMenu();
+      const msg = document.getElementById("pos-settings-msg");
+      if (msg) msg.innerText = "";
+      document.getElementById("pos-settings-modal").classList.add("open");
+      await loadPosSettings();
+    }
 
+    function closePosSettings() {
+      document.getElementById("pos-settings-modal").classList.remove("open");
+    }
+
+    async function loadPosSettings() {
+      const msg = document.getElementById("pos-settings-msg");
+      try {
+        const res = await fetch("/api/settings/pos", { headers: authHeaders() });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) {
+          msg.style.color = "var(--danger)";
+          msg.innerText = data.message || "Unable to load settings";
+          return;
+        }
+        const s = data.data || {};
+
+        document.getElementById("pos-gst").value      = s.gst_percent      ?? 0;
+        document.getElementById("pos-tax").value      = s.tax_percent      ?? 0;
+        document.getElementById("pos-delivery").value = s.delivery_charge  ?? 0;
+        document.getElementById("pos-dine").value     = s.dine_charge      ?? 0;
+        document.getElementById("pos-card").value     = s.card_charge      ?? 0;
+        document.getElementById("pos-bank").value     = s.bank_charge      ?? 0;
+
+        document.getElementById("pos-discount-enabled").checked = !!s.discount_enabled;
+        document.getElementById("pos-discount-type").value      = s.discount_type    || "none";
+        document.getElementById("pos-discount-value").value     = s.discount_value   ?? 0;
+        document.getElementById("pos-discount-reason").value    = s.discount_reason  || "";
+
+        // Raast QR
+        try {
+          const qrRes = await fetch("/api/settings/raast-qr", { headers: authHeaders() });
+          if (qrRes.ok) {
+            const qrData = await qrRes.json().catch(() => ({}));
+            document.getElementById("pos-raast-qr").value = qrData?.data?.raast_qr_string || "";
+          }
+        } catch (_) {}
+      } catch (e) {
+        console.error("loadPosSettings:", e);
+        msg.style.color = "var(--danger)";
+        msg.innerText = "Network error";
+      }
+    }
+
+    async function savePosSettings() {
+      const msg = document.getElementById("pos-settings-msg");
+      msg.style.color = "var(--muted)";
+      msg.innerText = "Saving...";
+
+      const body = {
+        gst_percent:      Number(document.getElementById("pos-gst").value      || 0),
+        tax_percent:      Number(document.getElementById("pos-tax").value      || 0),
+        delivery_charge:  Number(document.getElementById("pos-delivery").value || 0),
+        dine_charge:      Number(document.getElementById("pos-dine").value     || 0),
+        card_charge:      Number(document.getElementById("pos-card").value     || 0),
+        bank_charge:      Number(document.getElementById("pos-bank").value     || 0),
+        discount_enabled: document.getElementById("pos-discount-enabled").checked,
+        discount_type:    document.getElementById("pos-discount-type").value,
+        discount_value:   Number(document.getElementById("pos-discount-value").value || 0),
+        discount_reason:  document.getElementById("pos-discount-reason").value.trim()
+      };
+
+      if (body.discount_type === "percent" && body.discount_value > 100) {
+        msg.style.color = "var(--danger)";
+        msg.innerText = "Discount % cannot exceed 100";
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/settings/pos", {
+          method: "PUT",
+          headers: { ...authHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) {
+          msg.style.color = "var(--danger)";
+          msg.innerText = data.message || "Save failed";
+          return;
+        }
+
+        // Raast QR save (separate endpoint)
+        const raastQr = document.getElementById("pos-raast-qr").value.trim();
+        await fetch("/api/settings/raast-qr", {
+          method: "PUT",
+          headers: { ...authHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify({ raast_qr_string: raastQr })
+        }).catch(() => {});
+
+        msg.style.color = "var(--success)";
+        msg.innerText = "✓ Settings saved";
+        setTimeout(closePosSettings, 900);
+      } catch (e) {
+        console.error("savePosSettings:", e);
+        msg.style.color = "var(--danger)";
+        msg.innerText = "Network error";
+      }
+    }
+
+    /* =====================================================
+       FBR SETUP
+    ===================================================== */
     function openFbrSetupModal() {
       closeMenu();
       document.getElementById("fbr-setup-modal").classList.add("open");
@@ -1657,9 +1846,7 @@
         document.getElementById("fbr-form-wrap").style.display = enabled ? "block" : "none";
         document.getElementById("fbr-environment").value = cfg.fbr_environment || "sandbox";
         document.getElementById("fbr-pos-reg").value = cfg.fbr_pos_registration_no || "";
-       
 
-        // ✅ Token UI mein mat bharo
         const hasToken = !!(cfg.fbr_has_token || (cfg.fbr_api_token && !String(cfg.fbr_api_token).includes("••")));
         window.__fbrHasToken = hasToken;
         const tokenEl = document.getElementById("fbr-api-token");
@@ -1667,7 +1854,6 @@
         tokenEl.placeholder = hasToken
           ? "Token saved — leave blank to keep current"
           : "Paste token from IRIS";
-
 
         document.getElementById("fbr-seller-ntn").value = cfg.fbr_seller_ntn_cnic || "";
         document.getElementById("fbr-seller-name").value = cfg.fbr_seller_business_name || "";
@@ -1691,7 +1877,7 @@
         fbr_enabled: document.getElementById("fbr-enabled").checked,
         fbr_environment: document.getElementById("fbr-environment").value || "sandbox",
         fbr_pos_registration_no: document.getElementById("fbr-pos-reg").value.trim() || null,
-        fbr_api_token: tokenInput || null, // blank = server purana token rakhega
+        fbr_api_token: tokenInput || null,
         fbr_seller_ntn_cnic: document.getElementById("fbr-seller-ntn").value.trim() || null,
         fbr_seller_business_name: document.getElementById("fbr-seller-name").value.trim() || null,
         fbr_seller_province: document.getElementById("fbr-seller-province").value || null,
@@ -1727,8 +1913,8 @@
         msg.style.color = "var(--success)";
         if (tokenInput || window.__fbrHasToken) {
           window.__fbrHasToken = true;
-        document.getElementById("fbr-api-token").value = "";  
-        document.getElementById("fbr-api-token").placeholder = "Token saved - leave blank to keep current";
+          document.getElementById("fbr-api-token").value = "";  
+          document.getElementById("fbr-api-token").placeholder = "Token saved - leave blank to keep current";
         }
         updateFbrStatusPill(body.fbr_enabled, body.fbr_environment);
         await refreshFbrBadge();
@@ -1749,9 +1935,8 @@
     }
 
     /* =====================================================
-       FBR INVOICES (inside FBR Setup)
-       ===================================================== */
-
+       FBR INVOICES
+    ===================================================== */
     async function loadFbrInvoices() {
       const list = document.getElementById("fbr-invoices-list");
       if (!list) return;
@@ -1759,21 +1944,16 @@
 
       try {
         const res = await fetch("/api/fbr/pending", { headers: authHeaders() });
-
         if (checkUnauthorized(res)) return;
-
         const data = await res.json().catch(() => ({}));
-
         if (!res.ok || !data.success) {
           list.innerHTML = `<div class="empty">${escapeHtml(data.message || "Unable to load FBR invoices")}</div>`;
           updateFbrBadge(0);
           return;
         }
-
         const invoices = Array.isArray(data.invoices) ? data.invoices : [];
         updateFbrBadge(invoices.length);
         renderFbrInvoices(invoices);
-
       } catch (error) {
         console.error("loadFbrInvoices:", error);
         list.innerHTML = '<div class="empty">Server connection failed.</div>';
@@ -1828,7 +2008,6 @@
     function updateFbrBadge(count) {
       const badge = document.getElementById("fbr-pending-badge");
       if (!badge) return;
-
       if (count > 0) {
         badge.innerText = count;
         badge.classList.remove("hidden");
@@ -1841,26 +2020,20 @@
 
     async function retrySingleFbrInvoice(orderId) {
       if (!confirm(`Retry FBR invoice for order #${orderId}?`)) return;
-
       try {
         const res = await fetch(`/api/fbr/submit/${encodeURIComponent(orderId)}`, {
           method: "POST",
           headers: authHeaders()
         });
-
         if (checkUnauthorized(res)) return;
-
         const data = await res.json().catch(() => ({}));
-
         if (data.success) {
           alert(`✅ Invoice submitted for order #${orderId}`);
         } else {
           alert(`❌ Failed: ${data.error || data.message || "Unknown error"}`);
         }
-
         await loadFbrInvoices();
         await refreshFbrBadge();
-
       } catch (error) {
         console.error("retrySingleFbrInvoice:", error);
         alert("Server connection failed");
@@ -1869,17 +2042,13 @@
 
     async function retryAllFbrInvoices() {
       if (!confirm("Retry ALL pending FBR invoices now?")) return;
-
       try {
         const res = await fetch("/api/fbr/retry", {
           method: "POST",
           headers: authHeaders()
         });
-
         if (checkUnauthorized(res)) return;
-
         const data = await res.json().catch(() => ({}));
-
         if (data.success && Array.isArray(data.results)) {
           const ok = data.results.filter(r => r.success).length;
           const fail = data.results.length - ok;
@@ -1887,10 +2056,8 @@
         } else {
           alert(data.message || "Retry finished");
         }
-
         await loadFbrInvoices();
         await refreshFbrBadge();
-
       } catch (error) {
         console.error("retryAllFbrInvoices:", error);
         alert("Server connection failed");
@@ -1910,8 +2077,7 @@
 
     /* =====================================================
        STAFF PERFORMANCE
-       ===================================================== */
-
+    ===================================================== */
     function openStaffPerformance() {
       closeMenu();
       document.getElementById("staff-performance-modal").classList.add("open");
@@ -1972,15 +2138,12 @@
       try {
         const res = await fetch(`/api/shifts/all?${params.toString()}`, { headers: authHeaders() });
         if (checkUnauthorized(res)) return;
-
         const data = await res.json().catch(() => ({}));
-
         if (!res.ok || !data.success) {
           wrap.innerHTML = `<div class="empty">${escapeHtml(data.message || "Unable to load")}</div>`;
           return;
         }
 
-        // ✅ Store data for export
         lastStaffPerformanceData = {
           shifts: data.shifts || [],
           totalsByRole: data.totals_by_role || null,
@@ -1989,7 +2152,6 @@
 
         renderStaffPerformanceTotals(data.totals_by_role);
         renderStaffPerformanceTable(data.shifts || []);
-
       } catch (err) {
         console.error("loadStaffPerformance:", err);
         wrap.innerHTML = '<div class="empty">Server connection failed.</div>';
@@ -2026,13 +2188,7 @@
         return;
       }
 
-      const roleEmoji = {
-        delivery: "🚴",
-        kitchen: "🍳",
-        counter: "💰",
-        waiter: "🍽️",
-        manager: "👔"
-      };
+      const roleEmoji = { delivery: "🚴", kitchen: "🍳", counter: "💰", waiter: "🍽️", manager: "👔" };
 
       const rows = shifts.map((s, idx) => {
         const emoji = roleEmoji[s.role] || "👤";
@@ -2079,13 +2235,8 @@
 
     /* =====================================================
        STAFF PERFORMANCE — PRINT & CSV EXPORT
-       ===================================================== */
-
-    let lastStaffPerformanceData = {
-      shifts: [],
-      totalsByRole: null,
-      filters: {}
-    };
+    ===================================================== */
+    let lastStaffPerformanceData = { shifts: [], totalsByRole: null, filters: {} };
 
     async function printStaffPerformance() {
       if (!lastStaffPerformanceData.shifts.length) {
@@ -2094,7 +2245,6 @@
       }
 
       const { shifts, totalsByRole, filters } = lastStaffPerformanceData;
-
       const restaurantName = (restaurantInfo && restaurantInfo.name) || "Restaurant";
 
       let filterText = "All shifts";
@@ -2103,13 +2253,7 @@
       if (filters.role && filters.role !== "all") filterText += ` · Role: ${filters.role}`;
       if (filters.username) filterText += ` · User: ${filters.username}`;
 
-      const roleEmoji = {
-        delivery: "🚴",
-        kitchen: "🍳",
-        counter: "💰",
-        waiter: "🍽️",
-        manager: "👔"
-      };
+      const roleEmoji = { delivery: "🚴", kitchen: "🍳", counter: "💰", waiter: "🍽️", manager: "👔" };
 
       const totalsRows = [
         { key: "rider", label: "🚴 Rider" },
@@ -2133,7 +2277,6 @@
         const date = new Date(s.started_at).toLocaleDateString();
         const start = new Date(s.started_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
         const end = s.ended_at ? new Date(s.ended_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "-";
-
         return `
           <tr>
             <td>${date}</td>
@@ -2155,13 +2298,7 @@
           <title>Staff Performance — ${escapeHtml(restaurantName)}</title>
           <style>
             * { box-sizing: border-box; }
-            body {
-              font-family: Arial, Helvetica, sans-serif;
-              padding: 20px;
-              color: #111;
-              background: #fff;
-              font-size: 12px;
-            }
+            body { font-family: Arial, Helvetica, sans-serif; padding: 20px; color: #111; background: #fff; font-size: 12px; }
             h1 { margin: 0 0 4px; font-size: 22px; }
             h2 { margin: 20px 0 10px; font-size: 15px; border-bottom: 2px solid #333; padding-bottom: 6px; }
             .sub { color: #666; font-size: 12px; margin-bottom: 6px; }
@@ -2182,11 +2319,7 @@
         <body onload="window.print();">
           <h1>📈 Staff Performance</h1>
           <div class="sub">${escapeHtml(restaurantName)} — printed ${new Date().toLocaleString()}</div>
-
-          <div class="filters">
-            <strong>Filters:</strong> ${escapeHtml(filterText)}
-          </div>
-
+          <div class="filters"><strong>Filters:</strong> ${escapeHtml(filterText)}</div>
           <h2>Summary by Role</h2>
           <table class="totals-table">
             <thead>
@@ -2198,38 +2331,26 @@
                 <th style="text-align:right">Collected</th>
               </tr>
             </thead>
-            <tbody>
-              ${totalsRows}
-            </tbody>
+            <tbody>${totalsRows}</tbody>
           </table>
-
           <h2>All Shifts (${shifts.length})</h2>
           <table>
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Staff</th>
-                <th>Start</th>
-                <th>End</th>
-                <th>Status</th>
+                <th>Date</th><th>Staff</th><th>Start</th><th>End</th><th>Status</th>
                 <th style="text-align:right">Orders</th>
                 <th style="text-align:right">Sales</th>
                 <th style="text-align:right">Collected</th>
               </tr>
             </thead>
-            <tbody>
-              ${shiftRows || '<tr><td colspan="8" style="text-align:center;color:#666;">No shifts found</td></tr>'}
-            </tbody>
+            <tbody>${shiftRows || '<tr><td colspan="8" style="text-align:center;color:#666;">No shifts found</td></tr>'}</tbody>
           </table>
         </body>
         </html>
       `;
 
       const printWindow = window.open("", "_blank", "width=900,height=700");
-      if (!printWindow) {
-        alert("Please allow pop-ups to print.");
-        return;
-      }
+      if (!printWindow) { alert("Please allow pop-ups to print."); return; }
       printWindow.document.write(html);
       printWindow.document.close();
     }
@@ -2242,32 +2363,15 @@
 
       const { shifts, totalsByRole, filters } = lastStaffPerformanceData;
 
-      const headers = [
-        "Date",
-        "Staff Name",
-        "Username",
-        "Role",
-        "Start Time",
-        "End Time",
-        "Status",
-        "Orders",
-        "Total Sales",
-        "Total Collected"
-      ];
+      const headers = ["Date","Staff Name","Username","Role","Start Time","End Time","Status","Orders","Total Sales","Total Collected"];
 
       const rows = shifts.map(s => {
         const startDate = new Date(s.started_at).toLocaleDateString();
         const startTime = new Date(s.started_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
         const endTime = s.ended_at ? new Date(s.ended_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "-";
-
         return [
-          startDate,
-          s.full_name || "",
-          s.username || "",
-          s.role || "",
-          startTime,
-          endTime,
-          s.status || "",
+          startDate, s.full_name || "", s.username || "", s.role || "",
+          startTime, endTime, s.status || "",
           Number(s.orders_count || 0),
           Number(s.total_sales || 0).toFixed(2),
           Number(s.total_collected || 0).toFixed(2)
@@ -2287,13 +2391,7 @@
       roles.forEach(r => {
         const t = (totalsByRole && totalsByRole[r.key]) || { shifts: 0, orders: 0, sales: 0, collected: 0 };
         rows.push([
-          r.label,
-          `${Number(t.shifts || 0)} shifts`,
-          "",
-          "",
-          "",
-          "",
-          "",
+          r.label, `${Number(t.shifts || 0)} shifts`, "", "", "", "", "",
           Number(t.orders || 0),
           Number(t.sales || 0).toFixed(2),
           Number(t.collected || 0).toFixed(2)
@@ -2365,13 +2463,11 @@
       const msg = document.getElementById('location-msg');
       msg.style.color = 'var(--muted)';
       msg.innerText = 'Getting location...';
-      
       if (!navigator.geolocation) {
         msg.style.color = 'var(--danger)';
         msg.innerText = 'GPS is not supported on this device.';
         return;
       }
-      
       navigator.geolocation.getCurrentPosition(
         (position) => {
           document.getElementById('rest-lat').value = position.coords.latitude.toFixed(8);
@@ -2392,13 +2488,11 @@
       const lng = document.getElementById('rest-lng').value;
       const radius = document.getElementById('rest-radius').value;
       const msg = document.getElementById('location-msg');
-      
       if (!lat || !lng) {
         msg.style.color = 'var(--danger)';
         msg.innerText = 'Please capture location first.';
         return;
       }
-      
       try {
         const res = await fetch(`/api/restaurants/${restaurantId}/location`, {
           method: 'PUT',
@@ -2409,7 +2503,6 @@
             gps_radius_meters: Number(radius)
           })
         });
-        
         const data = await res.json();
         msg.style.color = data.success ? 'var(--success)' : 'var(--danger)';
         msg.innerText = data.message || (data.success ? '✓ Location saved!' : 'Failed');
@@ -2462,6 +2555,7 @@
     /* MODAL CLICK OUTSIDE */
     document.getElementById("settings-modal").addEventListener("click", event => { if (event.target.id === "settings-modal") closeSettings(); });
     document.getElementById("fbr-setup-modal").addEventListener("click", event => { if (event.target.id === "fbr-setup-modal") closeFbrSetupModal(); });
+    document.getElementById("pos-settings-modal").addEventListener("click", event => { if (event.target.id === "pos-settings-modal") closePosSettings(); });
     document.getElementById("staff-modal").addEventListener("click", event => { if (event.target.id === "staff-modal") closeStaffModal(); });
     document.getElementById("items-modal").addEventListener("click", event => { if (event.target.id === "items-modal") closeItemsModal(); });
     document.getElementById("category-modal").addEventListener("click", event => { if (event.target.id === "category-modal") closeCategoryModal(); });

@@ -8,9 +8,6 @@
         /* ── reset ── */
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* ═══════════════════════════════════════════
-           THEME 1: DARK (default)
-        ═══════════════════════════════════════════ */
         :root,
         [data-theme="dark"] {
             --bg: #0F1419;
@@ -42,9 +39,6 @@
             --status-completed-bg: rgba(148, 163, 184, 0.18);
         }
 
-        /* ═══════════════════════════════════════════
-           THEME 2: LIGHT
-        ═══════════════════════════════════════════ */
         [data-theme="light"] {
             --bg: #F1F5F9;
             --bg-2: #E2E8F0;
@@ -75,9 +69,6 @@
             --status-completed-bg: rgba(100, 116, 139, 0.12);
         }
 
-        /* ═══════════════════════════════════════════
-           THEME 3: BLUE (new)
-        ═══════════════════════════════════════════ */
         [data-theme="blue"] {
             --bg: #0B1220;
             --bg-2: #0F172A;
@@ -119,7 +110,6 @@
         }
         .hidden { display: none !important; }
 
-        /* ── LAYOUT ── */
         .container {
             display: grid;
             grid-template-columns: 70% 30%;
@@ -157,7 +147,6 @@
             .orders { grid-template-columns: 1fr; }
         }
 
-        /* ── PANELS ── */
         .panel {
             background: var(--panel);
             border: 1px solid var(--border);
@@ -167,7 +156,6 @@
             transition: background 0.2s, border-color 0.2s;
         }
 
-        /* ── SIDE MENU ── */
         .menu-btn {
             background: none; border: 0; color: var(--text);
             font-size: 20px; cursor: pointer; margin-right: 8px;
@@ -238,7 +226,6 @@
         .side-menu-btn:hover { background: var(--bg); }
         .side-menu-btn.danger { color: var(--danger); }
 
-        /* ── SWITCH ── */
         .switch { position: relative; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
@@ -252,7 +239,6 @@
         .switch input:checked+.slider { background: var(--accent); }
         .switch input:checked+.slider::before { transform: translateX(20px); }
 
-        /* ── BRAND HEADER ── */
         .brand-header {
             display: none; align-items: center; gap: 10px; padding: 12px 16px;
             background: var(--panel); border-bottom: 1px solid var(--border);
@@ -260,7 +246,6 @@
         .brand-header img { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; }
         .brand-header .brand-name { font-weight: 700; font-size: 15px; }
 
-        /* ── HEADER ── */
         .header {
             height: 62px; background: var(--panel); color: var(--text);
             display: flex; align-items: center; justify-content: space-between;
@@ -277,7 +262,6 @@
         }
         .logout:hover { opacity: 0.9; transform: translateY(-1px); }
 
-        /* ── LOGIN ── */
         .login-screen {
             min-height: 100vh; display: flex; align-items: center;
             justify-content: center; padding: 20px; background: var(--bg);
@@ -323,7 +307,6 @@
             border: 1px solid rgba(239, 68, 68, .3);
         }
 
-        /* ── MENU PANEL CONTROLS ── */
         .top { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: flex-end; }
         .type-btn, .cat-btn, .action-btn, .qty-btn {
             border: 1px solid var(--border); background: var(--panel);
@@ -372,7 +355,6 @@
             box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
         }
 
-        /* ── DEALS ── */
         .deals-section { margin-bottom: 18px; }
         .deals-heading { color: var(--accent); font-size: 14px; font-weight: 800; margin: 0 0 12px; letter-spacing: 0.3px; }
         .deals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
@@ -396,7 +378,6 @@
         .deal-items { color: var(--muted); font-size: 11px; margin-top: 8px; line-height: 1.5; }
         .deal-price { color: var(--accent); font-weight: 800; font-size: 15px; margin-top: 10px; }
 
-        /* ── MENU ITEMS ── */
         .menu-heading { color: var(--accent); font-size: 14px; font-weight: 800; margin: 0 0 12px; letter-spacing: 0.3px; }
         .menu {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -462,7 +443,6 @@
         .step-btn.accent { background: var(--accent); color: var(--accent-text); }
         .step-btn.accent:hover { background: var(--accent-2); }
 
-        /* ── CUSTOMER / CART PANEL ── */
         .customer { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; min-width: 0; }
         .customer .field { min-width: 0; }
         .customer input { width: 100%; min-width: 0; }
@@ -532,7 +512,6 @@
             font-size: 12px; color: var(--muted); text-align: center;
         }
 
-        /* ── LIVE DOT ── */
         .live-dot {
             display: inline-flex; align-items: center; gap: 6px;
             font-size: 12px; color: var(--success); font-weight: 800;
@@ -550,7 +529,6 @@
             100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
 
-        /* ── ORDERS ── */
         .orders {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 14px; margin-top: 14px; max-height: 480px; overflow: auto;
@@ -626,7 +604,6 @@
             font-size: 11px; font-weight: 800; letter-spacing: 0.3px;
         }
 
-        /* ── MODALS ── */
         .modal {
             display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, .7);
             align-items: center; justify-content: center; z-index: 30;
@@ -661,7 +638,6 @@
         }
         .modal-close-x:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
 
-        /* ── RIDER SUMMARY ── */
         .rider-summary-controls {
             display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;
             margin: 14px 0 16px; background: var(--bg-2); padding: 14px 16px;
@@ -744,7 +720,6 @@
             font-weight: 500; color: var(--muted);
         }
 
-        /* ── SHIFT REPORTS ── */
         .shift-filter-row {
             display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;
             margin-bottom: 16px; background: var(--bg-2); padding: 14px 16px;
@@ -930,7 +905,7 @@
                 <div class="shift-status" id="shiftStatus">Checking...</div>
                 <button class="shift-btn" id="shiftBtn" onclick="toggleShift()" disabled>...</button>
             </div>
-            <button class="side-menu-btn" onclick="openSettings()">⚙️ Settings</button>
+            <!-- ✅ Settings button REMOVED - moved to Manager -->
             <button class="side-menu-btn" onclick="openShiftReports()">📊 Shift Reports</button>
             <button class="side-menu-btn" onclick="openRiderManagement()">🚚 Rider Management</button>
             <button class="side-menu-btn danger" onclick="logout()">🚪 Logout</button>
@@ -1221,49 +1196,7 @@
         </div>
     </div>
 
-    <!-- ── SETTINGS MODAL ── -->
-    <div class="modal" id="settingsModal">
-        <div class="modal-box">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                <h3 style="margin:0;">⚙️ Default Settings</h3>
-                <button class="modal-close-x" onclick="closeSettings()" aria-label="Close">&times;</button>
-            </div>
-
-            <div class="field">
-                <label>Default GST %</label>
-                <input id="settingsGst" type="number" min="0" max="100" step="0.01" value="0" />
-            </div>
-            <div class="field" style="margin-top:12px">
-                <label>Default Other Tax %</label>
-                <input id="settingsTax" type="number" min="0" max="100" step="0.01" value="0" />
-            </div>
-            <div class="field" style="margin-top:12px">
-                <label>Default Delivery Charges (Rs)</label>
-                <input id="settingsDelivery" type="number" min="0" step="0.01" value="0" />
-            </div>
-            <div class="field" style="margin-top:12px">
-                <label>Default Dine-in Charges (Rs)</label>
-                <input id="settingsDine" type="number" min="0" step="0.01" value="0" />
-            </div>
-            <div class="field" style="margin-top:12px">
-                <label>💳 Default Card Charges % <small style="color:var(--muted);font-weight:400">(surcharge on card payments)</small></label>
-                <input id="settingsCardCharges" type="number" min="0" max="100" step="0.01" value="0" />
-            </div>
-            <div class="field" style="margin-top:12px">
-                <label>🏦 Default Bank Charges % <small style="color:var(--muted);font-weight:400">(surcharge on bank transfers)</small></label>
-                <input id="settingsBankCharges" type="number" min="0" max="100" step="0.01" value="0" />
-            </div>
-            <div class="field" style="margin-top:12px">
-                <label>🔗 Raast QR String <small style="color:var(--muted);font-weight:400">(bank se milega — QR Payment option iske baad enable hoga)</small></label>
-                <input id="settingsRaastQr" type="text" placeholder="RAAST://PAY?..." />
-            </div>
-
-            <div class="modal-actions">
-                <button class="cancel" onclick="closeSettings()">Cancel</button>
-                <button class="confirm" onclick="saveSettings()">Save Settings</button>
-            </div>
-        </div>
-    </div>
+    <!-- ❌ SETTINGS MODAL REMOVED - now on Manager page -->
 
     <!-- ── QR PAYMENT MODAL ── -->
     <div class="modal" id="qrPaymentModal">
@@ -1344,6 +1277,20 @@
         let payNow = false;
         let pollTimer = null;
         let restaurantBrand = { name: '', logo: '', address: '', phone: '' };
+
+        /* ✅ POS SETTINGS loaded from server (manager-controlled) */
+        let posSettings = {
+            gst_percent: 0,
+            tax_percent: 0,
+            delivery_charge: 0,
+            dine_charge: 0,
+            card_charge: 0,
+            bank_charge: 0,
+            discount_enabled: false,
+            discount_type: 'none',
+            discount_value: 0,
+            discount_reason: ''
+        };
 
         /* QR payment state */
         let qrPollTimer = null;
@@ -1510,88 +1457,41 @@
             document.getElementById('loginError').classList.add('hidden');
         }
 
-        async function openSettings() {
-            closeSideMenu();
-            document.getElementById('settingsGst').value = localStorage.getItem('counter_default_gst') || 0;
-            document.getElementById('settingsTax').value = localStorage.getItem('counter_default_tax') || 0;
-            document.getElementById('settingsDelivery').value = localStorage.getItem('counter_default_delivery') || 0;
-            document.getElementById('settingsDine').value = localStorage.getItem('counter_default_dine') || 0;
-            document.getElementById('settingsCardCharges').value = localStorage.getItem('counter_default_card_charges') || 0;
-            document.getElementById('settingsBankCharges').value = localStorage.getItem('counter_default_bank_charges') || 0;
-
+        /* ✅ Load POS settings from server (manager-controlled) */
+        async function loadPosSettingsFromServer() {
             try {
-                const res = await apiFetch(`${API_BASE}/settings/raast-qr`);
-                document.getElementById('settingsRaastQr').value = res.data?.raast_qr_string || '';
+                const res = await apiFetch(`${API_BASE}/settings/pos`);
+                if (res && res.success && res.data) {
+                    posSettings = { ...posSettings, ...res.data };
+                    console.log('POS settings loaded from server:', posSettings);
+                }
             } catch (err) {
-                console.warn('Raast QR load failed:', err.message);
-                document.getElementById('settingsRaastQr').value = '';
+                console.warn('loadPosSettingsFromServer failed:', err.message);
             }
-
-            document.getElementById('settingsModal').classList.add('show');
         }
 
-        function closeSettings() {
-            document.getElementById('settingsModal').classList.remove('show');
-        }
-
-        async function saveSettings() {
-            const gst = Number(document.getElementById('settingsGst').value || 0);
-            const tax = Number(document.getElementById('settingsTax').value || 0);
-            const delivery = Number(document.getElementById('settingsDelivery').value || 0);
-            const dine = Number(document.getElementById('settingsDine').value || 0);
-            const cardCharges = Number(document.getElementById('settingsCardCharges').value || 0);
-            const bankCharges = Number(document.getElementById('settingsBankCharges').value || 0);
-            const raastQr = document.getElementById('settingsRaastQr').value.trim();
-
-            if (gst < 0 || tax < 0 || delivery < 0 || dine < 0 || cardCharges < 0 || bankCharges < 0) {
-                alert('Values cannot be negative');
-                return;
-            }
-
-            localStorage.setItem('counter_default_gst', gst);
-            localStorage.setItem('counter_default_tax', tax);
-            localStorage.setItem('counter_default_delivery', delivery);
-            localStorage.setItem('counter_default_dine', dine);
-            localStorage.setItem('counter_default_card_charges', cardCharges);
-            localStorage.setItem('counter_default_bank_charges', bankCharges);
-
-            try {
-                await apiFetch(`${API_BASE}/settings/raast-qr`, {
-                    method: 'PUT',
-                    body: JSON.stringify({ raast_qr_string: raastQr })
-                });
-            } catch (err) {
-                console.warn('Raast QR save failed:', err.message);
-                alert('⚠️ Raast QR save nahi hua: ' + err.message);
-            }
-
-            resetChargesToDefaults();
-            await checkQrAvailability();
-
-            alert('✅ Settings saved');
-            closeSettings();
-            renderCart();
-        }
-
+        /* ✅ Reset charges from server-loaded posSettings */
         function resetChargesToDefaults() {
-            const gst = localStorage.getItem('counter_default_gst') || 0;
-            const tax = localStorage.getItem('counter_default_tax') || 0;
-            const delivery = localStorage.getItem('counter_default_delivery') || 0;
-            const dine = localStorage.getItem('counter_default_dine') || 0;
-
-            const gstEl = document.getElementById('gstPercent');
-            const taxEl = document.getElementById('taxPercent');
-            const delEl = document.getElementById('deliveryCharge');
+            const gstEl  = document.getElementById('gstPercent');
+            const taxEl  = document.getElementById('taxPercent');
+            const delEl  = document.getElementById('deliveryCharge');
             const dineEl = document.getElementById('dineCharge');
-            const dtEl = document.getElementById('discountType');
-            const dvEl = document.getElementById('discountValue');
+            const dtEl   = document.getElementById('discountType');
+            const dvEl   = document.getElementById('discountValue');
 
-            if (gstEl) gstEl.value = gst;
-            if (taxEl) taxEl.value = tax;
-            if (delEl) delEl.value = delivery;
-            if (dineEl) dineEl.value = dine;
-            if (dtEl) dtEl.value = 'none';
-            if (dvEl) dvEl.value = '0';
+            if (gstEl)  gstEl.value  = posSettings.gst_percent || 0;
+            if (taxEl)  taxEl.value  = posSettings.tax_percent || 0;
+            if (delEl)  delEl.value  = posSettings.delivery_charge || 0;
+            if (dineEl) dineEl.value = posSettings.dine_charge || 0;
+
+            // Discount: only pre-fill when manager enables it
+            if (posSettings.discount_enabled) {
+                if (dtEl) dtEl.value = posSettings.discount_type || 'none';
+                if (dvEl) dvEl.value = posSettings.discount_value || 0;
+            } else {
+                if (dtEl) dtEl.value = 'none';
+                if (dvEl) dvEl.value = 0;
+            }
         }
 
         async function checkQrAvailability() {
@@ -1705,7 +1605,7 @@
                         const dealItems = Array.isArray(deal.items) ? deal.items : [];
                         const subHtml = dealItems.map(di =>
                             `<div class="order-item" style="padding-left:16px;color:var(--muted);">
-                                <span>↳ ${esc(di.name)}${di.variant_label ? ' (' + di.variant_label + ')' : ''}</span>
+                                <span>↳ ${esc(di.name)}${di.variant_label ? ' (' + esc(di.variant_label) + ')' : ''}</span>
                                 <span>×${esc(di.quantity)}</span>
                             </div>`
                         ).join('');
@@ -1961,13 +1861,14 @@
             const dineChargeField = document.getElementById('dineChargeField');
             if (dineChargeField) dineChargeField.style.display = (type === 'dine_in') ? 'flex' : 'none';
 
+            /* ✅ Use posSettings from server */
             if (type === 'delivery') {
                 const delEl = document.getElementById('deliveryCharge');
-                if (delEl) delEl.value = localStorage.getItem('counter_default_delivery') || 0;
+                if (delEl) delEl.value = posSettings.delivery_charge || 0;
             }
             if (type === 'dine_in') {
                 const dineEl = document.getElementById('dineCharge');
-                if (dineEl) dineEl.value = localStorage.getItem('counter_default_dine') || 0;
+                if (dineEl) dineEl.value = posSettings.dine_charge || 0;
             }
 
             const labels = { dine_in: 'Dine In', delivery: 'Delivery', walk_in: 'Walk-in' };
@@ -2180,13 +2081,10 @@
             renderCart();
         }
 
+        /* ✅ Surcharge % now from server-loaded posSettings */
         function getPaymentSurchargePercent(method) {
-            if (method === 'Card') {
-                return Number(localStorage.getItem('counter_default_card_charges') || 0);
-            }
-            if (method === 'Bank') {
-                return Number(localStorage.getItem('counter_default_bank_charges') || 0);
-            }
+            if (method === 'Card') return Number(posSettings.card_charge || 0);
+            if (method === 'Bank') return Number(posSettings.bank_charge || 0);
             return 0;
         }
 
@@ -2242,10 +2140,10 @@
             if (payNow) {
                 const method = document.getElementById('payNowMethod')?.value || 'Cash';
                 if (method === 'Card') {
-                    cardPercent = Number(localStorage.getItem('counter_default_card_charges') || 0);
+                    cardPercent = Number(posSettings.card_charge || 0);
                     cardChargeAmount = billBeforeSurcharge * (cardPercent / 100);
                 } else if (method === 'Bank') {
-                    bankPercent = Number(localStorage.getItem('counter_default_bank_charges') || 0);
+                    bankPercent = Number(posSettings.bank_charge || 0);
                     bankChargeAmount = billBeforeSurcharge * (bankPercent / 100);
                 }
             }
@@ -3753,12 +3651,14 @@
             URL.revokeObjectURL(url);
         }
 
+        /* ✅ UPDATED: Load POS settings from server first, then reset charges */
         async function startCounter() {
             setOrderType('dine_in');
 
+            await loadPosSettingsFromServer();   /* ← NEW: fetch manager settings */
             resetChargesToDefaults();
-
             renderCart();
+
             await loadBranding();
             await loadMenu();
             await loadDeals();
@@ -3767,7 +3667,6 @@
             await loadOfflineOrders();
             updateSyncStatus();
 
-            /* ✅ Check if Raast QR is configured */
             await checkQrAvailability();
 
             connectSocket();
@@ -3945,9 +3844,6 @@
         window.printOfflineOrder = printOfflineOrder;
         window.updateSyncStatus = updateSyncStatus;
         window.cancelOrder = cancelOrder;
-        window.openSettings = openSettings;
-        window.closeSettings = closeSettings;
-        window.saveSettings = saveSettings;
         window.dispatchWalkIn = dispatchWalkIn;
         window.resetChargesToDefaults = resetChargesToDefaults;
         window.loadBranding = loadBranding;
@@ -3961,6 +3857,9 @@
         window.onPayNowMethodChange = onPayNowMethodChange;
         window.closeQrModal = closeQrModal;
         window.checkQrAvailability = checkQrAvailability;
+        window.loadPosSettingsFromServer = loadPosSettingsFromServer;
+
+       
     </script>
 </body>
 </html>
