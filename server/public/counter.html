@@ -5,37 +5,121 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>Counter POS</title>
     <style>
-        /* ── reset & vars ── */
-        * { box-sizing: border-box; }
-        :root {
-            --bg: #14181C;
-            --panel: #1F262C;
-            --panel2: #241C14;
-            --text: #F6F3EC;
-            --muted: #9CA3AF;
-            --border: #2A3138;
-            --accent: #E3A23B;
-            --success: #2FA37D;
-            --danger: #E15A4C;
+        /* ── reset ── */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        /* ═══════════════════════════════════════════
+           THEME 1: DARK (default)
+        ═══════════════════════════════════════════ */
+        :root,
+        [data-theme="dark"] {
+            --bg: #0F1419;
+            --bg-2: #1A2028;
+            --panel: #1E252E;
+            --panel-2: #262E38;
+            --panel-hover: #2A323D;
+            --text: #F5F3EE;
+            --text-2: #CBD5E1;
+            --muted: #94A3B8;
+            --border: #2D3748;
+            --border-2: #374151;
+            --accent: #F59E0B;
+            --accent-2: #FBBF24;
+            --accent-text: #0F1419;
+            --success: #10B981;
+            --success-2: #34D399;
+            --danger: #EF4444;
+            --danger-2: #F87171;
+            --info: #60A5FA;
+            --purple: #A78BFA;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
+            --status-placed-bg: rgba(245, 158, 11, 0.18);
+            --status-preparing-bg: rgba(167, 139, 250, 0.18);
+            --status-ready-bg: rgba(96, 165, 250, 0.18);
+            --status-served-bg: rgba(16, 185, 129, 0.18);
+            --status-completed-bg: rgba(148, 163, 184, 0.18);
         }
-        body.light-theme {
-            --bg: #f4f1ea;
-            --panel: #ffffff;
-            --panel2: #fdf6ec;
-            --text: #1b1f22;
-            --muted: #6b7280;
-            --border: #ddd6c8;
-            --accent: #c97b2e;
+
+        /* ═══════════════════════════════════════════
+           THEME 2: LIGHT
+        ═══════════════════════════════════════════ */
+        [data-theme="light"] {
+            --bg: #F1F5F9;
+            --bg-2: #E2E8F0;
+            --panel: #FFFFFF;
+            --panel-2: #FEF3C7;
+            --panel-hover: #F8FAFC;
+            --text: #0F172A;
+            --text-2: #334155;
+            --muted: #64748B;
+            --border: #E2E8F0;
+            --border-2: #CBD5E1;
+            --accent: #D97706;
+            --accent-2: #F59E0B;
+            --accent-text: #FFFFFF;
+            --success: #059669;
+            --success-2: #10B981;
+            --danger: #DC2626;
+            --danger-2: #EF4444;
+            --info: #2563EB;
+            --purple: #7C3AED;
+            --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
+            --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.1);
+            --shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.15);
+            --status-placed-bg: rgba(217, 119, 6, 0.12);
+            --status-preparing-bg: rgba(124, 58, 237, 0.12);
+            --status-ready-bg: rgba(37, 99, 235, 0.12);
+            --status-served-bg: rgba(5, 150, 105, 0.12);
+            --status-completed-bg: rgba(100, 116, 139, 0.12);
         }
+
+        /* ═══════════════════════════════════════════
+           THEME 3: BLUE (new)
+        ═══════════════════════════════════════════ */
+        [data-theme="blue"] {
+            --bg: #0B1220;
+            --bg-2: #0F172A;
+            --panel: #141B2D;
+            --panel-2: #1E293B;
+            --panel-hover: #1E293B;
+            --text: #E2E8F0;
+            --text-2: #CBD5E1;
+            --muted: #94A3B8;
+            --border: #334155;
+            --border-2: #475569;
+            --accent: #38BDF8;
+            --accent-2: #7DD3FC;
+            --accent-text: #0B1220;
+            --success: #34D399;
+            --success-2: #6EE7B7;
+            --danger: #F87171;
+            --danger-2: #FCA5A5;
+            --info: #60A5FA;
+            --purple: #C4B5FD;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.6);
+            --status-placed-bg: rgba(56, 189, 248, 0.18);
+            --status-preparing-bg: rgba(196, 181, 253, 0.18);
+            --status-ready-bg: rgba(96, 165, 250, 0.18);
+            --status-served-bg: rgba(52, 211, 153, 0.18);
+            --status-completed-bg: rgba(148, 163, 184, 0.18);
+        }
+
         body {
             margin: 0;
-            font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
+            transition: background 0.2s, color 0.2s;
+            -webkit-font-smoothing: antialiased;
         }
         .hidden { display: none !important; }
 
+        /* ── LAYOUT ── */
         .container {
             display: grid;
             grid-template-columns: 70% 30%;
@@ -73,25 +157,36 @@
             .orders { grid-template-columns: 1fr; }
         }
 
+        /* ── PANELS ── */
         .panel {
             background: var(--panel);
+            border: 1px solid var(--border);
             border-radius: 14px;
             padding: 18px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, .25);
+            box-shadow: var(--shadow-sm);
+            transition: background 0.2s, border-color 0.2s;
         }
+
+        /* ── SIDE MENU ── */
         .menu-btn {
             background: none; border: 0; color: var(--text);
             font-size: 20px; cursor: pointer; margin-right: 8px;
+            padding: 6px 10px; border-radius: 8px;
+            transition: background 0.15s;
         }
+        .menu-btn:hover { background: var(--bg); }
+
         .side-overlay {
             display: none; position: fixed; inset: 0;
-            background: rgba(0, 0, 0, .5); z-index: 1100;
+            background: rgba(0, 0, 0, .6); z-index: 1100;
+            backdrop-filter: blur(2px);
         }
         .side-overlay.open { display: block; }
         .side-menu {
-            position: fixed; top: 0; left: -260px; width: 240px; height: 100%;
+            position: fixed; top: 0; left: -280px; width: 260px; height: 100%;
             background: var(--panel); border-right: 1px solid var(--border);
-            transition: left .2s; z-index: 1200; padding: 20px 0; overflow-y: auto;
+            transition: left .25s ease; z-index: 1200; padding: 20px 0; overflow-y: auto;
+            box-shadow: var(--shadow-lg);
         }
         .side-menu.open { left: 0; }
         .menu-heading {
@@ -102,30 +197,53 @@
             display: flex; justify-content: space-between; align-items: center;
             padding: 14px 20px; font-size: 14px; color: var(--text);
         }
+        .side-menu-row label { cursor: pointer; }
+        .theme-cycle-btn {
+            display: flex; justify-content: space-between; align-items: center;
+            width: 100%; padding: 14px 20px; background: none; border: 0;
+            color: var(--text); font-size: 14px; cursor: pointer;
+            text-align: left; transition: background 0.15s;
+        }
+        .theme-cycle-btn:hover { background: var(--bg); }
+        .theme-cycle-btn .theme-label {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .theme-cycle-btn .theme-badge {
+            background: var(--accent);
+            color: var(--accent-text);
+            font-size: 10px; font-weight: 800;
+            padding: 3px 9px; border-radius: 10px;
+            text-transform: uppercase; letter-spacing: 0.4px;
+        }
         .shift-box {
             padding: 14px 20px; border-top: 1px solid var(--border);
             border-bottom: 1px solid var(--border);
         }
-        .shift-title { font-size: 14px; color: var(--text); margin-bottom: 6px; }
+        .shift-title { font-size: 14px; color: var(--text); margin-bottom: 6px; font-weight: 700; }
         .shift-status { font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
         .shift-btn {
             width: 100%; padding: 10px; border-radius: 8px;
             border: 1px solid var(--accent); background: transparent;
             color: var(--accent); font-weight: 700; font-size: 13px; cursor: pointer;
+            transition: all 0.15s;
         }
+        .shift-btn:hover:not(:disabled) { background: var(--accent); color: var(--accent-text); }
         .shift-btn.on { background: var(--danger); color: #fff; border-color: var(--danger); }
         .shift-btn:disabled { opacity: .5; cursor: default; }
         .side-menu-btn {
             display: block; width: 100%; text-align: left; padding: 14px 20px;
             color: var(--text); background: none; border: 0; font-size: 14px; cursor: pointer;
+            transition: background 0.15s;
         }
         .side-menu-btn:hover { background: var(--bg); }
         .side-menu-btn.danger { color: var(--danger); }
+
+        /* ── SWITCH ── */
         .switch { position: relative; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
             position: absolute; inset: 0; background: var(--border);
-            border-radius: 24px; cursor: pointer;
+            border-radius: 24px; cursor: pointer; transition: 0.2s;
         }
         .slider::before {
             content: ""; position: absolute; width: 18px; height: 18px;
@@ -134,373 +252,491 @@
         .switch input:checked+.slider { background: var(--accent); }
         .switch input:checked+.slider::before { transform: translateX(20px); }
 
+        /* ── BRAND HEADER ── */
         .brand-header {
             display: none; align-items: center; gap: 10px; padding: 12px 16px;
             background: var(--panel); border-bottom: 1px solid var(--border);
         }
         .brand-header img { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; }
         .brand-header .brand-name { font-weight: 700; font-size: 15px; }
+
+        /* ── HEADER ── */
         .header {
-            height: 60px; background: var(--panel); color: var(--text);
+            height: 62px; background: var(--panel); color: var(--text);
             display: flex; align-items: center; justify-content: space-between;
             padding: 0 22px; border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
         }
         .header h2 { margin: 0; font-size: 18px; }
         .header-right { display: flex; align-items: center; gap: 10px; }
         .logout {
             border: 0; background: var(--danger); color: #fff;
-            border-radius: 6px; padding: 8px 12px; font-weight: 700; cursor: pointer;
+            border-radius: 8px; padding: 8px 14px; font-weight: 700;
+            cursor: pointer; font-size: 13px;
+            transition: opacity 0.15s, transform 0.1s;
         }
+        .logout:hover { opacity: 0.9; transform: translateY(-1px); }
 
+        /* ── LOGIN ── */
         .login-screen {
             min-height: 100vh; display: flex; align-items: center;
             justify-content: center; padding: 20px; background: var(--bg);
         }
         .login-box {
-            width: min(400px, 100%); background: var(--panel); padding: 28px;
-            border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
+            width: min(400px, 100%); background: var(--panel); padding: 32px;
+            border-radius: 16px; box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
         }
-        .login-box h2 { text-align: center; margin: 0 0 6px; }
-        .login-box p { text-align: center; color: var(--muted); font-size: 13px; margin: 0 0 22px; }
-        .field { display: flex; flex-direction: column; gap: 5px; }
-        .field label { font-size: 12px; color: var(--muted); font-weight: 600; }
+        .login-box h2 { text-align: center; margin: 0 0 6px; font-size: 22px; }
+        .login-box p { text-align: center; color: var(--muted); font-size: 13px; margin: 0 0 24px; }
+        .field { display: flex; flex-direction: column; gap: 6px; }
+        .field label { font-size: 12px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
         .field input, .field select {
-            height: 40px; border: 1px solid var(--border); border-radius: 8px;
-            padding: 0 10px; font-size: 14px; background: var(--bg); color: var(--text);
+            height: 42px; border: 1px solid var(--border); border-radius: 9px;
+            padding: 0 12px; font-size: 14px; background: var(--bg); color: var(--text);
+            transition: border-color 0.15s, box-shadow 0.15s;
         }
-        .field input:focus, .field select:focus { outline: none; border-color: var(--accent); }
-        .login-box .field { margin-bottom: 13px; }
+        .field input:focus, .field select:focus {
+            outline: none; border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+        }
+        .login-box .field { margin-bottom: 14px; }
         .pw-wrap { position: relative; }
-        .pw-wrap input { width: 100%; padding-right: 38px; }
+        .pw-wrap input { width: 100%; padding-right: 42px; }
         .pw-eye {
-            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
             cursor: pointer; user-select: none; font-size: 15px;
+            opacity: 0.6; transition: opacity 0.15s;
         }
+        .pw-eye:hover { opacity: 1; }
         .login-btn {
-            width: 100%; height: 44px; border: 0; border-radius: 8px;
-            background: var(--accent); color: #14181C; font-size: 16px; font-weight: 700; cursor: pointer;
+            width: 100%; height: 46px; border: 0; border-radius: 9px;
+            background: var(--accent); color: var(--accent-text);
+            font-size: 16px; font-weight: 700; cursor: pointer;
+            transition: opacity 0.15s, transform 0.1s;
+            margin-top: 6px;
         }
+        .login-btn:hover { opacity: 0.92; transform: translateY(-1px); }
         .login-error {
-            margin-top: 12px; background: rgba(225, 90, 76, .15); color: var(--danger);
-            padding: 9px; border-radius: 6px; font-size: 13px;
+            margin-top: 14px; background: rgba(239, 68, 68, .15); color: var(--danger);
+            padding: 10px 12px; border-radius: 8px; font-size: 13px;
+            border: 1px solid rgba(239, 68, 68, .3);
         }
 
-        .top { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; align-items: flex-end; }
+        /* ── MENU PANEL CONTROLS ── */
+        .top { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: flex-end; }
         .type-btn, .cat-btn, .action-btn, .qty-btn {
-            border: 1px solid var(--border); background: transparent;
-            color: var(--text); border-radius: 8px; cursor: pointer; font-weight: 600;
+            border: 1px solid var(--border); background: var(--panel);
+            color: var(--text); border-radius: 9px; cursor: pointer; font-weight: 700;
+            transition: all 0.15s;
         }
-        .type-btn { padding: 10px 16px; }
-        .type-btn.active { background: var(--accent); color: #14181C; border-color: var(--accent); }
-        .search-wrap { margin-bottom: 12px; }
+        .type-btn { padding: 10px 18px; font-size: 13px; }
+        .type-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .type-btn.active {
+            background: var(--accent); color: var(--accent-text);
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        .search-wrap { margin-bottom: 14px; }
         .search-box { position: relative; }
         .search {
-            width: 100%; height: 42px; border: 1px solid var(--border);
-            border-radius: 10px; padding: 0 12px 0 38px; font-size: 14px;
+            width: 100%; height: 46px; border: 1px solid var(--border);
+            border-radius: 11px; padding: 0 12px 0 42px; font-size: 14px;
             background: var(--bg); color: var(--text);
+            transition: border-color 0.15s, box-shadow 0.15s;
         }
-        .search:focus { outline: none; border-color: var(--accent); }
+        .search:focus {
+            outline: none; border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+        }
         .search-icon {
-            position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
             font-size: 14px; color: var(--muted); pointer-events: none;
         }
+
         .cats {
-            display: flex; gap: 8px; overflow: auto; margin-bottom: 14px;
-            padding-bottom: 2px; scrollbar-width: none;
+            display: flex; gap: 8px; overflow-x: auto; margin-bottom: 16px;
+            padding-bottom: 4px; scrollbar-width: none;
         }
         .cats::-webkit-scrollbar { display: none; }
         .cat-btn {
-            white-space: nowrap; padding: 7px 16px; border-radius: 20px;
+            white-space: nowrap; padding: 8px 18px; border-radius: 20px;
             flex-shrink: 0; font-size: 12px; background: var(--bg);
-            color: var(--muted); border-color: transparent;
+            color: var(--muted); border: 1px solid var(--border);
         }
-        .cat-btn.active { background: var(--accent); color: #14181C; }
-        .deals-section { margin-bottom: 16px; }
-        .deals-heading { color: var(--accent); font-size: 14px; font-weight: 700; margin: 0 0 10px; }
+        .cat-btn:hover { color: var(--text); border-color: var(--border-2); }
+        .cat-btn.active {
+            background: var(--accent); color: var(--accent-text);
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+        }
+
+        /* ── DEALS ── */
+        .deals-section { margin-bottom: 18px; }
+        .deals-heading { color: var(--accent); font-size: 14px; font-weight: 800; margin: 0 0 12px; letter-spacing: 0.3px; }
         .deals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
         .deal-card {
-            background: var(--panel2); border: 1px solid #E3A23B33;
-            border-radius: 12px; padding: 14px; cursor: pointer; transition: border-color .15s;
+            background: var(--panel-2); border: 1px solid var(--border-2);
+            border-radius: 12px; padding: 14px; cursor: pointer;
+            transition: all 0.2s;
         }
-        .deal-card:hover { border-color: var(--accent); }
+        .deal-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
         .deal-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-        .deal-name { font-size: 13px; font-weight: 700; }
+        .deal-name { font-size: 13px; font-weight: 800; }
         .deal-badge {
-            flex-shrink: 0; background: var(--accent); color: #14181C;
-            font-size: 9px; font-weight: 700; text-transform: uppercase;
-            padding: 3px 7px; border-radius: 10px;
+            flex-shrink: 0; background: var(--accent); color: var(--accent-text);
+            font-size: 9px; font-weight: 800; text-transform: uppercase;
+            padding: 3px 8px; border-radius: 10px; letter-spacing: 0.4px;
         }
-        .deal-items { color: var(--muted); font-size: 11px; margin-top: 6px; line-height: 1.5; }
-        .deal-price { color: var(--accent); font-weight: 700; font-size: 14px; margin-top: 8px; }
+        .deal-items { color: var(--muted); font-size: 11px; margin-top: 8px; line-height: 1.5; }
+        .deal-price { color: var(--accent); font-weight: 800; font-size: 15px; margin-top: 10px; }
 
-        .menu-heading { color: var(--accent); font-size: 14px; font-weight: 700; margin: 0 0 10px; }
+        /* ── MENU ITEMS ── */
+        .menu-heading { color: var(--accent); font-size: 14px; font-weight: 800; margin: 0 0 12px; letter-spacing: 0.3px; }
         .menu {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             gap: 12px; padding: 2px;
         }
         .menu-item {
             border: 1px solid var(--border); border-radius: 12px; padding: 14px;
-            background: var(--bg); transition: border-color .15s;
-            display: flex; flex-direction: column; gap: 6px;
+            background: var(--bg-2); transition: all 0.2s;
+            display: flex; flex-direction: column; gap: 8px;
         }
-        .menu-item:hover { border-color: var(--accent); }
+        .menu-item:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
         .menu-item-top {
             display: flex; justify-content: space-between; align-items: flex-start;
-            gap: 8px; cursor: pointer;
+            gap: 8px;
         }
-        .menu-item h4 { margin: 0; font-size: 14px; line-height: 1.3; }
-        .menu-item .price { font-weight: 700; color: var(--muted); font-size: 12px; white-space: nowrap; }
+        .menu-item h4 { margin: 0; font-size: 14px; line-height: 1.3; font-weight: 700; }
+        .menu-item .price { font-weight: 800; color: var(--accent); font-size: 13px; white-space: nowrap; }
         .category {
             display: inline-block; font-size: 10px; color: var(--muted);
-            background: var(--panel); border-radius: 20px; padding: 3px 9px; align-self: flex-start;
+            background: var(--panel); border-radius: 20px; padding: 4px 10px;
+            align-self: flex-start; font-weight: 700;
+            border: 1px solid var(--border);
         }
         .add-btn {
-            width: 100%; padding: 7px; border-radius: 8px;
+            width: 100%; padding: 9px; border-radius: 9px;
             border: 1px solid var(--accent); background: transparent;
-            color: var(--accent); font-weight: 700; font-size: 12px;
+            color: var(--accent); font-weight: 800; font-size: 12px;
             cursor: pointer; margin-top: auto;
+            transition: all 0.15s;
+        }
+        .add-btn:hover {
+            background: var(--accent); color: var(--accent-text);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
         }
         .add-btn-sm {
-            width: 64px; flex-shrink: 0; padding: 6px 0; border-radius: 8px;
+            width: 68px; flex-shrink: 0; padding: 7px 0; border-radius: 8px;
             border: 1px solid var(--accent); background: transparent;
-            color: var(--accent); font-weight: 700; font-size: 12px; cursor: pointer;
+            color: var(--accent); font-weight: 800; font-size: 12px; cursor: pointer;
+            transition: all 0.15s;
         }
+        .add-btn-sm:hover { background: var(--accent); color: var(--accent-text); }
+
         .variant-row {
             display: flex; align-items: center; justify-content: space-between;
-            gap: 6px; padding: 6px 0; border-top: 1px solid var(--border);
+            gap: 8px; padding: 8px 0; border-top: 1px dashed var(--border);
         }
         .variant-row:first-child { border-top: none; }
-        .variant-label { font-size: 11px; color: var(--text); }
+        .variant-label { font-size: 12px; color: var(--text); font-weight: 600; }
         .variant-price { font-size: 10px; color: var(--muted); }
+
         .step-btn {
-            width: 24px; height: 24px; border-radius: 8px; border: none;
-            background: var(--border); color: var(--text); font-size: 14px;
+            width: 26px; height: 26px; border-radius: 8px; border: none;
+            background: var(--panel-2); color: var(--text); font-size: 15px;
             font-weight: 700; cursor: pointer; display: inline-flex;
             align-items: center; justify-content: center;
+            transition: all 0.15s;
         }
-        .step-btn.accent { background: var(--accent); color: #14181C; }
+        .step-btn:hover { background: var(--border-2); }
+        .step-btn.accent { background: var(--accent); color: var(--accent-text); }
+        .step-btn.accent:hover { background: var(--accent-2); }
+
+        /* ── CUSTOMER / CART PANEL ── */
         .customer { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; min-width: 0; }
         .customer .field { min-width: 0; }
         .customer input { width: 100%; min-width: 0; }
-        .pay-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .pay-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
         .pay-row .type-btn { flex: 1; min-width: 100px; }
-        .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; min-width: 0; }
+        .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; min-width: 0; }
         .pricing-grid .field { min-width: 0; }
-        .pricing-grid input, .pricing-grid select { width: 100%; min-width: 0; }
+        .pricing-grid input, .pricing-grid select { width: 100%; min-width: 0; height: 38px; }
+
         .mini-live {
             display: flex; align-items: center; gap: 6px; font-size: 11px;
-            color: var(--success); font-weight: 700; margin-top: 8px; justify-content: center;
+            color: var(--success); font-weight: 800; margin-top: 10px;
+            justify-content: center; text-transform: uppercase;
+            letter-spacing: 0.4px;
         }
-        .mini-live .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+        .mini-live .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); animation: pulse 1.6s infinite; }
         .mini-live.off { color: var(--muted); }
-        .mini-live.off .dot { background: var(--muted); }
-        .delivery { display: none; gap: 8px; grid-template-columns: 1fr; margin: 10px 0; }
+        .mini-live.off .dot { background: var(--muted); animation: none; }
+
+        .delivery { display: none; gap: 10px; grid-template-columns: 1fr; margin: 12px 0; }
         .delivery.show { display: grid; }
-        .cart { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin-top: 10px; }
-        .empty { text-align: center; color: var(--muted); padding: 35px 10px; font-size: 13px; }
-        .cart-row { padding: 10px 0; border-bottom: 1px solid var(--border); }
-        .cart-main, .summary-line { display: flex; justify-content: space-between; gap: 8px; }
-        .cart-name { font-weight: 600; font-size: 13px; }
-        .cart-name .variant-tag { color: var(--accent); font-weight: 500; font-size: 11px; }
-        .qty { display: flex; align-items: center; gap: 7px; margin-top: 7px; flex-wrap: wrap; }
-        .qty-btn { width: 28px; height: 28px; }
-        .remove {
-            margin-left: auto; border: 0; background: rgba(225, 90, 76, .15);
-            color: var(--danger); border-radius: 6px; padding: 6px 9px;
-            cursor: pointer; font-size: 12px;
+
+        .cart {
+            border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+            margin-top: 14px;
         }
-        .summary { padding-top: 10px; }
-        .summary-line { padding: 5px 0; font-size: 13px; color: var(--text); }
+        .empty { text-align: center; color: var(--muted); padding: 40px 12px; font-size: 13px; }
+
+        .cart-row { padding: 12px 0; border-bottom: 1px solid var(--border); }
+        .cart-row:last-child { border-bottom: none; }
+        .cart-main, .summary-line { display: flex; justify-content: space-between; gap: 8px; }
+        .cart-name { font-weight: 700; font-size: 13px; }
+        .cart-name .variant-tag { color: var(--accent); font-weight: 600; font-size: 11px; }
+        .qty { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+        .qty-btn { width: 30px; height: 30px; }
+        .remove {
+            margin-left: auto; border: 0; background: rgba(239, 68, 68, .12);
+            color: var(--danger); border-radius: 7px; padding: 7px 11px;
+            cursor: pointer; font-size: 12px; font-weight: 700;
+            transition: all 0.15s;
+        }
+        .remove:hover { background: var(--danger); color: #fff; }
+
+        .summary { padding-top: 12px; }
+        .summary-line { padding: 6px 0; font-size: 13px; color: var(--text-2); }
         .total {
-            font-size: 18px; font-weight: 800; border-top: 1px solid var(--border);
-            margin-top: 7px; padding-top: 12px;
+            font-size: 20px; font-weight: 900; border-top: 2px solid var(--border);
+            margin-top: 8px; padding-top: 14px;
         }
         .total span:last-child { color: var(--accent); }
+
         .place {
-            width: 100%; height: 48px; margin-top: 12px; border: 0;
-            border-radius: 10px; background: var(--success); color: #fff;
-            font-size: 16px; font-weight: 700; cursor: pointer;
+            width: 100%; height: 52px; margin-top: 14px; border: 0;
+            border-radius: 11px; background: var(--success); color: #fff;
+            font-size: 16px; font-weight: 800; cursor: pointer;
+            transition: all 0.15s; letter-spacing: 0.3px;
+        }
+        .place:hover:not(:disabled) {
+            background: var(--success-2); transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
         }
         .place:disabled { opacity: .6; cursor: default; }
+
         .status {
-            margin-top: 9px; padding: 9px; border-radius: 8px;
-            background: var(--bg); border: 1px solid var(--border);
-            font-size: 12px; color: var(--muted);
+            margin-top: 10px; padding: 10px 12px; border-radius: 9px;
+            background: var(--bg-2); border: 1px solid var(--border);
+            font-size: 12px; color: var(--muted); text-align: center;
         }
+
+        /* ── LIVE DOT ── */
         .live-dot {
             display: inline-flex; align-items: center; gap: 6px;
-            font-size: 12px; color: var(--success); font-weight: 700;
+            font-size: 12px; color: var(--success); font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.3px;
         }
         .live-dot .dot {
             width: 8px; height: 8px; border-radius: 50%; background: var(--success);
-            box-shadow: 0 0 0 rgba(47, 163, 125, .5); animation: pulse 1.6s infinite;
+            box-shadow: 0 0 0 rgba(16, 185, 129, .5); animation: pulse 1.6s infinite;
         }
         .live-dot.off .dot { background: var(--muted); animation: none; }
         .live-dot.off { color: var(--muted); }
         @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(47, 163, 125, .5); }
-            70% { box-shadow: 0 0 0 7px rgba(47, 163, 125, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(47, 163, 125, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, .5); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
+
+        /* ── ORDERS ── */
         .orders {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 14px; margin-top: 12px; max-height: 420px; overflow: auto;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 14px; margin-top: 14px; max-height: 480px; overflow: auto;
+            padding-right: 4px;
         }
         .order-card {
             border: 1px solid var(--border); border-radius: 12px; padding: 14px;
-            background: var(--bg); display: flex; flex-direction: column; gap: 8px;
+            background: var(--bg-2); display: flex; flex-direction: column; gap: 10px;
+            transition: all 0.2s;
         }
+        .order-card:hover { border-color: var(--border-2); }
         .order-card h4 {
             margin: 0; display: flex; justify-content: space-between;
-            align-items: center; font-size: 14px;
+            align-items: center; font-size: 14px; gap: 8px; flex-wrap: wrap;
         }
+
         .status-chip {
-            font-size: 11px; font-weight: 700; padding: 3px 9px;
-            border-radius: 20px; text-transform: capitalize;
+            font-size: 10px; font-weight: 800; padding: 4px 11px;
+            border-radius: 20px; text-transform: uppercase; letter-spacing: 0.3px;
+            white-space: nowrap;
         }
         .status-chip.st-placed, .status-chip.st-accepted {
-            background: rgba(227, 162, 59, .18); color: var(--accent);
+            background: var(--status-placed-bg); color: var(--accent);
         }
-        .status-chip.st-preparing { background: rgba(99, 102, 241, .18); color: #a5b4fc; }
+        .status-chip.st-preparing {
+            background: var(--status-preparing-bg); color: var(--purple);
+        }
         .status-chip.st-ready, .status-chip.st-ready_to_deliver {
-            background: rgba(59, 130, 246, .18); color: #93c5fd;
+            background: var(--status-ready-bg); color: var(--info);
         }
-        .status-chip.st-out_for_delivery { background: rgba(227, 162, 59, .18); color: var(--accent); }
-        .status-chip.st-ready_to_dispatch { background: rgba(47, 163, 125, .18); color: var(--success); }
+        .status-chip.st-out_for_delivery {
+            background: var(--status-placed-bg); color: var(--accent);
+        }
+        .status-chip.st-ready_to_dispatch {
+            background: var(--status-served-bg); color: var(--success);
+        }
         .status-chip.st-served, .status-chip.st-delivered {
-            background: rgba(47, 163, 125, .18); color: var(--success);
+            background: var(--status-served-bg); color: var(--success);
         }
-        .status-chip.st-completed { background: var(--border); color: var(--muted); }
+        .status-chip.st-completed {
+            background: var(--status-completed-bg); color: var(--muted);
+        }
+
         .meta { font-size: 12px; color: var(--muted); line-height: 1.6; }
         .items {
             font-size: 12px; color: var(--text); background: var(--panel);
-            border-radius: 8px; padding: 8px 10px;
+            border-radius: 9px; padding: 10px 12px; border: 1px solid var(--border);
         }
-        .items .deal-line { color: var(--accent); font-weight: 700; margin-top: 4px; }
+        .items .deal-line { color: var(--accent); font-weight: 800; margin-top: 6px; }
         .items .deal-line:first-child { margin-top: 0; }
-        .items .deal-sub { color: var(--muted); font-size: 11px; padding-left: 10px; }
-        .order-total { font-weight: 800; font-size: 14px; }
+        .items .deal-sub { color: var(--muted); font-size: 11px; padding-left: 12px; }
+        .order-total { font-weight: 900; font-size: 15px; color: var(--text); }
+
         .actions {
-            display: flex; gap: 7px; flex-wrap: wrap;
+            display: flex; gap: 8px; flex-wrap: wrap;
             align-items: center; margin-top: 2px;
         }
         .order-card>.actions:first-of-type { margin-top: auto; }
         .action-btn {
-            padding: 8px 11px; font-size: 12px;
-            background: transparent; color: var(--text);
+            padding: 9px 13px; font-size: 12px; border-radius: 8px;
+            font-weight: 700;
+            transition: all 0.15s;
         }
-        .pay { background: rgba(47, 163, 125, .15); color: var(--success); border-color: rgba(47, 163, 125, .4); }
-        .edit { background: rgba(227, 162, 59, .15); color: var(--accent); border-color: rgba(227, 162, 59, .4); }
-        .print { background: rgba(99, 102, 241, .15); color: #a5b4fc; border-color: rgba(99, 102, 241, .4); }
-        .serve { background: rgba(59, 130, 246, .15); color: #93c5fd; border-color: rgba(59, 130, 246, .4); }
-        .accept { background: rgba(227, 162, 59, .15); color: var(--accent); border-color: rgba(227, 162, 59, .4); }
+        .action-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+        .pay { background: rgba(16, 185, 129, .12); color: var(--success); border-color: rgba(16, 185, 129, .35); }
+        .edit { background: rgba(245, 158, 11, .12); color: var(--accent); border-color: rgba(245, 158, 11, .35); }
+        .print { background: rgba(96, 165, 250, .12); color: var(--info); border-color: rgba(96, 165, 250, .35); }
+        .serve { background: rgba(96, 165, 250, .12); color: var(--info); border-color: rgba(96, 165, 250, .35); }
+        .accept { background: rgba(245, 158, 11, .12); color: var(--accent); border-color: rgba(245, 158, 11, .35); }
         .paid-badge {
-            display: inline-block; background: rgba(47, 163, 125, .18);
-            color: var(--success); border-radius: 6px; padding: 6px 10px;
-            font-size: 12px; font-weight: 700;
+            display: inline-block; background: rgba(16, 185, 129, .15);
+            color: var(--success); border-radius: 7px; padding: 7px 12px;
+            font-size: 11px; font-weight: 800; letter-spacing: 0.3px;
         }
+
+        /* ── MODALS ── */
         .modal {
-            display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, .6);
+            display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, .7);
             align-items: center; justify-content: center; z-index: 30;
+            backdrop-filter: blur(3px);
         }
         .modal.show { display: flex; }
         .modal-box {
             position: relative; background: var(--panel); width: min(430px, 92%);
-            border-radius: 14px; padding: 20px; color: var(--text);
+            border-radius: 16px; padding: 22px; color: var(--text);
+            box-shadow: var(--shadow-lg); border: 1px solid var(--border);
+            max-height: 90vh; overflow-y: auto;
         }
-        .modal-box h3 { margin-top: 0; }
-        .modal-actions { display: flex; gap: 8px; margin-top: 15px; }
+        .modal-box h3 { margin-top: 0; font-size: 17px; }
+        .modal-actions { display: flex; gap: 8px; margin-top: 18px; }
         .modal-actions button {
-            flex: 1; height: 42px; border: 0; border-radius: 8px;
-            font-weight: 700; cursor: pointer;
+            flex: 1; height: 44px; border: 0; border-radius: 9px;
+            font-weight: 800; cursor: pointer; font-size: 13px;
+            transition: all 0.15s;
         }
+        .modal-actions button:hover { transform: translateY(-1px); }
         .confirm { background: var(--success); color: #fff; }
         .cancel {
-            background: rgba(225, 90, 76, .15); color: var(--danger);
-            border: 1px solid rgba(225, 90, 76, .4);
+            background: rgba(239, 68, 68, .12); color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, .35);
         }
         .modal-close-x {
-            width: 32px; height: 32px; border: 1px solid var(--border);
+            width: 34px; height: 34px; border: 1px solid var(--border);
             border-radius: 50%; background: transparent; color: var(--text);
             font-size: 20px; line-height: 1; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            transition: background 0.15s, color 0.15s; flex-shrink: 0;
+            transition: all 0.15s; flex-shrink: 0;
         }
         .modal-close-x:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
 
+        /* ── RIDER SUMMARY ── */
         .rider-summary-controls {
             display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;
-            margin: 14px 0 16px; background: var(--bg); padding: 14px 16px;
-            border-radius: 10px; border: 1px solid var(--border);
+            margin: 14px 0 16px; background: var(--bg-2); padding: 14px 16px;
+            border-radius: 11px; border: 1px solid var(--border);
         }
         .rider-summary-controls .field { flex: 1; min-width: 130px; }
         .rider-summary-controls .field label {
-            font-size: 10px; color: var(--muted); font-weight: 700;
+            font-size: 10px; color: var(--muted); font-weight: 800;
             text-transform: uppercase; letter-spacing: 0.5px;
-            margin-bottom: 4px; display: block;
+            margin-bottom: 5px; display: block;
         }
         .rider-summary-controls .field input, .rider-summary-controls .field select {
-            width: 100%; padding: 8px 10px; border-radius: 7px;
+            width: 100%; padding: 9px 12px; border-radius: 8px;
             border: 1px solid var(--border); background: var(--panel);
             color: var(--text); font-size: 13px;
         }
-        .rider-summary-controls .action-btn { padding: 8px 18px; height: 38px; align-self: flex-end; }
+        .rider-summary-controls .action-btn { padding: 9px 20px; height: 40px; align-self: flex-end; }
         .rider-summary-card {
             padding: 16px; margin-bottom: 14px;
-            border: 1px solid rgba(234, 179, 8, 0.35); border-radius: 12px;
-            background: rgba(234, 179, 8, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 12px;
+            background: rgba(245, 158, 11, 0.08);
         }
         .rider-summary-card .badge {
-            font-size: 10px; color: var(--muted); font-weight: 700;
+            font-size: 10px; color: var(--muted); font-weight: 800;
             text-transform: uppercase; letter-spacing: 0.3px;
         }
-        .rider-summary-card .name { font-size: 18px; font-weight: 800; margin-top: 4px; }
-        .rider-summary-card .meta { margin-top: 6px; font-size: 12px; color: var(--muted); }
+        .rider-summary-card .name { font-size: 18px; font-weight: 900; margin-top: 5px; }
+        .rider-summary-card .meta { margin-top: 7px; font-size: 12px; color: var(--muted); }
         .rider-stats-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
             gap: 10px; margin-bottom: 16px;
         }
         .rider-stat-card {
-            padding: 12px; border: 1px solid var(--border);
-            border-radius: 10px; background: var(--bg);
+            padding: 13px; border: 1px solid var(--border);
+            border-radius: 10px; background: var(--bg-2);
         }
         .rider-stat-card .label {
-            font-size: 10px; color: var(--muted); font-weight: 700; text-transform: uppercase;
+            font-size: 10px; color: var(--muted); font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.3px;
         }
-        .rider-stat-card .value { margin-top: 4px; font-size: 18px; font-weight: 800; }
+        .rider-stat-card .value { margin-top: 5px; font-size: 18px; font-weight: 900; }
         .rider-list-header {
             display: flex; justify-content: space-between; align-items: center;
-            gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
+            gap: 10px; margin-bottom: 12px; flex-wrap: wrap;
         }
-        .rider-list-header .title { font-size: 14px; font-weight: 800; }
+        .rider-list-header .title { font-size: 14px; font-weight: 900; }
         .rider-list-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .rider-item {
-            padding: 14px; margin-bottom: 8px; border: 1px solid var(--border);
-            border-radius: 10px; background: var(--bg);
+            padding: 14px; margin-bottom: 10px; border: 1px solid var(--border);
+            border-radius: 11px; background: var(--bg-2);
         }
         .rider-item .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
         .rider-item .name { font-weight: 800; font-size: 14px; }
         .rider-item .username { font-size: 11px; color: var(--muted); margin-top: 3px; }
         .rider-item .status-badge {
-            padding: 4px 10px; border-radius: 7px; font-size: 10px;
-            font-weight: 800; white-space: nowrap;
+            padding: 5px 11px; border-radius: 8px; font-size: 10px;
+            font-weight: 800; white-space: nowrap; letter-spacing: 0.3px;
         }
-        .rider-item .status-badge.active { background: rgba(46, 160, 67, 0.12); color: #2ea043; }
-        .rider-item .status-badge.inactive { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+        .rider-item .status-badge.active { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .rider-item .status-badge.inactive { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
         .rider-item .stats {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 8px; margin-top: 12px;
+            gap: 10px; margin-top: 12px;
         }
-        .rider-item .stats .stat { font-size: 10px; color: var(--muted); }
+        .rider-item .stats .stat { font-size: 10px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
         .rider-item .stats .stat b {
-            color: var(--text); font-size: 13px; display: block; margin-top: 2px;
+            color: var(--text); font-size: 14px; display: block; margin-top: 3px;
+            text-transform: none; letter-spacing: normal;
         }
-        .rider-item .stats .stat .sales { color: var(--success, #2ea043); }
+        .rider-item .stats .stat .sales { color: var(--success); }
 
         .no-active-warning {
             padding: 14px; margin-bottom: 12px;
-            border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 10px;
-            background: rgba(245, 158, 11, 0.10); color: #b45309;
+            border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 11px;
+            background: rgba(245, 158, 11, 0.10); color: var(--accent);
             font-size: 13px; font-weight: 700;
         }
         .no-active-warning small {
@@ -508,49 +744,50 @@
             font-weight: 500; color: var(--muted);
         }
 
+        /* ── SHIFT REPORTS ── */
         .shift-filter-row {
             display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;
-            margin-bottom: 16px; background: var(--bg); padding: 14px 16px;
-            border-radius: 10px; border: 1px solid var(--border);
+            margin-bottom: 16px; background: var(--bg-2); padding: 14px 16px;
+            border-radius: 11px; border: 1px solid var(--border);
         }
         .shift-filter-row .field { flex: 1; min-width: 140px; }
         .shift-filter-row .field label {
-            font-size: 10px; color: var(--muted); font-weight: 700;
+            font-size: 10px; color: var(--muted); font-weight: 800;
             text-transform: uppercase; letter-spacing: 0.5px;
-            margin-bottom: 4px; display: block;
+            margin-bottom: 5px; display: block;
         }
         .shift-filter-row .field input {
-            width: 100%; padding: 8px 10px; border-radius: 7px;
+            width: 100%; padding: 9px 12px; border-radius: 8px;
             border: 1px solid var(--border); background: var(--panel);
             color: var(--text); font-size: 13px;
         }
         .shift-filter-row .action-btn {
-            padding: 8px 18px; height: 38px; align-self: flex-end; flex-shrink: 0;
+            padding: 9px 20px; height: 40px; align-self: flex-end; flex-shrink: 0;
         }
-        #shiftReportsModal .modal-box { max-width: 1100px; width: 95%; padding: 20px 24px; }
+        #shiftReportsModal .modal-box { max-width: 1100px; width: 95%; padding: 22px 26px; }
         .shift-report-table-wrap { overflow-x: auto; margin-top: 4px; width: 100%; }
         .shift-report-table {
             width: 100%; border-collapse: collapse; font-size: 12px; table-layout: auto;
         }
         .shift-report-table th {
-            text-align: left; padding: 10px 8px;
+            text-align: left; padding: 12px 10px;
             border-bottom: 2px solid var(--border); color: var(--muted);
-            font-weight: 700; font-size: 11px; text-transform: uppercase;
-            letter-spacing: 0.3px; white-space: nowrap; background: var(--bg);
+            font-weight: 800; font-size: 11px; text-transform: uppercase;
+            letter-spacing: 0.4px; white-space: nowrap; background: var(--bg-2);
         }
         .shift-report-table td {
-            padding: 10px 8px; border-bottom: 1px solid var(--border);
+            padding: 12px 10px; border-bottom: 1px solid var(--border);
             vertical-align: middle; white-space: nowrap;
         }
         .shift-report-table tr.report-row { cursor: pointer; transition: background 0.1s; }
-        .shift-report-table tr.report-row:hover td { background: var(--bg); }
-        .shift-report-table tr.report-row td:first-child { font-weight: 600; }
+        .shift-report-table tr.report-row:hover td { background: var(--bg-2); }
+        .shift-report-table tr.report-row td:first-child { font-weight: 700; }
         .shift-report-table .status-badge {
-            font-size: 10px; padding: 3px 9px; border-radius: 12px;
-            font-weight: 700; text-transform: capitalize;
-            display: inline-block; white-space: nowrap;
+            font-size: 10px; padding: 4px 11px; border-radius: 12px;
+            font-weight: 800; text-transform: capitalize;
+            display: inline-block; white-space: nowrap; letter-spacing: 0.3px;
         }
-        .shift-report-table .status-badge.active { background: rgba(47, 163, 125, .18); color: var(--success); }
+        .shift-report-table .status-badge.active { background: rgba(16, 185, 129, .18); color: var(--success); }
         .shift-report-table .status-badge.closed { background: var(--border); color: var(--muted); }
         .shift-report-table .text-right { text-align: right; }
         .shift-report-table .text-muted { color: var(--muted); }
@@ -561,25 +798,25 @@
         .shift-report-table .col-numbers { min-width: 60px; text-align: right; }
 
         .report-detail {
-            background: var(--bg); border-radius: 8px; padding: 12px 14px;
+            background: var(--bg-2); border-radius: 9px; padding: 14px 16px;
             margin: 6px 0 10px; border-left: 3px solid var(--accent);
         }
         .report-detail table { width: 100%; border-collapse: collapse; font-size: 11px; }
         .report-detail th, .report-detail td {
-            padding: 5px 6px; text-align: left; border-bottom: 1px solid var(--border);
+            padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border);
         }
         .report-detail th {
-            color: var(--muted); font-weight: 700; font-size: 10px;
+            color: var(--muted); font-weight: 800; font-size: 10px;
             text-transform: uppercase; letter-spacing: 0.3px;
         }
         .report-detail .order-item {
-            display: flex; justify-content: space-between; padding: 3px 0;
+            display: flex; justify-content: space-between; padding: 4px 0;
             font-size: 12px; border-bottom: 1px dashed var(--border);
         }
         .report-detail .order-item:last-child { border-bottom: 0; }
         .report-detail .deal-header {
-            color: var(--accent); font-weight: 700; font-size: 12px;
-            padding: 6px 0 2px; border-top: 1px solid var(--border); margin-top: 4px;
+            color: var(--accent); font-weight: 800; font-size: 12px;
+            padding: 7px 0 3px; border-top: 1px solid var(--border); margin-top: 5px;
         }
         .report-detail .deal-header:first-child { border-top: 0; margin-top: 0; }
 
@@ -597,50 +834,52 @@
             display: flex; justify-content: space-between;
             align-items: center; flex-wrap: wrap; gap: 8px;
         }
-        .orders-panel-head h3 { margin: 0; }
+        .orders-panel-head h3 { margin: 0; font-size: 16px; }
+
         .offline-order-card {
-            border: 1px solid var(--border); border-radius: 10px;
-            padding: 12px; margin-bottom: 8px; background: var(--bg);
+            border: 1px solid var(--border); border-radius: 11px;
+            padding: 14px; margin-bottom: 10px; background: var(--bg-2);
         }
         .offline-order-card .row {
             display: flex; justify-content: space-between;
             align-items: center; flex-wrap: wrap; gap: 6px;
         }
         .offline-order-card .pending {
-            padding: 3px 10px; border-radius: 20px; font-size: 10px;
-            font-weight: 700; background: rgba(245, 158, 11, .15); color: #fbbf24;
+            padding: 4px 11px; border-radius: 20px; font-size: 10px;
+            font-weight: 800; background: rgba(245, 158, 11, .18); color: var(--accent);
+            letter-spacing: 0.3px;
         }
         .offline-order-card .items-list {
-            font-size: 12px; color: var(--muted); margin-top: 6px;
+            font-size: 12px; color: var(--muted); margin-top: 8px;
         }
         .offline-order-card .footer {
             display: flex; justify-content: space-between;
-            align-items: center; gap: 8px; margin-top: 10px;
+            align-items: center; gap: 8px; margin-top: 12px;
         }
         .offline-order-card .footer strong { font-size: 14px; }
 
         .surcharge-hint {
-            display: block; margin-top: 5px; font-size: 11px;
-            color: var(--accent); font-weight: 600;
+            display: block; margin-top: 6px; font-size: 11px;
+            color: var(--accent); font-weight: 700;
         }
 
         @media(max-width:600px) {
-            .modal-box-lg { max-width: 95%; padding: 14px; }
+            .modal-box-lg { max-width: 95%; padding: 16px; }
             .rider-summary-controls, .shift-filter-row { flex-direction: column; align-items: stretch; }
             .rider-summary-controls .action-btn, .shift-filter-row .action-btn { align-self: stretch; }
             .modal-box-lg .modal-close-x { float: none; margin: 0 0 10px auto; display: block; }
             #shiftReportsModal .modal-box { max-width: 98%; padding: 14px; }
-            .shift-report-table th, .shift-report-table td { padding: 6px 4px; font-size: 10px; }
-            .shift-report-table .status-badge { font-size: 8px; padding: 2px 6px; }
+            .shift-report-table th, .shift-report-table td { padding: 7px 5px; font-size: 10px; }
+            .shift-report-table .status-badge { font-size: 9px; padding: 2px 7px; }
         }
         @media(max-width:768px) {
             #shiftReportsModal .modal-box { max-width: 98%; padding: 14px; }
-            .shift-report-table th, .shift-report-table td { padding: 6px 4px; font-size: 10px; }
-            .shift-report-table .status-badge { font-size: 8px; padding: 2px 6px; }
+            .shift-report-table th, .shift-report-table td { padding: 7px 5px; font-size: 10px; }
+            .shift-report-table .status-badge { font-size: 9px; padding: 2px 7px; }
         }
     </style>
 </head>
-<body>
+<body data-theme="dark">
 
     <section id="loginScreen" class="login-screen">
         <div class="login-box">
@@ -672,20 +911,20 @@
 
         <header class="header">
             <button class="menu-btn" onclick="toggleSideMenu()" aria-label="Menu">☰</button>
-            <div style="font-weight:700;font-size:16px;">Counter POS</div>
+            <div style="font-weight:800;font-size:16px;">Counter POS</div>
             <div style="width:40px;"></div>
         </header>
 
         <div class="side-overlay" id="sideOverlay" onclick="closeSideMenu()"></div>
         <div class="side-menu" id="sideMenu">
             <div class="menu-heading">Counter Menu</div>
-            <div class="side-menu-row">
-                <span>Dark / Light Theme</span>
-                <label class="switch">
-                    <input type="checkbox" id="themeToggle" onchange="toggleTheme()" />
-                    <span class="slider"></span>
-                </label>
-            </div>
+            <button class="theme-cycle-btn" onclick="cycleTheme()">
+                <span class="theme-label">
+                    <span id="theme-icon">🌙</span>
+                    <span id="theme-name">Dark Theme</span>
+                </span>
+                <span class="theme-badge" id="theme-badge">Switch</span>
+            </button>
             <div class="shift-box">
                 <div class="shift-title">Shift</div>
                 <div class="shift-status" id="shiftStatus">Checking...</div>
@@ -740,7 +979,7 @@
             </section>
 
             <aside class="panel cart-panel">
-                <h3>Current Order</h3>
+                <h3 style="margin-bottom:14px;">Current Order</h3>
 
                 <div class="customer">
                     <div class="field">
@@ -776,7 +1015,7 @@
                     <div class="field">
                         <label>Customer Phone</label>
                         <input id="deliveryPhone" placeholder="03xxxxxxxxx" autocomplete="tel" oninput="lookupDeliveryCustomer()" />
-                        <small id="customerLookupStatus" style="display:block;margin-top:5px;color:#8B949E;font-size:11px;"></small>
+                        <small id="customerLookupStatus" style="display:block;margin-top:5px;color:var(--muted);font-size:11px;"></small>
                     </div>
                     <div class="field">
                         <label>Customer Name</label>
@@ -788,12 +1027,12 @@
                     </div>
                 </div>
 
-                <div class="field" id="deliveryChargeField" style="display:none; margin-top:8px;">
+                <div class="field" id="deliveryChargeField" style="display:none; margin-top:10px;">
                     <label>🛵 Delivery Charges (Rs)</label>
                     <input id="deliveryCharge" type="number" min="0" step="0.01" value="0" oninput="renderCart()" />
                 </div>
 
-                <div class="field" id="dineChargeField" style="display:none; margin-top:8px;">
+                <div class="field" id="dineChargeField" style="display:none; margin-top:10px;">
                     <label>🍽️ Dine-in / Service Charges (Rs)</label>
                     <input id="dineCharge" type="number" min="0" step="0.01" value="0" oninput="renderCart()" />
                 </div>
@@ -835,19 +1074,20 @@
 
             <section class="panel offline-orders-panel">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-                    <h3 style="margin:0;">📦 Offline Orders</h3>
+                    <h3 style="margin:0; font-size:16px;">📦 Offline Orders</h3>
                     <div style="display:flex;gap:8px;align-items:center;">
                         <span id="syncStatus" style="font-size:12px;color:var(--muted);">✅ Synced</span>
                         <button class="action-btn accept" onclick="syncNow()">Sync Now</button>
                     </div>
                 </div>
-                <div id="offlineOrders" style="margin-top:10px;">
+                <div id="offlineOrders" style="margin-top:12px;">
                     <div class="empty">No offline orders</div>
                 </div>
             </section>
         </main>
     </section>
 
+    <!-- ── RIDER MANAGEMENT MODAL ── -->
     <div class="modal" id="riderManagementModal">
         <div class="modal-box modal-box-lg">
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;flex-wrap:wrap;">
@@ -892,9 +1132,10 @@
         </div>
     </div>
 
+    <!-- ── PAYMENT MODAL ── -->
     <div class="modal" id="paymentModal">
         <div class="modal-box">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
                 <h3 style="margin:0;">Receive Payment</h3>
                 <button class="modal-close-x" onclick="closePayment()" aria-label="Close">&times;</button>
             </div>
@@ -905,7 +1146,7 @@
                 </select>
                 <small id="paymentSurchargeHint" class="surcharge-hint" style="display:none;"></small>
             </div>
-            <div class="field" style="margin-top:10px">
+            <div class="field" style="margin-top:12px">
                 <label>Paid Amount</label>
                 <input id="paidAmount" type="number" min="0" step="0.01" />
             </div>
@@ -917,9 +1158,10 @@
         </div>
     </div>
 
+    <!-- ── SLIP MODAL ── -->
     <div class="modal" id="slipModal">
         <div class="modal-box">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
                 <h3 style="margin:0;">Print Slip</h3>
                 <button class="modal-close-x" onclick="closeSlip()" aria-label="Close">&times;</button>
             </div>
@@ -935,9 +1177,10 @@
         </div>
     </div>
 
+    <!-- ── SHIFT SUMMARY MODAL ── -->
     <div class="modal" id="shiftSummaryModal">
         <div class="modal-box" style="max-width:480px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
                 <h3 style="margin:0;">Shift Summary</h3>
                 <button class="modal-close-x" onclick="closeShiftSummary()" aria-label="Close">&times;</button>
             </div>
@@ -949,6 +1192,7 @@
         </div>
     </div>
 
+    <!-- ── SHIFT REPORTS MODAL ── -->
     <div class="modal" id="shiftReportsModal">
         <div class="modal-box">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap;">
@@ -977,9 +1221,10 @@
         </div>
     </div>
 
+    <!-- ── SETTINGS MODAL ── -->
     <div class="modal" id="settingsModal">
         <div class="modal-box">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
                 <h3 style="margin:0;">⚙️ Default Settings</h3>
                 <button class="modal-close-x" onclick="closeSettings()" aria-label="Close">&times;</button>
             </div>
@@ -988,27 +1233,27 @@
                 <label>Default GST %</label>
                 <input id="settingsGst" type="number" min="0" max="100" step="0.01" value="0" />
             </div>
-            <div class="field" style="margin-top:10px">
+            <div class="field" style="margin-top:12px">
                 <label>Default Other Tax %</label>
                 <input id="settingsTax" type="number" min="0" max="100" step="0.01" value="0" />
             </div>
-            <div class="field" style="margin-top:10px">
+            <div class="field" style="margin-top:12px">
                 <label>Default Delivery Charges (Rs)</label>
                 <input id="settingsDelivery" type="number" min="0" step="0.01" value="0" />
             </div>
-            <div class="field" style="margin-top:10px">
+            <div class="field" style="margin-top:12px">
                 <label>Default Dine-in Charges (Rs)</label>
                 <input id="settingsDine" type="number" min="0" step="0.01" value="0" />
             </div>
-            <div class="field" style="margin-top:10px">
+            <div class="field" style="margin-top:12px">
                 <label>💳 Default Card Charges % <small style="color:var(--muted);font-weight:400">(surcharge on card payments)</small></label>
                 <input id="settingsCardCharges" type="number" min="0" max="100" step="0.01" value="0" />
             </div>
-            <div class="field" style="margin-top:10px">
+            <div class="field" style="margin-top:12px">
                 <label>🏦 Default Bank Charges % <small style="color:var(--muted);font-weight:400">(surcharge on bank transfers)</small></label>
                 <input id="settingsBankCharges" type="number" min="0" max="100" step="0.01" value="0" />
             </div>
-            <div class="field" style="margin-top:10px">
+            <div class="field" style="margin-top:12px">
                 <label>🔗 Raast QR String <small style="color:var(--muted);font-weight:400">(bank se milega — QR Payment option iske baad enable hoga)</small></label>
                 <input id="settingsRaastQr" type="text" placeholder="RAAST://PAY?..." />
             </div>
@@ -1020,7 +1265,7 @@
         </div>
     </div>
 
-    <!-- QR PAYMENT MODAL -->
+    <!-- ── QR PAYMENT MODAL ── -->
     <div class="modal" id="qrPaymentModal">
         <div class="modal-box" style="max-width:420px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -1057,7 +1302,7 @@
 
             <div class="modal-actions" style="margin-top:12px;">
                 <button class="cancel" onclick="cancelQrPayment()">Cancel</button>
-                <button class="cancel" style="background:rgba(227,162,59,.15);color:var(--accent);border-color:rgba(227,162,59,.4);"
+                <button class="cancel" style="background:rgba(245,158,11,.15);color:var(--accent);border-color:rgba(245,158,11,.4);"
                         onclick="regenerateQr()">
                     🔄 Refresh
                 </button>
@@ -1109,6 +1354,41 @@
 
         /* ✅ Raast availability flag */
         let raastQrAvailable = false;
+
+        /* ═══════════════════════════════════════════
+           THEME SYSTEM (3 themes: dark / light / blue)
+        ═══════════════════════════════════════════ */
+        const THEMES = [
+            { key: 'dark',  icon: '🌙', name: 'Dark Theme',  badge: '1/3' },
+            { key: 'light', icon: '☀️', name: 'Light Theme', badge: '2/3' },
+            { key: 'blue',  icon: '🌊', name: 'Blue Theme',  badge: '3/3' }
+        ];
+
+        function applyTheme(themeKey) {
+            const theme = THEMES.find(t => t.key === themeKey) || THEMES[0];
+            document.body.setAttribute('data-theme', theme.key);
+
+            const iconEl = document.getElementById('theme-icon');
+            const nameEl = document.getElementById('theme-name');
+            const badgeEl = document.getElementById('theme-badge');
+            if (iconEl) iconEl.textContent = theme.icon;
+            if (nameEl) nameEl.textContent = theme.name;
+            if (badgeEl) badgeEl.textContent = theme.badge;
+
+            localStorage.setItem('counter_theme', theme.key);
+        }
+
+        function cycleTheme() {
+            const current = document.body.getAttribute('data-theme') || 'dark';
+            const idx = THEMES.findIndex(t => t.key === current);
+            const next = THEMES[(idx + 1) % THEMES.length];
+            applyTheme(next.key);
+        }
+
+        function initializeTheme() {
+            const saved = localStorage.getItem('counter_theme') || 'dark';
+            applyTheme(saved);
+        }
 
         function normalizeLogoUrl(value) {
             if (!value) return '';
@@ -1239,7 +1519,6 @@
             document.getElementById('settingsCardCharges').value = localStorage.getItem('counter_default_card_charges') || 0;
             document.getElementById('settingsBankCharges').value = localStorage.getItem('counter_default_bank_charges') || 0;
 
-            // Load Raast QR from backend
             try {
                 const res = await apiFetch(`${API_BASE}/settings/raast-qr`);
                 document.getElementById('settingsRaastQr').value = res.data?.raast_qr_string || '';
@@ -1276,7 +1555,6 @@
             localStorage.setItem('counter_default_card_charges', cardCharges);
             localStorage.setItem('counter_default_bank_charges', bankCharges);
 
-            // Save Raast QR to backend
             try {
                 await apiFetch(`${API_BASE}/settings/raast-qr`, {
                     method: 'PUT',
@@ -1316,7 +1594,6 @@
             if (dvEl) dvEl.value = '0';
         }
 
-        /* ✅ NEW: Check if QR payment is available */
         async function checkQrAvailability() {
             try {
                 const res = await apiFetch(`${API_BASE}/settings/raast-qr`);
@@ -1328,7 +1605,6 @@
                     qrOption.style.display = raastQrAvailable ? 'block' : 'none';
                 }
 
-                // Agar QR unavailable ho jaye lekin selected ho to Cash pe switch karo
                 const methodSelect = document.getElementById('payNowMethod');
                 if (methodSelect && methodSelect.value === 'QR Payment' && !raastQrAvailable) {
                     methodSelect.value = 'Cash';
@@ -1349,19 +1625,6 @@
         function closeSideMenu() {
             document.getElementById('sideMenu').classList.remove('open');
             document.getElementById('sideOverlay').classList.remove('open');
-        }
-
-        function toggleTheme() {
-            const light = document.getElementById('themeToggle').checked;
-            document.body.classList.toggle('light-theme', light);
-            localStorage.setItem('counter_theme', light ? 'light' : 'dark');
-        }
-
-        function initializeTheme() {
-            const light = localStorage.getItem('counter_theme') === 'light';
-            document.body.classList.toggle('light-theme', light);
-            const toggle = document.getElementById('themeToggle');
-            if (toggle) toggle.checked = light;
         }
 
         let currentShift = null;
@@ -2102,7 +2365,7 @@
 
                 if (statusEl) {
                     statusEl.textContent = 'Searching customer...';
-                    statusEl.style.color = '#8B949E';
+                    statusEl.style.color = 'var(--muted)';
                 }
 
                 const cacheKey = [RESTAURANT_ID_FROM_URL, phone];
@@ -2115,12 +2378,12 @@
                             if (cached.delivery_address) addressInput.value = cached.delivery_address;
                             if (statusEl) {
                                 statusEl.textContent = '✓ Found in local cache (offline)';
-                                statusEl.style.color = '#2FA37D';
+                                statusEl.style.color = 'var(--success)';
                             }
                         } else {
                             if (statusEl) {
                                 statusEl.textContent = 'New customer (offline mode)';
-                                statusEl.style.color = '#8B949E';
+                                statusEl.style.color = 'var(--muted)';
                             }
                         }
                     } catch (err) {
@@ -2143,7 +2406,7 @@
                         if (customer.delivery_address) addressInput.value = customer.delivery_address;
                         if (statusEl) {
                             statusEl.textContent = '✓ Previous customer details found';
-                            statusEl.style.color = '#2FA37D';
+                            statusEl.style.color = 'var(--success)';
                         }
                         try {
                             await db.customers_v2.put({
@@ -2159,7 +2422,7 @@
                     } else {
                         if (statusEl) {
                             statusEl.textContent = 'New customer';
-                            statusEl.style.color = '#8B949E';
+                            statusEl.style.color = 'var(--muted)';
                         }
                     }
                 } catch (err) {
@@ -2171,12 +2434,12 @@
                             if (cached.delivery_address) addressInput.value = cached.delivery_address;
                             if (statusEl) {
                                 statusEl.textContent = '✓ Found in local cache';
-                                statusEl.style.color = '#2FA37D';
+                                statusEl.style.color = 'var(--success)';
                             }
                         } else {
                             if (statusEl) {
                                 statusEl.textContent = 'Network issue';
-                                statusEl.style.color = '#E15A4C';
+                                statusEl.style.color = 'var(--danger)';
                             }
                         }
                     } catch (e) {
@@ -2783,7 +3046,7 @@
             if (status !== 'ready_to_deliver') {
                 const current = riderNameForOrder(order);
                 return current ?
-                    `<div style="margin-top:8px;padding:8px 10px;border-radius:8px;background:rgba(46,160,67,.10);font-size:12px;">🚚 Rider: <strong>${esc(current)}</strong></div>` : '';
+                    `<div style="margin-top:8px;padding:8px 10px;border-radius:8px;background:rgba(16,185,129,.10);font-size:12px;">🚚 Rider: <strong>${esc(current)}</strong></div>` : '';
             }
             const current = riderNameForOrder(order);
             const options = deliveryRiders.map(r => {
@@ -2791,7 +3054,7 @@
                 return `<option value="${Number(r.id)}"${selected}>${esc(r.full_name || r.username || `Rider #${r.id}`)}</option>`;
             }).join('');
             return `
-                    <div style="margin-top:8px;padding:10px;border:1px solid var(--border);border-radius:9px;background:rgba(255,255,255,.02);">
+                    <div style="margin-top:8px;padding:10px;border:1px solid var(--border);border-radius:9px;background:var(--bg-2);">
                         ${current ? `<div style="font-size:12px;margin-bottom:8px;">🚚 Assigned Rider: <strong>${esc(current)}</strong></div>` : `<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">No rider assigned</div>`}
                         <div style="display:flex;gap:6px;flex-wrap:wrap;">
                             <select id="riderSelect-${Number(order.id)}" style="flex:1;min-width:150px;padding:8px;border-radius:7px;border:1px solid var(--border);background:var(--panel);color:inherit;">
@@ -3595,13 +3858,13 @@
             try {
                 await syncService.manualSync();
                 document.getElementById('syncStatus').textContent = '✅ Synced';
-                document.getElementById('syncStatus').style.color = '#2FA37D';
+                document.getElementById('syncStatus').style.color = 'var(--success)';
                 await loadOfflineOrders();
                 status('✅ All orders synced successfully.');
             } catch (err) {
                 console.error('Sync failed:', err);
                 document.getElementById('syncStatus').textContent = '❌ Sync failed';
-                document.getElementById('syncStatus').style.color = '#E15A4C';
+                document.getElementById('syncStatus').style.color = 'var(--danger)';
                 status('❌ Sync failed: ' + err.message);
             } finally {
                 if (btn) { btn.disabled = false; btn.textContent = originalText; }
@@ -3617,7 +3880,7 @@
                     statusEl.style.color = '#fbbf24';
                 } else {
                     statusEl.textContent = '✅ Synced';
-                    statusEl.style.color = '#2FA37D';
+                    statusEl.style.color = 'var(--success)';
                 }
             });
         }
@@ -3632,7 +3895,7 @@
         window.logout = logout;
         window.toggleSideMenu = toggleSideMenu;
         window.closeSideMenu = closeSideMenu;
-        window.toggleTheme = toggleTheme;
+        window.cycleTheme = cycleTheme;
         window.toggleShift = toggleShift;
         window.openShiftReports = openShiftReports;
         window.closeShiftReports = closeShiftReports;
