@@ -4,6 +4,7 @@
     "description": "Delivery rider notifications",
     "start_url": "/rider",
     "scope": "/",
+     "id": "/rider-app",
     "display": "standalone",
     "orientation": "portrait",
     "background_color": "#0f172a",
