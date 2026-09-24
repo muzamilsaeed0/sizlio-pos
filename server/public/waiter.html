@@ -846,11 +846,21 @@ async function loadPendingOrders() {
       }
       if (!itemsHtml) itemsHtml = '<em style="color:#6B7280;">No items</em>';
 
-      // ✅ Order type ke hisaab se label decide karein
+      // ✅ FIX: table_no ko priority do — QR orders bhi sahi dikhein
+      const orderType = String(o.order_type || '').toLowerCase();
+      const tableNo = Number(o.table_no);
       let locationLabel = '';
-      if (o.order_type === 'delivery') locationLabel = '🛵 Delivery';
-      else if (o.order_type === 'walk_in') locationLabel = '🛍️ Walk-in';
-      else locationLabel = `🍽️ Table ${escapeHtml(o.table_no)}`;
+
+      if (orderType === 'delivery') {
+        locationLabel = '🛵 Delivery';
+      } else if (tableNo > 0) {
+        // Table number hai to dine-in (QR ya counter)
+        locationLabel = `🍽️ Table ${escapeHtml(tableNo)}`;
+      } else if (orderType === 'walk_in') {
+        locationLabel = '🛍️ Walk-in';
+      } else {
+        locationLabel = '🍽️ Dine-in';
+      }
 
       // ✅ Customer name sirf tab dikhayein jab mojood ho
       const customerName = o.customer_name ? escapeHtml(o.customer_name) : '';
@@ -926,11 +936,20 @@ async function loadReadyOrders() {
       }
       if (!itemsHtml) itemsHtml = '<em style="color:#6B7280;">No items</em>';
 
-      // ✅ Order type ke hisaab se label decide karein
+      // ✅ FIX: table_no ko priority do — QR orders bhi sahi dikhein
+      const orderType = String(o.order_type || '').toLowerCase();
+      const tableNo = Number(o.table_no);
       let locationLabel = '';
-      if (o.order_type === 'delivery') locationLabel = '🛵 Delivery';
-      else if (o.order_type === 'walk_in') locationLabel = '🛍️ Walk-in';
-      else locationLabel = `🍽️ Table ${escapeHtml(o.table_no)}`;
+
+      if (orderType === 'delivery') {
+        locationLabel = '🛵 Delivery';
+      } else if (tableNo > 0) {
+        locationLabel = `🍽️ Table ${escapeHtml(tableNo)}`;
+      } else if (orderType === 'walk_in') {
+        locationLabel = '🛍️ Walk-in';
+      } else {
+        locationLabel = '🍽️ Dine-in';
+      }
 
       // ✅ Customer name sirf tab dikhayein jab mojood ho
       const customerName = o.customer_name ? escapeHtml(o.customer_name) : '';
