@@ -984,12 +984,45 @@ async function loadReadyOrders() {
 }
 
 async function serveOrder(id) {
-  const res = await fetch(`/api/orders/${id}/serve`, { method: 'PUT', headers: authHeaders(true) });
-  if (checkUnauthorized(res)) return;
-  const data = await res.json();
-  if (!res.ok) { alert(data.message); return; }
-  loadReadyOrders();
-  loadCurrentOrder();
+  if (!confirm(`Serve order #${id}?`)) return;
+  try {
+    const res = await fetch(`/api/orders/${id}/serve`, {
+      method: 'PUT',
+      headers: authHeaders(true)
+    });
+    if (checkUnauthorized(res)) return;
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      const errMsg = data.message || data.error || 'Serve failed';
+
+      // Inventory / stock error
+      if (
+        data.error === 'INSUFFICIENT_KITCHEN_STOCK' ||
+        data.error === 'KITCHEN_STOCK_NOT_FOUND' ||
+        errMsg.toLowerCase().includes('stock')
+      ) {
+        showStockAlert(
+          `Sorry, ${data.ingredient || 'item'} ka stock kam hai. ` +
+          `Available: ${data.available || 0}, Required: ${data.required || 0} ${data.unit || 'pcs'}`
+        );
+        return;
+      }
+
+      alert('❌ ' + errMsg);
+      return;
+    }
+
+    showToast(`✅ Order #${id} served!`, 'success');
+    loadReadyOrders();
+    loadCurrentOrder();
+    loadPendingOrders();
+
+  } catch (err) {
+    console.error('serveOrder:', err);
+    alert('Server error: ' + err.message);
+  }
 }
 
 async function cancelOrder(id) {
@@ -1070,7 +1103,8 @@ async function placeOrder() {
       table_no: table,
       items,
       deals,
-      order_source: 'WAITER'
+      order_source: 'WAITER',
+      order_type: 'dine_in'  
     })
   });
 

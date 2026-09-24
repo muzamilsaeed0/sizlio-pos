@@ -584,17 +584,12 @@ exports.placeOrder = async (
 
 
 
-    let existingOrder = null;
+   let existingOrder = null;
 
-if (order_type === 'dine_in') {
-
-      existingOrder =
-        await getActiveOrderForTable(
-          tableNo,
-          restaurantId
-        );
-
-    }
+// ✅ Dine-in aur Walk-in dono ke liye existing order check karo
+if ((order_type === 'dine_in' || order_type === 'walk_in') && tableNo > 0) {
+  existingOrder = await getActiveOrderForTable(tableNo, restaurantId);
+}
 
 
     // --------------------------------------------------

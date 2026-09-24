@@ -2910,43 +2910,28 @@ const markPaid = async (
 // an unfinished order.
 // ======================================================
 
-const getActiveOrderForTable = async (
-  tableNo,
-  restaurantId
-) => {
-
-  const result =
-    await pool.query(
-      `
-      SELECT *
-
-      FROM orders
-
-      WHERE table_no = $1
-
-        AND restaurant_id = $2
-
-        AND status IN (
-          'pending',
-          'placed',
-          'accepted',
-          'preparing'
-        )
-
-      ORDER BY
-        created_at DESC
-
-      LIMIT 1
-      `,
-      [
-        tableNo,
-        restaurantId
-      ]
-    );
-
-
+const getActiveOrderForTable = async (tableNo, restaurantId) => {
+  const result = await pool.query(
+    `
+    SELECT *
+    FROM orders
+    WHERE table_no = $1
+      AND restaurant_id = $2
+      AND status IN (
+        'pending',
+        'placed',
+        'accepted',
+        'preparing',
+        'ready',
+        'ready_to_dispatch'
+      )
+      AND payment_status != 'paid'
+    ORDER BY created_at DESC
+    LIMIT 1
+    `,
+    [tableNo, restaurantId]
+  );
   return result.rows[0] || null;
-
 };
 
 
