@@ -995,7 +995,9 @@
       const password = document.getElementById("password").value;
       const error = document.getElementById("login-error");
       
-      const urlRestaurantId = params.get("restaurant");
+      const urlRestaurantId =
+        new URLSearchParams(location.search).get("restaurant") ||
+        localStorage.getItem("saved_restaurant_id");
       error.innerText = "";
       if (!username || !password) { error.innerText = "Username and Password required"; return; }
       if (!urlRestaurantId) { error.innerText = "Restaurant ID is missing. Open page with ?restaurant=ID"; return; }
@@ -1005,7 +1007,9 @@
         if (!res.ok) { error.innerText = data.message || "Login failed"; return; }
         if (!data.user || data.user.role !== "manager") { error.innerText = "Manager account required"; return; }
         token = data.token; restaurantId = data.user.restaurant_id;
-        localStorage.setItem("token", token); localStorage.setItem("restaurant_id", restaurantId);
+        localStorage.setItem("token", token); 
+        localStorage.setItem("restaurant_id", restaurantId);
+        localStorage.setItem("saved_restaurant_id", restaurantId); 
         socket.auth = { token };
         if (!socket.connected) socket.connect();
         document.getElementById("login-box").style.display = "none";
