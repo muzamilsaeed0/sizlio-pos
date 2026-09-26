@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <title>Sizlio Cafe</title>
+  <title>Sizlio Cafe — Counter Lite</title>
   <style>
     :root {
       --bg: #0f1419;
@@ -28,7 +28,7 @@
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
@@ -36,7 +36,7 @@
     button, input, select { font: inherit; }
     .hidden { display: none !important; }
 
-    /* Login */
+    /* ================ LOGIN ================ */
     #login-box {
       min-height: 100vh;
       display: flex;
@@ -53,9 +53,17 @@
       padding: 28px;
       box-shadow: 0 20px 50px rgba(0,0,0,.35);
     }
-    .login-card h1 { margin: 0 0 6px; font-size: 22px; }
-    .login-card p { margin: 0 0 20px; color: var(--muted); font-size: 13px; }
-    .login-card label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .login-card h2 { margin: 0 0 6px; font-size: 22px; }
+    .login-card p.sub { margin: 0 0 20px; color: var(--muted); font-size: 13px; }
+    .login-card label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+      font-weight: 700;
+    }
     .login-card input {
       width: 100%;
       padding: 12px 14px;
@@ -64,15 +72,44 @@
       background: var(--bg);
       color: var(--text);
       margin-bottom: 14px;
+      font-size: 14px;
     }
+    .login-card input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .pw-wrap {
+      position: relative;
+      margin-bottom: 14px;
+    }
+    .pw-wrap input {
+      margin: 0 !important;
+      padding-right: 44px !important;
+    }
+    .pw-eye {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      user-select: none;
+      font-size: 16px;
+      opacity: .55;
+      transition: opacity .15s;
+    }
+    .pw-eye:hover { opacity: 1; }
+
     .btn {
       border: none;
       border-radius: 10px;
       padding: 12px 16px;
       font-weight: 700;
       cursor: pointer;
+      transition: opacity .15s, transform .1s;
     }
+    .btn:active { transform: translateY(1px); }
     .btn-accent { background: var(--accent); color: #14181c; width: 100%; }
+    .btn-accent:hover { opacity: .92; }
     .btn-ok { background: var(--ok); color: #fff; }
     .btn-danger { background: var(--danger); color: #fff; }
     .btn-ghost {
@@ -80,15 +117,27 @@
       color: var(--text);
       border: 1px solid var(--border);
     }
-    #login-error { color: var(--danger); font-size: 13px; min-height: 18px; margin-top: 10px; }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    #login-error {
+      color: var(--danger);
+      font-size: 13px;
+      min-height: 18px;
+      margin-top: 10px;
+      text-align: center;
+    }
 
-    /* App shell */
-    #app-box { display: none; min-height: 100vh; flex-direction: column; }
+    /* ================ APP SHELL ================ */
+    #app-box {
+      display: none;
+      min-height: 100vh;
+      flex-direction: column;
+    }
     #app-box.show { display: flex; }
+
     .topbar {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       padding: 10px 14px;
       border-bottom: 1px solid var(--border);
       background: var(--panel);
@@ -105,7 +154,7 @@
       border: 1px solid var(--border);
     }
     .pill.ok { color: var(--ok); border-color: #2fa37d55; }
-    .pill.warn { color: var(--accent); }
+    .pill.warn { color: var(--accent); border-color: #e3a23b55; }
     .topbar .spacer { flex: 1; }
     .sales-chip {
       font-size: 13px;
@@ -153,6 +202,7 @@
       color: var(--text);
       font-weight: 700;
       cursor: pointer;
+      transition: background .15s, color .15s;
     }
     .type-btn.active {
       background: var(--accent);
@@ -168,17 +218,23 @@
       color: var(--text);
       margin-bottom: 10px;
     }
+    .search:focus { outline: none; border-color: var(--accent); }
     .cats { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
     .cat-chip {
-      padding: 6px 10px;
+      padding: 6px 12px;
       border-radius: 999px;
       border: 1px solid var(--border);
       background: var(--panel2);
       color: var(--muted);
       font-size: 12px;
       cursor: pointer;
+      font-weight: 600;
     }
-    .cat-chip.active { color: var(--text); border-color: var(--accent); }
+    .cat-chip.active {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(227,162,59,.1);
+    }
     .menu-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -194,10 +250,12 @@
       padding: 10px;
       cursor: pointer;
       text-align: left;
+      transition: border-color .15s, transform .1s;
+      color: var(--text);
     }
-    .menu-card:hover { border-color: var(--accent); }
+    .menu-card:hover { border-color: var(--accent); transform: translateY(-1px); }
     .menu-card .n { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
-    .menu-card .u { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+    .menu-card .u { font-size: 11px; color: var(--muted); margin-bottom: 6px; min-height: 14px; }
     .menu-card .p { font-weight: 800; color: var(--accent); font-size: 13px; }
 
     .field-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
@@ -210,7 +268,11 @@
       background: var(--bg);
       color: var(--text);
     }
-    .cart-list { flex: 1; overflow: auto; margin-bottom: 8px; }
+    .field-row input:focus, .field-row select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .cart-list { flex: 1; overflow: auto; margin-bottom: 8px; min-height: 80px; }
     .cart-row {
       display: flex;
       align-items: center;
@@ -219,7 +281,8 @@
       border-bottom: 1px solid var(--border);
       font-size: 13px;
     }
-    .cart-row .nm { flex: 1; }
+    .cart-row:last-child { border-bottom: none; }
+    .cart-row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
     .qty-btn {
       width: 28px; height: 28px;
       border-radius: 8px;
@@ -228,7 +291,9 @@
       color: var(--text);
       cursor: pointer;
       font-weight: 700;
+      flex-shrink: 0;
     }
+    .qty-btn:hover { border-color: var(--accent); color: var(--accent); }
     .totals { font-size: 14px; margin-bottom: 10px; }
     .totals .line { display: flex; justify-content: space-between; margin: 4px 0; color: var(--muted); }
     .totals .grand { color: var(--text); font-weight: 800; font-size: 18px; margin-top: 6px; }
@@ -244,13 +309,20 @@
       margin-bottom: 8px;
       font-size: 12px;
     }
-    .order-card .hd { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 4px; }
-    .order-card .st { color: var(--accent); }
-    .order-card .paid { color: var(--ok); }
+    .order-card .hd {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+      margin-bottom: 4px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .order-card .st { color: var(--accent); text-transform: uppercase; font-size: 11px; }
+    .order-card .paid { color: var(--ok); text-transform: uppercase; font-size: 11px; }
     .order-card .actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
     .order-card .actions button { padding: 6px 10px; font-size: 11px; border-radius: 8px; }
 
-    /* Modal */
+    /* ================ MODAL ================ */
     .modal-bg {
       position: fixed; inset: 0;
       background: rgba(0,0,0,.55);
@@ -266,7 +338,13 @@
       padding: 18px;
     }
     .modal h3 { margin: 0 0 12px; }
-    .modal label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 4px; }
+    .modal label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin: 8px 0 4px;
+      font-weight: 600;
+    }
     .modal input, .modal select {
       width: 100%;
       padding: 10px 12px;
@@ -275,31 +353,67 @@
       background: var(--bg);
       color: var(--text);
     }
+    .modal input:focus, .modal select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
     .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
     .modal-actions .btn { flex: 1; }
     .menu-admin-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      gap: 8px;
     }
+    .menu-admin-row:last-child { border-bottom: none; }
     .empty { color: var(--muted); text-align: center; padding: 24px 8px; font-size: 13px; }
   </style>
 </head>
 <body>
-  <!-- LOGIN -->
+
+  <!-- ================ LOGIN ================ -->
   <div id="login-box">
     <div class="login-card">
-      <h1>Sizlio Cafe</h1>
-      <p>Single-screen counter · Lite plan</p>
+      <h2>Counter Lite</h2>
+      <p class="sub">Sign in with your counter account</p>
+
       <label>Username</label>
-      <input id="username" autocomplete="username" />
+      <input
+        id="username"
+        placeholder="Username"
+        autocomplete="username"
+        onkeydown="if (event.key === 'Enter') login()"
+      />
+
       <label>Password</label>
-      <input id="password" type="password" autocomplete="current-password" />
+      <div class="pw-wrap">
+        <input
+          id="password"
+          type="password"
+          placeholder="Password"
+          autocomplete="current-password"
+          onkeydown="if (event.key === 'Enter') login()"
+        />
+        <span
+          class="pw-eye"
+          onmousedown="showPassword()"
+          onmouseup="hidePassword()"
+          onmouseleave="hidePassword()"
+          ontouchstart="showPassword()"
+          ontouchend="hidePassword()"
+          title="Show password">👁</span>
+      </div>
+
       <button class="btn btn-accent" onclick="login()">Login</button>
-      <div id="login-error"></div>
+
+      <p id="login-error"></p>
     </div>
   </div>
 
-  <!-- APP -->
+  <!-- ================ APP ================ -->
   <div id="app-box">
     <div class="topbar">
       <span class="brand" id="brandName">Cafe</span>
@@ -358,13 +472,13 @@
 
       <!-- TODAY -->
       <section class="panel">
-        <h2>Today’s orders</h2>
+        <h2>Today's orders</h2>
         <div class="orders-list" id="ordersList"></div>
       </section>
     </div>
   </div>
 
-  <!-- MENU ADMIN MODAL -->
+  <!-- ================ MENU ADMIN MODAL ================ -->
   <div id="menuModal" class="modal-bg hidden">
     <div class="modal">
       <h3>Menu items</h3>
@@ -396,7 +510,7 @@
     </div>
   </div>
 
-  <!-- SETTINGS MODAL -->
+  <!-- ================ SETTINGS MODAL ================ -->
   <div id="settingsModal" class="modal-bg hidden">
     <div class="modal">
       <h3>Settings</h3>
@@ -418,8 +532,12 @@
   </div>
 
   <script>
+    /* =========================================================
+       GLOBAL STATE
+    ========================================================= */
     const API = '/api';
     const params = new URLSearchParams(location.search);
+
     let restaurantId = Number(params.get('restaurant')) || null;
     let token = localStorage.getItem('cafe_token') || '';
     let user = null;
@@ -429,21 +547,41 @@
     let cart = []; // { id, name, price, qty, package_size, package_unit }
     let currentShift = null;
 
+    /* =========================================================
+       HELPERS
+    ========================================================= */
     function money(n) {
       return 'Rs ' + Number(n || 0).toLocaleString('en-PK', { maximumFractionDigits: 2 });
     }
+
     function esc(s) {
       return String(s ?? '').replace(/[&<>"']/g, c => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
       })[c]);
     }
+
     function pkgLabel(item) {
-      if (item.package_size && item.package_unit) {
+      if (item && item.package_size && item.package_unit) {
         return `${item.package_size} ${item.package_unit}`;
       }
       return '';
     }
 
+    function showPassword() {
+      document.getElementById('password').type = 'text';
+    }
+
+    function hidePassword() {
+      document.getElementById('password').type = 'password';
+    }
+
+    /* =========================================================
+       API WRAPPER
+    ========================================================= */
     async function api(path, opts = {}) {
       const res = await fetch(API + path, {
         ...opts,
@@ -453,20 +591,37 @@
           ...(opts.headers || {})
         }
       });
+
       if (res.status === 401) {
         logout();
         throw new Error('Session expired');
       }
+
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || 'Request failed');
       return data;
     }
 
+    /* =========================================================
+       LOGIN
+    ========================================================= */
     async function login() {
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
       const err = document.getElementById('login-error');
       err.textContent = '';
+
+      if (!username || !password) {
+        err.textContent = 'Username and password required';
+        return;
+      }
+
+      if (!restaurantId) {
+        // Try saved
+        const saved = localStorage.getItem('cafe_restaurant_id');
+        if (saved) restaurantId = Number(saved);
+      }
+
       try {
         const res = await fetch(API + '/auth/login', {
           method: 'POST',
@@ -474,51 +629,94 @@
           body: JSON.stringify({
             username,
             password,
-            restaurant_id: restaurantId,
+            restaurant_id: restaurantId || undefined,
             role: 'counter'
           })
         });
+
         const data = await res.json().catch(() => ({}));
+
         if (!res.ok) {
           err.textContent = data.message || 'Login failed';
           return;
         }
+
         if (!data.token || data.user?.role !== 'counter') {
           err.textContent = 'Counter login required for Cafe Lite';
           return;
         }
-        // Soft plan hint (server may still return Basic until Cafe Lite assigned)
+
         token = data.token;
         user = data.user;
         restaurantId = data.user.restaurant_id || restaurantId;
+
         localStorage.setItem('cafe_token', token);
         localStorage.setItem('cafe_restaurant_id', String(restaurantId));
+
         await bootApp();
+
       } catch (e) {
+        console.error('login:', e);
         err.textContent = 'Server connection failed';
       }
     }
 
+    /* =========================================================
+       LOGOUT
+    ========================================================= */
     function logout() {
       token = '';
+      user = null;
       localStorage.removeItem('cafe_token');
       location.reload();
     }
 
+    /* =========================================================
+       BOOT APP — login hide karo, app show karo
+    ========================================================= */
     async function bootApp() {
       document.getElementById('login-box').style.display = 'none';
       document.getElementById('app-box').classList.add('show');
-      document.getElementById('brandName').textContent = user?.restaurant_name || 'Cafe';
-      document.getElementById('planPill').textContent = user?.plan || 'Lite';
-      await Promise.all([loadShift(), loadMenu(), loadOrders(), loadTodaySales()]);
+
+      // Try to fetch fresh restaurant info
+      let brandName = user?.restaurant_name || 'Cafe';
+      let plan = user?.plan || 'Cafe Lite';
+
+      try {
+        const info = await api('/restaurants/me');
+        if (info?.data) {
+          brandName = info.data.name || brandName;
+          plan = info.data.plan || plan;
+        }
+      } catch (e) {
+        console.warn('Could not fetch restaurant info:', e.message);
+      }
+
+      document.getElementById('brandName').textContent = brandName;
+      document.getElementById('planPill').textContent = plan;
+
+      await Promise.all([
+        loadShift(),
+        loadMenu(),
+        loadOrders(),
+        loadTodaySales()
+      ]);
+
       renderCart();
     }
 
+    /* =========================================================
+       SHIFT
+    ========================================================= */
     async function loadShift() {
       const pill = document.getElementById('shiftPill');
+      pill.onclick = null;
+      pill.style.cursor = 'default';
+
       try {
         const data = await api('/shifts/current');
         currentShift = data.data || data.shift || null;
+
         if (currentShift && (currentShift.id || currentShift.status === 'active')) {
           pill.textContent = 'Shift open';
           pill.className = 'pill ok';
@@ -530,6 +728,7 @@
         }
       } catch {
         pill.textContent = 'Shift ?';
+        pill.className = 'pill';
       }
     }
 
@@ -542,10 +741,13 @@
       }
     }
 
+    /* =========================================================
+       MENU
+    ========================================================= */
     async function loadMenu() {
       try {
         const data = await api('/menu');
-        menu = data.data || [];
+        menu = data.items || data.data || [];
         renderCats();
         renderMenu();
       } catch (e) {
@@ -557,8 +759,16 @@
     function renderCats() {
       const cats = ['All', ...new Set(menu.map(m => m.category || 'Other'))];
       document.getElementById('cats').innerHTML = cats.map(c =>
-        `<button class="cat-chip ${c === activeCat ? 'active' : ''}" onclick="activeCat='${esc(c)}';renderMenu();renderCats()">${esc(c)}</button>`
+        `<button class="cat-chip ${c === activeCat ? 'active' : ''}"
+                 data-cat="${esc(c)}"
+                 onclick="selectCat(this.dataset.cat)">${esc(c)}</button>`
       ).join('');
+    }
+
+    function selectCat(c) {
+      activeCat = c;
+      renderCats();
+      renderMenu();
     }
 
     function renderMenu() {
@@ -568,20 +778,34 @@
         if (q && !String(m.name).toLowerCase().includes(q)) return false;
         return true;
       });
+
       const grid = document.getElementById('menuGrid');
       if (!list.length) {
         grid.innerHTML = '<div class="empty">No items. Add from Menu button.</div>';
         return;
       }
-      grid.innerHTML = list.map(m => `
-        <button class="menu-card" onclick='addToCart(${JSON.stringify(m).replace(/'/g, "&#39;")})'>
+
+      grid.innerHTML = list.map((m, idx) => `
+        <button class="menu-card" data-idx="${idx}" onclick="addFromGrid(this)">
           <div class="n">${esc(m.name)}</div>
           <div class="u">${esc(pkgLabel(m))}</div>
           <div class="p">${money(m.price)}</div>
         </button>
       `).join('');
+
+      // Store current filtered list so addFromGrid can find by index
+      window._filteredMenu = list;
     }
 
+    function addFromGrid(btn) {
+      const idx = Number(btn.dataset.idx);
+      const item = (window._filteredMenu || [])[idx];
+      if (item) addToCart(item);
+    }
+
+    /* =========================================================
+       ORDER TYPE
+    ========================================================= */
     function setOrderType(t) {
       orderType = t;
       document.getElementById('t-dine').classList.toggle('active', t === 'dine_in');
@@ -591,10 +815,14 @@
       document.getElementById('deliveryFields').classList.toggle('hidden', t !== 'delivery');
     }
 
+    /* =========================================================
+       CART
+    ========================================================= */
     function addToCart(item) {
       const existing = cart.find(c => c.id === item.id);
-      if (existing) existing.qty += 1;
-      else {
+      if (existing) {
+        existing.qty += 1;
+      } else {
         cart.push({
           id: item.id,
           name: item.name,
@@ -621,6 +849,7 @@
 
     function renderCart() {
       const el = document.getElementById('cartList');
+
       if (!cart.length) {
         el.innerHTML = '<div class="empty">Tap menu items to add</div>';
       } else {
@@ -634,6 +863,7 @@
           </div>
         `).join('');
       }
+
       const t = cartTotal();
       document.getElementById('totals').innerHTML = `
         <div class="line"><span>Subtotal</span><span>${money(t)}</span></div>
@@ -641,11 +871,15 @@
       `;
     }
 
+    /* =========================================================
+       PLACE ORDER
+    ========================================================= */
     async function placeOrder(payNow) {
       if (!cart.length) {
         alert('Add at least one item');
         return;
       }
+
       if (orderType === 'delivery') {
         const phone = document.getElementById('custPhone').value.trim();
         const address = document.getElementById('custAddress').value.trim();
@@ -655,10 +889,17 @@
         }
       }
 
+      if (orderType === 'dine_in') {
+        const table = Number(document.getElementById('tableNo').value);
+        if (!Number.isInteger(table) || table <= 0) {
+          alert('Valid table number is required');
+          return;
+        }
+      }
+
       const items = cart.map(c => ({
         menu_item_id: c.id,
         quantity: c.qty,
-        // display helpers for print (if backend stores notes/name snapshot)
         name: c.name,
         package_size: c.package_size,
         package_unit: c.package_unit
@@ -669,8 +910,8 @@
         deals: [],
         order_type: orderType,
         table_no: orderType === 'dine_in'
-          ? (Number(document.getElementById('tableNo').value) || null)
-          : null,
+          ? Number(document.getElementById('tableNo').value)
+          : 0,
         customer_name: document.getElementById('custName').value.trim() || null,
         delivery_phone: orderType === 'delivery'
           ? document.getElementById('custPhone').value.trim()
@@ -693,40 +934,59 @@
           method: 'POST',
           body: JSON.stringify(body)
         });
+
         cart = [];
         renderCart();
+
+        // Reset form fields
+        document.getElementById('tableNo').value = '';
+        document.getElementById('custName').value = '';
+        document.getElementById('custPhone').value = '';
+        document.getElementById('custAddress').value = '';
+
         await loadOrders();
         await loadTodaySales();
+
         const id = data.order?.id || data.data?.id || '';
         alert(payNow ? `Order #${id} placed & paid` : `Order #${id} placed`);
       } catch (e) {
+        console.error('placeOrder:', e);
         alert(e.message || 'Place order failed');
       }
     }
 
+    /* =========================================================
+       ORDERS
+    ========================================================= */
     async function loadOrders() {
       try {
         const data = await api('/orders');
         const orders = data.orders || data.data || [];
         const el = document.getElementById('ordersList');
+
         if (!orders.length) {
           el.innerHTML = '<div class="empty">No orders yet</div>';
           return;
         }
+
         el.innerHTML = orders.slice(0, 40).map(o => {
           const paid = String(o.payment_status).toLowerCase() === 'paid';
           const type = o.order_type === 'walk_in' ? 'Takeaway'
-            : o.order_type === 'delivery' ? 'Delivery' : 'Dine-in';
+            : o.order_type === 'delivery' ? 'Delivery'
+            : 'Dine-in';
+
           return `
             <div class="order-card">
               <div class="hd">
-                <span>#${esc(o.id)} · ${esc(type)}</span>
-                <span class="${paid ? 'paid' : 'st'}">${paid ? 'PAID' : esc(o.status)}</span>
+                <span>#${esc(o.id)} · ${esc(type)}${o.table_no ? ' · T' + esc(o.table_no) : ''}</span>
+                <span class="${paid ? 'paid' : 'st'}">${paid ? 'PAID' : esc(o.status || '—')}</span>
               </div>
               <div>${money(o.total_amount)} · ${esc(o.customer_name || '—')}</div>
-              ${!paid ? `<div class="actions">
-                <button class="btn btn-ok" onclick="payOrder(${o.id},${Number(o.total_amount)})">Take payment</button>
-              </div>` : ''}
+              ${!paid ? `
+                <div class="actions">
+                  <button class="btn btn-ok" onclick="payOrder(${o.id},${Number(o.total_amount) || 0})">Take payment</button>
+                </div>
+              ` : ''}
             </div>
           `;
         }).join('');
@@ -748,11 +1008,13 @@
         await loadOrders();
         await loadTodaySales();
       } catch (e) {
-        // Lite: pay may require served — show server message
         alert(e.message || 'Payment failed');
       }
     }
 
+    /* =========================================================
+       TODAY SALES
+    ========================================================= */
     async function loadTodaySales() {
       try {
         const data = await api('/reports/summary');
@@ -764,15 +1026,19 @@
       }
     }
 
-    /* Menu admin */
+    /* =========================================================
+       MENU ADMIN
+    ========================================================= */
     function openMenuAdmin() {
       document.getElementById('menuModal').classList.remove('hidden');
       resetMenuForm();
       renderMenuAdmin();
     }
+
     function closeMenuAdmin() {
       document.getElementById('menuModal').classList.add('hidden');
     }
+
     function resetMenuForm() {
       document.getElementById('editMenuId').value = '';
       document.getElementById('menuFormTitle').textContent = 'Add item';
@@ -782,24 +1048,30 @@
       document.getElementById('mPkgSize').value = '';
       document.getElementById('mPkgUnit').value = '';
     }
+
     function renderMenuAdmin() {
       const el = document.getElementById('menuAdminList');
       if (!menu.length) {
         el.innerHTML = '<div class="empty">No items yet</div>';
         return;
       }
-      el.innerHTML = menu.map(m => `
+      el.innerHTML = menu.map((m, idx) => `
         <div class="menu-admin-row">
           <div>
             <strong>${esc(m.name)}</strong>
             ${pkgLabel(m) ? `<span style="color:var(--muted)"> · ${esc(pkgLabel(m))}</span>` : ''}
-            <div style="color:var(--muted)">${money(m.price)} · ${esc(m.category || '')}</div>
+            <div style="color:var(--muted);font-size:12px;">${money(m.price)} · ${esc(m.category || 'Other')}</div>
           </div>
-          <button class="btn btn-ghost" onclick='editMenuItem(${JSON.stringify(m)})'>Edit</button>
+          <button class="btn btn-ghost" data-idx="${idx}" onclick="editMenuByIdx(this)">Edit</button>
         </div>
       `).join('');
     }
-    function editMenuItem(m) {
+
+    function editMenuByIdx(btn) {
+      const idx = Number(btn.dataset.idx);
+      const m = menu[idx];
+      if (!m) return;
+
       document.getElementById('editMenuId').value = m.id;
       document.getElementById('menuFormTitle').textContent = 'Edit item';
       document.getElementById('mName').value = m.name || '';
@@ -808,6 +1080,7 @@
       document.getElementById('mPkgSize').value = m.package_size || '';
       document.getElementById('mPkgUnit').value = m.package_unit || '';
     }
+
     async function saveMenuItem() {
       const id = document.getElementById('editMenuId').value;
       const body = {
@@ -817,10 +1090,12 @@
         package_size: document.getElementById('mPkgSize').value || null,
         package_unit: document.getElementById('mPkgUnit').value || null
       };
+
       if (!body.name || !body.price) {
         alert('Name and price required');
         return;
       }
+
       try {
         if (id) {
           await api('/menu/' + id, { method: 'PUT', body: JSON.stringify(body) });
@@ -835,36 +1110,56 @@
       }
     }
 
+    /* =========================================================
+       SETTINGS
+    ========================================================= */
     function openSettings() {
       const mode = localStorage.getItem('cafe_assign_mode') || 'manual';
       document.getElementById('assignMode').value = mode;
       document.getElementById('settingsModal').classList.remove('hidden');
     }
+
     function closeSettings() {
       document.getElementById('settingsModal').classList.add('hidden');
     }
+
     function saveSettings() {
       localStorage.setItem('cafe_assign_mode', document.getElementById('assignMode').value);
       closeSettings();
     }
 
+    /* =========================================================
+       THEME
+    ========================================================= */
     function toggleTheme() {
       document.body.classList.toggle('light');
-      localStorage.setItem('cafe_theme', document.body.classList.contains('light') ? 'light' : 'dark');
+      localStorage.setItem(
+        'cafe_theme',
+        document.body.classList.contains('light') ? 'light' : 'dark'
+      );
     }
 
+    /* =========================================================
+       PAGE LOAD
+    ========================================================= */
     window.addEventListener('load', async () => {
-      if (localStorage.getItem('cafe_theme') === 'light') document.body.classList.add('light');
+      if (localStorage.getItem('cafe_theme') === 'light') {
+        document.body.classList.add('light');
+      }
+
+      // Restore restaurantId
       if (!restaurantId) {
         const saved = localStorage.getItem('cafe_restaurant_id');
         if (saved) restaurantId = Number(saved);
       }
+
+      // Soft session restore
       if (token) {
         try {
-          // soft restore
           user = { restaurant_name: 'Cafe', plan: 'Cafe Lite', restaurant_id: restaurantId };
           await bootApp();
-        } catch {
+        } catch (err) {
+          console.warn('Session restore failed:', err);
           logout();
         }
       }

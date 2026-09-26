@@ -211,7 +211,7 @@ app.get("/admin", (req, res) => {
 });
 
 app.get("/cafe", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "cafe.html"));
+  res.sendFile(path.join(__dirname, "public", "counter-lite.html"));
 });
 
 /* =====================================================
