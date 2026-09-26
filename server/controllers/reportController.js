@@ -10,10 +10,10 @@ const {
 // Manager Dashboard Summary
 exports.summary = async (req, res) => {
 
-  if (req.user.role !== 'manager') {
+  if (!['manager', 'counter'].includes(req.user.role)) {
     return res.status(403).json({
       success: false,
-      message: 'Only manager can view reports'
+      message: 'Only manager or counter can view reports'
     });
   }
 
@@ -46,10 +46,10 @@ exports.summary = async (req, res) => {
 // Sales Details
 exports.salesDetails = async (req,res)=>{
 
-  if(req.user.role !== 'manager'){
+  if(!['manager','counter'].includes(req.user.role)){
     return res.status(403).json({
       success:false,
-      message:'Only manager can view sales'
+      message:'Only manager or counter can view sales'
     });
   }
 
@@ -91,11 +91,11 @@ exports.salesDetails = async (req,res)=>{
 exports.topItems = async (req,res)=>{
 
 
-  if(req.user.role !== 'manager'){
+  if(!['manager','counter'].includes(req.user.role)){
 
     return res.status(403).json({
       success:false,
-      message:'Only manager can view reports'
+      message:'Only manager or counter can view reports'
     });
 
   }
@@ -141,11 +141,11 @@ exports.topItems = async (req,res)=>{
 // Payment Summary
 exports.paymentSummary = async (req,res)=>{
 
-  if(req.user.role !== 'manager'){
+  if(!['manager','counter'].includes(req.user.role)){
 
     return res.status(403).json({
       success:false,
-      message:'Only manager can view reports'
+      message:'Only manager or counter can view reports'
     });
 
   }

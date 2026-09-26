@@ -407,6 +407,34 @@
       .topbar button { padding: 6px 10px; font-size: 11px; }
       .sales-chip { font-size: 11px; }
     }
+
+    .sales-modal { max-width: 720px; width: 100%; }
+.sales-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
+.sales-filters input[type="date"] {
+  padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg); color: var(--text);
+}
+.sales-filters .chip-btn {
+  padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--panel2); color: var(--text); font-weight: 700; cursor: pointer; font-size: 12px;
+}
+.sales-filters .chip-btn.active { background: var(--accent); color: #14181c; border-color: var(--accent); }
+.sales-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+@media (max-width: 600px) { .sales-stats { grid-template-columns: 1fr 1fr; } }
+.sales-stat {
+  background: var(--panel2); border: 1px solid var(--border); border-radius: 12px; padding: 12px;
+}
+.sales-stat .lbl { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.sales-stat .val { font-size: 16px; font-weight: 800; color: var(--accent); }
+.sales-section-title {
+  font-size: 12px; text-transform: uppercase; color: var(--muted); margin: 14px 0 8px; font-weight: 700;
+}
+.sales-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.sales-table th, .sales-table td {
+  text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border);
+}
+.sales-table th { color: var(--muted); font-weight: 600; }
+.pay-bar-row { display: flex; justify-content: space-between; font-size: 13px; margin: 4px 0; }
   </style>
 </head>
 <body>
@@ -466,6 +494,7 @@
       <span class="pill" id="shiftPill">Shift…</span>
       <span class="spacer"></span>
       <span class="sales-chip" id="todaySales">Today: Rs 0</span>
+      <button class="btn btn-ghost" onclick="openSalesReport()">Sales Report</button>
       <button class="btn btn-ghost" onclick="openMenuAdmin()">Menu</button>
       <button class="btn btn-ghost" onclick="openSettings()">Settings</button>
       <button class="btn btn-ghost" onclick="toggleTheme()">Theme</button>
@@ -551,6 +580,44 @@
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeMenuAdmin()">Close</button>
         <button class="btn btn-accent" onclick="saveMenuItem()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="salesModal" class="modal-bg hidden">
+    <div class="modal sales-modal">
+      <h3>Sales report</h3>
+      <div class="sales-filters">
+        <button type="button" class="chip-btn active" id="sf-today" onclick="setSalesRange('today')">Today</button>
+        <button type="button" class="chip-btn" id="sf-week" onclick="setSalesRange('week')">This week</button>
+        <button type="button" class="chip-btn" id="sf-month" onclick="setSalesRange('month')">This month</button>
+        <input type="date" id="salesFrom" />
+        <input type="date" id="salesTo" />
+        <button type="button" class="btn btn-accent" style="width:auto;padding:8px 14px;" onclick="loadSalesReport()">Apply</button>
+      </div>
+      <div class="sales-stats">
+        <div class="sales-stat"><div class="lbl">Orders</div><div class="val" id="stOrders">0</div></div>
+        <div class="sales-stat"><div class="lbl">Sales</div><div class="val" id="stSales">Rs 0</div></div>
+        <div class="sales-stat"><div class="lbl">Avg bill</div><div class="val" id="stAvg">Rs 0</div></div>
+        <div class="sales-stat"><div class="lbl">Items sold</div><div class="val" id="stItems">0</div></div>
+      </div>
+      <div class="sales-section-title">Payment summary</div>
+      <div id="salesPayments" class="empty">—</div>
+      <div class="sales-section-title">Top items</div>
+      <div id="salesTop" class="empty">—</div>
+      <div class="sales-section-title">Orders</div>
+      <div style="max-height:220px;overflow:auto;">
+        <table class="sales-table">
+          <thead>
+            <tr><th>#</th><th>Type</th><th>Status</th><th>Pay</th><th>Total</th><th>Time</th></tr>
+          </thead>
+          <tbody id="salesOrdersBody"></tbody>
+        </table>
+      </div>
+      <div class="modal-actions" style="margin-top:14px;">
+        <button class="btn btn-ghost" onclick="exportSalesCSV()">Export CSV</button>
+        <button class="btn btn-ghost" onclick="printSalesReport()">Print</button>
+        <button class="btn btn-accent" onclick="closeSalesReport()">Close</button>
       </div>
     </div>
   </div>
@@ -1183,6 +1250,225 @@
         alert(e.message || 'Save failed — ensure counter can manage menu (backend patch)');
       }
     }
+
+    
+let salesCache = { orders: [], from: '', to: '', range: 'today' };
+
+function todayISO() {
+  const d = new Date();
+  return d.toISOString().slice(0, 10);
+}
+function addDaysISO(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+function startOfWeekISO() {
+  const d = new Date();
+  const day = d.getDay(); // 0 Sun
+  const diff = day === 0 ? -6 : 1 - day; // Monday start
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().slice(0, 10);
+}
+function startOfMonthISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+}
+
+function setSalesRange(range) {
+  salesCache.range = range;
+  ['today', 'week', 'month'].forEach(r => {
+    const el = document.getElementById('sf-' + r);
+    if (el) el.classList.toggle('active', r === range);
+  });
+  let from = todayISO();
+  let to = todayISO();
+  if (range === 'week') from = startOfWeekISO();
+  if (range === 'month') from = startOfMonthISO();
+  document.getElementById('salesFrom').value = from;
+  document.getElementById('salesTo').value = to;
+  loadSalesReport();
+}
+
+function openSalesReport() {
+  document.getElementById('salesModal').classList.remove('hidden');
+  if (!document.getElementById('salesFrom').value) {
+    setSalesRange('today');
+  } else {
+    loadSalesReport();
+  }
+}
+
+function closeSalesReport() {
+  document.getElementById('salesModal').classList.add('hidden');
+}
+
+function orderTypeLabel(t) {
+  const x = String(t || '').toLowerCase();
+  if (x === 'walk_in') return 'Takeaway';
+  if (x === 'delivery') return 'Delivery';
+  return 'Dine-in';
+}
+
+async function loadSalesReport() {
+  const from = document.getElementById('salesFrom').value || todayISO();
+  const to = document.getElementById('salesTo').value || todayISO();
+  salesCache.from = from;
+  salesCache.to = to;
+
+  const q = `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+
+  try {
+    const [salesRes, topRes, payRes] = await Promise.all([
+      api('/reports/sales' + q),
+      api('/reports/top-items' + q).catch(() => ({ data: [] })),
+      api('/reports/payment-summary' + q).catch(() => ({ data: [] }))
+    ]);
+
+    const orders = salesRes.data || salesRes.orders || [];
+    salesCache.orders = Array.isArray(orders) ? orders : [];
+
+    // Stats — prefer paid totals when available
+    let totalSales = 0;
+    let paidCount = 0;
+    let itemsSold = 0;
+    salesCache.orders.forEach(o => {
+      const paid = String(o.payment_status || '').toLowerCase() === 'paid';
+      const amt = Number(o.total_amount || o.total || 0);
+      if (paid) {
+        totalSales += amt;
+        paidCount += 1;
+      }
+      const items = o.items || o.order_items || [];
+      if (Array.isArray(items)) {
+        items.forEach(it => { itemsSold += Number(it.quantity || it.qty || 0); });
+      }
+    });
+    // If API already aggregates differently, fall back to all orders sum when no paid
+    if (paidCount === 0 && salesCache.orders.length) {
+      totalSales = salesCache.orders.reduce((s, o) => s + Number(o.total_amount || 0), 0);
+    }
+    const orderCount = salesCache.orders.length;
+    const avg = orderCount ? totalSales / (paidCount || orderCount) : 0;
+
+    document.getElementById('stOrders').textContent = String(orderCount);
+    document.getElementById('stSales').textContent = money(totalSales);
+    document.getElementById('stAvg').textContent = money(avg);
+    document.getElementById('stItems').textContent = String(itemsSold || '—');
+
+    // Payments
+    const payData = payRes.data || [];
+    const payEl = document.getElementById('salesPayments');
+    if (Array.isArray(payData) && payData.length) {
+      payEl.classList.remove('empty');
+      payEl.innerHTML = payData.map(p => {
+        const method = p.payment_method || p.method || 'Other';
+        const total = p.total || p.amount || p.sum || 0;
+        const cnt = p.count || p.orders || '';
+        return `<div class="pay-bar-row"><span>${esc(method)}${cnt ? ` (${esc(cnt)})` : ''}</span><strong>${money(total)}</strong></div>`;
+      }).join('');
+    } else {
+      // derive from orders
+      const map = {};
+      salesCache.orders.forEach(o => {
+        if (String(o.payment_status).toLowerCase() !== 'paid') return;
+        const m = o.payment_method || 'Cash';
+        map[m] = (map[m] || 0) + Number(o.total_amount || 0);
+      });
+      const keys = Object.keys(map);
+      if (!keys.length) {
+        payEl.className = 'pay-bars empty';
+        payEl.textContent = 'No payments in range';
+      } else {
+        payEl.classList.remove('empty');
+        payEl.innerHTML = keys.map(k =>
+          `<div class="pay-bar-row"><span>${esc(k)}</span><strong>${money(map[k])}</strong></div>`
+        ).join('');
+      }
+    }
+
+    // Top items
+    const topData = topRes.data || [];
+    const topEl = document.getElementById('salesTop');
+    if (Array.isArray(topData) && topData.length) {
+      topEl.classList.remove('empty');
+      topEl.innerHTML = `<table class="sales-table"><thead><tr><th>Item</th><th>Qty</th><th>Sales</th></tr></thead><tbody>${
+        topData.slice(0, 10).map(t => `
+          <tr>
+            <td>${esc(t.name || t.item_name || 'Item')}</td>
+            <td>${esc(t.quantity || t.qty || t.total_qty || 0)}</td>
+            <td>${money(t.total || t.sales || t.revenue || 0)}</td>
+          </tr>
+        `).join('')
+      }</tbody></table>`;
+    } else {
+      topEl.className = 'empty';
+      topEl.textContent = 'No item data';
+    }
+
+    // Orders table
+    const body = document.getElementById('salesOrdersBody');
+    if (!salesCache.orders.length) {
+      body.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;">No orders</td></tr>';
+    } else {
+      body.innerHTML = salesCache.orders.map(o => {
+        const t = o.created_at || o.paid_at || '';
+        const time = t ? new Date(t).toLocaleString() : '—';
+        return `<tr>
+          <td>#${esc(o.id)}</td>
+          <td>${esc(orderTypeLabel(o.order_type))}</td>
+          <td>${esc(o.status || '—')}</td>
+          <td>${esc(o.payment_status || '—')}${o.payment_method ? ' / ' + esc(o.payment_method) : ''}</td>
+          <td>${money(o.total_amount)}</td>
+          <td>${esc(time)}</td>
+        </tr>`;
+      }).join('');
+    }
+  } catch (e) {
+    alert(e.message || 'Failed to load sales report');
+  }
+}
+
+function exportSalesCSV() {
+  const rows = [['Order ID', 'Type', 'Status', 'Payment', 'Method', 'Total', 'Created']];
+  salesCache.orders.forEach(o => {
+    rows.push([
+      o.id,
+      orderTypeLabel(o.order_type),
+      o.status || '',
+      o.payment_status || '',
+      o.payment_method || '',
+      o.total_amount || 0,
+      o.created_at || ''
+    ]);
+  });
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `sales_${salesCache.from}_${salesCache.to}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function printSalesReport() {
+  const from = salesCache.from;
+  const to = salesCache.to;
+  const stats = `Orders: ${document.getElementById('stOrders').textContent} | Sales: ${document.getElementById('stSales').textContent} | Avg: ${document.getElementById('stAvg').textContent}`;
+  let table = '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:12px;"><tr><th>#</th><th>Type</th><th>Status</th><th>Pay</th><th>Total</th></tr>';
+  salesCache.orders.forEach(o => {
+    table += `<tr><td>${o.id}</td><td>${orderTypeLabel(o.order_type)}</td><td>${o.status || ''}</td><td>${o.payment_status || ''}</td><td>${o.total_amount || 0}</td></tr>`;
+  });
+  table += '</table>';
+  const w = window.open('', '_blank');
+  if (!w) { alert('Allow popups to print'); return; }
+  w.document.write(`<!DOCTYPE html><html><head><title>Sales ${from} – ${to}</title></head><body>
+    <h2>${document.getElementById('brandName')?.textContent || 'Cafe'} — Sales</h2>
+    <p>${from} → ${to}</p><p>${stats}</p>${table}
+    <script>window.onload=function(){window.print();}</script>
+  </body></html>`);
+  w.document.close();
+}
 
     /* =========================================================
        SETTINGS
