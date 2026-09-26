@@ -574,6 +574,10 @@
       🔴 Suspended Restaurants
     </button>
 
+    <button onclick="openOnlineUsers()">
+  🌐 Online Users
+    </button>
+
     <button onclick="openSettings()">
       ⚙️ Settings
     </button>
@@ -1319,6 +1323,43 @@
       id="settings-msg"
       class="msg">
     </p>
+
+  </div>
+
+</div>
+
+<!-- ================= ONLINE USERS ================= -->
+
+<div class="modal-overlay" id="online-users-modal">
+
+  <div class="modal-topbar">
+
+    <button
+      class="back-btn"
+      onclick="closeOnlineUsers()">
+      ←
+    </button>
+
+    <div class="modal-title">
+      🌐 Online Users
+    </div>
+
+    <div style="margin-left:auto;">
+      <button
+        class="secondary"
+        style="width:auto;padding:6px 14px;font-size:12px;margin:0;"
+        onclick="loadOnlineUsers()">
+        Refresh
+      </button>
+    </div>
+
+  </div>
+
+  <div class="modal-box">
+
+    <div id="online-users-summary" style="margin-bottom:14px;min-height:24px;"></div>
+
+    <div id="online-users-list"></div>
 
   </div>
 
@@ -4124,6 +4165,209 @@ async function deleteStaffMember(
 
   }
 
+  /* =========================================================
+   ONLINE USERS
+========================================================= */
+
+let onlineUsersTimer = null;
+
+async function openOnlineUsers() {
+
+  document
+    .getElementById('side-menu')
+    .classList
+    .remove('open');
+
+  document
+    .getElementById('side-overlay')
+    .classList
+    .remove('open');
+
+  openModal('online-users-modal');
+
+  await loadOnlineUsers();
+
+  // Auto refresh every 10 seconds
+  if (onlineUsersTimer) clearInterval(onlineUsersTimer);
+  onlineUsersTimer = setInterval(loadOnlineUsers, 10000);
+
+}
+
+
+function closeOnlineUsers() {
+
+  if (onlineUsersTimer) {
+    clearInterval(onlineUsersTimer);
+    onlineUsersTimer = null;
+  }
+
+  closeModal('online-users-modal');
+
+}
+
+
+async function loadOnlineUsers() {
+
+  const summaryBox =
+    document.getElementById('online-users-summary');
+
+  const listBox =
+    document.getElementById('online-users-list');
+
+  if (!summaryBox || !listBox) return;
+
+  try {
+
+    const res = await fetch(
+      '/api/admin/online-users?t=' + Date.now(),
+      { headers: authHeaders() }
+    );
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+
+      summaryBox.innerHTML = '';
+      listBox.innerHTML =
+        `<div class="empty">
+          ${escapeHtml(data.message || 'Failed to load')}
+        </div>`;
+
+      return;
+
+    }
+
+    renderOnlineUsers(data);
+
+  } catch (err) {
+
+    console.error('Load online users error:', err);
+
+    listBox.innerHTML =
+      '<div class="empty">Server connection failed.</div>';
+
+  }
+
+}
+
+
+function renderOnlineUsers(data) {
+
+  const summaryBox =
+    document.getElementById('online-users-summary');
+
+  const listBox =
+    document.getElementById('online-users-list');
+
+  const users = Array.isArray(data.users) ? data.users : [];
+
+  if (!users.length) {
+
+    summaryBox.innerHTML = '';
+    listBox.innerHTML =
+      '<div class="empty">No devices online right now.</div>';
+
+    return;
+
+  }
+
+  // Count by role
+  const byRole = {};
+  users.forEach(u => {
+    const r = u.role || 'unknown';
+    byRole[r] = (byRole[r] || 0) + 1;
+  });
+
+  const roleEmoji = {
+    super_admin: '👑',
+    manager: '👔',
+    counter: '🧾',
+    waiter: '🧑‍🍳',
+    kitchen: '🍳',
+    rider: '🏍️',
+    display: '🖥️'
+  };
+
+  const summaryChips = Object.entries(byRole)
+    .map(([role, count]) => `
+      <span style="
+        display:inline-block;
+        background:var(--panel);
+        border:1px solid var(--border);
+        color:var(--text);
+        padding:4px 12px;
+        border-radius:20px;
+        font-size:12px;
+        font-weight:700;
+        margin:0 6px 6px 0;
+      ">
+        ${roleEmoji[role] || '👤'} ${escapeHtml(role)}: ${count}
+      </span>
+    `)
+    .join('');
+
+  summaryBox.innerHTML = `
+    <div style="font-size:13px;color:#9CA3AF;margin-bottom:6px;">
+      <b style="color:var(--text);">${users.length}</b> device(s) connected · auto-refresh every 10s
+    </div>
+    <div>${summaryChips}</div>
+  `;
+
+  // Sort: newest first
+  const sorted = [...users].sort((a, b) =>
+    new Date(b.connected_at) - new Date(a.connected_at)
+  );
+
+  listBox.innerHTML = sorted.map(u => {
+
+    const time = u.connected_at
+      ? new Date(u.connected_at)
+      : null;
+
+    const timeStr = time
+      ? time.toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        })
+      : '-';
+
+    const dateStr = time
+      ? time.toLocaleDateString()
+      : '-';
+
+    const emoji = roleEmoji[u.role] || '👤';
+
+    return `
+      <div class="cred-box" style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:12px;
+        flex-wrap:wrap;
+      ">
+        <div>
+          <div style="font-weight:700;font-size:14px;">
+            ${emoji} ${escapeHtml(u.role || 'user')}
+            <span style="color:#9CA3AF;font-weight:400;font-size:12px;">
+              · User #${u.id}
+            </span>
+          </div>
+          <div style="font-size:12px;color:#9CA3AF;margin-top:4px;">
+            🏪 Restaurant #${u.restaurant_id ?? '-'}
+            · Connected ${dateStr} ${timeStr}
+          </div>
+          <div style="font-size:11px;color:#6B7280;margin-top:2px;">
+            socket: ${escapeHtml(u.socket_id || '-')}
+          </div>
+        </div>
+      </div>
+    `;
+
+  }).join('');
+
+}
+
 
   /* =========================================================
      SETTINGS
@@ -4341,6 +4585,39 @@ async function deleteStaffMember(
     }
 
   };
+
+  /* =========================================================
+   AUTO-REFRESH PAUSE WHEN TAB HIDDEN
+========================================================= */
+
+document.addEventListener('visibilitychange', () => {
+
+  if (document.hidden) {
+
+    // Tab hidden — timer band karo (waste na ho)
+    if (onlineUsersTimer) {
+      clearInterval(onlineUsersTimer);
+      onlineUsersTimer = null;
+    }
+
+  } else {
+
+    // Tab wapas visible — agar modal open hai toh refresh resume karo
+    const modal = document.getElementById('online-users-modal');
+
+    if (modal && modal.classList.contains('open')) {
+
+      loadOnlineUsers();
+
+      if (onlineUsersTimer) clearInterval(onlineUsersTimer);
+
+      onlineUsersTimer = setInterval(loadOnlineUsers, 10000);
+
+    }
+
+  }
+
+});
 
 </script>
 
