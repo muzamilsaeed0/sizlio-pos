@@ -999,84 +999,75 @@
        PLACE ORDER
     ========================================================= */
     async function placeOrder(payNow) {
-      if (!cart.length) {
-        alert('Add at least one item');
-        return;
-      }
-
-      if (orderType === 'delivery') {
-        const phone = document.getElementById('custPhone').value.trim();
-        const address = document.getElementById('custAddress').value.trim();
-        if (!phone || !address) {
-          alert('Delivery needs phone and address');
-          return;
-        }
-      }
-
-      if (orderType === 'dine_in') {
-        const table = Number(document.getElementById('tableNo').value);
-        if (!Number.isInteger(table) || table <= 0) {
-          alert('Valid table number is required');
-          return;
-        }
-      }
-
-      const items = cart.map(c => ({
-        menu_item_id: c.id,
-        quantity: c.qty,
-        name: c.name,
-        package_size: c.package_size,
-        package_unit: c.package_unit
-      }));
-
-      const body = {
-        items,
-        deals: [],
-        order_type: orderType,
-        table_no: orderType === 'dine_in'
-          ? Number(document.getElementById('tableNo').value)
-          : 0,
-        customer_name: document.getElementById('custName').value.trim() || null,
-        delivery_phone: orderType === 'delivery'
-          ? document.getElementById('custPhone').value.trim()
-          : null,
-        delivery_address: orderType === 'delivery'
-          ? document.getElementById('custAddress').value.trim()
-          : null,
-        payment_timing: payNow
-          ? 'PAID_AT_ORDER'
-          : (orderType === 'delivery' ? 'COD' : 'PAY_LATER'),
-        payment_method: payNow ? document.getElementById('payMethod').value : null,
-        discount_type: 'none',
-        discount_value: 0,
-        gst_percent: 0,
-        tax_percent: 0
-      };
-
-      try {
-        const data = await api('/orders', {
-          method: 'POST',
-          body: JSON.stringify(body)
-        });
-
-        cart = [];
-        renderCart();
-
-        document.getElementById('tableNo').value = '';
-        document.getElementById('custName').value = '';
-        document.getElementById('custPhone').value = '';
-        document.getElementById('custAddress').value = '';
-
-        await loadOrders();
-        await loadTodaySales();
-
-        const id = data.order?.id || data.data?.id || '';
-        alert(payNow ? `Order #${id} placed & paid` : `Order #${id} placed`);
-      } catch (e) {
-        console.error('placeOrder:', e);
-        alert(e.message || 'Place order failed');
-      }
+  if (!cart.length) {
+    alert('Add at least one item');
+    return;
+  }
+  if (orderType === 'delivery') {
+    const phone = document.getElementById('custPhone').value.trim();
+    const address = document.getElementById('custAddress').value.trim();
+    if (!phone || !address) {
+      alert('Delivery needs phone and address');
+      return;
     }
+  }
+
+  const total = cartTotal();
+  const items = cart.map(c => ({
+    menu_item_id: Number(c.id),
+    quantity: Number(c.qty)
+  }));
+
+  // Dine-in: table optional — empty ho to 0 (backend patch chahiye)
+  // Jab tak backend nahi: optional default 1 use kar sakte ho
+  let tableNo = 0;
+  if (orderType === 'dine_in') {
+    const t = Number(document.getElementById('tableNo').value);
+    tableNo = Number.isInteger(t) && t > 0 ? t : 0; // 0 = no table (needs backend)
+  }
+
+  const body = {
+    items,
+    deals: [],
+    order_type: orderType,
+    order_source: 'COUNTER',          // ← zaroori
+    table_no: tableNo,
+    customer_name: document.getElementById('custName').value.trim() || null,
+    delivery_phone: orderType === 'delivery'
+      ? document.getElementById('custPhone').value.trim() : null,
+    delivery_address: orderType === 'delivery'
+      ? document.getElementById('custAddress').value.trim() : null,
+    payment_timing: payNow
+      ? 'PAID_AT_ORDER'
+      : (orderType === 'delivery' ? 'COD' : 'PAY_LATER'),
+    payment_method: payNow
+      ? (document.getElementById('payMethod').value || 'Cash')
+      : null,
+    paid_amount: payNow ? total : 0,  // ← zaroori Pay Now ke liye
+    discount_type: 'none',
+    discount_value: 0,
+    gst_percent: 0,
+    tax_percent: 0
+  };
+
+  try {
+    const data = await api('/orders', {
+      method: 'POST',
+      body: JSON.stringify(body)
+    });
+    cart = [];
+    renderCart();
+    await loadOrders();
+    await loadTodaySales();
+    const id = data.order?.id || '';
+    const localNo = data.order?.local_number; // after backend column
+    alert(payNow
+      ? `Order #${localNo || id} paid`
+      : `Order #${localNo || id} placed`);
+  } catch (e) {
+    alert(e.message || 'Place order failed');
+  }
+}
 
     /* =========================================================
        ORDERS
