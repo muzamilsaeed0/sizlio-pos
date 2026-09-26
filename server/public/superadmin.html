@@ -688,6 +688,10 @@
         Premium
       </option>
 
+      <option value="Cafe Lite">
+        Cafe Lite
+      </option>
+
     </select>
 
 
@@ -904,6 +908,10 @@
 
       <option value="Premium">
         Premium
+      </option>
+
+      <option value="Cafe Lite">
+        Cafe Lite
       </option>
 
     </select>
@@ -1135,28 +1143,12 @@
 
 
     <select id="member-role">
-
-      <option value="waiter">
-        Waiter
-      </option>
-
-      <option value="counter">
-        Counter
-      </option>
-
-      <option value="display">
-        Display
-      </option>
-
-      <option value="kitchen">
-        Kitchen
-      </option>
-
-      <option value="rider">
-        Delivery Rider
-      </option>
-
-    </select>
+  <option value="counter">Counter</option>
+  <option value="waiter">Waiter</option>
+  <option value="kitchen">Kitchen</option>
+  <option value="display">Display</option>
+  <option value="rider">Delivery Rider</option>
+</select>
 
 
     <div
@@ -1454,7 +1446,16 @@
       manager: 1,
       kitchen: 2,
       rider: 4
-    }
+    },
+
+     'Cafe Lite': {
+    waiter: 0,
+    counter: 1,
+    display: 0,
+    manager: 0,
+    kitchen: 0,
+    rider: 2
+  }
 
   };
 
@@ -2789,39 +2790,40 @@
 
   function updateCreatePlanLimits() {
 
-    const plan =
-      document.getElementById(
-        'r-plan'
-      ).value;
+  const plan = document.getElementById('r-plan').value;
+  const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.Basic;
 
+  let extraNote = '';
 
-    const limits =
-      PLAN_LIMITS[plan] ||
-      PLAN_LIMITS.Basic;
-
-
-    document.getElementById(
-      'create-plan-limits'
-    ).innerHTML = `
-
-      <strong>${plan} Plan Limits</strong><br>
-
-      Waiter: ${limits.waiter}
-      · Counter: ${limits.counter}
-      · Display: ${limits.display}
-      · Manager: ${limits.manager}
-      · Kitchen: ${limits.kitchen}
-      · Rider: ${limits.rider}
-
+  if (plan === 'Cafe Lite') {
+    extraNote = `
       <br><br>
-
-      <span style="color:#9CA3AF;">
-        These are the default limits for this plan.
+      <span style="color:#e3a23b;font-weight:700;">
+        ☕ Cafe Lite = Counter-only POS
       </span>
-
+      <br>
+      <span style="color:#9CA3AF;">
+        Manager + 1 Counter account ban sakta hai.
+        Waiter/Kitchen/Rider nahi.
+      </span>
     `;
-
   }
+
+  document.getElementById('create-plan-limits').innerHTML = `
+    <strong>${plan} Plan Limits</strong><br>
+    Waiter: ${limits.waiter}
+    · Counter: ${limits.counter}
+    · Display: ${limits.display}
+    · Manager: ${limits.manager}
+    · Kitchen: ${limits.kitchen}
+    · Rider: ${limits.rider}
+    <br><br>
+    <span style="color:#9CA3AF;">
+      These are the default limits for this plan.
+    </span>
+    ${extraNote}
+  `;
+}
 
 
   document.getElementById(
@@ -2940,50 +2942,49 @@ async function addRestaurant() {
 
   async function openAddMemberModal() {
 
-    if (!activeRestaurantId) {
-
-      alert(
-        'Please select a restaurant first.'
-      );
-
-      return;
-
-    }
-
-
-    document.getElementById(
-      'member-full-name'
-    ).value = '';
-
-
-    document.getElementById(
-      'member-username'
-    ).value = '';
-
-
-    document.getElementById(
-      'member-password'
-    ).value = '';
-
-
-    document.getElementById(
-      'member-role'
-    ).value = 'waiter';
-
-
-    document.getElementById(
-      'add-member-msg'
-    ).innerText = '';
-
-
-    updateMemberPlanInfo();
-
-
-    openModal(
-      'add-member-modal'
-    );
-
+  if (!activeRestaurantId) {
+    alert('Please select a restaurant first.');
+    return;
   }
+
+  /* ✅ NEW: filter role options based on plan */
+  filterMemberRolesByPlan();
+
+  document.getElementById('member-full-name').value = '';
+  document.getElementById('member-username').value = '';
+  document.getElementById('member-password').value = '';
+  document.getElementById('member-role').value = 'counter';
+  document.getElementById('add-member-msg').innerText = '';
+
+  updateMemberPlanInfo();
+
+  openModal('add-member-modal');
+}
+
+function filterMemberRolesByPlan() {
+
+  const plan =
+    activeRestaurant && activeRestaurant.plan
+      ? activeRestaurant.plan
+      : 'Basic';
+
+  const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.Basic;
+
+  const roleSelect = document.getElementById('member-role');
+  const allRoles = ['counter', 'waiter', 'kitchen', 'display', 'rider'];
+
+  // Hide roles where plan limit = 0
+  Array.from(roleSelect.options).forEach(opt => {
+    const role = opt.value;
+    const isAllowed = (limits[role] || 0) > 0;
+    opt.disabled = !isAllowed;
+    opt.style.display = isAllowed ? '' : 'none';
+  });
+
+  // Default to first allowed
+  const firstAllowed = allRoles.find(r => (limits[r] || 0) > 0);
+  if (firstAllowed) roleSelect.value = firstAllowed;
+}
 
 
   /* =========================================================
@@ -3948,74 +3949,7 @@ async function refreshStaffList() {
 }
 
 
-/* =========================================================
-     DELETE STAFF - IMPROVED
-  ========================================================= */
 
-async function deleteStaffMember(
-  userId,
-  username
-) {
-
-  if (
-    !confirm(
-      `Delete "${username}" permanently?`
-    )
-  ) {
-
-    return;
-
-  }
-
-  try {
-
-    const res = await fetch(
-
-      `/api/restaurants/${activeRestaurantId}/staff/${userId}`,
-
-      {
-        method: 'DELETE',
-
-        headers: authHeaders()
-
-      }
-
-    );
-
-    const data =
-      await res.json().catch(
-        () => ({})
-      );
-
-    if (!res.ok) {
-
-      alert(
-        data.message ||
-        'Delete failed'
-      );
-
-      return;
-
-    }
-
-    await refreshActiveRestaurant();
-
-    // Refresh staff list
-    await refreshStaffList();
-
-    // Also refresh restaurant detail if open
-    if (activeRestaurantId) {
-      await openDetail(activeRestaurantId);
-    }
-
-  } catch (err) {
-
-    console.error('Delete staff error:', err);
-    alert('Failed to delete staff member');
-
-  }
-
-}
 
 
 /* =========================================================

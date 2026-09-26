@@ -52,6 +52,15 @@ const PLAN_LIMITS = {
     manager: 1,
     kitchen: 2,
     rider: 4
+  },
+
+   'Cafe Lite': {
+    waiter: 0,
+    counter: 1,
+    display: 0,
+    manager: 1,
+    kitchen: 0,
+    rider: 2
   }
 
 };
@@ -168,7 +177,7 @@ const createRestaurant = async (data) => {
 if (!PLAN_LIMITS[selectedPlan]) {
 
   throw new Error(
-    "Invalid restaurant plan. Allowed plans: Basic, Standard, Premium."
+    "Invalid restaurant plan. Allowed plans: Basic, Standard, Premium, Cafe Lite."
   );
 
 }
