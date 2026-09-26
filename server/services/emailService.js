@@ -80,7 +80,24 @@ const sendRestaurantCredentials = async ({
   staff
 }) => {
 
-  const managerLoginUrl = getLoginUrl("manager", restaurant.id);
+  /* =====================================================
+     MANAGER — OPTIONAL (Cafe Lite ke liye ho sakta hai null)
+  ===================================================== */
+
+  const hasManager =
+    manager &&
+    manager.username &&
+    manager.password;
+
+  let managerLoginUrl = null;
+
+  if (hasManager) {
+    managerLoginUrl = getLoginUrl("manager", restaurant.id);
+  }
+
+  /* =====================================================
+     ROLE NAMES
+  ===================================================== */
 
   const roleNames = {
     waiter: "Waiter",
@@ -92,16 +109,28 @@ const sendRestaurantCredentials = async ({
     delivery_rider: "Delivery"
   };
 
+  /* =====================================================
+     STAFF SECTIONS
+  ===================================================== */
+
   const staffSections = [];
 
   for (const role of Object.keys(staff || {})) {
+
     const accounts = staff[role];
+
     if (!Array.isArray(accounts) || !accounts.length) {
       continue;
     }
 
-    const loginRole = (role === "rider" || role === "delivery_rider") ? "delivery" : role;
-    const roleTitle = roleNames[role] || (role.charAt(0).toUpperCase() + role.slice(1));
+    const loginRole =
+      (role === "rider" || role === "delivery_rider")
+        ? "delivery"
+        : role;
+
+    const roleTitle =
+      roleNames[role] ||
+      (role.charAt(0).toUpperCase() + role.slice(1));
 
     const loginUrl = getLoginUrl(loginRole, restaurant.id);
 
@@ -135,6 +164,52 @@ const sendRestaurantCredentials = async ({
       </div>
     `);
   }
+
+  /* =====================================================
+     MANAGER SECTION — OPTIONAL
+  ===================================================== */
+
+  const managerSection = hasManager
+    ? `
+      <div style="margin-top:30px;padding:22px;border:1px solid #e5e7eb;border-radius:12px;">
+        <h3 style="margin-top:0;">Manager Account</h3>
+
+        <div style="background:#f3f4f6;padding:12px;border-radius:8px;margin-bottom:15px;">
+          <strong>Manager Login URL</strong><br>
+          <a href="${escapeAttribute(managerLoginUrl)}" style="color:#2563eb;word-break:break-all;">
+            ${escapeHtml(managerLoginUrl)}
+          </a>
+          <br><br>
+          <a href="${escapeAttribute(managerLoginUrl)}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:9px 16px;border-radius:7px;text-decoration:none;font-weight:bold;">
+            Open Manager Login
+          </a>
+        </div>
+
+        <table cellpadding="10" style="width:100%;border-collapse:collapse;">
+          <tr>
+            <td>Username</td>
+            <td><strong>${escapeHtml(manager.username)}</strong></td>
+          </tr>
+          <tr>
+            <td>Password</td>
+            <td><strong>${escapeHtml(manager.password || "-")}</strong></td>
+          </tr>
+        </table>
+      </div>
+    `
+    : `
+      <div style="margin-top:30px;padding:18px;background:#fef3c7;border:1px solid #fde68a;border-radius:10px;">
+        <strong>ℹ️ Cafe Lite — No Manager Account</strong>
+        <p style="margin-bottom:0;line-height:1.5;">
+          This restaurant was created without a Manager account.
+          You can add a manager later from the Super Admin panel if needed.
+        </p>
+      </div>
+    `;
+
+  /* =====================================================
+     FULL EMAIL HTML
+  ===================================================== */
 
   const html = `
     <!DOCTYPE html>
@@ -172,31 +247,7 @@ const sendRestaurantCredentials = async ({
             </tr>
           </table>
 
-          <div style="margin-top:30px;padding:22px;border:1px solid #e5e7eb;border-radius:12px;">
-            <h3 style="margin-top:0;">Manager Account</h3>
-
-            <div style="background:#f3f4f6;padding:12px;border-radius:8px;margin-bottom:15px;">
-              <strong>Manager Login URL</strong><br>
-              <a href="${escapeAttribute(managerLoginUrl)}" style="color:#2563eb;word-break:break-all;">
-                ${escapeHtml(managerLoginUrl)}
-              </a>
-              <br><br>
-              <a href="${escapeAttribute(managerLoginUrl)}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:9px 16px;border-radius:7px;text-decoration:none;font-weight:bold;">
-                Open Manager Login
-              </a>
-            </div>
-
-            <table cellpadding="10" style="width:100%;border-collapse:collapse;">
-              <tr>
-                <td>Username</td>
-                <td><strong>${escapeHtml(manager.username)}</strong></td>
-              </tr>
-              <tr>
-                <td>Password</td>
-                <td><strong>${escapeHtml(manager.password || "-")}</strong></td>
-              </tr>
-            </table>
-          </div>
+          ${managerSection}
 
           ${staffSections.join("")}
 
@@ -224,6 +275,10 @@ const sendRestaurantCredentials = async ({
     </body>
     </html>
   `;
+
+  /* =====================================================
+     SEND EMAIL
+  ===================================================== */
 
   const result = await resend.emails.send({
     from: FROM_NO_REPLY,

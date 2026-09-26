@@ -158,42 +158,36 @@ if (!isCafeLite) {
     // ✅ EMAIL IN BACKGROUND (Non-blocking)
     // --------------------------------------------------
 
-    setImmediate(async () => {
-
+setImmediate(async () => {
   try {
 
-    // ✅ Manager optional for Cafe Lite — skip email if no credentials
-    if (!manager_username || !manager_password) {
+    const hasManager = !!(manager_username && manager_password);
+    const staff = result.staff || {};
+    const hasStaff = Object.values(staff)
+      .some(arr => Array.isArray(arr) && arr.length > 0);
 
-      console.log(
-        `ℹ️ No manager credentials — skipping email for restaurant #${result.restaurant.id}`
-      );
-
+    // Skip ONLY if literally nothing to email
+    if (!hasManager && !hasStaff) {
+      console.log(`ℹ️ No credentials to email for restaurant #${result.restaurant.id}`);
       return;
-
     }
 
     await sendRestaurantCredentials({
-
       restaurant: result.restaurant,
 
-      manager: {
-        username: manager_username,
-        password: manager_password
-      },
+      // ✅ Manager may be null for Cafe Lite
+      manager: hasManager
+        ? { username: manager_username, password: manager_password }
+        : null,
 
-      staff: result.staff || {}
-
+      staff: staff
     });
 
     console.log(`✅ Credential email sent to ${result.restaurant.email}`);
 
   } catch (emailErr) {
-
     console.error('⚠️ Background email failed:', emailErr.message);
-
   }
-
 });
 
 
