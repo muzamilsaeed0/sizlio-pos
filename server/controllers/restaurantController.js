@@ -77,12 +77,35 @@ exports.addRestaurant = async (req, res) => {
     // REQUIRED FIELDS
     // --------------------------------------------------
 
-    if (!name || !manager_username || !manager_password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Restaurant name, manager username and password are required'
-      });
-    }
+   const isCafeLite = (plan === 'Cafe Lite');
+
+// Name always required
+if (!name) {
+  return res.status(400).json({ 
+    success: false, 
+    message: 'Restaurant name is required' 
+  });
+}
+
+// Manager required for non-Cafe-Lite plans
+if (!isCafeLite) {
+  if (!manager_username || !manager_password) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Manager username & password required for this plan' 
+    });
+  }
+} else {
+  // Cafe Lite: if one provided, both required
+  const hasUser = !!manager_username;
+  const hasPass = !!manager_password;
+  if (hasUser !== hasPass) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Enter both manager username and password, or leave both blank' 
+    });
+  }
+}
 
 
     // --------------------------------------------------
@@ -137,29 +160,41 @@ exports.addRestaurant = async (req, res) => {
 
     setImmediate(async () => {
 
-      try {
+  try {
 
-        await sendRestaurantCredentials({
-          restaurant: result.restaurant,
-          manager: {
-            username: manager_username,
-            password: manager_password
-          },
-          staff: result.staff || {}
-        });
+    // ✅ Manager optional for Cafe Lite — skip email if no credentials
+    if (!manager_username || !manager_password) {
 
-        console.log(`✅ Credential email sent to ${result.restaurant.email}`);
+      console.log(
+        `ℹ️ No manager credentials — skipping email for restaurant #${result.restaurant.id}`
+      );
 
-      } catch (emailErr) {
+      return;
 
-        console.error('⚠️ Background email failed:', emailErr.message);
+    }
 
-        // Email fail ho toh bhi restaurant create ho chuka hai
-        // Aap chaho toh yahan DB mein log kar sakte ho
+    await sendRestaurantCredentials({
 
-      }
+      restaurant: result.restaurant,
+
+      manager: {
+        username: manager_username,
+        password: manager_password
+      },
+
+      staff: result.staff || {}
 
     });
+
+    console.log(`✅ Credential email sent to ${result.restaurant.email}`);
+
+  } catch (emailErr) {
+
+    console.error('⚠️ Background email failed:', emailErr.message);
+
+  }
+
+});
 
 
   } catch (err) {

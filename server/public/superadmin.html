@@ -2793,18 +2793,21 @@
   const plan = document.getElementById('r-plan').value;
   const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.Basic;
 
+  const isCafeLite = (plan === 'Cafe Lite');
+
   let extraNote = '';
 
-  if (plan === 'Cafe Lite') {
+  if (isCafeLite) {
     extraNote = `
       <br><br>
       <span style="color:#e3a23b;font-weight:700;">
-        ☕ Cafe Lite = Counter and Rider POS
+        ☕ Cafe Lite = Counter + Rider POS
       </span>
       <br>
       <span style="color:#9CA3AF;">
-        Counter + 2 riders account can be added.
-        Waiter/Kitchen/Manager nahi.
+        Counter + 2 riders baad mein add kar sakte ho.<br>
+        <strong style="color:#e3a23b;">Manager is OPTIONAL</strong> —
+        khali chhoro to skip ho jayega.
       </span>
     `;
   }
@@ -2823,8 +2826,22 @@
     </span>
     ${extraNote}
   `;
-}
 
+  /* ✅ Manager field placeholders update karo */
+  const mgrNameEl = document.getElementById('r-manager-name');
+  const mgrUserEl = document.getElementById('r-manager-username');
+  const mgrPassEl = document.getElementById('r-manager-password');
+
+  if (isCafeLite) {
+    if (mgrNameEl) mgrNameEl.placeholder = 'Manager Full Name (optional)';
+    if (mgrUserEl) mgrUserEl.placeholder = 'Manager Username (optional)';
+    if (mgrPassEl) mgrPassEl.placeholder = 'Manager Password (optional)';
+  } else {
+    if (mgrNameEl) mgrNameEl.placeholder = 'Manager Full Name';
+    if (mgrUserEl) mgrUserEl.placeholder = 'Manager Username';
+    if (mgrPassEl) mgrPassEl.placeholder = 'Manager Password';
+  }
+}
 
   document.getElementById(
     'r-plan'
@@ -2840,11 +2857,11 @@
 
 
 async function addRestaurant() {
+
   if (creatingRestaurant) {
     return;
   }
   creatingRestaurant = true;
-
 
   const addBtn = document.querySelector('button.primary[onclick="addRestaurant()"]');
   if (addBtn) {
@@ -2853,7 +2870,15 @@ async function addRestaurant() {
   }
 
   const msg = document.getElementById('add-msg');
+
   try {
+
+    const plan = document.getElementById('r-plan').value;
+    const isCafeLite = (plan === 'Cafe Lite');
+
+    const mgrUsername = document.getElementById('r-manager-username').value.trim();
+    const mgrPassword = document.getElementById('r-manager-password').value;
+
     const body = {
       name: document.getElementById('r-name').value.trim(),
       owner_name: document.getElementById('r-owner').value.trim(),
@@ -2861,21 +2886,49 @@ async function addRestaurant() {
       phone: document.getElementById('r-phone').value.trim(),
       email: document.getElementById('r-email').value.trim(),
       address: document.getElementById('r-address').value.trim(),
-      plan: document.getElementById('r-plan').value,
+      plan: plan,
       food_type: document.getElementById('r-food-type').value,
       expiry_date: document.getElementById('r-expiry').value,
       manager_fullname: document.getElementById('r-manager-name').value.trim(),
-      manager_username: document.getElementById('r-manager-username').value.trim(),
-      manager_password: document.getElementById('r-manager-password').value
+      manager_username: mgrUsername,
+      manager_password: mgrPassword
     };
 
-    if (!body.name || !body.manager_username || !body.manager_password) {
+    /* ── Basic required fields ── */
+    if (!body.name) {
       msg.style.color = '#E15A4C';
-      msg.innerText = 'Restaurant name, manager username & password required';
-      
+      msg.innerText = 'Restaurant name is required';
       creatingRestaurant = false;
       if (addBtn) { addBtn.disabled = false; addBtn.innerText = 'Create Restaurant'; }
       return;
+    }
+
+    /* ── Manager rules based on plan ── */
+    if (isCafeLite) {
+
+      // Cafe Lite: Manager optional
+      // But if user started typing one field, require both
+      const hasUsername = !!mgrUsername;
+      const hasPassword = !!mgrPassword;
+
+      if (hasUsername !== hasPassword) {
+        msg.style.color = '#E15A4C';
+        msg.innerText = 'Enter BOTH manager username AND password, or leave BOTH blank';
+        creatingRestaurant = false;
+        if (addBtn) { addBtn.disabled = false; addBtn.innerText = 'Create Restaurant'; }
+        return;
+      }
+
+    } else {
+
+      // Other plans: Manager mandatory
+      if (!mgrUsername || !mgrPassword) {
+        msg.style.color = '#E15A4C';
+        msg.innerText = 'Manager username & password are required for this plan';
+        creatingRestaurant = false;
+        if (addBtn) { addBtn.disabled = false; addBtn.innerText = 'Create Restaurant'; }
+        return;
+      }
     }
 
     const res = await fetch('/api/restaurants', {
@@ -2889,7 +2942,6 @@ async function addRestaurant() {
     if (!res.ok) {
       msg.style.color = '#E15A4C';
       msg.innerText = data.message || 'Failed';
-      
       creatingRestaurant = false;
       if (addBtn) { addBtn.disabled = false; addBtn.innerText = 'Create Restaurant'; }
       return;
@@ -2898,7 +2950,7 @@ async function addRestaurant() {
     msg.style.color = '#2FA37D';
     msg.innerText = 'Restaurant created successfully!';
 
-    
+    /* Reset form */
     document.getElementById('r-name').value = '';
     document.getElementById('r-owner').value = '';
     document.getElementById('r-city').value = '';
@@ -2911,15 +2963,13 @@ async function addRestaurant() {
     document.getElementById('r-expiry').value = '';
     document.getElementById('r-plan').value = 'Basic';
     document.getElementById('r-food-type').value = 'Fast Food';
-    updateCreatePlanLimits(); 
+    updateCreatePlanLimits();
 
     await loadRestaurants();
 
-    
     creatingRestaurant = false;
     if (addBtn) { addBtn.disabled = false; addBtn.innerText = 'Create Restaurant'; }
 
-    
     setTimeout(() => {
       closeModal('add-modal');
     }, 800);
@@ -2928,7 +2978,6 @@ async function addRestaurant() {
     console.error(err);
     msg.style.color = '#E15A4C';
     msg.innerText = 'Server connection failed';
-
     creatingRestaurant = false;
     if (addBtn) { addBtn.disabled = false; addBtn.innerText = 'Create Restaurant'; }
   }

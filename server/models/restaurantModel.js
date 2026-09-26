@@ -58,7 +58,7 @@ const PLAN_LIMITS = {
     waiter: 0,
     counter: 1,
     display: 0,
-    manager: 1,
+    manager: 0,
     kitchen: 0,
     rider: 2
   }
@@ -253,8 +253,8 @@ if (!PLAN_LIMITS[selectedPlan]) {
           selectedPlan,
           expiry_date,
 
-          manager_username,
-          manager_password,
+          manager_username || null,
+          manager_password || null,
 
           null,
           null,
@@ -280,44 +280,36 @@ if (!PLAN_LIMITS[selectedPlan]) {
     // MANAGER
     // --------------------------------------------------
 
-    const managerHashed =
-      await bcrypt.hash(
-        manager_password,
-        10
-      );
+    // --------------------------------------------------
+// MANAGER (optional for Cafe Lite)
+// --------------------------------------------------
 
-    const managerResult =
-      await client.query(
-        `
-        INSERT INTO users
-        (
-          full_name,
-          username,
-          password,
-          plain_password,
-          role,
-          restaurant_id
-        )
+let managerCreated = null;
 
-        VALUES
-        (
-          $1,$2,$3,$4,'manager',$5
-        )
+if (manager_username && manager_password) {
 
-        RETURNING
-          id,
-          username,
-          full_name,
-          role
-        `,
-        [
-          manager_fullname || "Manager",
-          manager_username,
-          managerHashed,
-          manager_password,
-          restaurant.id
-        ]
-      );
+  const hashedPassword = await bcrypt.hash(manager_password, 10);
+
+  const mgrResult = await client.query(
+    `INSERT INTO users (full_name, username, password, plain_password, role, restaurant_id, is_active)
+     VALUES ($1, $2, $3, $4, 'manager', $5, true)
+     RETURNING id, username, full_name, role`,
+    [
+      manager_fullname || manager_username,
+      manager_username,
+      hashedPassword,
+      manager_password,
+      restaurant.id
+    ]
+  );
+
+  managerCreated = mgrResult.rows[0];
+
+} else {
+
+  console.log(`ℹ️ Cafe Lite: no manager created for restaurant #${restaurant.id}`);
+
+}
 
 // ======================================================
 // AUTO CREATE STAFF ACCORDING TO PLAN
@@ -538,7 +530,7 @@ return {
   },
 
   manager:
-    managerResult.rows[0],
+    managerCreated,
 
   staff:
     generatedStaff
