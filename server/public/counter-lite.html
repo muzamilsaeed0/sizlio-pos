@@ -1069,34 +1069,55 @@
   }
 }
 
+   
+
     /* =========================================================
        ORDERS
     ========================================================= */
     async function loadOrders() {
       try {
         const data = await api('/orders');
-        const orders = data.orders || data.data || [];
+
+        const allOrders = data.orders || data.data || [];
+
+        /* ✅ Active unpaid only */
+        const orders = allOrders.filter(o => {
+          const paid = String(o.payment_status || '').toLowerCase() === 'paid';
+          const done = ['completed', 'cancelled', 'delivered'].includes(
+            String(o.status || '').toLowerCase()
+          );
+          return !paid && !done;
+        });
+
         const el = document.getElementById('ordersList');
 
         if (!orders.length) {
-          el.innerHTML = '<div class="empty">No orders yet</div>';
+          el.innerHTML = '<div class="empty">No active orders</div>';
           return;
         }
 
         el.innerHTML = orders.slice(0, 40).map(o => {
-          const paid = String(o.payment_status).toLowerCase() === 'paid';
+          const paid = String(o.payment_status || '').toLowerCase() === 'paid';
+          const status = String(o.status || '').toLowerCase();
           const type = o.order_type === 'walk_in' ? 'Takeaway'
             : o.order_type === 'delivery' ? 'Delivery'
             : 'Dine-in';
 
+          /* ✅ Sirf served / delivered / ready_to_dispatch pe pay button */
+          const canPay = !paid && (
+            status === 'served' ||
+            status === 'delivered' ||
+            status === 'ready_to_dispatch'
+          );
+
           return `
             <div class="order-card">
               <div class="hd">
-                <span>#${esc(o.id)} · ${esc(type)}${o.table_no ? ' · T' + esc(o.table_no) : ''}</span>
+                <span>#${esc(o.local_number || o.id)} · ${esc(type)}${o.table_no ? ' · T' + esc(o.table_no) : ''}</span>
                 <span class="${paid ? 'paid' : 'st'}">${paid ? 'PAID' : esc(o.status || '—')}</span>
               </div>
               <div>${money(o.total_amount)} · ${esc(o.customer_name || '—')}</div>
-              ${!paid ? `
+              ${canPay ? `
                 <div class="actions">
                   <button class="btn btn-ok" onclick="payOrder(${o.id},${Number(o.total_amount) || 0})">Take payment</button>
                 </div>
@@ -1104,12 +1125,12 @@
             </div>
           `;
         }).join('');
+
       } catch (e) {
         document.getElementById('ordersList').innerHTML =
           `<div class="empty">${esc(e.message)}</div>`;
       }
     }
-
     async function payOrder(id, amount) {
       try {
         await api(`/orders/${id}/pay`, {
@@ -1387,7 +1408,7 @@
             const t = o.created_at || o.paid_at || '';
             const time = t ? new Date(t).toLocaleString() : '—';
             return `<tr>
-              <td>#${esc(o.id)}</td>
+              <td>#${esc(o.local_number || o.id)}</td>
               <td>${esc(orderTypeLabel(o.order_type))}</td>
               <td>${esc(o.status || '—')}</td>
               <td>${esc(o.payment_status || '—')}${o.payment_method ? ' / ' + esc(o.payment_method) : ''}</td>

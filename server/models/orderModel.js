@@ -644,12 +644,20 @@ const createOrder = async (
     // CREATE ORDER
     // --------------------------------------------------
 
+    const lnRes = await client.query(
+  `SELECT COALESCE(MAX(local_number), 0) + 1 AS n
+   FROM orders WHERE restaurant_id = $1`,
+  [restaurantId]
+);
+const localNumber = lnRes.rows[0].n;
+
     const orderResult =
       await client.query(
         `
         INSERT INTO orders
         (
           table_no,
+          local_number,
           restaurant_id,
           customer_name,
           status,
@@ -2699,24 +2707,22 @@ const markPaid = async (
     // delivered → paid
     // ==================================================
 
-    const allowedStatuses = [
-      'served',
-      'payment_pending',
-      'delivered'
-    ];
+   // Restaurant plan fetch karo
+const planRes = await client.query(
+  `SELECT plan FROM restaurants WHERE id = $1`,
+  [restaurantId]
+);
+const plan = planRes.rows[0]?.plan || 'Basic';
+const isCafeLite = plan === 'Cafe Lite';
 
-
-    if (
-      !allowedStatuses.includes(
-        order.status
-      )
-    ) {
-
-      await client.query('ROLLBACK');
-
-      return null;
-
-    }
+// Cafe Lite mein koi status check nahi
+if (!isCafeLite) {
+  const allowedStatuses = ['served', 'payment_pending', 'delivered'];
+  if (!allowedStatuses.includes(order.status)) {
+    await client.query('ROLLBACK');
+    return null;
+  }
+}
 
 
     // ==================================================

@@ -290,25 +290,30 @@ exports.placeOrder = async (
   // TABLE NUMBER
   // ----------------------------------------------------
 
-  let tableNo =
-    Number(table_no);
-
-
   if (order_type === 'delivery' || order_type === 'walk_in') {
-    tableNo = 0;
+  tableNo = 0;
 } else {
-    if (!Number.isInteger(tableNo) || tableNo <= 0) {
+  // dine_in
+  if (!Number.isInteger(tableNo) || tableNo <= 0) {
+    // Cafe Lite only — full counter.html still requires table
+    let isCafeLite = false;
+    try {
+      const planRes = await pool.query(
+        `SELECT plan FROM restaurants WHERE id = $1`,
+        [restaurantId]
+      );
+      isCafeLite = planRes.rows[0]?.plan === 'Cafe Lite';
+    } catch (_) {}
 
+    if (isCafeLite) {
+      tableNo = 0;
+    } else {
       return res.status(400).json({
-
         success: false,
-
-        message:
-          'Valid table number is required for dine-in order'
-
+        message: 'Valid table number is required for dine-in order'
       });
-
     }
+  }
 
   }
 
