@@ -1461,7 +1461,7 @@
           <p>${from} → ${to}</p>
           <p>${stats}</p>
           ${table}
-          <scr` + `ipt>window.onload=function(){window.print();};</scr` + `ipt>
+          <script>window.onload=function(){window.print();};</script>
         </body>
         </html>
       `);
