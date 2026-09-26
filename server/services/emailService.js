@@ -43,19 +43,24 @@ function getBaseUrl() {
 // ROLE LOGIN URL
 // =====================================================
 
-function getLoginUrl(role, restaurantId) {
+function getLoginUrl(role, restaurantId, plan) {
   const baseUrl = getBaseUrl();
 
   const pages = {
     manager: "manager.html",
     waiter: "waiter.html",
     kitchen: "kitchen.html",
-    counter: "counter.html",
+    counter: "counter.html",       /* default */
     display: "display.html",
     delivery: "rider.html",
     rider: "rider.html",
     delivery_rider: "rider.html"
   };
+
+  /* ✅ Cafe Lite — counter ke liye counter-lite.html */
+  if (plan === "Cafe Lite" && role === "counter") {
+    pages.counter = "counter-lite.html";
+  }
 
   const page = pages[role];
   if (!page) {
@@ -202,7 +207,7 @@ const sendRestaurantCredentials = async ({
         <strong>ℹ️ Cafe Lite — No Manager Account</strong>
         <p style="margin-bottom:0;line-height:1.5;">
           This restaurant was created without a Manager account.
-          You can add a manager later from the Super Admin panel if needed.
+          You can add a manager later by contacting support if needed.
         </p>
       </div>
     `;
