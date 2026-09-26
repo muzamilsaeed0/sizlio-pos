@@ -185,7 +185,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <div class="topnav">
     <button class="menu-btn" onclick="toggleMenu()" aria-label="Open menu">☰</button>
     <div class="title">Kitchen</div>
-    <div></div>
+    <span class="status-chip" id="live-status">Live</span>
   </div>
 
   <div class="restaurant-info" id="restaurant-info"></div>
@@ -527,9 +527,31 @@ function createSocket(){
     transports:['websocket','polling'],
     auth:{ token:token, restaurant_id:restaurantId }
   });
-  socket.on('connect', () => { console.log('Kitchen Socket Connected', socket.id, 'Restaurant:', restaurantId); });
-  socket.on('disconnect', reason => { console.log('Kitchen Socket Disconnected:', reason); });
-  socket.on('connect_error', err => { console.log('Kitchen Socket Error:', err?.message || err); });
+  socket.on('connect', () => {
+    console.log('Kitchen Socket Connected', socket.id, 'Restaurant:', restaurantId);
+    const chip = document.getElementById('live-status');
+    if (chip) {
+      chip.classList.remove('offline');
+      chip.textContent = 'Live';
+    }
+    if (token) loadOrders();
+  });
+  socket.on('disconnect', reason => {
+    console.log('Kitchen Socket Disconnected:', reason);
+    const chip = document.getElementById('live-status');
+    if (chip) {
+      chip.classList.add('offline');
+      chip.textContent = 'Offline';
+    }
+  });
+  socket.on('connect_error', err => {
+    console.log('Kitchen Socket Error:', err?.message || err);
+    const chip = document.getElementById('live-status');
+    if (chip) {
+      chip.classList.add('offline');
+      chip.textContent = 'Offline';
+    }
+  });
   
   socket.on('order_created', kitchenNewOrderAlert);
   socket.on('order_accepted', kitchenNewOrderAlert);
@@ -573,11 +595,32 @@ function checkUnauthorized(res){
 async function apiFetch(url, options = {}){
   const response = await fetch(url, {
     ...options,
-    headers:{ 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token, ...(options.headers || {}) }
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token,
+      ...(options.headers || {})
+    }
   });
-  if(response.status === 401){ logout(); throw new Error('Session expired. Please login again.'); }
+
+  if (response.status === 401) {
+    logout();
+    throw new Error('Session expired. Please login again.');
+  }
+
   const data = await response.json().catch(() => ({}));
-  if(!response.ok){ throw new Error(data.message || 'Request failed'); }
+
+  if (response.status === 403) {
+    if (/subscription|expired|plan/i.test(data.message || '')) {
+      alert(data.message || 'Subscription expired');
+      logout();
+    }
+    throw new Error(data.message || 'Access denied');
+  }
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Request failed');
+  }
+
   return data;
 }
 
@@ -799,19 +842,49 @@ async function confirmOrder(id) {
   const button = document.querySelector(`button[onclick="confirmOrder(${id})"]`);
   const input = document.getElementById('prep-' + id);
   const prep_minutes = Number(input?.value);
-  if (!Number.isInteger(prep_minutes) || prep_minutes <= 0) { alert('Enter a valid preparation time.'); return; }
-  if (button) { button.disabled = true; button.innerText = 'Confirming...'; }
+
+  if (!Number.isInteger(prep_minutes) || prep_minutes <= 0) {
+    alert('Enter a valid preparation time (minutes).');
+    input?.focus();
+    return;
+  }
+
+  if (button) {
+    button.disabled = true;
+    button.dataset.label = button.innerText;
+    button.innerText = 'Confirming...';
+  }
+
   try {
     const res = await fetch(`/api/orders/${id}/confirm`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + token
+      },
       body: JSON.stringify({ prep_minutes })
     });
+
     if (checkUnauthorized(res)) return;
+
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) { alert(data.message || 'Confirm failed'); if (button) { button.disabled = false; button.innerText = 'Confirm'; } return; }
+
+    if (!res.ok) {
+      if (res.status === 409) await loadOrders();
+      alert(data.message || 'Confirm failed');
+      return;
+    }
+
     await loadOrders();
-  } catch (error) { console.error('confirmOrder:', error); alert('Server error'); if (button) { button.disabled = false; button.innerText = 'Confirm'; } }
+  } catch (error) {
+    console.error('confirmOrder:', error);
+    alert(navigator.onLine ? 'Server error. Try again.' : 'You are offline.');
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.innerText = button.dataset.label || 'Confirm';
+    }
+  }
 }
 
 /* =====================================================
@@ -864,14 +937,33 @@ function renderOrders(orders){
 ===================================================== */
 async function readyOrder(id) {
   const button = document.querySelector(`button[onclick="readyOrder(${id})"]`);
-  if (button) { button.disabled = true; button.innerText = 'Preparing...'; }
+  if (button) {
+    button.disabled = true;
+    button.dataset.label = button.innerText;
+    button.innerText = 'Updating...';
+  }
   try {
-    const res = await fetch(`/api/orders/${id}/ready`, { method: 'PUT', headers: { Authorization: 'Bearer ' + token } });
+    const res = await fetch(`/api/orders/${id}/ready`, {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + token }
+    });
     if (checkUnauthorized(res)) return;
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) { alert(data.message || 'Unable to mark ready'); if (button) { button.disabled = false; button.innerText = 'Mark Ready'; } return; }
+    if (!res.ok) {
+      if (res.status === 409) await loadOrders();
+      alert(data.message || 'Mark ready failed');
+      return;
+    }
     await loadOrders();
-  } catch (error) { console.error('readyOrder:', error); alert('Server error'); if (button) { button.disabled = false; button.innerText = 'Mark Ready'; } }
+  } catch (error) {
+    console.error('readyOrder:', error);
+    alert(navigator.onLine ? 'Server error. Try again.' : 'You are offline.');
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.innerText = button.dataset.label || 'Mark Ready';
+    }
+  }
 }
 
 /* =====================================================

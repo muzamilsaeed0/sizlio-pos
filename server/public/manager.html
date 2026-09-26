@@ -966,7 +966,13 @@
     /* AUTH HELPERS */
     function authHeaders() { return { "Content-Type": "application/json", "Authorization": "Bearer " + token }; }
     function checkUnauthorized(res) { if (res.status === 401) { alert("Session expired. Please login again."); logout(); return true; } return false; }
-    function clearAuthStorage() { localStorage.removeItem("token"); localStorage.removeItem("restaurant_id"); token = null; restaurantId = null; }
+    function clearAuthStorage() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("restaurant_id");
+  // ✅ saved_restaurant_id ko MAT hato — future login ke liye chahiye
+  token = null;
+  restaurantId = null;
+}
 
     /* PASSWORD */
     function showPassword() { document.getElementById("password").type = "text"; }
@@ -988,7 +994,7 @@
       const username = document.getElementById("username").value.trim();
       const password = document.getElementById("password").value;
       const error = document.getElementById("login-error");
-      const params = new URLSearchParams(window.location.search);
+      
       const urlRestaurantId = params.get("restaurant");
       error.innerText = "";
       if (!username || !password) { error.innerText = "Username and Password required"; return; }
@@ -2539,6 +2545,19 @@
       updateFbrBadge(0);
       closeMenu();
     }
+
+    /* Restaurant ID: pehle URL param, phir saved value */
+function resolveRestaurantId() {
+  const params = new URLSearchParams(window.location.search);
+  const urlId = params.get("restaurant");
+  if (urlId) {
+    // URL mein tha → save karo future ke liye
+    localStorage.setItem("saved_restaurant_id", urlId);
+    return urlId;
+  }
+  // URL mein nahi tha → saved value use karo
+  return localStorage.getItem("saved_restaurant_id") || null;
+}
 
     /* SOCKET EVENTS */
     socket.on("order_created", () => { if (!token) return; loadSummary(); });
