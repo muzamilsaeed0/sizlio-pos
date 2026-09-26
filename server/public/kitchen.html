@@ -527,7 +527,7 @@ function createSocket(){
     transports:['websocket','polling'],
     auth:{ token:token, restaurant_id:restaurantId }
   });
-  socket.on('connect', () => {
+ socket.on('connect', () => {
     console.log('Kitchen Socket Connected', socket.id, 'Restaurant:', restaurantId);
     const chip = document.getElementById('live-status');
     if (chip) {
@@ -536,6 +536,7 @@ function createSocket(){
     }
     if (token) loadOrders();
   });
+
   socket.on('disconnect', reason => {
     console.log('Kitchen Socket Disconnected:', reason);
     const chip = document.getElementById('live-status');
@@ -543,15 +544,40 @@ function createSocket(){
       chip.classList.add('offline');
       chip.textContent = 'Offline';
     }
+    // Server ne kick kiya (auth / force) — infinite reconnect mat chhodo
+    if (reason === 'io server disconnect') {
+      alert('Disconnected by server. Please login again.');
+      logout();
+    }
   });
+
   socket.on('connect_error', err => {
-    console.log('Kitchen Socket Error:', err?.message || err);
+    const msg = err?.message || String(err);
+    console.log('Kitchen Socket Error:', msg);
     const chip = document.getElementById('live-status');
     if (chip) {
       chip.classList.add('offline');
       chip.textContent = 'Offline';
     }
+    // Bad / expired JWT
+    if (/auth|token|jwt|unauthorized|forbidden/i.test(msg)) {
+      try { socket.disconnect(); } catch (e) {}
+      alert('Session expired. Please login again.');
+      logout();
+    }
   });
+
+  // Reconnecting… chip (manager event)
+  if (socket.io && !socket.__reconnectHooked) {
+    socket.__reconnectHooked = true;
+    socket.io.on('reconnect_attempt', () => {
+      const chip = document.getElementById('live-status');
+      if (chip) {
+        chip.classList.add('offline');
+        chip.textContent = 'Reconnecting…';
+      }
+    });
+  }
   
   socket.on('order_created', kitchenNewOrderAlert);
   socket.on('order_accepted', kitchenNewOrderAlert);
