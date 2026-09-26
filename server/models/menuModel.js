@@ -1,60 +1,39 @@
 const pool = require('../config/db');
 
 const getAllMenuItems = async (restaurantId) => {
-
   const result = await pool.query(
     `
     SELECT
-      mi.*,
-      COALESCE(
-        json_agg(
-          json_build_object(
-            'id', miv.id,
-            'label', miv.label,
-            'price', miv.price
-          )
-          ORDER BY miv.price
-        ) FILTER (WHERE miv.id IS NOT NULL),
-        '[]'::json
-      ) AS variants
-    FROM menu_items mi
-    LEFT JOIN menu_item_variants miv
-      ON miv.menu_item_id = mi.id
-      AND miv.active = true
-    WHERE mi.active = true
-      AND mi.restaurant_id = $1
-    GROUP BY mi.id
-    ORDER BY mi.id
+      id, name, price, category, image, active, restaurant_id,
+      package_size, package_unit
+    FROM menu_items
+    WHERE restaurant_id = $1
+      AND active = true
+    ORDER BY category, name
     `,
     [restaurantId]
   );
-
   return result.rows;
-
 };
 
 const createMenuItem = async (
   name,
   price,
   category,
-  restaurantId
+  restaurantId,
+  packageSize = null,
+  packageUnit = null
 ) => {
-
-  // Duplicate check
   const exists = await pool.query(
     `
-    SELECT id
-    FROM menu_items
+    SELECT id FROM menu_items
     WHERE restaurant_id = $1
       AND LOWER(name) = LOWER($2)
       AND active = true
     `,
     [restaurantId, name]
   );
-
-  if (exists.rowCount) {
-    throw new Error('Menu item already exists');
-  }
+  if (exists.rowCount) throw new Error('Menu item already exists');
 
   const image =
     '/images/' +
@@ -65,24 +44,24 @@ const createMenuItem = async (
       .replace(/[^\w-]/g, '') +
     '.jpg';
 
+  const unit = packageUnit && String(packageUnit).trim()
+    ? String(packageUnit).trim().toLowerCase()
+    : null;
+  const size =
+    packageSize !== null && packageSize !== '' && !Number.isNaN(Number(packageSize))
+      ? Number(packageSize)
+      : null;
+
   const result = await pool.query(
     `
     INSERT INTO menu_items
-    (name, price, category, image, restaurant_id)
-    VALUES ($1, $2, $3, $4, $5)
+      (name, price, category, image, restaurant_id, package_size, package_unit)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *
     `,
-    [
-      name,
-      price,
-      category || 'Other',
-      image,
-      restaurantId
-    ]
+    [name, price, category || 'Other', image, restaurantId, size, unit]
   );
-
   return result.rows[0];
-
 };
 
 const updateMenuItem = async (
@@ -90,14 +69,13 @@ const updateMenuItem = async (
   name,
   price,
   category,
-  restaurantId
+  restaurantId,
+  packageSize = null,
+  packageUnit = null
 ) => {
-
-  // Duplicate check
   const exists = await pool.query(
     `
-    SELECT id
-    FROM menu_items
+    SELECT id FROM menu_items
     WHERE restaurant_id = $1
       AND LOWER(name) = LOWER($2)
       AND id <> $3
@@ -105,10 +83,15 @@ const updateMenuItem = async (
     `,
     [restaurantId, name, id]
   );
+  if (exists.rowCount) throw new Error('Menu item already exists');
 
-  if (exists.rowCount) {
-    throw new Error('Menu item already exists');
-  }
+  const unit = packageUnit && String(packageUnit).trim()
+    ? String(packageUnit).trim().toLowerCase()
+    : null;
+  const size =
+    packageSize !== null && packageSize !== '' && !Number.isNaN(Number(packageSize))
+      ? Number(packageSize)
+      : null;
 
   const result = await pool.query(
     `
@@ -116,22 +99,16 @@ const updateMenuItem = async (
     SET
       name = $1,
       price = $2,
-      category = $3
-    WHERE id = $4
-      AND restaurant_id = $5
+      category = $3,
+      package_size = $4,
+      package_unit = $5
+    WHERE id = $6
+      AND restaurant_id = $7
     RETURNING *
     `,
-    [
-      name,
-      price,
-      category || 'Other',
-      id,
-      restaurantId
-    ]
+    [name, price, category || 'Other', size, unit, id, restaurantId]
   );
-
   return result.rows[0];
-
 };
 
 const deactivateMenuItem = async (

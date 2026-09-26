@@ -35,14 +35,14 @@ exports.getMenu = async (req, res) => {
 // Add Menu Item
 exports.addMenuItem = async (req, res) => {
 
-  if (req.user.role !== 'manager') {
+   if (!['manager', 'counter'].includes(req.user.role)) {
     return res.status(403).json({
       success: false,
-      message: 'Only manager can add menu items'
+      message: 'Only manager or counter can add menu items'
     });
   }
 
-  let { name, price, category } = req.body;
+  let { name, price, category, package_size, package_unit } = req.body;
 
   name = name?.trim();
 
@@ -62,12 +62,14 @@ exports.addMenuItem = async (req, res) => {
 
   try {
 
-    const item = await createMenuItem(
-      name,
-      Number(price),
-      category,
-      req.user.restaurant_id
-    );
+   const item = await createMenuItem(
+    name,
+    Number(price),
+    category,
+    req.user.restaurant_id,
+    package_size,
+    package_unit
+  );
 
     return res.status(201).json({
       success: true,
@@ -99,16 +101,14 @@ exports.addMenuItem = async (req, res) => {
 // Edit Menu Item
 exports.editMenuItem = async (req, res) => {
 
-  if (req.user.role !== 'manager') {
+ if (!['manager', 'counter'].includes(req.user.role)) {
     return res.status(403).json({
       success: false,
-      message: 'Only manager can edit menu items'
+      message: 'Only manager or counter can edit menu items'
     });
   }
 
-  const { id } = req.params;
-
-  let { name, price, category } = req.body;
+  let { name, price, category, package_size, package_unit } = req.body;
 
   name = name?.trim();
 
@@ -129,12 +129,14 @@ exports.editMenuItem = async (req, res) => {
   try {
 
     const item = await updateMenuItem(
-      id,
-      name,
-      Number(price),
-      category,
-      req.user.restaurant_id
-    );
+    id,
+    name,
+    Number(price),
+    category,
+    req.user.restaurant_id,
+    package_size,
+    package_unit
+  );
 
     if (!item) {
       return res.status(404).json({
@@ -173,10 +175,10 @@ exports.editMenuItem = async (req, res) => {
 // Remove Menu Item
 exports.removeMenuItem = async (req, res) => {
 
-  if (req.user.role !== 'manager') {
+  if (!['manager', 'counter'].includes(req.user.role)) {
     return res.status(403).json({
       success: false,
-      message: 'Only manager can remove menu items'
+      message: 'Only manager or counter can remove menu items'
     });
   }
 

@@ -210,6 +210,10 @@ app.get("/admin", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "superadmin.html"));
 });
 
+app.get("/cafe", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "cafe.html"));
+});
+
 /* =====================================================
    API ROUTES
 ===================================================== */

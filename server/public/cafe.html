@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Sizlio Cafe</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a222c;
+      --panel2: #232d3a;
+      --text: #f3f0e8;
+      --muted: #9aa3b2;
+      --border: #2e3a48;
+      --accent: #e3a23b;
+      --ok: #2fa37d;
+      --danger: #e15a4c;
+      --blue: #3b82f6;
+    }
+    body.light {
+      --bg: #f4f1ea;
+      --panel: #fff;
+      --panel2: #f0ebe3;
+      --text: #1a1f26;
+      --muted: #6b7280;
+      --border: #e5e0d6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    button, input, select { font: inherit; }
+    .hidden { display: none !important; }
+
+    /* Login */
+    #login-box {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .login-card {
+      width: 100%;
+      max-width: 380px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.35);
+    }
+    .login-card h1 { margin: 0 0 6px; font-size: 22px; }
+    .login-card p { margin: 0 0 20px; color: var(--muted); font-size: 13px; }
+    .login-card label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .login-card input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-accent { background: var(--accent); color: #14181c; width: 100%; }
+    .btn-ok { background: var(--ok); color: #fff; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    #login-error { color: var(--danger); font-size: 13px; min-height: 18px; margin-top: 10px; }
+
+    /* App shell */
+    #app-box { display: none; min-height: 100vh; flex-direction: column; }
+    #app-box.show { display: flex; }
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+      flex-wrap: wrap;
+    }
+    .brand { font-weight: 800; font-size: 16px; }
+    .pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--panel2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .pill.ok { color: var(--ok); border-color: #2fa37d55; }
+    .pill.warn { color: var(--accent); }
+    .topbar .spacer { flex: 1; }
+    .sales-chip {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .topbar button { padding: 8px 12px; border-radius: 8px; font-size: 12px; }
+
+    .main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr 0.85fr;
+      gap: 12px;
+      padding: 12px;
+      min-height: 0;
+    }
+    @media (max-width: 1100px) {
+      .main { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      min-height: 280px;
+      max-height: calc(100vh - 90px);
+    }
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      letter-spacing: .02em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .type-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+    .type-btn {
+      flex: 1;
+      min-width: 90px;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--text);
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .type-btn.active {
+      background: var(--accent);
+      color: #14181c;
+      border-color: var(--accent);
+    }
+    .search {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+    .cats { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .cat-chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .cat-chip.active { color: var(--text); border-color: var(--accent); }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+      overflow: auto;
+      flex: 1;
+      align-content: start;
+    }
+    .menu-card {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      cursor: pointer;
+      text-align: left;
+    }
+    .menu-card:hover { border-color: var(--accent); }
+    .menu-card .n { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+    .menu-card .u { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+    .menu-card .p { font-weight: 800; color: var(--accent); font-size: 13px; }
+
+    .field-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .field-row input, .field-row select {
+      flex: 1;
+      min-width: 100px;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+    }
+    .cart-list { flex: 1; overflow: auto; margin-bottom: 8px; }
+    .cart-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .cart-row .nm { flex: 1; }
+    .qty-btn {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .totals { font-size: 14px; margin-bottom: 10px; }
+    .totals .line { display: flex; justify-content: space-between; margin: 4px 0; color: var(--muted); }
+    .totals .grand { color: var(--text); font-weight: 800; font-size: 18px; margin-top: 6px; }
+    .pay-row { display: flex; gap: 8px; }
+    .pay-row .btn { flex: 1; }
+
+    .orders-list { flex: 1; overflow: auto; }
+    .order-card {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+    .order-card .hd { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 4px; }
+    .order-card .st { color: var(--accent); }
+    .order-card .paid { color: var(--ok); }
+    .order-card .actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .order-card .actions button { padding: 6px 10px; font-size: 11px; border-radius: 8px; }
+
+    /* Modal */
+    .modal-bg {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.55);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 50; padding: 16px;
+    }
+    .modal {
+      width: 100%; max-width: 480px;
+      max-height: 90vh; overflow: auto;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+    }
+    .modal h3 { margin: 0 0 12px; }
+    .modal label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 4px; }
+    .modal input, .modal select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+    }
+    .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+    .modal-actions .btn { flex: 1; }
+    .menu-admin-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+    }
+    .empty { color: var(--muted); text-align: center; padding: 24px 8px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <!-- LOGIN -->
+  <div id="login-box">
+    <div class="login-card">
+      <h1>Sizlio Cafe</h1>
+      <p>Single-screen counter · Lite plan</p>
+      <label>Username</label>
+      <input id="username" autocomplete="username" />
+      <label>Password</label>
+      <input id="password" type="password" autocomplete="current-password" />
+      <button class="btn btn-accent" onclick="login()">Login</button>
+      <div id="login-error"></div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="app-box">
+    <div class="topbar">
+      <span class="brand" id="brandName">Cafe</span>
+      <span class="pill" id="planPill">Cafe Lite</span>
+      <span class="pill" id="shiftPill">Shift…</span>
+      <span class="spacer"></span>
+      <span class="sales-chip" id="todaySales">Today: Rs 0</span>
+      <button class="btn btn-ghost" onclick="openMenuAdmin()">Menu</button>
+      <button class="btn btn-ghost" onclick="openSettings()">Settings</button>
+      <button class="btn btn-ghost" onclick="toggleTheme()">Theme</button>
+      <button class="btn btn-danger" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="main">
+      <!-- MENU -->
+      <section class="panel">
+        <h2>Menu</h2>
+        <div class="type-row">
+          <button class="type-btn active" id="t-dine" onclick="setOrderType('dine_in')">Dine-in</button>
+          <button class="type-btn" id="t-take" onclick="setOrderType('walk_in')">Takeaway</button>
+          <button class="type-btn" id="t-del" onclick="setOrderType('delivery')">Delivery</button>
+        </div>
+        <input class="search" id="menuSearch" placeholder="Search menu…" oninput="renderMenu()" />
+        <div class="cats" id="cats"></div>
+        <div class="menu-grid" id="menuGrid"></div>
+      </section>
+
+      <!-- CART -->
+      <section class="panel">
+        <h2>Current order</h2>
+        <div class="field-row" id="dineFields">
+          <input id="tableNo" type="number" min="1" placeholder="Table no" />
+        </div>
+        <div class="field-row hidden" id="deliveryFields">
+          <input id="custPhone" placeholder="Phone *" />
+          <input id="custAddress" placeholder="Address *" />
+        </div>
+        <div class="field-row">
+          <input id="custName" placeholder="Customer name (optional)" />
+        </div>
+        <div class="cart-list" id="cartList"></div>
+        <div class="totals" id="totals"></div>
+        <div class="field-row">
+          <select id="payMethod">
+            <option value="Cash">Cash</option>
+            <option value="Card">Card</option>
+            <option value="Bank">Bank</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="pay-row">
+          <button class="btn btn-ghost" onclick="placeOrder(false)">Pay later</button>
+          <button class="btn btn-ok" onclick="placeOrder(true)">Pay now</button>
+        </div>
+      </section>
+
+      <!-- TODAY -->
+      <section class="panel">
+        <h2>Today’s orders</h2>
+        <div class="orders-list" id="ordersList"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- MENU ADMIN MODAL -->
+  <div id="menuModal" class="modal-bg hidden">
+    <div class="modal">
+      <h3>Menu items</h3>
+      <div id="menuAdminList"></div>
+      <hr style="border-color:var(--border);margin:14px 0;" />
+      <h3 id="menuFormTitle">Add item</h3>
+      <input type="hidden" id="editMenuId" value="" />
+      <label>Name *</label>
+      <input id="mName" />
+      <label>Price *</label>
+      <input id="mPrice" type="number" min="1" step="0.01" />
+      <label>Category</label>
+      <input id="mCategory" placeholder="e.g. Drinks" />
+      <label>Package size</label>
+      <input id="mPkgSize" type="number" min="0" step="0.01" placeholder="e.g. 250" />
+      <label>Package unit</label>
+      <select id="mPkgUnit">
+        <option value="">— none —</option>
+        <option value="ml">ml</option>
+        <option value="g">g</option>
+        <option value="kg">kg</option>
+        <option value="L">L</option>
+        <option value="pcs">pcs</option>
+      </select>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeMenuAdmin()">Close</button>
+        <button class="btn btn-accent" onclick="saveMenuItem()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settingsModal" class="modal-bg hidden">
+    <div class="modal">
+      <h3>Settings</h3>
+      <p style="color:var(--muted);font-size:13px;margin:0 0 12px;">
+        Rider management &amp; auto-assign — Phase 2 (structure ready).
+      </p>
+      <label>Default assign mode</label>
+      <select id="assignMode">
+        <option value="manual">Manual</option>
+        <option value="auto">Auto (least load)</option>
+      </select>
+      <label style="margin-top:12px;">Riders</label>
+      <div id="riderList" class="empty">Load riders after backend rider APIs wired on this screen.</div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeSettings()">Close</button>
+        <button class="btn btn-accent" onclick="saveSettings()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = '/api';
+    const params = new URLSearchParams(location.search);
+    let restaurantId = Number(params.get('restaurant')) || null;
+    let token = localStorage.getItem('cafe_token') || '';
+    let user = null;
+    let orderType = 'dine_in';
+    let menu = [];
+    let activeCat = 'All';
+    let cart = []; // { id, name, price, qty, package_size, package_unit }
+    let currentShift = null;
+
+    function money(n) {
+      return 'Rs ' + Number(n || 0).toLocaleString('en-PK', { maximumFractionDigits: 2 });
+    }
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[c]);
+    }
+    function pkgLabel(item) {
+      if (item.package_size && item.package_unit) {
+        return `${item.package_size} ${item.package_unit}`;
+      }
+      return '';
+    }
+
+    async function api(path, opts = {}) {
+      const res = await fetch(API + path, {
+        ...opts,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token,
+          ...(opts.headers || {})
+        }
+      });
+      if (res.status === 401) {
+        logout();
+        throw new Error('Session expired');
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Request failed');
+      return data;
+    }
+
+    async function login() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const err = document.getElementById('login-error');
+      err.textContent = '';
+      try {
+        const res = await fetch(API + '/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username,
+            password,
+            restaurant_id: restaurantId,
+            role: 'counter'
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          err.textContent = data.message || 'Login failed';
+          return;
+        }
+        if (!data.token || data.user?.role !== 'counter') {
+          err.textContent = 'Counter login required for Cafe Lite';
+          return;
+        }
+        // Soft plan hint (server may still return Basic until Cafe Lite assigned)
+        token = data.token;
+        user = data.user;
+        restaurantId = data.user.restaurant_id || restaurantId;
+        localStorage.setItem('cafe_token', token);
+        localStorage.setItem('cafe_restaurant_id', String(restaurantId));
+        await bootApp();
+      } catch (e) {
+        err.textContent = 'Server connection failed';
+      }
+    }
+
+    function logout() {
+      token = '';
+      localStorage.removeItem('cafe_token');
+      location.reload();
+    }
+
+    async function bootApp() {
+      document.getElementById('login-box').style.display = 'none';
+      document.getElementById('app-box').classList.add('show');
+      document.getElementById('brandName').textContent = user?.restaurant_name || 'Cafe';
+      document.getElementById('planPill').textContent = user?.plan || 'Lite';
+      await Promise.all([loadShift(), loadMenu(), loadOrders(), loadTodaySales()]);
+      renderCart();
+    }
+
+    async function loadShift() {
+      const pill = document.getElementById('shiftPill');
+      try {
+        const data = await api('/shifts/current');
+        currentShift = data.data || data.shift || null;
+        if (currentShift && (currentShift.id || currentShift.status === 'active')) {
+          pill.textContent = 'Shift open';
+          pill.className = 'pill ok';
+        } else {
+          pill.textContent = 'No shift — tap to start';
+          pill.className = 'pill warn';
+          pill.style.cursor = 'pointer';
+          pill.onclick = startShift;
+        }
+      } catch {
+        pill.textContent = 'Shift ?';
+      }
+    }
+
+    async function startShift() {
+      try {
+        await api('/shifts/start', { method: 'POST' });
+        await loadShift();
+      } catch (e) {
+        alert(e.message || 'Could not start shift');
+      }
+    }
+
+    async function loadMenu() {
+      try {
+        const data = await api('/menu');
+        menu = data.data || [];
+        renderCats();
+        renderMenu();
+      } catch (e) {
+        document.getElementById('menuGrid').innerHTML =
+          `<div class="empty">${esc(e.message)}</div>`;
+      }
+    }
+
+    function renderCats() {
+      const cats = ['All', ...new Set(menu.map(m => m.category || 'Other'))];
+      document.getElementById('cats').innerHTML = cats.map(c =>
+        `<button class="cat-chip ${c === activeCat ? 'active' : ''}" onclick="activeCat='${esc(c)}';renderMenu();renderCats()">${esc(c)}</button>`
+      ).join('');
+    }
+
+    function renderMenu() {
+      const q = (document.getElementById('menuSearch').value || '').toLowerCase();
+      const list = menu.filter(m => {
+        if (activeCat !== 'All' && (m.category || 'Other') !== activeCat) return false;
+        if (q && !String(m.name).toLowerCase().includes(q)) return false;
+        return true;
+      });
+      const grid = document.getElementById('menuGrid');
+      if (!list.length) {
+        grid.innerHTML = '<div class="empty">No items. Add from Menu button.</div>';
+        return;
+      }
+      grid.innerHTML = list.map(m => `
+        <button class="menu-card" onclick='addToCart(${JSON.stringify(m).replace(/'/g, "&#39;")})'>
+          <div class="n">${esc(m.name)}</div>
+          <div class="u">${esc(pkgLabel(m))}</div>
+          <div class="p">${money(m.price)}</div>
+        </button>
+      `).join('');
+    }
+
+    function setOrderType(t) {
+      orderType = t;
+      document.getElementById('t-dine').classList.toggle('active', t === 'dine_in');
+      document.getElementById('t-take').classList.toggle('active', t === 'walk_in');
+      document.getElementById('t-del').classList.toggle('active', t === 'delivery');
+      document.getElementById('dineFields').classList.toggle('hidden', t !== 'dine_in');
+      document.getElementById('deliveryFields').classList.toggle('hidden', t !== 'delivery');
+    }
+
+    function addToCart(item) {
+      const existing = cart.find(c => c.id === item.id);
+      if (existing) existing.qty += 1;
+      else {
+        cart.push({
+          id: item.id,
+          name: item.name,
+          price: Number(item.price),
+          qty: 1,
+          package_size: item.package_size,
+          package_unit: item.package_unit
+        });
+      }
+      renderCart();
+    }
+
+    function changeQty(id, d) {
+      const row = cart.find(c => c.id === id);
+      if (!row) return;
+      row.qty += d;
+      if (row.qty <= 0) cart = cart.filter(c => c.id !== id);
+      renderCart();
+    }
+
+    function cartTotal() {
+      return cart.reduce((s, c) => s + c.price * c.qty, 0);
+    }
+
+    function renderCart() {
+      const el = document.getElementById('cartList');
+      if (!cart.length) {
+        el.innerHTML = '<div class="empty">Tap menu items to add</div>';
+      } else {
+        el.innerHTML = cart.map(c => `
+          <div class="cart-row">
+            <div class="nm">${esc(c.name)}${pkgLabel(c) ? ` <span style="color:var(--muted)">(${esc(pkgLabel(c))})</span>` : ''}</div>
+            <button class="qty-btn" onclick="changeQty(${c.id},-1)">−</button>
+            <span>${c.qty}</span>
+            <button class="qty-btn" onclick="changeQty(${c.id},1)">+</button>
+            <strong>${money(c.price * c.qty)}</strong>
+          </div>
+        `).join('');
+      }
+      const t = cartTotal();
+      document.getElementById('totals').innerHTML = `
+        <div class="line"><span>Subtotal</span><span>${money(t)}</span></div>
+        <div class="line grand"><span>Total</span><span>${money(t)}</span></div>
+      `;
+    }
+
+    async function placeOrder(payNow) {
+      if (!cart.length) {
+        alert('Add at least one item');
+        return;
+      }
+      if (orderType === 'delivery') {
+        const phone = document.getElementById('custPhone').value.trim();
+        const address = document.getElementById('custAddress').value.trim();
+        if (!phone || !address) {
+          alert('Delivery needs phone and address');
+          return;
+        }
+      }
+
+      const items = cart.map(c => ({
+        menu_item_id: c.id,
+        quantity: c.qty,
+        // display helpers for print (if backend stores notes/name snapshot)
+        name: c.name,
+        package_size: c.package_size,
+        package_unit: c.package_unit
+      }));
+
+      const body = {
+        items,
+        deals: [],
+        order_type: orderType,
+        table_no: orderType === 'dine_in'
+          ? (Number(document.getElementById('tableNo').value) || null)
+          : null,
+        customer_name: document.getElementById('custName').value.trim() || null,
+        delivery_phone: orderType === 'delivery'
+          ? document.getElementById('custPhone').value.trim()
+          : null,
+        delivery_address: orderType === 'delivery'
+          ? document.getElementById('custAddress').value.trim()
+          : null,
+        payment_timing: payNow
+          ? 'PAID_AT_ORDER'
+          : (orderType === 'delivery' ? 'COD' : 'PAY_LATER'),
+        payment_method: payNow ? document.getElementById('payMethod').value : null,
+        discount_type: 'none',
+        discount_value: 0,
+        gst_percent: 0,
+        tax_percent: 0
+      };
+
+      try {
+        const data = await api('/orders', {
+          method: 'POST',
+          body: JSON.stringify(body)
+        });
+        cart = [];
+        renderCart();
+        await loadOrders();
+        await loadTodaySales();
+        const id = data.order?.id || data.data?.id || '';
+        alert(payNow ? `Order #${id} placed & paid` : `Order #${id} placed`);
+      } catch (e) {
+        alert(e.message || 'Place order failed');
+      }
+    }
+
+    async function loadOrders() {
+      try {
+        const data = await api('/orders');
+        const orders = data.orders || data.data || [];
+        const el = document.getElementById('ordersList');
+        if (!orders.length) {
+          el.innerHTML = '<div class="empty">No orders yet</div>';
+          return;
+        }
+        el.innerHTML = orders.slice(0, 40).map(o => {
+          const paid = String(o.payment_status).toLowerCase() === 'paid';
+          const type = o.order_type === 'walk_in' ? 'Takeaway'
+            : o.order_type === 'delivery' ? 'Delivery' : 'Dine-in';
+          return `
+            <div class="order-card">
+              <div class="hd">
+                <span>#${esc(o.id)} · ${esc(type)}</span>
+                <span class="${paid ? 'paid' : 'st'}">${paid ? 'PAID' : esc(o.status)}</span>
+              </div>
+              <div>${money(o.total_amount)} · ${esc(o.customer_name || '—')}</div>
+              ${!paid ? `<div class="actions">
+                <button class="btn btn-ok" onclick="payOrder(${o.id},${Number(o.total_amount)})">Take payment</button>
+              </div>` : ''}
+            </div>
+          `;
+        }).join('');
+      } catch (e) {
+        document.getElementById('ordersList').innerHTML =
+          `<div class="empty">${esc(e.message)}</div>`;
+      }
+    }
+
+    async function payOrder(id, amount) {
+      try {
+        await api(`/orders/${id}/pay`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            payment_method: document.getElementById('payMethod').value || 'Cash',
+            paid_amount: amount
+          })
+        });
+        await loadOrders();
+        await loadTodaySales();
+      } catch (e) {
+        // Lite: pay may require served — show server message
+        alert(e.message || 'Payment failed');
+      }
+    }
+
+    async function loadTodaySales() {
+      try {
+        const data = await api('/reports/summary');
+        const today = data.data?.today || {};
+        document.getElementById('todaySales').textContent =
+          `Today: ${money(today.total_sales)} (${today.orders_count || 0} orders)`;
+      } catch {
+        document.getElementById('todaySales').textContent = 'Today: —';
+      }
+    }
+
+    /* Menu admin */
+    function openMenuAdmin() {
+      document.getElementById('menuModal').classList.remove('hidden');
+      resetMenuForm();
+      renderMenuAdmin();
+    }
+    function closeMenuAdmin() {
+      document.getElementById('menuModal').classList.add('hidden');
+    }
+    function resetMenuForm() {
+      document.getElementById('editMenuId').value = '';
+      document.getElementById('menuFormTitle').textContent = 'Add item';
+      document.getElementById('mName').value = '';
+      document.getElementById('mPrice').value = '';
+      document.getElementById('mCategory').value = '';
+      document.getElementById('mPkgSize').value = '';
+      document.getElementById('mPkgUnit').value = '';
+    }
+    function renderMenuAdmin() {
+      const el = document.getElementById('menuAdminList');
+      if (!menu.length) {
+        el.innerHTML = '<div class="empty">No items yet</div>';
+        return;
+      }
+      el.innerHTML = menu.map(m => `
+        <div class="menu-admin-row">
+          <div>
+            <strong>${esc(m.name)}</strong>
+            ${pkgLabel(m) ? `<span style="color:var(--muted)"> · ${esc(pkgLabel(m))}</span>` : ''}
+            <div style="color:var(--muted)">${money(m.price)} · ${esc(m.category || '')}</div>
+          </div>
+          <button class="btn btn-ghost" onclick='editMenuItem(${JSON.stringify(m)})'>Edit</button>
+        </div>
+      `).join('');
+    }
+    function editMenuItem(m) {
+      document.getElementById('editMenuId').value = m.id;
+      document.getElementById('menuFormTitle').textContent = 'Edit item';
+      document.getElementById('mName').value = m.name || '';
+      document.getElementById('mPrice').value = m.price || '';
+      document.getElementById('mCategory').value = m.category || '';
+      document.getElementById('mPkgSize').value = m.package_size || '';
+      document.getElementById('mPkgUnit').value = m.package_unit || '';
+    }
+    async function saveMenuItem() {
+      const id = document.getElementById('editMenuId').value;
+      const body = {
+        name: document.getElementById('mName').value.trim(),
+        price: Number(document.getElementById('mPrice').value),
+        category: document.getElementById('mCategory').value.trim() || 'Other',
+        package_size: document.getElementById('mPkgSize').value || null,
+        package_unit: document.getElementById('mPkgUnit').value || null
+      };
+      if (!body.name || !body.price) {
+        alert('Name and price required');
+        return;
+      }
+      try {
+        if (id) {
+          await api('/menu/' + id, { method: 'PUT', body: JSON.stringify(body) });
+        } else {
+          await api('/menu', { method: 'POST', body: JSON.stringify(body) });
+        }
+        await loadMenu();
+        renderMenuAdmin();
+        resetMenuForm();
+      } catch (e) {
+        alert(e.message || 'Save failed — ensure counter can manage menu (backend patch)');
+      }
+    }
+
+    function openSettings() {
+      const mode = localStorage.getItem('cafe_assign_mode') || 'manual';
+      document.getElementById('assignMode').value = mode;
+      document.getElementById('settingsModal').classList.remove('hidden');
+    }
+    function closeSettings() {
+      document.getElementById('settingsModal').classList.add('hidden');
+    }
+    function saveSettings() {
+      localStorage.setItem('cafe_assign_mode', document.getElementById('assignMode').value);
+      closeSettings();
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+      localStorage.setItem('cafe_theme', document.body.classList.contains('light') ? 'light' : 'dark');
+    }
+
+    window.addEventListener('load', async () => {
+      if (localStorage.getItem('cafe_theme') === 'light') document.body.classList.add('light');
+      if (!restaurantId) {
+        const saved = localStorage.getItem('cafe_restaurant_id');
+        if (saved) restaurantId = Number(saved);
+      }
+      if (token) {
+        try {
+          // soft restore
+          user = { restaurant_name: 'Cafe', plan: 'Cafe Lite', restaurant_id: restaurantId };
+          await bootApp();
+        } catch {
+          logout();
+        }
+      }
+    });
+  </script>
+</body>
+</html>
