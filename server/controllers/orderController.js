@@ -291,6 +291,7 @@ exports.placeOrder = async (
   // ----------------------------------------------------
 
   if (order_type === 'delivery' || order_type === 'walk_in') {
+    let tableNo = Number(table_no);
   tableNo = 0;
 } else {
   // dine_in
@@ -702,8 +703,8 @@ if ((order_type === 'dine_in' || order_type === 'walk_in') && tableNo > 0) {
         req.user?.id || null,             
         Number(delivery_charge || 0),    
         Number(dine_charge || 0),
-        Number(card_charge || 0),        // ✅ NEW
-        Number(bank_charge || 0)         // ✅ NEW
+        Number(card_charge || 0),       
+        Number(bank_charge || 0)         
       );
 
 

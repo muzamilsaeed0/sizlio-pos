@@ -753,8 +753,8 @@ const localNumber = lnRes.rows[0].n;
             : null,
           Number(deliveryCharge || 0),
           Number(dineCharge || 0),
-          Number(cardCharge || 0),     // ✅ NEW
-          Number(bankCharge || 0)      // ✅ NEW
+          Number(cardCharge || 0),    
+          Number(bankCharge || 0)      
         ]
       );
 
