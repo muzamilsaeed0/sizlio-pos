@@ -721,6 +721,7 @@ const localNumber = lnRes.rows[0].n;
         `,
         [
           tableNo,
+          localNumber,
           restaurantId,
           customerName,
           status,

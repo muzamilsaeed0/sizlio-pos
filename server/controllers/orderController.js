@@ -289,9 +289,9 @@ exports.placeOrder = async (
   // ----------------------------------------------------
   // TABLE NUMBER
   // ----------------------------------------------------
-
+ let tableNo = Number(table_no);
   if (order_type === 'delivery' || order_type === 'walk_in') {
-    let tableNo = Number(table_no);
+   
   tableNo = 0;
 } else {
   // dine_in
