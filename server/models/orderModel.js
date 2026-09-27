@@ -692,29 +692,30 @@ const localNumber = lnRes.rows[0].n;
           $2,
           $3,
           $4,
-
           $5,
-          $6::varchar,
-          $7::text,
 
-          $8,
+          $6::varchar,
+          $7::varchar,
+          $8::text,
+
           $9,
 
           $10,
-          NULL,
-          $11,
 
+          $11,
+          NULL,
           $12,
           $13,
           $14,
           $15,
-
           $16,
+
           $17,
           $18,
           $19,
           $20,
-          $21
+          $21,
+          $22
         )
 
         RETURNING *
