@@ -2286,22 +2286,17 @@ function renderOrderCard(order){
   const status = order.status;
 
   let badgeClass = 'ready';
-let badgeText = 'READY';
+  let badgeText = 'READY';
 
-if(status === 'out_for_delivery'){
-  badgeClass = 'out';
-  badgeText = 'OUT FOR DELIVERY';
-}
+  if(status === 'out_for_delivery'){
+    badgeClass = 'out';
+    badgeText = 'OUT FOR DELIVERY';
+  }
 
-if(status === 'delivered'){
-  badgeClass = 'delivered';
-  badgeText = 'DELIVERED';
-}
-
-if(status === 'completed'){
-  badgeClass = 'delivered';
-  badgeText = 'COMPLETED';
-}
+  if(status === 'delivered'){
+    badgeClass = 'delivered';
+    badgeText = 'DELIVERED';
+  }
 
   const customer = esc(order.customer_name || 'Delivery Customer');
   const phone = String(order.delivery_phone || '').trim();
