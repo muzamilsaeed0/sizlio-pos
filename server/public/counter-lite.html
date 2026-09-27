@@ -1223,54 +1223,75 @@
 
           /* Delivery */
           if (isDelivery) {
-            actions += `<div style="font-size:11px;color:var(--muted);margin:4px 0;">
-              ${esc(o.delivery_phone || '')} · ${esc(o.delivery_address || '')}
-              ${hasRider ? '<br>Rider assigned' : ''}
-            </div>`;
+            /* ✅ Rider info display */
+            const riderName = o.delivery_rider_name || o.delivery_rider_username || '';
+            const riderInfo = hasRider
+              ? `<div style="margin:6px 0;padding:6px 10px;border-radius:8px;background:rgba(47,163,125,.1);font-size:11px;color:var(--ok);">
+                   🚴 <strong>Rider: ${esc(riderName || 'Assigned')}</strong>
+                 </div>`
+              : `<div style="margin:6px 0;font-size:11px;color:var(--muted);">
+                   ⚠️ No rider assigned
+                 </div>`;
 
-            /* Assign rider */
+            actions += `
+              <div style="font-size:11px;color:var(--muted);margin:4px 0;">
+                ${esc(o.delivery_phone || '')} · ${esc(o.delivery_address || '')}
+              </div>
+              ${riderInfo}
+            `;
+
+            /* ============ UNASSIGNED — Manual + Auto ============ */
             if (!hasRider && ['placed', 'preparing', 'ready', 'ready_to_deliver'].includes(st)) {
-              /* ✅ ONLY show riders who are BOTH active AND on active shift */
+
               const availableRiders = deliveryRiders.filter(r =>
                 r.is_active !== false && r.shift_active === true
               );
 
-              const opts = availableRiders
-                .map(r => `<option value="${r.id}">${esc(r.full_name || r.username || ('Rider ' + r.id))}</option>`)
-                .join('');
-
               if (!availableRiders.length) {
                 actions += `
-                  <div style="font-size:11px;color:var(--danger);margin:6px 0;">
+                  <div style="font-size:11px;color:var(--danger);margin:6px 0;padding:6px 10px;background:rgba(225,90,76,.1);border-radius:8px;">
                     ⚠️ Koi rider shift pe nahi hai. Rider se shift start karwao.
                   </div>
                 `;
               } else {
+                const opts = availableRiders
+                  .map(r => `<option value="${r.id}">${esc(r.full_name || r.username || ('Rider ' + r.id))}</option>`)
+                  .join('');
+
                 actions += `
                   <select id="rider-sel-${o.id}" style="width:100%;margin:4px 0;padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);">
                     <option value="">Select rider…</option>
                     ${opts}
                   </select>
-                  <button class="btn btn-ok" onclick="assignRider(${o.id})">Send to rider</button>
-                  <button class="btn btn-ghost" onclick="autoAssignRider(${o.id})">Auto assign</button>
+                  <button class="btn btn-ok" onclick="assignRider(${o.id})">📤 Send to rider</button>
+                  <button class="btn btn-ghost" onclick="autoAssignRider(${o.id})">🤖 Auto assign</button>
                 `;
               }
             }
 
-            if (hasRider && st === 'ready_to_deliver') {
-              actions += `<button class="btn btn-ok" onclick="outForDelivery(${o.id})">Out for delivery</button>`;
-            }
+            /* ============ ASSIGNED — Unassign + Workflow ============ */
+            if (hasRider) {
 
-            if (hasRider && st === 'out_for_delivery') {
-              actions += `<button class="btn btn-ok" onclick="markDelivered(${o.id})">Mark delivered</button>`;
-            }
+              /* ✅ Unassign button — before pickup */
+              if (['placed', 'preparing', 'ready', 'ready_to_deliver'].includes(st)) {
+                actions += `<button class="btn btn-ghost" style="color:var(--danger);border-color:var(--danger);" onclick="unassignRider(${o.id})">❌ Unassign rider</button>`;
+              }
 
-            if (!paid && st === 'delivered') {
-              actions += `<button class="btn btn-ok" onclick="payOrder(${o.id},${Number(o.total_amount) || 0})">Mark paid (COD)</button>`;
-            }
+              if (st === 'ready_to_deliver') {
+                actions += `<button class="btn btn-ok" onclick="outForDelivery(${o.id})">🚴 Out for delivery</button>`;
+              }
 
-            if (paid && st === 'delivered') {
-              actions += `<button class="btn btn-accent" onclick="completeOrder(${o.id})">Mark complete</button>`;
+              if (st === 'out_for_delivery') {
+                actions += `<button class="btn btn-ok" onclick="markDelivered(${o.id})">✓ Mark delivered</button>`;
+              }
+
+              if (!paid && st === 'delivered') {
+                actions += `<button class="btn btn-ok" onclick="payOrder(${o.id},${Number(o.total_amount) || 0})">💰 Mark paid (COD)</button>`;
+              }
+
+              if (paid && st === 'delivered') {
+                actions += `<button class="btn btn-accent" onclick="completeOrder(${o.id})">✓ Mark complete</button>`;
+              }
             }
           }
 
@@ -1356,6 +1377,24 @@
         await Promise.all([loadOrders(), loadDeliveryRiders()]);
       } catch (e) {
         alert(e.message || 'Auto assign failed — try manual');
+      }
+    }
+
+        /* =========================================================
+       UNASSIGN RIDER
+    ========================================================= */
+    async function unassignRider(orderId) {
+      if (!confirm('Remove rider from this order?\n\nOrder will go back to unassigned state.')) {
+        return;
+      }
+
+      try {
+        await api('/orders/' + orderId + '/unassign-rider', {
+          method: 'PUT'
+        });
+        await Promise.all([loadOrders(), loadDeliveryRiders()]);
+      } catch (e) {
+        alert(e.message || 'Unassign failed');
       }
     }
 

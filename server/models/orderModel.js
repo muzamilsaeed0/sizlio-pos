@@ -5211,7 +5211,12 @@ const unassignDeliveryRider = async (
     WHERE id = $1
       AND restaurant_id = $2
       AND order_type = 'delivery'
-      AND status = 'ready_to_deliver'
+      AND status IN (
+        'placed',
+        'preparing',
+        'ready',
+        'ready_to_deliver'
+      )
     RETURNING *
     `,
     [
