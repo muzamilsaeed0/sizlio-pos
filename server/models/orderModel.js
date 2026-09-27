@@ -755,8 +755,8 @@ const localNumber = lnRes.rows[0].n;
             : null,
           Number(deliveryCharge || 0),
           Number(dineCharge || 0),
-          Number(cardCharge || 0),    
-          Number(bankCharge || 0)      
+          0,    
+          0    
         ]
       );
 
@@ -1166,12 +1166,12 @@ const localNumber = lnRes.rows[0].n;
         taxPercent
       );
 
-       // ✅ Final total with delivery/dine charges
-    const finalDeliveryCharge = Number(deliveryCharge || 0);
+         const finalDeliveryCharge = Number(deliveryCharge || 0);
     const finalDineCharge = Number(dineCharge || 0);
-    const finalCardCharge = Number(cardCharge || 0);     // ✅ NEW
-    const finalBankCharge = Number(bankCharge || 0);     // ✅ NEW
-    const finalTotalAmount = calculated.totalAmount + finalDeliveryCharge + finalDineCharge + finalCardCharge + finalBankCharge;
+    
+    const finalCardCharge = 0;
+    const finalBankCharge = 0;
+    const finalTotalAmount = calculated.totalAmount + finalDeliveryCharge + finalDineCharge;
 
 
     // --------------------------------------------------
@@ -3997,7 +3997,7 @@ const recalculateOrderPricing = async (client, orderId, restaurantId) => {
   // ✅ Charges bhi fetch karo
   const orderResult = await client.query(
     `SELECT discount_type, discount_value, gst_percent, tax_percent,
-            delivery_charge, dine_charge
+            delivery_charge, dine_charge, card_charge, bank_charge
      FROM orders WHERE id = $1 AND restaurant_id = $2`,
     [orderId, restaurantId]
   );
