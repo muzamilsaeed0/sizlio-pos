@@ -1230,19 +1230,31 @@
 
             /* Assign rider */
             if (!hasRider && ['placed', 'preparing', 'ready', 'ready_to_deliver'].includes(st)) {
-              const opts = deliveryRiders
-                .filter(r => r.is_active !== false)
+              /* ✅ ONLY show riders who are BOTH active AND on active shift */
+              const availableRiders = deliveryRiders.filter(r =>
+                r.is_active !== false && r.shift_active === true
+              );
+
+              const opts = availableRiders
                 .map(r => `<option value="${r.id}">${esc(r.full_name || r.username || ('Rider ' + r.id))}</option>`)
                 .join('');
 
-              actions += `
-                <select id="rider-sel-${o.id}" style="width:100%;margin:4px 0;padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);">
-                  <option value="">Select rider…</option>
-                  ${opts}
-                </select>
-                <button class="btn btn-ok" onclick="assignRider(${o.id})">Send to rider</button>
-                <button class="btn btn-ghost" onclick="autoAssignRider(${o.id})">Auto assign</button>
-              `;
+              if (!availableRiders.length) {
+                actions += `
+                  <div style="font-size:11px;color:var(--danger);margin:6px 0;">
+                    ⚠️ Koi rider shift pe nahi hai. Rider se shift start karwao.
+                  </div>
+                `;
+              } else {
+                actions += `
+                  <select id="rider-sel-${o.id}" style="width:100%;margin:4px 0;padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);">
+                    <option value="">Select rider…</option>
+                    ${opts}
+                  </select>
+                  <button class="btn btn-ok" onclick="assignRider(${o.id})">Send to rider</button>
+                  <button class="btn btn-ghost" onclick="autoAssignRider(${o.id})">Auto assign</button>
+                `;
+              }
             }
 
             if (hasRider && st === 'ready_to_deliver') {

@@ -5286,7 +5286,20 @@ const autoAssignDeliveryRider = async (
 
     // --------------------------------------------------
     // Verify target order
+    // ✅ Cafe Lite: allow placed/preparing/ready/ready_to_deliver
     // --------------------------------------------------
+
+    // Restaurant plan check
+    const planRes = await client.query(
+      `SELECT plan FROM restaurants WHERE id = $1`,
+      [restaurantId]
+    );
+    const plan = planRes.rows[0]?.plan || 'Basic';
+    const isCafeLite = plan === 'Cafe Lite';
+
+    const allowedStatuses = isCafeLite
+      ? ['placed', 'preparing', 'ready', 'ready_to_deliver']
+      : ['ready_to_deliver'];
 
     const orderResult = await client.query(
       `
@@ -5295,12 +5308,13 @@ const autoAssignDeliveryRider = async (
       WHERE id = $1
         AND restaurant_id = $2
         AND order_type = 'delivery'
-        AND status = 'ready_to_deliver'
+        AND status = ANY($3::text[])
       FOR UPDATE
       `,
       [
         orderId,
-        restaurantId
+        restaurantId,
+        allowedStatuses
       ]
     );
 
@@ -5371,21 +5385,24 @@ const autoAssignDeliveryRider = async (
     const updateResult = await client.query(
       `
       UPDATE orders
-
       SET
-        delivery_rider_id = $3
-
+        delivery_rider_id = $3,
+        status = CASE
+          WHEN status = 'ready_to_deliver' THEN status
+          ELSE 'ready_to_deliver'
+        END,
+        ready_at = COALESCE(ready_at, NOW())
       WHERE id = $1
         AND restaurant_id = $2
         AND order_type = 'delivery'
-        AND status = 'ready_to_deliver'
-
+        AND status = ANY($4::text[])
       RETURNING *
       `,
       [
         orderId,
         restaurantId,
-        selectedRider.rider_id
+        selectedRider.rider_id,
+        allowedStatuses
       ]
     );
 
