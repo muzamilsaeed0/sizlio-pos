@@ -292,8 +292,10 @@ body{
 }
 
 .shift-status.active{
-  color:#86efac;
-  border-color:rgba(34,197,94,.35);
+  background:rgba(34,197,94,.18);
+  color:#4ade80;
+  border-color:#22c55e;
+  font-weight:800;
 }
 
 .shift-status.active .shift-dot{
@@ -1261,7 +1263,7 @@ body{
 
       <div class="stat done">
         <div class="stat-label">
-          DELIVERED
+          DELIVERED TODAY
         </div>
 
         <div
@@ -2170,30 +2172,60 @@ async function loadOrders(){
     const previousOrders = orders;
     const previousIds = new Set(previousOrders.map(o => Number(o.id)));
 
+    /* =====================================================
+       ✅ TODAY'S DELIVERED COUNT (includes completed)
+       Runs before filtering — so we see hidden completed ones
+    ===================================================== */
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const todayDeliveredCount = allOrders.filter(o => {
+      if (o.order_type !== 'delivery') return false;
+      if (Number(o.delivery_rider_id) !== Number(currentUser.id)) return false;
+
+      const st = String(o.status || '').toLowerCase();
+      if (!['delivered', 'completed'].includes(st)) return false;
+
+      const t = new Date(
+        o.delivered_at || o.completed_at || o.created_at || 0
+      ).getTime();
+
+      return t >= todayStart.getTime();
+    }).length;
+
+    document.getElementById('deliveredCount').textContent = todayDeliveredCount;
+
+    /* =====================================================
+       ✅ ACTIVE ORDERS LIST
+       - Active orders: always
+       - Delivered (not yet completed): show
+       - Completed: hidden (already counted above)
+    ===================================================== */
     const now = Date.now();
-const RECENT_WINDOW_MS = 4 * 60 * 60 * 1000; /* 4 hours */
+    const RECENT_WINDOW_MS = 4 * 60 * 60 * 1000; /* 4 hours */
 
-orders = allOrders.filter(order => {
-  if (order.order_type !== 'delivery') return false;
-  if (Number(order.delivery_rider_id) !== Number(currentUser.id)) return false;
+    orders = allOrders.filter(order => {
+      if (order.order_type !== 'delivery') return false;
+      if (Number(order.delivery_rider_id) !== Number(currentUser.id)) return false;
 
-  const st = String(order.status || '').toLowerCase();
+      const st = String(order.status || '').toLowerCase();
 
-  /* Active orders: always show */
-  if (['ready_to_deliver', 'out_for_delivery'].includes(st)) return true;
+      /* Active — always show */
+      if (['ready_to_deliver', 'out_for_delivery'].includes(st)) return true;
 
-  /* ✅ Delivered only (not completed): show if within last 4 hours */
-  if (st === 'delivered') {
-    const t = new Date(order.delivered_at || order.created_at || 0).getTime();
-    return (now - t) < RECENT_WINDOW_MS;
-  }
+      /* Delivered (waiting for counter) — show if recent */
+      if (st === 'delivered') {
+        const t = new Date(order.delivered_at || order.created_at || 0).getTime();
+        return (now - t) < RECENT_WINDOW_MS;
+      }
 
-  /* ✅ Completed orders: HIDE from rider screen */
-  if (st === 'completed') return false;
+      /* Completed — hidden */
+      if (st === 'completed') return false;
 
-  return false;
-});
+      return false;
+    });
 
+    /* ✅ Trigger new-order alert for newly appeared orders */
     if(previousOrders.length > 0 || previousIds.size > 0){
       orders.forEach(order => {
         const orderId = Number(order.id);
@@ -2231,12 +2263,11 @@ function renderOrders(){
 
   const ready = orders.filter(o => o.status === 'ready_to_deliver').length;
   const out = orders.filter(o => o.status === 'out_for_delivery').length;
-  
-const delivered = orders.filter(o => o.status === 'delivered').length;
 
   document.getElementById('readyCount').textContent = ready;
   document.getElementById('outCount').textContent = out;
-  document.getElementById('deliveredCount').textContent = delivered;
+
+  /* ✅ Delivered count is set in loadOrders() — do NOT overwrite here */
 
   if(!orders.length){
     container.innerHTML = `
@@ -2253,10 +2284,9 @@ const delivered = orders.filter(o => o.status === 'delivered').length;
 
   const sorted = [...orders].sort((a,b) => {
     const priority = {
-      ready_to_deliver:1,
-      out_for_delivery:2,
-      delivered:3,
-    
+      ready_to_deliver: 1,
+      out_for_delivery: 2,
+      delivered: 3
     };
 
     const pa = priority[a.status] || 99;
