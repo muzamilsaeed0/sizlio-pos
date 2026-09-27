@@ -630,6 +630,7 @@
       </div>
     </div>
   </div>
+  <script src="/socket.io/socket.io.js"></script>
 
   <script>
     /* =========================================================
@@ -773,10 +774,65 @@
       }
     }
 
+        /* =========================================================
+       SOCKET.IO — Realtime updates
+    ========================================================= */
+    let socket = null;
+
+    function connectSocket() {
+      if (typeof io === 'undefined') {
+        console.warn('Socket.io not available');
+        return;
+      }
+
+      if (socket) {
+        try { socket.disconnect(); } catch (_) {}
+        socket = null;
+      }
+
+      try {
+        socket = io({ auth: { token } });
+
+        socket.on('connect', () => {
+          console.log('✅ Counter Lite socket connected');
+        });
+
+        socket.on('connect_error', (err) => {
+          console.warn('Counter Lite socket:', err.message);
+        });
+
+        /* ✅ Refresh orders list on any order event */
+        [
+          'order_created',
+          'order_updated',
+          'order_ready',
+          'order_out_for_delivery',
+          'order_delivered',
+          'order_completed',
+          'order_paid',
+          'delivery_rider_assigned',
+          'orders_refresh'
+        ].forEach(evt => {
+          socket.on(evt, (payload) => {
+            console.log('Socket event:', evt, payload);
+            loadOrders();
+            loadTodaySales();
+          });
+        });
+
+      } catch (err) {
+        console.error('Socket connect failed:', err);
+      }
+    }
+
     /* =========================================================
        LOGOUT
     ========================================================= */
-    function logout() {
+       function logout() {
+      if (socket) {
+        try { socket.disconnect(); } catch (_) {}
+        socket = null;
+      }
       token = '';
       user = null;
       localStorage.removeItem('cafe_token');
@@ -833,10 +889,13 @@
         loadShift(),
         loadMenu(),
         loadOrders(),
+         
         loadTodaySales(),
         loadDeliveryRiders()
       ]);
 
+
+      connectSocket();
       renderCart();
     }
 
@@ -1032,6 +1091,7 @@
           return;
         }
       }
+      
 
       let tableNo = 0;
       if (orderType === 'dine_in') {
@@ -1099,6 +1159,15 @@
         document.getElementById('custName').value = '';
         document.getElementById('custPhone').value = '';
         document.getElementById('custAddress').value = '';
+
+        /* ✅ Auto-assign rider for delivery orders */
+        if (orderType === 'delivery' && data.order?.id) {
+          try {
+            await api('/orders/' + data.order.id + '/auto-assign-rider', { method: 'PUT' });
+          } catch (err) {
+            console.warn('Auto-assign failed:', err.message);
+          }
+        }
 
         await loadOrders();
         await loadTodaySales();
