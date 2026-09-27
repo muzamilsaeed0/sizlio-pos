@@ -2182,11 +2182,14 @@ orders = allOrders.filter(order => {
   /* Active orders: always show */
   if (['ready_to_deliver', 'out_for_delivery'].includes(st)) return true;
 
-  /* Delivered / completed: only show if recent */
-  if (['delivered', 'completed'].includes(st)) {
-    const t = new Date(order.delivered_at || order.completed_at || order.created_at || 0).getTime();
+  /* ✅ Delivered only (not completed): show if within last 4 hours */
+  if (st === 'delivered') {
+    const t = new Date(order.delivered_at || order.created_at || 0).getTime();
     return (now - t) < RECENT_WINDOW_MS;
   }
+
+  /* ✅ Completed orders: HIDE from rider screen */
+  if (st === 'completed') return false;
 
   return false;
 });
@@ -2228,9 +2231,8 @@ function renderOrders(){
 
   const ready = orders.filter(o => o.status === 'ready_to_deliver').length;
   const out = orders.filter(o => o.status === 'out_for_delivery').length;
-  const delivered = orders.filter(o =>
-  o.status === 'delivered' || o.status === 'completed'
-).length;
+  
+const delivered = orders.filter(o => o.status === 'delivered').length;
 
   document.getElementById('readyCount').textContent = ready;
   document.getElementById('outCount').textContent = out;
@@ -2254,7 +2256,7 @@ function renderOrders(){
       ready_to_deliver:1,
       out_for_delivery:2,
       delivered:3,
-      completed: 4
+    
     };
 
     const pa = priority[a.status] || 99;
