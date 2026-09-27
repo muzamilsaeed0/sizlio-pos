@@ -2840,11 +2840,24 @@ if (!isCafeLite) {
     const addBank = Number(bankCharge) || 0;
     const newTotalAmount = totalAmount + addCard + addBank;
 
+    const statusList = isCafeLite
+      ? [
+          'placed',
+          'pending',
+          'accepted',
+          'confirmed',
+          'preparing',
+          'ready',
+          'served',
+          'payment_pending',
+          'delivered'
+        ]
+      : ['served', 'payment_pending', 'delivered'];
+
     const result =
       await client.query(
         `
         UPDATE orders
-
         SET
           payment_status = 'paid',
           payment_method = $3,
@@ -2856,13 +2869,8 @@ if (!isCafeLite) {
           total_amount = $8
         WHERE id = $1
           AND restaurant_id = $2
-          AND status IN (
-            'served',
-            'payment_pending',
-            'delivered'
-          )
+          AND status = ANY($9::text[])
           AND payment_status = 'unpaid'
-
         RETURNING *
         `,
         [
@@ -2871,9 +2879,10 @@ if (!isCafeLite) {
           paymentMethod,
           finalPaidAmount.toFixed(2),
           paidByUserId,
-          addCard.toFixed(2),        // ✅ NEW
-          addBank.toFixed(2),        // ✅ NEW
-          newTotalAmount.toFixed(2)  // ✅ NAYA total
+          addCard.toFixed(2),
+          addBank.toFixed(2),
+          newTotalAmount.toFixed(2),
+          statusList
         ]
       );
 
