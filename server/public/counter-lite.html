@@ -645,6 +645,7 @@
     let menu = [];
     let activeCat = 'All';
     let cart = [];
+    let deliveryRiders = [];
     let currentShift = null;
     let posSettings = {
       gst_percent: 0,
@@ -832,11 +833,22 @@
         loadShift(),
         loadMenu(),
         loadOrders(),
-        loadTodaySales()
+        loadTodaySales(),
+        loadDeliveryRiders()
       ]);
 
       renderCart();
     }
+
+    async function loadDeliveryRiders() {
+  try {
+    const data = await api('/orders/delivery-riders');
+    deliveryRiders = Array.isArray(data.riders) ? data.riders : [];
+  } catch (e) {
+    console.warn('riders:', e.message);
+    deliveryRiders = [];
+  }
+}
 
     /* =========================================================
        SHIFT
@@ -1102,7 +1114,7 @@
     /* =========================================================
        ORDERS
     ========================================================= */
-    async function loadOrders() {
+        async function loadOrders() {
       try {
         const data = await api('/orders');
         const allOrders = data.orders || data.data || [];
@@ -1126,20 +1138,59 @@
             : o.order_type === 'delivery' ? 'Delivery'
             : 'Dine-in';
           const isDelivery = o.order_type === 'delivery';
-
-          /* Cafe Lite: pay from placed onward, except delivery COD */
-          const canPay = !paid && !isDelivery;
-          const canComplete = paid && st !== 'completed';
+          const hasRider = !!o.delivery_rider_id;
 
           let actions = '';
-          if (canPay) {
-            actions += `<button class="btn btn-ok" onclick="payOrder(${o.id},${Number(o.total_amount) || 0})">Mark paid</button>`;
+
+          /* Dine-in / Takeaway */
+          if (!isDelivery) {
+            if (!paid) {
+              actions += `<button class="btn btn-ok" onclick="payOrder(${o.id},${Number(o.total_amount) || 0})">Mark paid</button>`;
+            }
+            if (paid && st !== 'completed') {
+              actions += `<button class="btn btn-accent" onclick="completeOrder(${o.id})">Mark complete</button>`;
+            }
           }
-          if (canComplete) {
-            actions += `<button class="btn btn-accent" onclick="completeOrder(${o.id})">Mark complete</button>`;
-          }
-          if (isDelivery && !paid) {
-            actions += `<span style="font-size:11px;color:var(--muted);">COD — pay after delivery</span>`;
+
+          /* Delivery */
+          if (isDelivery) {
+            actions += `<div style="font-size:11px;color:var(--muted);margin:4px 0;">
+              ${esc(o.delivery_phone || '')} · ${esc(o.delivery_address || '')}
+              ${hasRider ? '<br>Rider assigned' : ''}
+            </div>`;
+
+            /* Assign rider */
+            if (!hasRider && ['placed', 'preparing', 'ready', 'ready_to_deliver'].includes(st)) {
+              const opts = deliveryRiders
+                .filter(r => r.is_active !== false)
+                .map(r => `<option value="${r.id}">${esc(r.full_name || r.username || ('Rider ' + r.id))}</option>`)
+                .join('');
+
+              actions += `
+                <select id="rider-sel-${o.id}" style="width:100%;margin:4px 0;padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);">
+                  <option value="">Select rider…</option>
+                  ${opts}
+                </select>
+                <button class="btn btn-ok" onclick="assignRider(${o.id})">Send to rider</button>
+                <button class="btn btn-ghost" onclick="autoAssignRider(${o.id})">Auto assign</button>
+              `;
+            }
+
+            if (hasRider && st === 'ready_to_deliver') {
+              actions += `<button class="btn btn-ok" onclick="outForDelivery(${o.id})">Out for delivery</button>`;
+            }
+
+            if (hasRider && st === 'out_for_delivery') {
+              actions += `<button class="btn btn-ok" onclick="markDelivered(${o.id})">Mark delivered</button>`;
+            }
+
+            if (!paid && st === 'delivered') {
+              actions += `<button class="btn btn-ok" onclick="payOrder(${o.id},${Number(o.total_amount) || 0})">Mark paid (COD)</button>`;
+            }
+
+            if (paid && st === 'delivered') {
+              actions += `<button class="btn btn-accent" onclick="completeOrder(${o.id})">Mark complete</button>`;
+            }
           }
 
           return `
@@ -1197,6 +1248,51 @@
         await loadTodaySales();
       } catch (e) {
         alert(e.message || 'Complete failed');
+      }
+    }
+
+        async function assignRider(orderId) {
+      const sel = document.getElementById('rider-sel-' + orderId);
+      const riderId = Number(sel && sel.value);
+      if (!riderId) {
+        alert('Select a rider');
+        return;
+      }
+      try {
+        await api('/orders/' + orderId + '/assign-rider', {
+          method: 'PUT',
+          body: JSON.stringify({ rider_id: riderId })
+        });
+        await Promise.all([loadOrders(), loadDeliveryRiders()]);
+      } catch (e) {
+        alert(e.message || 'Assign failed');
+      }
+    }
+
+    async function autoAssignRider(orderId) {
+      try {
+        await api('/orders/' + orderId + '/auto-assign-rider', { method: 'PUT' });
+        await Promise.all([loadOrders(), loadDeliveryRiders()]);
+      } catch (e) {
+        alert(e.message || 'Auto assign failed — try manual');
+      }
+    }
+
+    async function outForDelivery(id) {
+      try {
+        await api('/orders/' + id + '/out-for-delivery', { method: 'PUT' });
+       await Promise.all([loadOrders(), loadDeliveryRiders()]);
+      } catch (e) {
+        alert(e.message || 'Failed');
+      }
+    }
+
+    async function markDelivered(id) {
+      try {
+        await api('/orders/' + id + '/delivered', { method: 'PUT' });
+        await Promise.all([loadOrders(), loadDeliveryRiders()]);
+      } catch (e) {
+        alert(e.message || 'Failed');
       }
     }
 

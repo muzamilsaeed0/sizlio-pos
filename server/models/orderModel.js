@@ -5135,21 +5135,34 @@ const getDeliveryRiders = async (
   return result.rows;
 };
 
-const assignDeliveryRider = async (
-  orderId,
-  restaurantId,
-  riderId
-) => {
+const assignDeliveryRider = async (orderId, restaurantId, riderId) => {
+  // Plan check
+  const planRes = await pool.query(
+    `SELECT plan FROM restaurants WHERE id = $1`,
+    [restaurantId]
+  );
+  const isCafeLite = planRes.rows[0]?.plan === 'Cafe Lite';
+
+  // Cafe Lite: placed/ready_to_deliver; Full: only ready_to_deliver
+  const allowed = isCafeLite
+    ? ['placed', 'ready_to_deliver', 'preparing', 'ready']
+    : ['ready_to_deliver'];
 
   const result = await pool.query(
     `
     UPDATE orders o
-    SET delivery_rider_id = $3
+    SET
+      delivery_rider_id = $3,
+      status = CASE
+        WHEN o.status = 'ready_to_deliver' THEN o.status
+        ELSE 'ready_to_deliver'
+      END,
+      ready_at = COALESCE(o.ready_at, NOW())
     FROM users u
     WHERE o.id = $1
       AND o.restaurant_id = $2
       AND o.order_type = 'delivery'
-      AND o.status = 'ready_to_deliver'
+      AND o.status = ANY($4::text[])
       AND u.id = $3
       AND u.restaurant_id = $2
       AND u.role = 'delivery'
@@ -5163,34 +5176,24 @@ const assignDeliveryRider = async (
       )
     RETURNING o.*
     `,
-    [
-      orderId,
-      restaurantId,
-      riderId
-    ]
+    [orderId, restaurantId, riderId, allowed]
   );
 
-  // ✅ Send push notification to rider
-if (result.rows[0]) {
+  // push notification — pehle wala try/catch same rehne do
+  if (result.rows[0]) {
     try {
-        const { sendPushToUser } = require('../routes/pushRoutes');
-        
-        const order = result.rows[0];
-        
-        await sendPushToUser(riderId, {
-            title: `🚴 Naya Order #${order.id}`,
-            body: `${order.customer_name || 'Customer'} — ${order.delivery_address || 'Address'}`,
-            tag: `order-${order.id}`,
-            data: {
-                url: `/rider?restaurant=${restaurantId}`,
-                orderId: order.id
-            }
-        });
-    } catch(err) {
-        console.error('Push send failed:', err);
-        // Don't fail assignment if push fails
+      const { sendPushToUser } = require('../routes/pushRoutes');
+      const order = result.rows[0];
+      await sendPushToUser(riderId, {
+        title: `New Order #${order.local_number || order.id}`,
+        body: `${order.customer_name || 'Customer'} — ${order.delivery_address || ''}`,
+        tag: `order-${order.id}`,
+        data: { url: `/rider?restaurant=${restaurantId}`, orderId: order.id }
+      });
+    } catch (err) {
+      console.error('Push send failed:', err);
     }
-}
+  }
 
   return result.rows[0] || null;
 };

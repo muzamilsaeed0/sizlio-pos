@@ -15,7 +15,6 @@
       --accent: #e3a23b;
       --ok: #2fa37d;
       --danger: #e15a4c;
-      --blue: #3b82f6;
     }
     body.light {
       --bg: #f4f1ea;
@@ -76,14 +75,8 @@
       margin-bottom: 14px;
       font-size: 14px;
     }
-    .login-card input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-    .pw-wrap {
-      position: relative;
-      margin-bottom: 14px;
-    }
+    .login-card input:focus { outline: none; border-color: var(--accent); }
+    .pw-wrap { position: relative; margin-bottom: 14px; }
     .pw-wrap input {
       margin: 0 !important;
       padding-right: 44px !important;
@@ -198,9 +191,7 @@
       padding: 12px;
       min-height: 0;
     }
-    @media (max-width: 1100px) {
-      .main { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 1100px) { .main { grid-template-columns: 1fr; } }
     .panel {
       background: var(--panel);
       border: 1px solid var(--border);
@@ -655,6 +646,14 @@
     let activeCat = 'All';
     let cart = [];
     let currentShift = null;
+    let posSettings = {
+      gst_percent: 0,
+      tax_percent: 0,
+      delivery_charge: 0,
+      dine_charge: 0,
+      card_charge: 0,
+      bank_charge: 0
+    };
     let salesCache = { orders: [], from: '', to: '', range: 'today' };
 
     /* =========================================================
@@ -767,7 +766,6 @@
         localStorage.setItem('cafe_restaurant_id', String(restaurantId));
 
         await bootApp();
-
       } catch (e) {
         console.error('login:', e);
         err.textContent = 'Server connection failed';
@@ -819,6 +817,16 @@
       }
 
       document.title = `${brandName} — Counter Lite`;
+
+      /* Load POS settings (for surcharge %) */
+      try {
+        const posRes = await api('/settings/pos');
+        if (posRes?.data) {
+          posSettings = { ...posSettings, ...posRes.data };
+        }
+      } catch (e) {
+        console.warn('Could not load POS settings:', e.message);
+      }
 
       await Promise.all([
         loadShift(),
@@ -1013,40 +1021,52 @@
         }
       }
 
+      let tableNo = 0;
       if (orderType === 'dine_in') {
-        const table = Number(document.getElementById('tableNo').value);
-        if (!Number.isInteger(table) || table <= 0) {
-          alert('Valid table number is required');
-          return;
+        const t = Number(document.getElementById('tableNo').value);
+        tableNo = Number.isInteger(t) && t > 0 ? t : 0;
+      }
+
+      const total = cartTotal();
+      const items = cart.map(c => ({
+        menu_item_id: Number(c.id),
+        quantity: Number(c.qty)
+      }));
+
+      const payMethod = document.getElementById('payMethod').value || 'Cash';
+
+      /* ✅ Calculate surcharge if paying now */
+      let cardCharge = 0;
+      let bankCharge = 0;
+
+      if (payNow) {
+        if (payMethod === 'Card') {
+          cardCharge = total * (Number(posSettings.card_charge || 0) / 100);
+        } else if (payMethod === 'Bank') {
+          bankCharge = total * (Number(posSettings.bank_charge || 0) / 100);
         }
       }
 
-      const items = cart.map(c => ({
-        menu_item_id: c.id,
-        quantity: c.qty,
-        name: c.name,
-        package_size: c.package_size,
-        package_unit: c.package_unit
-      }));
+      const finalTotal = total + cardCharge + bankCharge;
 
       const body = {
         items,
         deals: [],
         order_type: orderType,
-        table_no: orderType === 'dine_in'
-          ? Number(document.getElementById('tableNo').value)
-          : 0,
+        order_source: 'COUNTER',
+        table_no: tableNo,
         customer_name: document.getElementById('custName').value.trim() || null,
         delivery_phone: orderType === 'delivery'
-          ? document.getElementById('custPhone').value.trim()
-          : null,
+          ? document.getElementById('custPhone').value.trim() : null,
         delivery_address: orderType === 'delivery'
-          ? document.getElementById('custAddress').value.trim()
-          : null,
+          ? document.getElementById('custAddress').value.trim() : null,
         payment_timing: payNow
           ? 'PAID_AT_ORDER'
           : (orderType === 'delivery' ? 'COD' : 'PAY_LATER'),
-        payment_method: payNow ? document.getElementById('payMethod').value : null,
+        payment_method: payNow ? payMethod : null,
+        paid_amount: payNow ? finalTotal : 0,
+        card_charge: cardCharge,
+        bank_charge: bankCharge,
         discount_type: 'none',
         discount_value: 0,
         gst_percent: 0,
@@ -1062,6 +1082,7 @@
         cart = [];
         renderCart();
 
+        /* Reset form fields */
         document.getElementById('tableNo').value = '';
         document.getElementById('custName').value = '';
         document.getElementById('custPhone').value = '';
@@ -1070,7 +1091,7 @@
         await loadOrders();
         await loadTodaySales();
 
-        const id = data.order?.id || data.data?.id || '';
+        const id = data.order?.local_number || data.order?.id || '';
         alert(payNow ? `Order #${id} placed & paid` : `Order #${id} placed`);
       } catch (e) {
         console.error('placeOrder:', e);
@@ -1084,32 +1105,51 @@
     async function loadOrders() {
       try {
         const data = await api('/orders');
-        const orders = data.orders || data.data || [];
-        const el = document.getElementById('ordersList');
+        const allOrders = data.orders || data.data || [];
 
+        /* Active = not completed / cancelled */
+        const orders = allOrders.filter(o => {
+          const st = String(o.status || '').toLowerCase();
+          return !['completed', 'cancelled'].includes(st);
+        });
+
+        const el = document.getElementById('ordersList');
         if (!orders.length) {
-          el.innerHTML = '<div class="empty">No orders yet</div>';
+          el.innerHTML = '<div class="empty">No active orders</div>';
           return;
         }
 
-        el.innerHTML = orders.slice(0, 40).map(o => {
-          const paid = String(o.payment_status).toLowerCase() === 'paid';
+        el.innerHTML = orders.slice(0, 50).map(o => {
+          const paid = String(o.payment_status || '').toLowerCase() === 'paid';
+          const st = String(o.status || '').toLowerCase();
           const type = o.order_type === 'walk_in' ? 'Takeaway'
             : o.order_type === 'delivery' ? 'Delivery'
             : 'Dine-in';
+          const isDelivery = o.order_type === 'delivery';
+
+          /* Cafe Lite: pay from placed onward, except delivery COD */
+          const canPay = !paid && !isDelivery;
+          const canComplete = paid && st !== 'completed';
+
+          let actions = '';
+          if (canPay) {
+            actions += `<button class="btn btn-ok" onclick="payOrder(${o.id},${Number(o.total_amount) || 0})">Mark paid</button>`;
+          }
+          if (canComplete) {
+            actions += `<button class="btn btn-accent" onclick="completeOrder(${o.id})">Mark complete</button>`;
+          }
+          if (isDelivery && !paid) {
+            actions += `<span style="font-size:11px;color:var(--muted);">COD — pay after delivery</span>`;
+          }
 
           return `
             <div class="order-card">
               <div class="hd">
-                <span>#${esc(o.id)} · ${esc(type)}${o.table_no ? ' · T' + esc(o.table_no) : ''}</span>
+                <span>#${esc(o.local_number || o.id)} · ${esc(type)}${o.table_no ? ' · T' + esc(o.table_no) : ''}</span>
                 <span class="${paid ? 'paid' : 'st'}">${paid ? 'PAID' : esc(o.status || '—')}</span>
               </div>
               <div>${money(o.total_amount)} · ${esc(o.customer_name || '—')}</div>
-              ${!paid ? `
-                <div class="actions">
-                  <button class="btn btn-ok" onclick="payOrder(${o.id},${Number(o.total_amount) || 0})">Take payment</button>
-                </div>
-              ` : ''}
+              ${actions ? `<div class="actions">${actions}</div>` : ''}
             </div>
           `;
         }).join('');
@@ -1121,17 +1161,42 @@
 
     async function payOrder(id, amount) {
       try {
+        const method = document.getElementById('payMethod').value || 'Cash';
+
+        /* ✅ Apply surcharge on payment too */
+        let cardCharge = 0;
+        let bankCharge = 0;
+
+        if (method === 'Card') {
+          cardCharge = Number(amount) * (Number(posSettings.card_charge || 0) / 100);
+        } else if (method === 'Bank') {
+          bankCharge = Number(amount) * (Number(posSettings.bank_charge || 0) / 100);
+        }
+
         await api(`/orders/${id}/pay`, {
           method: 'PUT',
           body: JSON.stringify({
-            payment_method: document.getElementById('payMethod').value || 'Cash',
-            paid_amount: amount
+            payment_method: method,
+            paid_amount: Number(amount) + cardCharge + bankCharge,
+            card_charge: cardCharge,
+            bank_charge: bankCharge
           })
         });
+
         await loadOrders();
         await loadTodaySales();
       } catch (e) {
         alert(e.message || 'Payment failed');
+      }
+    }
+
+    async function completeOrder(id) {
+      try {
+        await api('/orders/' + id + '/completed', { method: 'PUT' });
+        await loadOrders();
+        await loadTodaySales();
+      } catch (e) {
+        alert(e.message || 'Complete failed');
       }
     }
 
@@ -1229,7 +1294,7 @@
         renderMenuAdmin();
         resetMenuForm();
       } catch (e) {
-        alert(e.message || 'Save failed — ensure counter can manage menu');
+        alert(e.message || 'Save failed');
       }
     }
 
@@ -1339,6 +1404,7 @@
         document.getElementById('stAvg').textContent = money(avg);
         document.getElementById('stItems').textContent = String(itemsSold || '—');
 
+        /* Payment summary */
         const payData = payRes.data || [];
         const payEl = document.getElementById('salesPayments');
 
@@ -1369,6 +1435,7 @@
           }
         }
 
+        /* Top items */
         const topData = topRes.data || [];
         const topEl = document.getElementById('salesTop');
 
@@ -1388,6 +1455,7 @@
           topEl.textContent = 'No item data';
         }
 
+        /* Orders table */
         const body = document.getElementById('salesOrdersBody');
         if (!salesCache.orders.length) {
           body.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;">No orders</td></tr>';
@@ -1396,7 +1464,7 @@
             const t = o.created_at || o.paid_at || '';
             const time = t ? new Date(t).toLocaleString() : '—';
             return `<tr>
-              <td>#${esc(o.id)}</td>
+              <td>#${esc(o.local_number || o.id)}</td>
               <td>${esc(orderTypeLabel(o.order_type))}</td>
               <td>${esc(o.status || '—')}</td>
               <td>${esc(o.payment_status || '—')}${o.payment_method ? ' / ' + esc(o.payment_method) : ''}</td>
@@ -1452,6 +1520,9 @@
       const w = window.open('', '_blank');
       if (!w) { alert('Allow popups to print'); return; }
 
+      const SCRIPT_OPEN = '<' + 'script>';
+      const SCRIPT_CLOSE = '</' + 'script>';
+
       w.document.write(`
         <!DOCTYPE html>
         <html>
@@ -1461,7 +1532,7 @@
           <p>${from} → ${to}</p>
           <p>${stats}</p>
           ${table}
-          <script>window.onload=function(){window.print();};</script>
+          ${SCRIPT_OPEN}window.onload=function(){window.print();};${SCRIPT_CLOSE}
         </body>
         </html>
       `);
