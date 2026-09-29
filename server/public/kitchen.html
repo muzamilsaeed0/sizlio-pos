@@ -852,7 +852,7 @@ function printOrderReceipt(order){
   </style></head><body>
     <h2>${tableLabel}</h2>
     <div class="line"></div>
-    <div>Order #${escapeHtml(order.id)} — ${new Date().toLocaleTimeString()}</div>
+    <div>Order #${escapeHtml(order.local_number || order.id)} — ${new Date().toLocaleTimeString()}</div>
     <div class="line"></div>
     <table>${itemsHtml}</table>
     <div class="line"></div>
@@ -1454,7 +1454,7 @@ function renderShiftOrdersWithIngredients(ordersList, ingredientSummary) {
     return `
       <div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:var(--bg);">
         <div style="display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:15px;margin-bottom:4px;">
-          <span>#${o.id} — ${tableLabel}</span>
+          <span>#${o.local_number || o.id} — ${tableLabel}</span>
           <span style="color:var(--accent);">${money(o.total_amount)}</span>
         </div>
         <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">
@@ -1868,7 +1868,7 @@ function printFullShiftReportHtml(shifts){
       return `
         <div class="order-card">
           <div class="order-head">
-            <span>#${o.id} — ${tableLabel}</span>
+            <span>#${o.local_number || o.id} — ${tableLabel}</span>
             <span>${money(o.total_amount)}</span>
           </div>
           <div class="order-meta">
