@@ -1755,7 +1755,7 @@ function triggerNewOrderAlert(order){
   const orderId = order?.id || '';
 
   showSystemNotification(
-    `🚴 Naya Order #${orderId}`,
+    `🚴 Naya Order #${order.local_number || order.id}`,
     `${customerName} — ${address}`,
     orderId
   );
@@ -1763,7 +1763,7 @@ function triggerNewOrderAlert(order){
   const alertBox = document.getElementById('newOrderAlert');
   const alertText = document.getElementById('newOrderAlertText');
   if(alertText){
-    alertText.textContent = `Order #${orderId} — ${customerName}`;
+    alertText.textContent = `Order #${order.local_number || order.id} — ${customerName}`;
   }
   if(alertBox){
     alertBox.classList.add('show');
@@ -2454,7 +2454,7 @@ function renderOrderCard(order){
       <div class="order-top">
         <div>
           <div class="order-number">
-            Order #${Number(order.id)}
+            Order #${order.local_number || order.id}
           </div>
           <div class="order-time">
             ${created}
