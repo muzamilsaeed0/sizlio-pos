@@ -1104,7 +1104,7 @@ async function serveOrder(id) {
       return;
     }
 
-    showToast(`✅ Order #${o.id} served!`, 'success');
+    showToast(`✅ Order #${data.order.local_number || data.order.id} served!`, 'success');
     loadReadyOrders();
     loadCurrentOrder();
     loadPendingOrders();
