@@ -2189,7 +2189,7 @@ function render(){
                         <div class="order-id">
 
                             🧾 Order #${escapeHtml(
-                                order.id
+                                order.local_number || order.id
                             )}
 
                             <span class="type-badge">

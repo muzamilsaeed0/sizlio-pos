@@ -2372,7 +2372,7 @@
                     body: JSON.stringify({
                         order_id: orderId,
                         amount: amount,
-                        description: `Order #${orderId}`,
+                        description: `Order #${local_number}`,
                     }),
                 });
 
@@ -2382,7 +2382,7 @@
                 activeQrAmount = amount;
 
                 document.getElementById('qrAmountText').textContent = money(amount);
-                document.getElementById('qrOrderText').textContent = `Order #${orderId}`;
+                document.getElementById('qrOrderText').textContent = `Order #${local_number}`;
                 document.getElementById('qrImage').src = data.qr_image_url;
                 document.getElementById('qrStatusText').textContent = '⏳ Waiting for payment...';
                 document.getElementById('qrStatusText').style.color = 'var(--muted)';
@@ -2502,7 +2502,7 @@
                         bank_charge: 0,
                     }),
                 });
-                status(`✅ QR Payment received for Order #${orderId}`);
+                status(`✅ QR Payment received for Order #${local_number}`);
                 await loadOrders();
             } catch (err) {
                 console.error('markOrderPaidViaQr:', err);
@@ -3173,9 +3173,9 @@
 
                 const newStatus = data.order?.status;
                 if (newStatus === 'completed') {
-                    status(`Order #${id} handed over and completed.`);
+                    status(`Order #${data.order.local_number} handed over and completed.`);
                 } else {
-                    status(`Order #${id} handed over. Collect payment now.`);
+                    status(`Order #${data.order.local_number} handed over. Collect payment now.`);
                 }
 
                 await loadOrders();
@@ -3336,7 +3336,7 @@
                         <div class="brand-header">${logoHtml}<div class="brand-name">${esc(restaurantName)}</div></div>
                         <div class="restaurant-header">${restaurantBrand.address ? `<div class="restaurant-info">${esc(restaurantBrand.address)}</div>` : ''}${restaurantBrand.phone ? `<div class="restaurant-info">Tel: ${esc(restaurantBrand.phone)}</div>` : ''}<div class="receipt-title">${o.order_type === 'delivery' ? 'DELIVERY SLIP' : 'SALES RECEIPT'}</div></div>
                         <hr class="divider">
-                        <div class="order-info"><div><strong>Order #</strong> ${esc(o.id)}</div>
+                        <div class="order-info"><div><strong>Order #</strong> ${esc(o.local_number || o.id)}</div>
                         <div><strong>${typeLabel} </strong>${locationValue}</div>
                         <div><strong>Date</strong> ${dateStr}</div><div><strong>Time</strong> ${timeStr}</div></div>
                         <hr class="divider">${deliveryInfo}
