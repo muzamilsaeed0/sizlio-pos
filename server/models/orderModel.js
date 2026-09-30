@@ -5006,7 +5006,7 @@ const getMyDeliveryOrders = async (
                           m2.name,
 
                         'quantity',
-                          oi2.quantity,
+                          oi2.quantity
 
                         
                       )
