@@ -579,10 +579,16 @@ async function apiFetch(url, options = {}) {
   });
 
   if (res.status === 401) {
-    alert("Session expired. Please login again.");
-    window.location.href = "manager.html";
-    throw new Error("Unauthorized");
-  }
+  alert("Session expired. Please login again.");
+  localStorage.removeItem("token");
+  const params = new URLSearchParams(window.location.search);
+  const rid = params.get("restaurant") || localStorage.getItem("restaurant_id") || "";
+  const q = rid ? ("?restaurant=" + encodeURIComponent(rid)) : "";
+  
+  window.location.href = "/manager.html" + q;
+ 
+  throw new Error("Unauthorized");
+}
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.message || "Request failed");

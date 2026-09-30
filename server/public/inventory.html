@@ -912,7 +912,7 @@
         <button
           class="theme-toggle-btn"
           type="button"
-          onclick="window.location.href='suppliers.html'">
+          onclick="window.location.href=('/suppliers.html' + (new URLSearchParams(location.search).get('restaurant') ? ('?restaurant=' + new URLSearchParams(location.search).get('restaurant')) : (localStorage.getItem('restaurant_id') ? ('?restaurant=' + localStorage.getItem('restaurant_id')) : '')))">
           🏢 Suppliers
         </button>
         <button

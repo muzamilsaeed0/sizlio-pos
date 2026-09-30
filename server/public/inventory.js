@@ -264,7 +264,10 @@ const supplier = supplierObj ? supplierObj.name : null;
 ===================================================== */
 
 function backToManager() {
-    history.back();
+  const params = new URLSearchParams(window.location.search);
+  const rid = params.get('restaurant') || localStorage.getItem('restaurant_id') || '';
+  const q = rid ? ('?restaurant=' + encodeURIComponent(rid)) : '';
+  window.location.href = '/manager.html' + q;
 }
 
 async function loadBranding() {
@@ -4372,6 +4375,15 @@ function openPrintWindow(html) {
   win.document.close();
   win.focus();
 }
+
+function restaurantQuery() {
+  const params = new URLSearchParams(window.location.search);
+  const rid = params.get('restaurant') || localStorage.getItem('restaurant_id') || '';
+  return rid ? ('?restaurant=' + encodeURIComponent(rid)) : '';
+}
+function inventoryUrl() { return '/inventory.html' + restaurantQuery(); }
+function managerUrl() { return '/manager.html' + restaurantQuery(); }
+function suppliersUrl() { return '/suppliers.html' + restaurantQuery(); }
 
 /* =====================================================
    SUPPLIER DROPDOWN
