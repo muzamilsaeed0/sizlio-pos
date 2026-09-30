@@ -1298,6 +1298,7 @@
         let activeQrId = null;
         let activeQrOrderId = null;
         let activeQrAmount = 0;
+        let activeQrDisplayNo = null;
 
         /* ✅ Raast availability flag */
         let raastQrAvailable = false;
@@ -2382,6 +2383,7 @@ async function startQrPayment(orderId, amount, displayNo) {
         activeQrId = data.qr_id;
         activeQrOrderId = orderId;
         activeQrAmount = amount;
+        activeQrDisplayNo = label;
 
         document.getElementById('qrAmountText').textContent = money(amount);
         document.getElementById('qrOrderText').textContent = `Order #${label}`;
@@ -2479,13 +2481,14 @@ async function startQrPayment(orderId, amount, displayNo) {
             activeQrId = null;
             activeQrOrderId = null;
             activeQrAmount = 0;
+            activeQrDisplayNo = null;
         }
 
         function regenerateQr() {
             const orderId = activeQrOrderId;
             const amount = activeQrAmount;
             closeQrModal();
-            setTimeout(() => startQrPayment(orderId, amount), 300);
+            setTimeout(() => startQrPayment(orderId, amount, activeQrDisplayNo), 300);
         }
 
         function onPayNowMethodChange() {
@@ -2505,6 +2508,7 @@ async function startQrPayment(orderId, amount, displayNo) {
                     }),
                 });
                 status(`✅ QR Payment received for Order #${activeQrDisplayNo || activeQrOrderId}`);
+                
                 await loadOrders();
             } catch (err) {
                 console.error('markOrderPaidViaQr:', err);
