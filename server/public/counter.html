@@ -2365,24 +2365,26 @@
         }
 
         /* QR PAYMENT FLOW */
-        async function startQrPayment(orderId, amount) {
-            try {
-                const res = await apiFetch(`${API_BASE}/payments/qr/create`, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        order_id: orderId,
-                        amount: amount,
-                        description: `Order #${local_number}`,
-                    }),
-                });
 
-                const data = res.data;
-                activeQrId = data.qr_id;
-                activeQrOrderId = orderId;
-                activeQrAmount = amount;
+async function startQrPayment(orderId, amount, displayNo) {
+    const label = displayNo || orderId;
+    try {
+        const res = await apiFetch(`${API_BASE}/payments/qr/create`, {
+            method: 'POST',
+            body: JSON.stringify({
+                order_id: orderId,           // API = global id
+                amount: amount,
+                description: `Order #${label}`,
+            }),
+        });
 
-                document.getElementById('qrAmountText').textContent = money(amount);
-                document.getElementById('qrOrderText').textContent = `Order #${local_number}`;
+        const data = res.data;
+        activeQrId = data.qr_id;
+        activeQrOrderId = orderId;
+        activeQrAmount = amount;
+
+        document.getElementById('qrAmountText').textContent = money(amount);
+        document.getElementById('qrOrderText').textContent = `Order #${label}`;
                 document.getElementById('qrImage').src = data.qr_image_url;
                 document.getElementById('qrStatusText').textContent = '⏳ Waiting for payment...';
                 document.getElementById('qrStatusText').style.color = 'var(--muted)';
@@ -2502,7 +2504,7 @@
                         bank_charge: 0,
                     }),
                 });
-                status(`✅ QR Payment received for Order #${local_number}`);
+                status(`✅ QR Payment received for Order #${activeQrDisplayNo || activeQrOrderId}`);
                 await loadOrders();
             } catch (err) {
                 console.error('markOrderPaidViaQr:', err);
@@ -2608,6 +2610,7 @@
                         body: JSON.stringify({ ...payload, payment_status: 'unpaid', paid_amount: 0, payment_method: 'QR Payment' }),
                     });
                     const newOrderId = data.order?.id;
+const newLocalNo = data.order?.local_number || newOrderId;
                     if (!newOrderId) throw new Error('Order ID missing');
 
                     cart = [];
@@ -2618,9 +2621,11 @@
                     if (orderType === 'dine_in') {
                         document.getElementById('tableNo').value = '';
                     }
-                    status(`Order #${newOrderId} created. Waiting for QR payment...`);
+                    status(`Order #${newLocalNo} created. Waiting for QR payment...`);
                     await loadOrders();
-                    await startQrPayment(newOrderId, finalTotalNow);
+                    await startQrPayment(newOrderId, finalTotalNow, newLocalNo);
+                    
+         
                 } catch (err) {
                     console.error('QR order create error:', err);
                     status(err.message);
