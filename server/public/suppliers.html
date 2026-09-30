@@ -198,7 +198,7 @@
       </div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn btn-secondary" onclick="window.location.href='inventory.html'">📦 Inventory</button>
+      <button class="btn btn-secondary" onclick="window.location.href=('/inventory.html'+(new URLSearchParams(location.search).get('restaurant')?('?restaurant='+new URLSearchParams(location.search).get('restaurant')):(localStorage.getItem('restaurant_id')?('?restaurant='+localStorage.getItem('restaurant_id')):'')))">📦 Inventory</button>
       <button class="btn btn-secondary" onclick="toggleTheme()">🌙 Theme</button>
       <button class="btn btn-primary" onclick="openSupplierModal()">➕ Add Supplier</button>
     </div>
