@@ -21,4 +21,9 @@
     <loc>https://sizlio.com/terms-of-service.html</loc>
     <priority>0.3</priority>
   </url>
+  <url>
+    <loc>https://sizlio.com/blog/restaurant-pos-pakistan.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
 </urlset>
