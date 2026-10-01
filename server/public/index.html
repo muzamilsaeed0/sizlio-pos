@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Sizlio — Offline Restaurant POS for Pakistan | FBR + Serve-tak KDS</title>
-<meta name="description" content="Offline Counter POS, Kitchen Display till Serve, QR Ordering, Waiter & Rider Apps, Recipe Inventory + FBR. Built for Pakistani restaurants." />
+<meta name="description" content="Restaurant POS for Pakistan: Offline Counter, Cafe Lite single-screen POS, Serve-tak KDS, QR, Rider, Recipe Inventory, Supplier Ledger + FBR." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
@@ -279,7 +279,7 @@ footer{border-top:1px solid var(--border);padding:44px 0 24px;margin-top:20px}
       <h1>Internet gaya?<br><em>Counter nahi rukta.</em></h1>
       <p class="hero-lead">
         Offline POS + Kitchen till <strong style="color:var(--text)">Serve</strong> + QR + Waiter + Rider +
-        Recipe inventory + <strong style="color:var(--brand)">FBR</strong> — ek system. Pakistani restaurants ke liye.
+        Cafe Lite single-screen POS, full KDS, <strong style="color:var(--brand)">supplier ledger</strong>, recipe stock + <strong style="color:var(--brand)">FBR</strong> — Pakistani restaurants ke liye.
       </p>
       <div class="hero-actions">
         <a href="#cta" class="btn btn-primary">Start free trial</a>
@@ -360,6 +360,24 @@ footer{border-top:1px solid var(--border);padding:44px 0 24px;margin-top:20px}
         <h3>FBR Compliance</h3>
         <p>Real-time invoice, FBR QR on receipt, sandbox + production, fail pe automatic retry.</p>
         <span class="chip chip-brand">FBR Ready</span>
+      </div>
+      <div class="card">
+        <div class="ico">☕</div>
+        <h3>Cafe Lite POS</h3>
+        <p>Ek screen par order, payment, rider assign aur mark complete — chhoti cafés, bina kitchen staff.</p>
+        <span class="chip chip-mint">Single counter</span>
+      </div>
+      <div class="card">
+        <div class="ico">🏢</div>
+        <h3>Supplier Ledger</h3>
+        <p>Suppliers, purchases, payments, aging — inventory se judi purchase line.</p>
+        <span class="chip">Stock + payables</span>
+      </div>
+      <div class="card">
+        <div class="ico">🔢</div>
+        <h3>Local order numbers</h3>
+        <p>Har restaurant apna #1, #2, #3… Staff ko local number; system ID background mein.</p>
+        <span class="chip">Multi-tenant</span>
       </div>
       <div class="card">
         <div class="ico">📈</div>
@@ -537,22 +555,36 @@ footer{border-top:1px solid var(--border);padding:44px 0 24px;margin-top:20px}
       <h2 class="section-title">Same features. Staff limits differ.</h2>
       <p class="section-desc">Har plan mein full product — Offline, KDS Serve-tak, QR, Rider, Inventory, FBR.</p>
     </div>
-    <div class="pricing">
+    <div class="pricing" style="grid-template-columns:repeat(4,1fr)">
+      <div class="plan featured">
+        <h3>Cafe Lite</h3>
+        <p class="sub">One-screen café POS</p>
+        <div class="limits">Counter 1 · Rider 1–2<br>No waiter / kitchen screens</div>
+        <ul>
+          <li>Single counter-lite screen</li>
+          <li>Dine-in · Takeaway · Delivery</li>
+          <li>Pay now / pay later · Mark complete</li>
+          <li>Rider assign + COD</li>
+          <li>Restaurant-wise order #</li>
+          <li>Sales + menu on same screen</li>
+        </ul>
+        <a href="#cta" class="btn btn-primary">Start free trial</a>
+      </div>
       <div class="plan">
         <h3>Basic</h3>
-        <p class="sub">Small café / single counter</p>
+        <p class="sub">Full floor + kitchen</p>
         <div class="limits">Waiter 2 · Counter 1 · Display 1<br>Manager 1 · Kitchen 1 · Rider 2</div>
         <ul>
           <li>Offline Counter POS</li>
           <li>KDS Serve-tak</li>
           <li>QR + Waiter + Rider</li>
-          <li>Recipe inventory</li>
+          <li>Recipe inventory + suppliers</li>
           <li>FBR compliance</li>
           <li>Reports</li>
         </ul>
         <a href="#cta" class="btn btn-ghost">Start free trial</a>
       </div>
-      <div class="plan featured">
+      <div class="plan">
         <h3>Standard</h3>
         <p class="sub">Growing restaurants</p>
         <div class="limits">Waiter 3 · Counter 1 · Display 1<br>Manager 1 · Kitchen 1 · Rider 3</div>
@@ -562,7 +594,7 @@ footer{border-top:1px solid var(--border);padding:44px 0 24px;margin-top:20px}
           <li>Priority support</li>
           <li>Free training</li>
         </ul>
-        <a href="#cta" class="btn btn-primary">Start free trial</a>
+        <a href="#cta" class="btn btn-ghost">Start free trial</a>
       </div>
       <div class="plan">
         <h3>Premium</h3>
@@ -577,6 +609,7 @@ footer{border-top:1px solid var(--border);padding:44px 0 24px;margin-top:20px}
         <a href="https://wa.me/923019128606?text=Premium%20plan" class="btn btn-ghost">Contact sales</a>
       </div>
     </div>
+    <p style="text-align:center;margin-top:16px;font-size:0.85rem;color:var(--muted)">Cafe Lite = small shops without kitchen staff. Basic+ = full restaurant with KDS & waiters.</p>
   </div>
 </section>
 
