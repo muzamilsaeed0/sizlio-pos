@@ -26,4 +26,22 @@
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
+
+    <url>
+    <loc>https://sizlio.com/blog/offline-pos-pakistan.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+    <url>
+    <loc>https://sizlio.com/blog/fbr-pos-restaurant-pakistan.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+    <url>
+    <loc>https://sizlio.com/blog/cafe-pos-pakistan.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
 </urlset>
