@@ -86,6 +86,10 @@ const getSalesDetails = async (
 
       o.payment_status,
 
+      o.status,
+
+      o.local_number,
+
       o.subtotal,
 
       o.discount_amount,
