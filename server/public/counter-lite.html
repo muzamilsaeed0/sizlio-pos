@@ -1674,13 +1674,19 @@
         const payEl = document.getElementById('salesPayments');
 
         if (Array.isArray(payData) && payData.length) {
-          payEl.classList.remove('empty');
-          payEl.innerHTML = payData.map(p => {
-            const method = p.payment_method || p.method || 'Other';
-           const total = Number(p.total || p.amount || p.sum || p.sales || 0);
-            const cnt = p.count || p.orders || '';
-            return `<div class="pay-bar-row"><span>${esc(method)}${cnt ? ` (${esc(cnt)})` : ''}</span><strong>${money(total)}</strong></div>`;
-          }).join('');
+  payEl.classList.remove('empty');
+  payEl.innerHTML = payData.map(p => {
+    const method = p.payment_method || p.method || 'Other';
+    let total = Number(p.total || p.amount || p.sum || p.sales || 0);
+    const cnt = p.count || p.orders || '';
+    if (!total) {
+      total = salesCache.orders
+        .filter(o => String(o.payment_status).toLowerCase() === 'paid'
+          && (o.payment_method || 'Cash') === method)
+        .reduce((s, o) => s + Number(o.total_amount || o.total || 0), 0);
+    }
+    return `<div class="pay-bar-row"><span>${esc(method)}${cnt ? ` (${esc(cnt)})` : ''}</span><strong>${money(total)}</strong></div>`;
+  }).join('');
         } else {
           const map = {};
           salesCache.orders.forEach(o => {
@@ -1733,7 +1739,7 @@
               <td>${esc(orderTypeLabel(o.order_type))}</td>
               <td>${esc(o.status || '—')}</td>
               <td>${esc(o.payment_status || '—')}${o.payment_method ? ' / ' + esc(o.payment_method) : ''}</td>
-              <td>${money(o.total_amount)}</td>
+              <td>${money(o.total_amount || o.total || 0)}</td>
               <td>${esc(time)}</td>
             </tr>`;
           }).join('');
@@ -1752,7 +1758,7 @@
           o.status || '',
           o.payment_status || '',
           o.payment_method || '',
-          o.total_amount || 0,
+          o.total_amount || o.total || 0,
           o.created_at || ''
         ]);
       });
