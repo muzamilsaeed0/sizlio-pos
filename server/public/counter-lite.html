@@ -1784,7 +1784,7 @@
 
       let table = '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:12px;"><tr><th>#</th><th>Type</th><th>Status</th><th>Pay</th><th>Total</th></tr>';
       salesCache.orders.forEach(o => {
-        table += `<tr><td>${o.id}</td><td>${orderTypeLabel(o.order_type)}</td><td>${o.status || ''}</td><td>${o.payment_status || ''}</td><td>${o.total_amount || 0}</td></tr>`;
+        table += `<tr><td>${o.id}</td><td>${orderTypeLabel(o.order_type)}</td><td>${o.status || ''}</td><td>${o.payment_status || ''}</td><td>${o.total_amount || o.total || 0}</td></tr>`;
       });
       table += '</table>';
 
