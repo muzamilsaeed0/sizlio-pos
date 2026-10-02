@@ -391,6 +391,39 @@
 
     /* ================ SALES REPORT ================ */
     .sales-modal { max-width: 720px; width: 100%; }
+        #salesPage {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      padding: 12px 16px 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    #salesPage.open { display: flex; }
+    #app-box.sales-open .main { display: none !important; }
+    #app-box.sales-open .topbar .sales-hide-on-report { display: none !important; }
+    .sales-page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+    .sales-page-header h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+    #salesPage .sales-table-wrap {
+      max-height: none;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    #salesPage .sales-table th,
+    #salesPage .sales-table td { padding: 10px 8px; }
     .sales-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
     .sales-filters input[type="date"] {
       padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);
@@ -485,8 +518,8 @@
       <span class="spacer"></span>
       <span class="sales-chip" id="todaySales">Today: Rs 0</span>
       <button class="btn btn-ghost" onclick="openSalesReport()">Sales Report</button>
-      <button class="btn btn-ghost" onclick="openMenuAdmin()">Menu</button>
-      <button class="btn btn-ghost" onclick="openSettings()">Settings</button>
+      <button class="btn btn-ghost sales-hide-on-report" onclick="openMenuAdmin()">Menu</button>
+      <button class="btn btn-ghost sales-hide-on-report" onclick="openSettings()">Settings</button>
       <button class="btn btn-ghost" onclick="toggleTheme()">Theme</button>
       <button class="btn btn-danger" onclick="logout()">Logout</button>
     </div>
@@ -571,42 +604,42 @@
     </div>
   </div>
 
-  <!-- ================ SALES REPORT MODAL ================ -->
-  <div id="salesModal" class="modal-bg hidden">
-    <div class="modal sales-modal">
-      <h3>Sales report</h3>
-      <div class="sales-filters">
-        <button type="button" class="chip-btn active" id="sf-today" onclick="setSalesRange('today')">Today</button>
-        <button type="button" class="chip-btn" id="sf-week" onclick="setSalesRange('week')">This week</button>
-        <button type="button" class="chip-btn" id="sf-month" onclick="setSalesRange('month')">This month</button>
-        <input type="date" id="salesFrom" />
-        <input type="date" id="salesTo" />
-        <button type="button" class="btn btn-accent" style="width:auto;padding:8px 14px;" onclick="loadSalesReport()">Apply</button>
+  <!-- ================ SALES FULL PAGE ================ -->
+  <div id="salesPage">
+    <div class="sales-page-header">
+      <h2>Sales report</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button type="button" class="btn btn-ghost" onclick="exportSalesCSV()">Export CSV</button>
+        <button type="button" class="btn btn-ghost" onclick="printSalesReport()">Print</button>
+        <button type="button" class="btn btn-accent" onclick="closeSalesReport()">← Back to counter</button>
       </div>
-      <div class="sales-stats">
-        <div class="sales-stat"><div class="lbl">Orders</div><div class="val" id="stOrders">0</div></div>
-        <div class="sales-stat"><div class="lbl">Sales</div><div class="val" id="stSales">Rs 0</div></div>
-        <div class="sales-stat"><div class="lbl">Avg bill</div><div class="val" id="stAvg">Rs 0</div></div>
-        <div class="sales-stat"><div class="lbl">Items sold</div><div class="val" id="stItems">0</div></div>
-      </div>
-      <div class="sales-section-title">Payment summary</div>
-      <div id="salesPayments" class="empty">—</div>
-      <div class="sales-section-title">Top items</div>
-      <div id="salesTop" class="empty">—</div>
-      <div class="sales-section-title">Orders</div>
-      <div style="max-height:220px;overflow:auto;">
-        <table class="sales-table">
-          <thead>
-            <tr><th>#</th><th>Type</th><th>Status</th><th>Pay</th><th>Total</th><th>Time</th></tr>
-          </thead>
-          <tbody id="salesOrdersBody"></tbody>
-        </table>
-      </div>
-      <div class="modal-actions" style="margin-top:14px;">
-        <button class="btn btn-ghost" onclick="exportSalesCSV()">Export CSV</button>
-        <button class="btn btn-ghost" onclick="printSalesReport()">Print</button>
-        <button class="btn btn-accent" onclick="closeSalesReport()">Close</button>
-      </div>
+    </div>
+    <div class="sales-filters">
+      <button type="button" class="chip-btn active" id="sf-today" onclick="setSalesRange('today')">Today</button>
+      <button type="button" class="chip-btn" id="sf-week" onclick="setSalesRange('week')">This week</button>
+      <button type="button" class="chip-btn" id="sf-month" onclick="setSalesRange('month')">This month</button>
+      <input type="date" id="salesFrom" />
+      <input type="date" id="salesTo" />
+      <button type="button" class="btn btn-accent" style="width:auto;padding:8px 14px;" onclick="loadSalesReport()">Apply</button>
+    </div>
+    <div class="sales-stats">
+      <div class="sales-stat"><div class="lbl">Orders</div><div class="val" id="stOrders">0</div></div>
+      <div class="sales-stat"><div class="lbl">Sales</div><div class="val" id="stSales">Rs 0</div></div>
+      <div class="sales-stat"><div class="lbl">Avg bill</div><div class="val" id="stAvg">Rs 0</div></div>
+      <div class="sales-stat"><div class="lbl">Items sold</div><div class="val" id="stItems">0</div></div>
+    </div>
+    <div class="sales-section-title">Payment summary</div>
+    <div id="salesPayments" class="empty">—</div>
+    <div class="sales-section-title">Top items</div>
+    <div id="salesTop" class="empty">—</div>
+    <div class="sales-section-title">Orders</div>
+    <div class="sales-table-wrap">
+      <table class="sales-table">
+        <thead>
+          <tr><th>#</th><th>Type</th><th>Status</th><th>Pay</th><th>Total</th><th>Time</th></tr>
+        </thead>
+        <tbody id="salesOrdersBody"></tbody>
+      </table>
     </div>
   </div>
 
@@ -1553,7 +1586,10 @@
     }
 
     function openSalesReport() {
-      document.getElementById('salesModal').classList.remove('hidden');
+      const app = document.getElementById('app-box');
+      const page = document.getElementById('salesPage');
+      if (app) app.classList.add('sales-open');
+      if (page) page.classList.add('open');
       if (!document.getElementById('salesFrom').value) {
         setSalesRange('today');
       } else {
@@ -1562,7 +1598,10 @@
     }
 
     function closeSalesReport() {
-      document.getElementById('salesModal').classList.add('hidden');
+      const app = document.getElementById('app-box');
+      const page = document.getElementById('salesPage');
+      if (app) app.classList.remove('sales-open');
+      if (page) page.classList.remove('open');
     }
 
     function orderTypeLabel(t) {
