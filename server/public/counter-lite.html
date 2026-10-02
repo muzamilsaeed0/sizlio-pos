@@ -570,41 +570,7 @@
         <div class="orders-list" id="ordersList"></div>
       </section>
     </div>
-  </div>
-
-  <!-- ================ MENU ADMIN MODAL ================ -->
-  <div id="menuModal" class="modal-bg hidden">
-    <div class="modal">
-      <h3>Menu items</h3>
-      <div id="menuAdminList"></div>
-      <hr style="border-color:var(--border);margin:14px 0;" />
-      <h3 id="menuFormTitle">Add item</h3>
-      <input type="hidden" id="editMenuId" value="" />
-      <label>Name *</label>
-      <input id="mName" />
-      <label>Price *</label>
-      <input id="mPrice" type="number" min="1" step="0.01" />
-      <label>Category</label>
-      <input id="mCategory" placeholder="e.g. Drinks" />
-      <label>Package size</label>
-      <input id="mPkgSize" type="number" min="0" step="0.01" placeholder="e.g. 250" />
-      <label>Package unit</label>
-      <select id="mPkgUnit">
-        <option value="">— none —</option>
-        <option value="ml">ml</option>
-        <option value="g">g</option>
-        <option value="kg">kg</option>
-        <option value="L">L</option>
-        <option value="pcs">pcs</option>
-      </select>
-      <div class="modal-actions">
-        <button class="btn btn-ghost" onclick="closeMenuAdmin()">Close</button>
-        <button class="btn btn-accent" onclick="saveMenuItem()">Save</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================ SALES FULL PAGE ================ -->
+      <!-- ================ SALES FULL PAGE ================ -->
   <div id="salesPage">
     <div class="sales-page-header">
       <h2>Sales report</h2>
@@ -643,7 +609,43 @@
     </div>
   </div>
 
-  <!-- ================ SETTINGS MODAL ================ -->
+  
+
+  </div>
+
+  <!-- ================ MENU ADMIN MODAL ================ -->
+  <div id="menuModal" class="modal-bg hidden">
+    <div class="modal">
+      <h3>Menu items</h3>
+      <div id="menuAdminList"></div>
+      <hr style="border-color:var(--border);margin:14px 0;" />
+      <h3 id="menuFormTitle">Add item</h3>
+      <input type="hidden" id="editMenuId" value="" />
+      <label>Name *</label>
+      <input id="mName" />
+      <label>Price *</label>
+      <input id="mPrice" type="number" min="1" step="0.01" />
+      <label>Category</label>
+      <input id="mCategory" placeholder="e.g. Drinks" />
+      <label>Package size</label>
+      <input id="mPkgSize" type="number" min="0" step="0.01" placeholder="e.g. 250" />
+      <label>Package unit</label>
+      <select id="mPkgUnit">
+        <option value="">— none —</option>
+        <option value="ml">ml</option>
+        <option value="g">g</option>
+        <option value="kg">kg</option>
+        <option value="L">L</option>
+        <option value="pcs">pcs</option>
+      </select>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeMenuAdmin()">Close</button>
+        <button class="btn btn-accent" onclick="saveMenuItem()">Save</button>
+      </div>
+    </div>
+  </div>
+
+ <!-- ================ SETTINGS MODAL ================ -->
   <div id="settingsModal" class="modal-bg hidden">
     <div class="modal">
       <h3>Settings</h3>
@@ -1453,15 +1455,23 @@
        TODAY SALES
     ========================================================= */
     async function loadTodaySales() {
-      try {
-        const data = await api('/reports/summary');
-        const today = data.data?.today || {};
-        document.getElementById('todaySales').textContent =
-          `Today: ${money(today.total_sales)} (${today.orders_count || 0} orders)`;
-      } catch {
-        document.getElementById('todaySales').textContent = 'Today: —';
+  try {
+    const from = todayISO();
+    const to = from;
+    const salesRes = await api(`/reports/sales?from=${from}&to=${to}`);
+    const orders = salesRes.data || [];
+    let total = 0;
+    orders.forEach(o => {
+      if (String(o.payment_status || '').toLowerCase() === 'paid') {
+        total += Number(o.total_amount || o.total || 0);
       }
-    }
+    });
+    document.getElementById('todaySales').textContent =
+      `Today: ${money(total)} (${orders.length} orders)`;
+  } catch {
+    document.getElementById('todaySales').textContent = 'Today: —';
+  }
+}
 
     /* =========================================================
        MENU ADMIN
@@ -1667,7 +1677,7 @@
           payEl.classList.remove('empty');
           payEl.innerHTML = payData.map(p => {
             const method = p.payment_method || p.method || 'Other';
-            const total = p.total || p.amount || p.sum || 0;
+           const total = Number(p.total || p.amount || p.sum || p.sales || 0);
             const cnt = p.count || p.orders || '';
             return `<div class="pay-bar-row"><span>${esc(method)}${cnt ? ` (${esc(cnt)})` : ''}</span><strong>${money(total)}</strong></div>`;
           }).join('');
@@ -1676,7 +1686,7 @@
           salesCache.orders.forEach(o => {
             if (String(o.payment_status).toLowerCase() !== 'paid') return;
             const m = o.payment_method || 'Cash';
-            map[m] = (map[m] || 0) + Number(o.total_amount || 0);
+           map[m] = (map[m] || 0) + Number(o.total_amount || o.total || 0);
           });
           const keys = Object.keys(map);
           if (!keys.length) {
