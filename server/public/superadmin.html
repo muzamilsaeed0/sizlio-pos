@@ -338,7 +338,7 @@
     border-radius:8px;
     border:1px solid var(--border);
     background:var(--panel);
-    color:var(Blue);
+    color:var(--text);
     cursor:pointer;
     font-size:14px;
   }
@@ -559,6 +559,11 @@
   .cred-box .staff-password {
     display: inline-block;
     margin: 0 2px;
+  }
+
+  #refresh {
+    color: blueviolet;
+    
   }
 </style>
 </head>
@@ -916,7 +921,7 @@
     <button class="back-btn" onclick="closeOnlineUsers()">←</button>
     <div class="modal-title">🌐 Online Users</div>
     <div style="margin-left:auto;">
-      <button class="secondary" style="width:auto;padding:6px 14px;font-size:12px;margin:0;" onclick="loadOnlineUsers()">
+      <button id="refresh" class="secondary" style="width:auto;padding:6px 14px;font-size:12px;margin:0;" onclick="loadOnlineUsers()">
         Refresh
       </button>
     </div>
