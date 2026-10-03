@@ -675,8 +675,16 @@
 
       <label>Discount value</label>
       <input id="setDiscValue" type="number" min="0" step="0.01" value="0" />
+            <hr style="border-color:var(--border);margin:14px 0;" />
+
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="setAutoPrint" style="width:auto;" />
+        Auto-print bill after order
+      </label>
 
       <hr style="border-color:var(--border);margin:14px 0;" />
+
+
 
       <label>Rider assign mode</label>
       <select id="assignMode">
@@ -722,6 +730,7 @@
     };
 
     let salesCache = { orders: [], from: '', to: '', range: 'today' };
+        let cafeBrand = { name: 'Cafe', logo: '', address: '', phone: '' };
 
     /* =========================================================
        HELPERS
@@ -908,35 +917,8 @@
     async function bootApp() {
       document.getElementById('login-box').style.display = 'none';
       document.getElementById('app-box').classList.add('show');
-
-      let brandName = user?.restaurant_name || 'Cafe';
-      let plan = user?.plan || 'Cafe Lite';
-      let info = null;
-
-      try {
-        info = await api('/restaurants/me');
-        if (info?.data) {
-          brandName = info.data.name || brandName;
-          plan = info.data.plan || plan;
-        }
-      } catch (e) {
-        console.warn('Could not fetch restaurant info:', e.message);
-      }
-
-      document.getElementById('brandName').textContent = brandName;
-      document.getElementById('planPill').textContent = plan;
-
-      const logoUrl = info?.data?.logo_url ? normalizeLogoUrl(info.data.logo_url) : '';
-      const brandLogoEl = document.getElementById('brandLogo');
-      if (brandLogoEl && logoUrl) {
-        brandLogoEl.src = logoUrl;
-        brandLogoEl.style.display = 'block';
-        brandLogoEl.onerror = () => { brandLogoEl.style.display = 'none'; };
-      } else if (brandLogoEl) {
-        brandLogoEl.style.display = 'none';
-      }
-
-      document.title = `${brandName} — Counter Lite`;
+      await loadCafeBrand();
+      document.title = `${cafeBrand.name} — Counter Lite`;
 
       try {
         const posRes = await api('/settings/pos');
@@ -946,6 +928,7 @@
       } catch (e) {
         console.warn('Could not load POS settings:', e.message);
       }
+            setInterval(() => { loadCafeBrand().catch(() => {}); }, 120000);
 
       await Promise.all([
         loadShift(),
@@ -957,6 +940,44 @@
 
       connectSocket();
       renderCart();
+    }
+
+        async function loadCafeBrand() {
+      try {
+        const info = await api('/restaurants/me');
+        if (!info?.data) return cafeBrand;
+
+        cafeBrand = {
+          name: info.data.name || cafeBrand.name || 'Cafe',
+          logo: info.data.logo_url ? normalizeLogoUrl(info.data.logo_url) : '',
+          address: info.data.address || '',
+          phone: info.data.phone || ''
+        };
+
+        document.getElementById('brandName').textContent = cafeBrand.name;
+        document.title = `${cafeBrand.name} — Counter Lite`;
+
+        const brandLogoEl = document.getElementById('brandLogo');
+        if (brandLogoEl) {
+          if (cafeBrand.logo) {
+            brandLogoEl.src = cafeBrand.logo;
+            brandLogoEl.style.display = 'block';
+            brandLogoEl.onerror = () => { brandLogoEl.style.display = 'none'; };
+          } else {
+            brandLogoEl.style.display = 'none';
+            brandLogoEl.removeAttribute('src');
+          }
+        }
+
+        const plan = info.data.plan || 'Cafe Lite';
+        const planEl = document.getElementById('planPill');
+        if (planEl) planEl.textContent = plan;
+
+        return cafeBrand;
+      } catch (e) {
+        console.warn('loadCafeBrand:', e.message);
+        return cafeBrand;
+      }
     }
 
     async function loadDeliveryRiders() {
@@ -1283,24 +1304,26 @@
         await loadTodaySales();
 
         const id = data.order?.local_number || data.order?.id || '';
-
-        try {
-          printBill({
-            orderNo: id,
-            orderType: receiptType,
-            tableNo: receiptTable || null,
-            customerName: receiptName,
-            phone: receiptPhone,
-            address: receiptAddr,
-            items: receiptItems,
-            bill: receiptBill,
-            payNow: receiptPayNow,
-            paymentMethod: receiptMethod,
-            cardCharge: receiptCard,
-            bankCharge: receiptBank
-          });
-        } catch (err) {
-          console.warn('printBill:', err);
+        const autoPrint = localStorage.getItem('cafe_auto_print') !== '0';
+        if (autoPrint) {
+          try {
+            printBill({
+              orderNo: id,
+              orderType: receiptType,
+              tableNo: receiptTable || null,
+              customerName: receiptName,
+              phone: receiptPhone,
+              address: receiptAddr,
+              items: receiptItems,
+              bill: receiptBill,
+              payNow: receiptPayNow,
+              paymentMethod: receiptMethod,
+              cardCharge: receiptCard,
+              bankCharge: receiptBank
+            });
+          } catch (err) {
+            console.warn('printBill:', err);
+          }
         }
 
         alert(payNow ? `Order #${id} placed & paid` : `Order #${id} placed`);
@@ -1972,7 +1995,18 @@
         bankCharge = 0
       } = opts;
 
-      const brand = document.getElementById('brandName')?.textContent || 'Cafe';
+      const brand = cafeBrand.name || document.getElementById('brandName')?.textContent || 'Cafe';
+      const logo = cafeBrand.logo || '';
+      const logoHtml = logo
+        ? `<div style="text-align:center;margin-bottom:6px;">
+             <img src="${esc(logo)}" alt="" style="max-width:64px;max-height:64px;object-fit:contain;"
+               onerror="this.style.display='none'" />
+           </div>`
+        : '';
+      const addrLine = cafeBrand.address
+        ? `<div class="muted">${esc(cafeBrand.address)}</div>` : '';
+      const phoneLine = cafeBrand.phone
+        ? `<div class="muted">${esc(cafeBrand.phone)}</div>` : '';
       const now = new Date().toLocaleString();
       const finalTotal = Number(bill.total || 0) + Number(cardCharge || 0) + Number(bankCharge || 0);
 
@@ -2031,7 +2065,10 @@
   .tot { font-weight: bold; font-size: 14px; }
   .center { text-align: center; }
 </style></head><body>
+    ${logoHtml}
   <h1>${esc(brand)}</h1>
+  ${addrLine}
+  ${phoneLine}
   <div class="muted">Order #${esc(String(orderNo))}<br>${esc(now)}</div>
   <div>${meta}</div>
   <hr>
@@ -2070,6 +2107,8 @@
       document.getElementById('setBankCharge').value = posSettings.bank_charge || 0;
       document.getElementById('setDiscType').value = posSettings.discount_type || 'none';
       document.getElementById('setDiscValue').value = posSettings.discount_value || 0;
+            document.getElementById('setAutoPrint').checked =
+        localStorage.getItem('cafe_auto_print') !== '0';
       document.getElementById('assignMode').value =
         localStorage.getItem('cafe_assign_mode') || 'manual';
       document.getElementById('settingsModal').classList.remove('hidden');
@@ -2098,6 +2137,10 @@
           body: JSON.stringify(payload)
         });
         posSettings = { ...posSettings, ...(res.data || payload) };
+                localStorage.setItem(
+          'cafe_auto_print',
+          document.getElementById('setAutoPrint').checked ? '1' : '0'
+        );
         localStorage.setItem('cafe_assign_mode', document.getElementById('assignMode').value);
         renderCart();
         closeSettings();
