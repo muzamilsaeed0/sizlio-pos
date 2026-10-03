@@ -391,7 +391,7 @@
 
     /* ================ SALES REPORT ================ */
     .sales-modal { max-width: 720px; width: 100%; }
-        #salesPage {
+    #salesPage {
       display: none;
       flex-direction: column;
       gap: 12px;
@@ -570,47 +570,45 @@
         <div class="orders-list" id="ordersList"></div>
       </section>
     </div>
-      <!-- ================ SALES FULL PAGE ================ -->
-  <div id="salesPage">
-    <div class="sales-page-header">
-      <h2>Sales report</h2>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button type="button" class="btn btn-ghost" onclick="exportSalesCSV()">Export CSV</button>
-        <button type="button" class="btn btn-ghost" onclick="printSalesReport()">Print</button>
-        <button type="button" class="btn btn-accent" onclick="closeSalesReport()">← Back to counter</button>
+
+    <!-- ================ SALES FULL PAGE ================ -->
+    <div id="salesPage">
+      <div class="sales-page-header">
+        <h2>Sales report</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" class="btn btn-ghost" onclick="exportSalesCSV()">Export CSV</button>
+          <button type="button" class="btn btn-ghost" onclick="printSalesReport()">Print</button>
+          <button type="button" class="btn btn-accent" onclick="closeSalesReport()">← Back to counter</button>
+        </div>
+      </div>
+      <div class="sales-filters">
+        <button type="button" class="chip-btn active" id="sf-today" onclick="setSalesRange('today')">Today</button>
+        <button type="button" class="chip-btn" id="sf-week" onclick="setSalesRange('week')">This week</button>
+        <button type="button" class="chip-btn" id="sf-month" onclick="setSalesRange('month')">This month</button>
+        <input type="date" id="salesFrom" />
+        <input type="date" id="salesTo" />
+        <button type="button" class="btn btn-accent" style="width:auto;padding:8px 14px;" onclick="loadSalesReport()">Apply</button>
+      </div>
+      <div class="sales-stats">
+        <div class="sales-stat"><div class="lbl">Orders</div><div class="val" id="stOrders">0</div></div>
+        <div class="sales-stat"><div class="lbl">Sales</div><div class="val" id="stSales">Rs 0</div></div>
+        <div class="sales-stat"><div class="lbl">Avg bill</div><div class="val" id="stAvg">Rs 0</div></div>
+        <div class="sales-stat"><div class="lbl">Items sold</div><div class="val" id="stItems">0</div></div>
+      </div>
+      <div class="sales-section-title">Payment summary</div>
+      <div id="salesPayments" class="empty">—</div>
+      <div class="sales-section-title">Top items</div>
+      <div id="salesTop" class="empty">—</div>
+      <div class="sales-section-title">Orders</div>
+      <div class="sales-table-wrap">
+        <table class="sales-table">
+          <thead>
+            <tr><th>#</th><th>Type</th><th>Status</th><th>Pay</th><th>Total</th><th>Time</th></tr>
+          </thead>
+          <tbody id="salesOrdersBody"></tbody>
+        </table>
       </div>
     </div>
-    <div class="sales-filters">
-      <button type="button" class="chip-btn active" id="sf-today" onclick="setSalesRange('today')">Today</button>
-      <button type="button" class="chip-btn" id="sf-week" onclick="setSalesRange('week')">This week</button>
-      <button type="button" class="chip-btn" id="sf-month" onclick="setSalesRange('month')">This month</button>
-      <input type="date" id="salesFrom" />
-      <input type="date" id="salesTo" />
-      <button type="button" class="btn btn-accent" style="width:auto;padding:8px 14px;" onclick="loadSalesReport()">Apply</button>
-    </div>
-    <div class="sales-stats">
-      <div class="sales-stat"><div class="lbl">Orders</div><div class="val" id="stOrders">0</div></div>
-      <div class="sales-stat"><div class="lbl">Sales</div><div class="val" id="stSales">Rs 0</div></div>
-      <div class="sales-stat"><div class="lbl">Avg bill</div><div class="val" id="stAvg">Rs 0</div></div>
-      <div class="sales-stat"><div class="lbl">Items sold</div><div class="val" id="stItems">0</div></div>
-    </div>
-    <div class="sales-section-title">Payment summary</div>
-    <div id="salesPayments" class="empty">—</div>
-    <div class="sales-section-title">Top items</div>
-    <div id="salesTop" class="empty">—</div>
-    <div class="sales-section-title">Orders</div>
-    <div class="sales-table-wrap">
-      <table class="sales-table">
-        <thead>
-          <tr><th>#</th><th>Type</th><th>Status</th><th>Pay</th><th>Total</th><th>Time</th></tr>
-        </thead>
-        <tbody id="salesOrdersBody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  
-
   </div>
 
   <!-- ================ MENU ADMIN MODAL ================ -->
@@ -645,8 +643,8 @@
     </div>
   </div>
 
- <!-- ================ SETTINGS MODAL ================ -->
-    <div id="settingsModal" class="modal-bg hidden">
+  <!-- ================ SETTINGS MODAL ================ -->
+  <div id="settingsModal" class="modal-bg hidden">
     <div class="modal" style="max-width:420px;">
       <h3>Settings</h3>
 
@@ -692,6 +690,7 @@
       </div>
     </div>
   </div>
+
   <script src="/socket.io/socket.io.js"></script>
 
   <script>
@@ -710,7 +709,7 @@
     let cart = [];
     let deliveryRiders = [];
     let currentShift = null;
-        let posSettings = {
+    let posSettings = {
       gst_percent: 0,
       tax_percent: 0,
       delivery_charge: 0,
@@ -840,7 +839,7 @@
       }
     }
 
-        /* =========================================================
+    /* =========================================================
        SOCKET.IO — Realtime updates
     ========================================================= */
     let socket = null;
@@ -867,7 +866,6 @@
           console.warn('Counter Lite socket:', err.message);
         });
 
-        /* ✅ Refresh orders list on any order event */
         [
           'order_created',
           'order_updated',
@@ -885,7 +883,6 @@
             loadTodaySales();
           });
         });
-
       } catch (err) {
         console.error('Socket connect failed:', err);
       }
@@ -894,7 +891,7 @@
     /* =========================================================
        LOGOUT
     ========================================================= */
-       function logout() {
+    function logout() {
       if (socket) {
         try { socket.disconnect(); } catch (_) {}
         socket = null;
@@ -941,7 +938,6 @@
 
       document.title = `${brandName} — Counter Lite`;
 
-      /* Load POS settings (for surcharge %) */
       try {
         const posRes = await api('/settings/pos');
         if (posRes?.data) {
@@ -955,25 +951,23 @@
         loadShift(),
         loadMenu(),
         loadOrders(),
-         
         loadTodaySales(),
         loadDeliveryRiders()
       ]);
-
 
       connectSocket();
       renderCart();
     }
 
     async function loadDeliveryRiders() {
-  try {
-    const data = await api('/orders/delivery-riders');
-    deliveryRiders = Array.isArray(data.riders) ? data.riders : [];
-  } catch (e) {
-    console.warn('riders:', e.message);
-    deliveryRiders = [];
-  }
-}
+      try {
+        const data = await api('/orders/delivery-riders');
+        deliveryRiders = Array.isArray(data.riders) ? data.riders : [];
+      } catch (e) {
+        console.warn('riders:', e.message);
+        deliveryRiders = [];
+      }
+    }
 
     /* =========================================================
        SHIFT
@@ -1116,8 +1110,7 @@
       return cart.reduce((s, c) => s + c.price * c.qty, 0);
     }
 
-
-        function calcBill(subtotal) {
+    function calcBill(subtotal) {
       const sub = Number(subtotal) || 0;
       const discType = posSettings.discount_type || 'none';
       const discVal = Number(posSettings.discount_value || 0);
@@ -1159,7 +1152,7 @@
         `).join('');
       }
 
-            const sub = cartTotal();
+      const sub = cartTotal();
       const bill = calcBill(sub);
       let lines = `<div class="line"><span>Subtotal</span><span>${money(bill.sub)}</span></div>`;
       if (bill.discountAmount > 0) {
@@ -1195,7 +1188,6 @@
           return;
         }
       }
-      
 
       let tableNo = 0;
       if (orderType === 'dine_in') {
@@ -1203,8 +1195,7 @@
         tableNo = Number.isInteger(t) && t > 0 ? t : 0;
       }
 
-      const total = cartTotal();
-            const bill = calcBill(cartTotal());
+      const bill = calcBill(cartTotal());
       const payMethod = document.getElementById('payMethod').value || 'Cash';
 
       let cardCharge = 0;
@@ -1217,6 +1208,12 @@
         }
       }
       const finalTotal = bill.total + cardCharge + bankCharge;
+
+      /* ✅ items PEHLE banao */
+      const items = cart.map(c => ({
+        menu_item_id: Number(c.id),
+        quantity: Number(c.qty)
+      }));
 
       const body = {
         items,
@@ -1239,12 +1236,6 @@
         gst_percent: Number(posSettings.gst_percent || 0),
         tax_percent: Number(posSettings.tax_percent || 0)
       };
-      const items = cart.map(c => ({
-        menu_item_id: Number(c.id),
-        quantity: Number(c.qty)
-      }));
-
-      
 
       try {
         const data = await api('/orders', {
@@ -1252,10 +1243,28 @@
           body: JSON.stringify(body)
         });
 
+        /* Snapshot for receipt */
+        const receiptItems = cart.map(c => ({
+          name: c.name,
+          qty: c.qty,
+          price: c.price,
+          package_size: c.package_size,
+          package_unit: c.package_unit
+        }));
+        const receiptBill = bill;
+        const receiptType = orderType;
+        const receiptTable = tableNo;
+        const receiptName = document.getElementById('custName').value.trim() || '';
+        const receiptPhone = document.getElementById('custPhone').value.trim() || '';
+        const receiptAddr = document.getElementById('custAddress').value.trim() || '';
+        const receiptPayNow = payNow;
+        const receiptMethod = payMethod;
+        const receiptCard = cardCharge;
+        const receiptBank = bankCharge;
+
         cart = [];
         renderCart();
 
-        /* Reset form fields */
         document.getElementById('tableNo').value = '';
         document.getElementById('custName').value = '';
         document.getElementById('custPhone').value = '';
@@ -1274,6 +1283,26 @@
         await loadTodaySales();
 
         const id = data.order?.local_number || data.order?.id || '';
+
+        try {
+          printBill({
+            orderNo: id,
+            orderType: receiptType,
+            tableNo: receiptTable || null,
+            customerName: receiptName,
+            phone: receiptPhone,
+            address: receiptAddr,
+            items: receiptItems,
+            bill: receiptBill,
+            payNow: receiptPayNow,
+            paymentMethod: receiptMethod,
+            cardCharge: receiptCard,
+            bankCharge: receiptBank
+          });
+        } catch (err) {
+          console.warn('printBill:', err);
+        }
+
         alert(payNow ? `Order #${id} placed & paid` : `Order #${id} placed`);
       } catch (e) {
         console.error('placeOrder:', e);
@@ -1284,12 +1313,11 @@
     /* =========================================================
        ORDERS
     ========================================================= */
-        async function loadOrders() {
+    async function loadOrders() {
       try {
         const data = await api('/orders');
         const allOrders = data.orders || data.data || [];
 
-        /* Active = not completed / cancelled */
         const orders = allOrders.filter(o => {
           const st = String(o.status || '').toLowerCase();
           return !['completed', 'cancelled'].includes(st);
@@ -1324,7 +1352,6 @@
 
           /* Delivery */
           if (isDelivery) {
-            /* ✅ Rider info display */
             const riderName = o.delivery_rider_name || o.delivery_rider_username || '';
             const riderInfo = hasRider
               ? `<div style="margin:6px 0;padding:6px 10px;border-radius:8px;background:rgba(47,163,125,.1);font-size:11px;color:var(--ok);">
@@ -1341,9 +1368,8 @@
               ${riderInfo}
             `;
 
-            /* ============ UNASSIGNED — Manual + Auto ============ */
+            /* UNASSIGNED — Manual + Auto */
             if (!hasRider && ['placed', 'preparing', 'ready', 'ready_to_deliver'].includes(st)) {
-
               const availableRiders = deliveryRiders.filter(r =>
                 r.is_active !== false && r.shift_active === true
               );
@@ -1370,10 +1396,8 @@
               }
             }
 
-            /* ============ ASSIGNED — Unassign + Workflow ============ */
+            /* ASSIGNED — Unassign + Workflow */
             if (hasRider) {
-
-              /* ✅ Unassign button — before pickup */
               if (['placed', 'preparing', 'ready', 'ready_to_deliver'].includes(st)) {
                 actions += `<button class="btn btn-ghost" style="color:var(--danger);border-color:var(--danger);" onclick="unassignRider(${o.id})">❌ Unassign rider</button>`;
               }
@@ -1396,6 +1420,9 @@
             }
           }
 
+          /* ✅ Print button HAR order card pe */
+          actions += `<button class="btn btn-ghost" onclick="reprintOrder(${o.id})">🖨️ Print</button>`;
+
           return `
             <div class="order-card">
               <div class="hd">
@@ -1413,11 +1440,59 @@
       }
     }
 
+    async function reprintOrder(orderId) {
+      try {
+        const data = await api('/orders');
+        const allOrders = data.orders || data.data || [];
+        const o = allOrders.find(x => Number(x.id) === Number(orderId));
+
+        if (!o) {
+          alert('Order not found — may have been completed');
+          return;
+        }
+
+        const items = (o.items || []).map(it => ({
+          name: it.name || it.item_name || 'Item',
+          qty: Number(it.qty || it.quantity || 1),
+          price: Number(it.price || 0),
+          package_size: it.package_size,
+          package_unit: it.package_unit
+        }));
+
+        const sub = Number(o.subtotal || items.reduce((s, i) => s + i.price * i.qty, 0));
+        const bill = {
+          sub,
+          discountAmount: Number(o.discount_amount || 0),
+          gstAmount: Number(o.gst_amount || 0),
+          taxAmount: Number(o.tax_amount || 0),
+          extra: Number(o.delivery_charge || 0) + Number(o.dine_charge || 0),
+          total: Number(o.total_amount || o.total || sub)
+        };
+
+        printBill({
+          orderNo: o.local_number || o.id,
+          orderType: o.order_type,
+          tableNo: o.table_no,
+          customerName: o.customer_name || '',
+          phone: o.delivery_phone || '',
+          address: o.delivery_address || '',
+          items,
+          bill,
+          payNow: String(o.payment_status).toLowerCase() === 'paid',
+          paymentMethod: o.payment_method || 'Cash',
+          cardCharge: Number(o.card_charge || 0),
+          bankCharge: Number(o.bank_charge || 0)
+        });
+      } catch (e) {
+        console.error('reprintOrder:', e);
+        alert(e.message || 'Print failed');
+      }
+    }
+
     async function payOrder(id, amount) {
       try {
         const method = document.getElementById('payMethod').value || 'Cash';
 
-        /* ✅ Apply surcharge on payment too */
         let cardCharge = 0;
         let bankCharge = 0;
 
@@ -1454,7 +1529,7 @@
       }
     }
 
-        async function assignRider(orderId) {
+    async function assignRider(orderId) {
       const sel = document.getElementById('rider-sel-' + orderId);
       const riderId = Number(sel && sel.value);
       if (!riderId) {
@@ -1481,7 +1556,7 @@
       }
     }
 
-        /* =========================================================
+    /* =========================================================
        UNASSIGN RIDER
     ========================================================= */
     async function unassignRider(orderId) {
@@ -1502,7 +1577,7 @@
     async function outForDelivery(id) {
       try {
         await api('/orders/' + id + '/out-for-delivery', { method: 'PUT' });
-       await Promise.all([loadOrders(), loadDeliveryRiders()]);
+        await Promise.all([loadOrders(), loadDeliveryRiders()]);
       } catch (e) {
         alert(e.message || 'Failed');
       }
@@ -1521,23 +1596,23 @@
        TODAY SALES
     ========================================================= */
     async function loadTodaySales() {
-  try {
-    const from = todayISO();
-    const to = from;
-    const salesRes = await api(`/reports/sales?from=${from}&to=${to}`);
-    const orders = salesRes.data || [];
-    let total = 0;
-    orders.forEach(o => {
-      if (String(o.payment_status || '').toLowerCase() === 'paid') {
-        total += Number(o.total_amount || o.total || 0);
+      try {
+        const from = todayISO();
+        const to = from;
+        const salesRes = await api(`/reports/sales?from=${from}&to=${to}`);
+        const orders = salesRes.data || [];
+        let total = 0;
+        orders.forEach(o => {
+          if (String(o.payment_status || '').toLowerCase() === 'paid') {
+            total += Number(o.total_amount || o.total || 0);
+          }
+        });
+        document.getElementById('todaySales').textContent =
+          `Today: ${money(total)} (${orders.length} orders)`;
+      } catch {
+        document.getElementById('todaySales').textContent = 'Today: —';
       }
-    });
-    document.getElementById('todaySales').textContent =
-      `Today: ${money(total)} (${orders.length} orders)`;
-  } catch {
-    document.getElementById('todaySales').textContent = 'Today: —';
-  }
-}
+    }
 
     /* =========================================================
        MENU ADMIN
@@ -1735,30 +1810,29 @@
         document.getElementById('stAvg').textContent = money(avg);
         document.getElementById('stItems').textContent = String(itemsSold || '—');
 
-        /* Payment summary */
         const payData = payRes.data || [];
         const payEl = document.getElementById('salesPayments');
 
         if (Array.isArray(payData) && payData.length) {
-  payEl.classList.remove('empty');
-  payEl.innerHTML = payData.map(p => {
-    const method = p.payment_method || p.method || 'Other';
-    let total = Number(p.total || p.amount || p.sum || p.sales || 0);
-    const cnt = p.count || p.orders || '';
-    if (!total) {
-      total = salesCache.orders
-        .filter(o => String(o.payment_status).toLowerCase() === 'paid'
-          && (o.payment_method || 'Cash') === method)
-        .reduce((s, o) => s + Number(o.total_amount || o.total || 0), 0);
-    }
-    return `<div class="pay-bar-row"><span>${esc(method)}${cnt ? ` (${esc(cnt)})` : ''}</span><strong>${money(total)}</strong></div>`;
-  }).join('');
+          payEl.classList.remove('empty');
+          payEl.innerHTML = payData.map(p => {
+            const method = p.payment_method || p.method || 'Other';
+            let total = Number(p.total || p.amount || p.sum || p.sales || 0);
+            const cnt = p.count || p.orders || '';
+            if (!total) {
+              total = salesCache.orders
+                .filter(o => String(o.payment_status).toLowerCase() === 'paid'
+                  && (o.payment_method || 'Cash') === method)
+                .reduce((s, o) => s + Number(o.total_amount || o.total || 0), 0);
+            }
+            return `<div class="pay-bar-row"><span>${esc(method)}${cnt ? ` (${esc(cnt)})` : ''}</span><strong>${money(total)}</strong></div>`;
+          }).join('');
         } else {
           const map = {};
           salesCache.orders.forEach(o => {
             if (String(o.payment_status).toLowerCase() !== 'paid') return;
             const m = o.payment_method || 'Cash';
-           map[m] = (map[m] || 0) + Number(o.total_amount || o.total || 0);
+            map[m] = (map[m] || 0) + Number(o.total_amount || o.total || 0);
           });
           const keys = Object.keys(map);
           if (!keys.length) {
@@ -1772,7 +1846,6 @@
           }
         }
 
-        /* Top items */
         const topData = topRes.data || [];
         const topEl = document.getElementById('salesTop');
 
@@ -1792,7 +1865,6 @@
           topEl.textContent = 'No item data';
         }
 
-        /* Orders table */
         const body = document.getElementById('salesOrdersBody');
         if (!salesCache.orders.length) {
           body.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;">No orders</td></tr>';
@@ -1876,10 +1948,120 @@
       w.document.close();
     }
 
+    function orderTypeLabelPrint(t) {
+      const x = String(t || '').toLowerCase();
+      if (x === 'walk_in') return 'Takeaway';
+      if (x === 'delivery') return 'Delivery';
+      return 'Dine-in';
+    }
+
+    /** Build + print cafe receipt (58mm thermal friendly) */
+    function printBill(opts) {
+      const {
+        orderNo,
+        orderType: ot,
+        tableNo,
+        customerName,
+        phone,
+        address,
+        items,
+        bill,
+        payNow,
+        paymentMethod,
+        cardCharge = 0,
+        bankCharge = 0
+      } = opts;
+
+      const brand = document.getElementById('brandName')?.textContent || 'Cafe';
+      const now = new Date().toLocaleString();
+      const finalTotal = Number(bill.total || 0) + Number(cardCharge || 0) + Number(bankCharge || 0);
+
+      const itemRows = (items || []).map(it => {
+        const pkg = (it.package_size && it.package_unit)
+          ? ` (${it.package_size}${it.package_unit})`
+          : '';
+        const line = Number(it.price) * Number(it.qty);
+        return `<tr>
+          <td style="text-align:left;">${esc(it.name)}${esc(pkg)}<br><span style="color:#555;">x${it.qty} @ ${Number(it.price).toFixed(2)}</span></td>
+          <td style="text-align:right;vertical-align:top;">${line.toFixed(2)}</td>
+        </tr>`;
+      }).join('');
+
+      let extraLines = '';
+      if (bill.discountAmount > 0) {
+        extraLines += `<tr><td>Discount</td><td style="text-align:right;">-${Number(bill.discountAmount).toFixed(2)}</td></tr>`;
+      }
+      if (bill.gstAmount > 0) {
+        extraLines += `<tr><td>GST (${posSettings.gst_percent || 0}%)</td><td style="text-align:right;">${Number(bill.gstAmount).toFixed(2)}</td></tr>`;
+      }
+      if (bill.taxAmount > 0) {
+        extraLines += `<tr><td>Tax</td><td style="text-align:right;">${Number(bill.taxAmount).toFixed(2)}</td></tr>`;
+      }
+      if (bill.extra > 0) {
+        const lbl = String(ot).toLowerCase() === 'delivery' ? 'Delivery charge' : 'Dine charge';
+        extraLines += `<tr><td>${lbl}</td><td style="text-align:right;">${Number(bill.extra).toFixed(2)}</td></tr>`;
+      }
+      if (cardCharge > 0) {
+        extraLines += `<tr><td>Card fee</td><td style="text-align:right;">${Number(cardCharge).toFixed(2)}</td></tr>`;
+      }
+      if (bankCharge > 0) {
+        extraLines += `<tr><td>Bank fee</td><td style="text-align:right;">${Number(bankCharge).toFixed(2)}</td></tr>`;
+      }
+
+      const typeLabel = orderTypeLabelPrint(ot);
+      const meta = [
+        `Type: ${typeLabel}`,
+        tableNo ? `Table: ${tableNo}` : '',
+        customerName ? `Customer: ${customerName}` : '',
+        phone ? `Phone: ${phone}` : '',
+        address ? `Address: ${address}` : '',
+        payNow ? `Paid: ${paymentMethod || 'Cash'}` : 'Payment: Later / COD'
+      ].filter(Boolean).join('<br>');
+
+      const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Bill #${esc(String(orderNo))}</title>
+<style>
+  @page { margin: 4mm; size: 80mm auto; }
+  body { font-family: 'Courier New', monospace; font-size: 12px; color: #000; width: 72mm; margin: 0 auto; padding: 4px; }
+  h1 { font-size: 16px; text-align: center; margin: 0 0 4px; }
+  .muted { text-align: center; color: #333; font-size: 11px; margin-bottom: 8px; }
+  hr { border: none; border-top: 1px dashed #000; margin: 8px 0; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 2px 0; vertical-align: top; }
+  .tot { font-weight: bold; font-size: 14px; }
+  .center { text-align: center; }
+</style></head><body>
+  <h1>${esc(brand)}</h1>
+  <div class="muted">Order #${esc(String(orderNo))}<br>${esc(now)}</div>
+  <div>${meta}</div>
+  <hr>
+  <table>
+    ${itemRows}
+  </table>
+  <hr>
+  <table>
+    <tr><td>Subtotal</td><td style="text-align:right;">${Number(bill.sub).toFixed(2)}</td></tr>
+    ${extraLines}
+    <tr class="tot"><td>TOTAL</td><td style="text-align:right;">Rs ${finalTotal.toFixed(2)}</td></tr>
+  </table>
+  <hr>
+  <p class="center">Thank you!</p>
+  <scr` + `ipt>window.onload=function(){window.print();setTimeout(function(){window.close();},400);};</scr` + `ipt>
+</body></html>`;
+
+      const w = window.open('', '_blank', 'width=400,height=600');
+      if (!w) {
+        alert('Allow popups to print bill');
+        return;
+      }
+      w.document.write(html);
+      w.document.close();
+    }
+
     /* =========================================================
        SETTINGS
     ========================================================= */
-        function openSettings() {
+    function openSettings() {
       document.getElementById('setGst').value = posSettings.gst_percent || 0;
       document.getElementById('setTax').value = posSettings.tax_percent || 0;
       document.getElementById('setDelCharge').value = posSettings.delivery_charge || 0;
