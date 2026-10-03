@@ -824,7 +824,8 @@ async (req, res) => {
           plan,
           status,
           expiry_date,
-          food_type
+          food_type,
+          busniss_type
 
         FROM restaurants
 
