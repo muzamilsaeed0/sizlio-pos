@@ -642,7 +642,32 @@
       </div>
     </div>
   </div>
+  <!-- ================ BILL PREVIEW ================ -->
+  <div id="billPreviewModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:420px;max-height:90vh;overflow:auto;">
+      <h3>Bill preview</h3>
 
+      <label>Customer name</label>
+      <input id="bpName" placeholder="Optional" />
+
+      <label>Phone</label>
+      <input id="bpPhone" placeholder="Optional" />
+
+      <label>Note on bill</label>
+      <input id="bpNote" placeholder="e.g. less spicy / thank you" />
+
+      <div id="bpPreview" style="
+        margin:12px 0;padding:12px;background:#fff;color:#000;
+        border-radius:10px;font-family:'Courier New',monospace;font-size:12px;
+        max-height:320px;overflow:auto;border:1px solid var(--border);
+      "></div>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeBillPreview()">Close</button>
+        <button class="btn btn-accent" onclick="confirmPrintBill()">Print</button>
+      </div>
+    </div>
+  </div>
   <!-- ================ SETTINGS MODAL ================ -->
   <div id="settingsModal" class="modal-bg hidden">
     <div class="modal" style="max-width:420px;">
@@ -728,6 +753,8 @@
       discount_type: 'none',
       discount_value: 0
     };
+
+        let pendingBillOpts = null;
 
     let salesCache = { orders: [], from: '', to: '', range: 'today' };
         let cafeBrand = { name: 'Cafe', logo: '', address: '', phone: '' };
@@ -1978,69 +2005,55 @@
       return 'Dine-in';
     }
 
-    /** Build + print cafe receipt (58mm thermal friendly) */
     function printBill(opts) {
+      showBillPreview(opts);
+    }
+     
+    function buildBillHtml(opts) {
       const {
-        orderNo,
-        orderType: ot,
-        tableNo,
-        customerName,
-        phone,
-        address,
-        items,
-        bill,
-        payNow,
-        paymentMethod,
-        cardCharge = 0,
-        bankCharge = 0
+        orderNo, orderType: ot, tableNo, customerName, phone, address,
+        items, bill, payNow, paymentMethod, cardCharge = 0, bankCharge = 0,
+        note = ''
       } = opts;
 
       const brand = cafeBrand.name || document.getElementById('brandName')?.textContent || 'Cafe';
       const logo = cafeBrand.logo || '';
       const logoHtml = logo
         ? `<div style="text-align:center;margin-bottom:6px;">
-             <img src="${esc(logo)}" alt="" style="max-width:64px;max-height:64px;object-fit:contain;"
+             <img src="${esc(logo)}" style="max-width:64px;max-height:64px;object-fit:contain;"
                onerror="this.style.display='none'" />
-           </div>`
-        : '';
-      const addrLine = cafeBrand.address
-        ? `<div class="muted">${esc(cafeBrand.address)}</div>` : '';
-      const phoneLine = cafeBrand.phone
-        ? `<div class="muted">${esc(cafeBrand.phone)}</div>` : '';
+           </div>` : '';
+      const addrLine = cafeBrand.address ? `<div class="muted">${esc(cafeBrand.address)}</div>` : '';
+      const phoneLine = cafeBrand.phone ? `<div class="muted">${esc(cafeBrand.phone)}</div>` : '';
       const now = new Date().toLocaleString();
       const finalTotal = Number(bill.total || 0) + Number(cardCharge || 0) + Number(bankCharge || 0);
 
       const itemRows = (items || []).map(it => {
         const pkg = (it.package_size && it.package_unit)
-          ? ` (${it.package_size}${it.package_unit})`
-          : '';
+          ? ` (${it.package_size}${it.package_unit})` : '';
         const line = Number(it.price) * Number(it.qty);
         return `<tr>
-          <td style="text-align:left;">${esc(it.name)}${esc(pkg)}<br><span style="color:#555;">x${it.qty} @ ${Number(it.price).toFixed(2)}</span></td>
+          <td style="text-align:left;">${esc(it.name)}${esc(pkg)}
+            <br><span style="color:#555;">x${it.qty} @ ${Number(it.price).toFixed(2)}</span></td>
           <td style="text-align:right;vertical-align:top;">${line.toFixed(2)}</td>
         </tr>`;
       }).join('');
 
       let extraLines = '';
-      if (bill.discountAmount > 0) {
+      if (bill.discountAmount > 0)
         extraLines += `<tr><td>Discount</td><td style="text-align:right;">-${Number(bill.discountAmount).toFixed(2)}</td></tr>`;
-      }
-      if (bill.gstAmount > 0) {
+      if (bill.gstAmount > 0)
         extraLines += `<tr><td>GST (${posSettings.gst_percent || 0}%)</td><td style="text-align:right;">${Number(bill.gstAmount).toFixed(2)}</td></tr>`;
-      }
-      if (bill.taxAmount > 0) {
+      if (bill.taxAmount > 0)
         extraLines += `<tr><td>Tax</td><td style="text-align:right;">${Number(bill.taxAmount).toFixed(2)}</td></tr>`;
-      }
       if (bill.extra > 0) {
         const lbl = String(ot).toLowerCase() === 'delivery' ? 'Delivery charge' : 'Dine charge';
         extraLines += `<tr><td>${lbl}</td><td style="text-align:right;">${Number(bill.extra).toFixed(2)}</td></tr>`;
       }
-      if (cardCharge > 0) {
+      if (cardCharge > 0)
         extraLines += `<tr><td>Card fee</td><td style="text-align:right;">${Number(cardCharge).toFixed(2)}</td></tr>`;
-      }
-      if (bankCharge > 0) {
+      if (bankCharge > 0)
         extraLines += `<tr><td>Bank fee</td><td style="text-align:right;">${Number(bankCharge).toFixed(2)}</td></tr>`;
-      }
 
       const typeLabel = orderTypeLabelPrint(ot);
       const meta = [
@@ -2049,32 +2062,29 @@
         customerName ? `Customer: ${customerName}` : '',
         phone ? `Phone: ${phone}` : '',
         address ? `Address: ${address}` : '',
+        note ? `Note: ${note}` : '',
         payNow ? `Paid: ${paymentMethod || 'Cash'}` : 'Payment: Later / COD'
       ].filter(Boolean).join('<br>');
 
-      const html = `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Bill #${esc(String(orderNo))}</title>
+      return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Bill #${esc(String(orderNo))}</title>
 <style>
-  @page { margin: 4mm; size: 80mm auto; }
-  body { font-family: 'Courier New', monospace; font-size: 12px; color: #000; width: 72mm; margin: 0 auto; padding: 4px; }
-  h1 { font-size: 16px; text-align: center; margin: 0 0 4px; }
-  .muted { text-align: center; color: #333; font-size: 11px; margin-bottom: 8px; }
-  hr { border: none; border-top: 1px dashed #000; margin: 8px 0; }
-  table { width: 100%; border-collapse: collapse; }
-  td { padding: 2px 0; vertical-align: top; }
-  .tot { font-weight: bold; font-size: 14px; }
-  .center { text-align: center; }
+  @page{margin:4mm;size:80mm auto;}
+  body{font-family:'Courier New',monospace;font-size:12px;color:#000;width:72mm;margin:0 auto;padding:4px;}
+  h1{font-size:16px;text-align:center;margin:0 0 4px;}
+  .muted{text-align:center;color:#333;font-size:11px;margin-bottom:6px;}
+  hr{border:none;border-top:1px dashed #000;margin:8px 0;}
+  table{width:100%;border-collapse:collapse;}
+  td{padding:2px 0;vertical-align:top;}
+  .tot{font-weight:bold;font-size:14px;}
+  .center{text-align:center;}
 </style></head><body>
-    ${logoHtml}
+  ${logoHtml}
   <h1>${esc(brand)}</h1>
-  ${addrLine}
-  ${phoneLine}
+  ${addrLine}${phoneLine}
   <div class="muted">Order #${esc(String(orderNo))}<br>${esc(now)}</div>
   <div>${meta}</div>
   <hr>
-  <table>
-    ${itemRows}
-  </table>
+  <table>${itemRows}</table>
   <hr>
   <table>
     <tr><td>Subtotal</td><td style="text-align:right;">${Number(bill.sub).toFixed(2)}</td></tr>
@@ -2083,16 +2093,69 @@
   </table>
   <hr>
   <p class="center">Thank you!</p>
-  <scr` + `ipt>window.onload=function(){window.print();setTimeout(function(){window.close();},400);};</scr` + `ipt>
 </body></html>`;
-
-      const w = window.open('', '_blank', 'width=400,height=600');
+    const w = window.open('', '_blank', 'width=400,height=600');
       if (!w) {
         alert('Allow popups to print bill');
         return;
       }
       w.document.write(html);
       w.document.close();
+    }
+        function showBillPreview(opts) {
+      pendingBillOpts = { ...opts };
+      document.getElementById('bpName').value = opts.customerName || '';
+      document.getElementById('bpPhone').value = opts.phone || '';
+      document.getElementById('bpNote').value = opts.note || '';
+      refreshBillPreview();
+      document.getElementById('billPreviewModal').classList.remove('hidden');
+    }
+
+    function refreshBillPreview() {
+      if (!pendingBillOpts) return;
+      const opts = {
+        ...pendingBillOpts,
+        customerName: document.getElementById('bpName').value.trim(),
+        phone: document.getElementById('bpPhone').value.trim(),
+        note: document.getElementById('bpNote').value.trim()
+      };
+      const html = buildBillHtml(opts);
+      // preview pane: body only
+      const m = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+      document.getElementById('bpPreview').innerHTML = m ? m[1] : html;
+    }
+
+    function closeBillPreview() {
+      document.getElementById('billPreviewModal').classList.add('hidden');
+      pendingBillOpts = null;
+    }
+
+    function confirmPrintBill() {
+      if (!pendingBillOpts) return;
+      const opts = {
+        ...pendingBillOpts,
+        customerName: document.getElementById('bpName').value.trim(),
+        phone: document.getElementById('bpPhone').value.trim(),
+        note: document.getElementById('bpNote').value.trim()
+      };
+      const html = buildBillHtml(opts);
+      const w = window.open('', '_blank', 'width=400,height=600');
+      if (!w) {
+        alert('Allow popups to print');
+        return;
+      }
+      w.document.write(html + '<script>window.onload=function(){window.print();setTimeout(function(){window.close();},400);};<\/script>');
+      w.document.close();
+      closeBillPreview();
+    }
+
+    // name/phone/note change pe preview update
+    // (page load pe bind)
+    function bindBillPreviewEditors() {
+      ['bpName', 'bpPhone', 'bpNote'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', refreshBillPreview);
+      });
     }
 
     /* =========================================================
@@ -2178,6 +2241,7 @@
         try {
           user = { restaurant_name: 'Cafe', plan: 'Cafe Lite', restaurant_id: restaurantId };
           await bootApp();
+                bindBillPreviewEditors();
         } catch (err) {
           console.warn('Session restore failed:', err);
           logout();
