@@ -646,19 +646,46 @@
   </div>
 
  <!-- ================ SETTINGS MODAL ================ -->
-  <div id="settingsModal" class="modal-bg hidden">
-    <div class="modal">
+    <div id="settingsModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:420px;">
       <h3>Settings</h3>
-      <p style="color:var(--muted);font-size:13px;margin:0 0 12px;">
-        Rider management &amp; auto-assign — Phase 2 (structure ready).
-      </p>
-      <label>Default assign mode</label>
+
+      <label>GST %</label>
+      <input id="setGst" type="number" min="0" max="100" step="0.01" value="0" />
+
+      <label>Tax % (other)</label>
+      <input id="setTax" type="number" min="0" max="100" step="0.01" value="0" />
+
+      <label>Delivery charge (Rs)</label>
+      <input id="setDelCharge" type="number" min="0" step="1" value="0" />
+
+      <label>Dine-in charge (Rs)</label>
+      <input id="setDineCharge" type="number" min="0" step="1" value="0" />
+
+      <label>Card surcharge %</label>
+      <input id="setCardCharge" type="number" min="0" max="100" step="0.01" value="0" />
+
+      <label>Bank surcharge %</label>
+      <input id="setBankCharge" type="number" min="0" max="100" step="0.01" value="0" />
+
+      <label>Discount type</label>
+      <select id="setDiscType">
+        <option value="none">None</option>
+        <option value="percent">Percent %</option>
+        <option value="fixed">Fixed Rs</option>
+      </select>
+
+      <label>Discount value</label>
+      <input id="setDiscValue" type="number" min="0" step="0.01" value="0" />
+
+      <hr style="border-color:var(--border);margin:14px 0;" />
+
+      <label>Rider assign mode</label>
       <select id="assignMode">
         <option value="manual">Manual</option>
         <option value="auto">Auto (least load)</option>
       </select>
-      <label style="margin-top:12px;">Riders</label>
-      <div id="riderList" class="empty">Load riders after backend rider APIs wired on this screen.</div>
+
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeSettings()">Close</button>
         <button class="btn btn-accent" onclick="saveSettings()">Save</button>
@@ -683,14 +710,18 @@
     let cart = [];
     let deliveryRiders = [];
     let currentShift = null;
-    let posSettings = {
+        let posSettings = {
       gst_percent: 0,
       tax_percent: 0,
       delivery_charge: 0,
       dine_charge: 0,
       card_charge: 0,
-      bank_charge: 0
+      bank_charge: 0,
+      discount_enabled: false,
+      discount_type: 'none',
+      discount_value: 0
     };
+
     let salesCache = { orders: [], from: '', to: '', range: 'today' };
 
     /* =========================================================
@@ -1085,6 +1116,32 @@
       return cart.reduce((s, c) => s + c.price * c.qty, 0);
     }
 
+
+        function calcBill(subtotal) {
+      const sub = Number(subtotal) || 0;
+      const discType = posSettings.discount_type || 'none';
+      const discVal = Number(posSettings.discount_value || 0);
+      let discountAmount = 0;
+      if (posSettings.discount_enabled !== false) {
+        if (discType === 'percent') discountAmount = sub * (discVal / 100);
+        else if (discType === 'fixed') discountAmount = discVal;
+      }
+      discountAmount = Math.min(Math.max(discountAmount, 0), sub);
+      const afterDiscount = sub - discountAmount;
+
+      const gstPercent = Number(posSettings.gst_percent || 0);
+      const taxPercent = Number(posSettings.tax_percent || 0);
+      const gstAmount = afterDiscount * (gstPercent / 100);
+      const taxAmount = afterDiscount * (taxPercent / 100);
+
+      let extra = 0;
+      if (orderType === 'delivery') extra += Number(posSettings.delivery_charge || 0);
+      if (orderType === 'dine_in') extra += Number(posSettings.dine_charge || 0);
+
+      const total = afterDiscount + gstAmount + taxAmount + extra;
+      return { sub, discountAmount, gstAmount, taxAmount, extra, total };
+    }
+
     function renderCart() {
       const el = document.getElementById('cartList');
 
@@ -1102,11 +1159,23 @@
         `).join('');
       }
 
-      const t = cartTotal();
-      document.getElementById('totals').innerHTML = `
-        <div class="line"><span>Subtotal</span><span>${money(t)}</span></div>
-        <div class="line grand"><span>Total</span><span>${money(t)}</span></div>
-      `;
+            const sub = cartTotal();
+      const bill = calcBill(sub);
+      let lines = `<div class="line"><span>Subtotal</span><span>${money(bill.sub)}</span></div>`;
+      if (bill.discountAmount > 0) {
+        lines += `<div class="line"><span>Discount</span><span>-${money(bill.discountAmount)}</span></div>`;
+      }
+      if (bill.gstAmount > 0) {
+        lines += `<div class="line"><span>GST (${posSettings.gst_percent}%)</span><span>${money(bill.gstAmount)}</span></div>`;
+      }
+      if (bill.taxAmount > 0) {
+        lines += `<div class="line"><span>Tax</span><span>${money(bill.taxAmount)}</span></div>`;
+      }
+      if (bill.extra > 0) {
+        lines += `<div class="line"><span>${orderType === 'delivery' ? 'Delivery' : 'Dine'} charge</span><span>${money(bill.extra)}</span></div>`;
+      }
+      lines += `<div class="line grand"><span>Total</span><span>${money(bill.total)}</span></div>`;
+      document.getElementById('totals').innerHTML = lines;
     }
 
     /* =========================================================
@@ -1135,26 +1204,19 @@
       }
 
       const total = cartTotal();
-      const items = cart.map(c => ({
-        menu_item_id: Number(c.id),
-        quantity: Number(c.qty)
-      }));
-
+            const bill = calcBill(cartTotal());
       const payMethod = document.getElementById('payMethod').value || 'Cash';
 
-      /* ✅ Calculate surcharge if paying now */
       let cardCharge = 0;
       let bankCharge = 0;
-
       if (payNow) {
         if (payMethod === 'Card') {
-          cardCharge = total * (Number(posSettings.card_charge || 0) / 100);
+          cardCharge = bill.total * (Number(posSettings.card_charge || 0) / 100);
         } else if (payMethod === 'Bank') {
-          bankCharge = total * (Number(posSettings.bank_charge || 0) / 100);
+          bankCharge = bill.total * (Number(posSettings.bank_charge || 0) / 100);
         }
       }
-
-      const finalTotal = total + cardCharge + bankCharge;
+      const finalTotal = bill.total + cardCharge + bankCharge;
 
       const body = {
         items,
@@ -1163,22 +1225,26 @@
         order_source: 'COUNTER',
         table_no: tableNo,
         customer_name: document.getElementById('custName').value.trim() || null,
-        delivery_phone: orderType === 'delivery'
-          ? document.getElementById('custPhone').value.trim() : null,
-        delivery_address: orderType === 'delivery'
-          ? document.getElementById('custAddress').value.trim() : null,
-        payment_timing: payNow
-          ? 'PAID_AT_ORDER'
-          : (orderType === 'delivery' ? 'COD' : 'PAY_LATER'),
+        delivery_phone: orderType === 'delivery' ? document.getElementById('custPhone').value.trim() : null,
+        delivery_address: orderType === 'delivery' ? document.getElementById('custAddress').value.trim() : null,
+        payment_timing: payNow ? 'PAID_AT_ORDER' : (orderType === 'delivery' ? 'COD' : 'PAY_LATER'),
         payment_method: payNow ? payMethod : null,
         paid_amount: payNow ? finalTotal : 0,
         card_charge: cardCharge,
         bank_charge: bankCharge,
-        discount_type: 'none',
-        discount_value: 0,
-        gst_percent: 0,
-        tax_percent: 0
+        delivery_charge: orderType === 'delivery' ? Number(posSettings.delivery_charge || 0) : 0,
+        dine_charge: orderType === 'dine_in' ? Number(posSettings.dine_charge || 0) : 0,
+        discount_type: posSettings.discount_type || 'none',
+        discount_value: Number(posSettings.discount_value || 0),
+        gst_percent: Number(posSettings.gst_percent || 0),
+        tax_percent: Number(posSettings.tax_percent || 0)
       };
+      const items = cart.map(c => ({
+        menu_item_id: Number(c.id),
+        quantity: Number(c.qty)
+      }));
+
+      
 
       try {
         const data = await api('/orders', {
@@ -1813,9 +1879,17 @@
     /* =========================================================
        SETTINGS
     ========================================================= */
-    function openSettings() {
-      const mode = localStorage.getItem('cafe_assign_mode') || 'manual';
-      document.getElementById('assignMode').value = mode;
+        function openSettings() {
+      document.getElementById('setGst').value = posSettings.gst_percent || 0;
+      document.getElementById('setTax').value = posSettings.tax_percent || 0;
+      document.getElementById('setDelCharge').value = posSettings.delivery_charge || 0;
+      document.getElementById('setDineCharge').value = posSettings.dine_charge || 0;
+      document.getElementById('setCardCharge').value = posSettings.card_charge || 0;
+      document.getElementById('setBankCharge').value = posSettings.bank_charge || 0;
+      document.getElementById('setDiscType').value = posSettings.discount_type || 'none';
+      document.getElementById('setDiscValue').value = posSettings.discount_value || 0;
+      document.getElementById('assignMode').value =
+        localStorage.getItem('cafe_assign_mode') || 'manual';
       document.getElementById('settingsModal').classList.remove('hidden');
     }
 
@@ -1823,9 +1897,32 @@
       document.getElementById('settingsModal').classList.add('hidden');
     }
 
-    function saveSettings() {
-      localStorage.setItem('cafe_assign_mode', document.getElementById('assignMode').value);
-      closeSettings();
+    async function saveSettings() {
+      const payload = {
+        gst_percent: Number(document.getElementById('setGst').value || 0),
+        tax_percent: Number(document.getElementById('setTax').value || 0),
+        delivery_charge: Number(document.getElementById('setDelCharge').value || 0),
+        dine_charge: Number(document.getElementById('setDineCharge').value || 0),
+        card_charge: Number(document.getElementById('setCardCharge').value || 0),
+        bank_charge: Number(document.getElementById('setBankCharge').value || 0),
+        discount_enabled: document.getElementById('setDiscType').value !== 'none',
+        discount_type: document.getElementById('setDiscType').value || 'none',
+        discount_value: Number(document.getElementById('setDiscValue').value || 0)
+      };
+
+      try {
+        const res = await api('/settings/pos', {
+          method: 'PUT',
+          body: JSON.stringify(payload)
+        });
+        posSettings = { ...posSettings, ...(res.data || payload) };
+        localStorage.setItem('cafe_assign_mode', document.getElementById('assignMode').value);
+        renderCart();
+        closeSettings();
+        alert('Settings saved');
+      } catch (e) {
+        alert(e.message || 'Save failed');
+      }
     }
 
     /* =========================================================
