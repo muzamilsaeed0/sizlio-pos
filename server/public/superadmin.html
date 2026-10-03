@@ -683,6 +683,15 @@
       Manager: 1 · Kitchen: 1 · Rider: 2
     </div>
 
+    <div class="form-group">
+  <label>Business Type</label>
+
+  <select id="r-business-type">
+    <option value="restaurant">Restaurant</option>
+    <option value="wholesale">Wholesale</option>
+  </select>
+</div>
+
     <select id="r-food-type">
       <option value="Fast Food">Fast Food</option>
       <option value="Desi / Pakistani">Desi / Pakistani</option>
@@ -1715,20 +1724,27 @@
       const mgrUsername = document.getElementById('r-manager-username').value.trim();
       const mgrPassword = document.getElementById('r-manager-password').value;
 
-      const body = {
-        name: document.getElementById('r-name').value.trim(),
-        owner_name: document.getElementById('r-owner').value.trim(),
-        city: document.getElementById('r-city').value.trim(),
-        phone: document.getElementById('r-phone').value.trim(),
-        email: document.getElementById('r-email').value.trim(),
-        address: document.getElementById('r-address').value.trim(),
-        plan: plan,
-        food_type: document.getElementById('r-food-type').value,
-        expiry_date: document.getElementById('r-expiry').value,
-        manager_fullname: document.getElementById('r-manager-name').value.trim(),
-        manager_username: mgrUsername,
-        manager_password: mgrPassword
-      };
+     const body = {
+  name: document.getElementById('r-name').value.trim(),
+  owner_name: document.getElementById('r-owner').value.trim(),
+  city: document.getElementById('r-city').value.trim(),
+  phone: document.getElementById('r-phone').value.trim(),
+  email: document.getElementById('r-email').value.trim(),
+  address: document.getElementById('r-address').value.trim(),
+
+  plan: plan,
+
+  food_type: document.getElementById('r-food-type').value,
+
+
+  business_type: document.getElementById('r-business-type').value,
+
+  expiry_date: document.getElementById('r-expiry').value,
+
+  manager_fullname: document.getElementById('r-manager-name').value.trim(),
+  manager_username: mgrUsername,
+  manager_password: mgrPassword
+};
 
       if (!body.name) {
         msg.style.color = '#E15A4C';
@@ -1791,6 +1807,7 @@
       document.getElementById('r-expiry').value = '';
       document.getElementById('r-plan').value = 'Basic';
       document.getElementById('r-food-type').value = 'Fast Food';
+      document.getElementById('r-business-type').value = 'restaurant';
       updateCreatePlanLimits();
 
       await loadRestaurants();

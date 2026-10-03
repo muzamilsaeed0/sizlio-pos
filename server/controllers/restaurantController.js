@@ -69,8 +69,19 @@ exports.addRestaurant = async (req, res) => {
       manager_username,
       manager_password,
       manager_fullname,
-      food_type
+      food_type,
+      business_type
     } = req.body;
+
+    const selectedBusinessType =
+  business_type || 'restaurant';
+
+if (!['restaurant', 'wholesale'].includes(selectedBusinessType)) {
+  return res.status(400).json({
+    success: false,
+    message: 'Invalid business type'
+  });
+}
 
 
     // --------------------------------------------------
@@ -139,7 +150,8 @@ if (!isCafeLite) {
       manager_username,
       manager_password,
       manager_fullname,
-      food_type: selectedFoodType
+      food_type: selectedFoodType,
+      business_type: selectedBusinessType
     });
 
 

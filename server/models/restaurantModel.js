@@ -169,8 +169,16 @@ const createRestaurant = async (data) => {
       manager_password,
       manager_fullname,
 
-      food_type
+      food_type,
+      business_type
     } = data;
+
+    const selectedBusinessType =
+  business_type || 'restaurant';
+
+if (!['restaurant', 'wholesale'].includes(selectedBusinessType)) {
+  throw new Error('Invalid business type.');
+}
 
     const selectedPlan = plan || "Basic";
 
@@ -201,6 +209,8 @@ if (!PLAN_LIMITS[selectedPlan]) {
 
     }
 
+    
+
     // --------------------------------------------------
     // CREATE RESTAURANT
     // --------------------------------------------------
@@ -228,7 +238,8 @@ if (!PLAN_LIMITS[selectedPlan]) {
           kitchen_username,
           kitchen_password,
 
-          food_type
+          food_type,
+          business_type
         )
 
         VALUES
@@ -237,7 +248,8 @@ if (!PLAN_LIMITS[selectedPlan]) {
           $9,$10,
           $11,$12,
           $13,$14,
-          $15
+          $15,
+          $16
         )
 
         RETURNING *
@@ -262,7 +274,8 @@ if (!PLAN_LIMITS[selectedPlan]) {
           null,
           null,
 
-          selectedFoodType
+          selectedFoodType,
+          selectedBusinessType
         ]
       );
 
