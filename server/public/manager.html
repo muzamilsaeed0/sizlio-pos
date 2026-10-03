@@ -980,7 +980,20 @@
 
     /* FOOD TYPE */
     function normalizeFoodType(value) { return String(value || "").trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " "); }
-    function foodType() { const value = restaurantInfo?.food_type ?? restaurantInfo?.foodType ?? restaurantInfo?.food_type_name ?? ""; const normalized = normalizeFoodType(value); if (normalized.includes("fast") && normalized.includes("desi")) return "combo"; if (normalized.includes("fast")) return "fast"; if (normalized.includes("desi") || normalized.includes("pakistani")) return "desi"; return "custom"; }
+    function foodType() { 
+      const value = restaurantInfo?.food_type ?? restaurantInfo?.foodType ?? restaurantInfo?.food_type_name ?? ""; 
+      const normalized = normalizeFoodType(value); if (normalized.includes("fast") && normalized.includes("desi")) return "combo"; if (normalized.includes("fast")) return "fast"; if (normalized.includes("desi") || normalized.includes("pakistani")) return "desi"; return "custom"; }
+      function businessType() {
+  return String(
+    restaurantInfo?.business_type ??
+    restaurantInfo?.businessType ??
+    "restaurant"
+  ).toLowerCase().trim();
+}
+
+function isWholesale() {
+  return businessType() === "wholesale";
+}
     function customCategories() { const raw = restaurantInfo?.enabled_categories ?? restaurantInfo?.enabled_menu_categories ?? restaurantInfo?.custom_categories ?? restaurantInfo?.menu_categories ?? []; if (Array.isArray(raw)) return raw.map(item => typeof item === "string" ? item : item?.category || item?.name).filter(Boolean); if (typeof raw === "string") return raw.split(",").map(item => item.trim()).filter(Boolean); return []; }
     function allowedCategories() { const type = foodType(); if (type === "fast") return Object.keys(CATEGORY_GROUPS.fastFood); if (type === "desi") return Object.keys(CATEGORY_GROUPS.desi); if (type === "combo") return [...new Set([...Object.keys(CATEGORY_GROUPS.desi), ...Object.keys(CATEGORY_GROUPS.fastFood)])]; return customCategories(); }
 
@@ -2441,6 +2454,9 @@
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.success || !data.data) return;
         restaurantInfo = data.data;
+        console.log("Restaurant:", restaurantInfo);
+console.log("Business type:", businessType());
+console.log("Is wholesale:", isWholesale());
         const header = document.getElementById("brand-header");
         header.style.display = "flex";
         const logo = restaurantInfo.logo_url ? normalizeLogoUrl(restaurantInfo.logo_url) : "";
