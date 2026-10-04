@@ -8,9 +8,7 @@ router.post('/login', login);
 router.put('/settings', authMiddleware, 
   require('../controllers/authController').updateSettings);
 
-// ✅ NEW: counter/manager apna username+password update kare
-router.put('/update-account', authMiddleware, 
-  require('../controllers/authController').updateAccount);
+
 
 router.get('/me', authMiddleware, (req, res) => {
   res.json({ success: true, user: req.user });
