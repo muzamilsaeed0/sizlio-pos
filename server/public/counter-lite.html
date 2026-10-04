@@ -1213,7 +1213,18 @@
       if (bill.extra > 0) {
         lines += `<div class="line"><span>${orderType === 'delivery' ? 'Delivery' : 'Dine'} charge</span><span>${money(bill.extra)}</span></div>`;
       }
-      lines += `<div class="line grand"><span>Total</span><span>${money(bill.total)}</span></div>`;
+
+      const method = document.getElementById('payMethod')?.value || 'Cash';
+      let surcharge = 0;
+      if (method === 'Card' && Number(posSettings.card_charge) > 0) {
+        surcharge = bill.total * (Number(posSettings.card_charge) / 100);
+        lines += `<div class="line"><span>Card (${posSettings.card_charge}%)</span><span>${money(surcharge)}</span></div>`;
+      } else if (method === 'Bank' && Number(posSettings.bank_charge) > 0) {
+        surcharge = bill.total * (Number(posSettings.bank_charge) / 100);
+        lines += `<div class="line"><span>Bank (${posSettings.bank_charge}%)</span><span>${money(surcharge)}</span></div>`;
+      }
+
+      lines += `<div class="line grand"><span>Total</span><span>${money(bill.total + surcharge)}</span></div>`;
       document.getElementById('totals').innerHTML = lines;
     }
 
