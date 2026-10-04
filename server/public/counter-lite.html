@@ -399,7 +399,7 @@
   </div>
 
   <div id="menuModal" class="modal-bg hidden">
-    <div class="modal">
+        <div class="modal" style="max-height:90vh;overflow:auto;">
       <h3>Menu items</h3>
       <div id="menuAdminList"></div>
       <hr style="border-color:var(--border);margin:14px 0;" />
@@ -425,6 +425,22 @@
         <option value="Ltr">Ltr</option>
         <option value="pcs">pcs</option>
       </select>
+            <hr style="border-color:var(--border);margin:16px 0;" />
+      <h3 style="margin:0 0 10px;">🎁 Deals</h3>
+      <div id="dealsAdminList" style="margin-bottom:12px;font-size:12px;"></div>
+
+      <h3 style="margin:0 0 10px;font-size:15px;">Add deal</h3>
+      <input type="hidden" id="editDealId" value="" />
+      <label>Deal name *</label>
+      <input id="dName" placeholder="e.g. Lunch combo" />
+      <label>Deal price *</label>
+      <input id="dPrice" type="number" min="1" step="0.01" placeholder="0" />
+      <label>Items in this deal</label>
+      <div id="dItemPicks" style="max-height:140px;overflow:auto;font-size:12px;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <button type="button" class="btn btn-accent" onclick="saveDeal()">Save deal</button>
+        <button type="button" class="btn btn-ghost" onclick="resetDealForm()">Clear</button>
+      </div>    <div class="modal"></div>
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeMenuAdmin()">Close</button>
         <button class="btn btn-accent" onclick="saveMenuItem()">Save</button>
@@ -448,16 +464,7 @@
         height:360px;
       "></div>
 
-      <hr style="border-color:var(--border);margin:16px 0;" />
-      <h3 style="margin:0 0 10px;">🎁 Add deal</h3>
-      <label>Deal name *</label>
-      <input id="dName" placeholder="e.g. Lunch combo" />
-      <label>Deal price *</label>
-      <input id="dPrice" type="number" min="1" step="0.01" placeholder="0" />
-      <label>Items in this deal</label>
-      <div id="dItemPicks" style="max-height:140px;overflow:auto;font-size:12px;margin-bottom:10px;"></div>
-      <button type="button" class="btn btn-accent" onclick="saveDeal()">Save deal</button>
-      <div id="dealsAdminList" style="margin-top:12px;font-size:12px;"></div>
+ 
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeBillPreview()">Close</button>
         <button class="btn btn-accent" onclick="confirmPrintBill()">Print</button>
