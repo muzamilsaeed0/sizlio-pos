@@ -628,12 +628,15 @@
       <label>Package size</label>
       <input id="mPkgSize" type="number" min="0" step="0.01" placeholder="e.g. 250" />
       <label>Package unit</label>
-      <select id="mPkgUnit">
+           <select id="mPkgUnit">
         <option value="">— none —</option>
+        <option value="S">S</option>
+        <option value="M">M</option>
+        <option value="L">L</option>
         <option value="ml">ml</option>
         <option value="g">g</option>
         <option value="kg">kg</option>
-        <option value="L">L</option>
+        <option value="Ltr">Ltr</option>
         <option value="pcs">pcs</option>
       </select>
       <div class="modal-actions">
@@ -1746,6 +1749,20 @@
       } catch (e) {
         alert(e.message || 'Save failed');
       }
+    }
+
+        function pkgLabel(item) {
+      if (!item) return '';
+      const u = item.package_unit || '';
+      const s = item.package_size;
+      if (!u && (s === null || s === undefined || s === '')) return '';
+      // size optional for S/M/L
+      if (['S', 'M', 'L'].includes(String(u)) && (s === null || s === '' || Number(s) === 0)) {
+        return String(u);
+      }
+      if (s !== null && s !== undefined && s !== '' && u) return `${s} ${u}`;
+      if (u) return String(u);
+      return s != null && s !== '' ? String(s) : '';
     }
 
     /* =========================================================
