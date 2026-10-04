@@ -379,6 +379,7 @@
               <th>Subtotal</th>
               <th>Disc</th>
               <th>GST</th>
+              <th>Tax</th>
               <th>Dine</th>
               <th>Del</th>
               <th>Card</th>
@@ -1508,6 +1509,7 @@
             const sub = Number(o.subtotal || 0);
             const disc = Number(o.discount_amount || 0);
             const gst = Number(o.gst_amount || 0);
+            const tax = Number(o.tax_amount || 0);
             const dine = Number(o.dine_charge || 0);
             const del = Number(o.delivery_charge || 0);
             const card = Number(o.card_charge || 0);
@@ -1522,6 +1524,7 @@
               <td>${sub ? money(sub) : '—'}</td>
               <td>${disc ? money(disc) : '—'}</td>
               <td>${gst ? money(gst) : '—'}</td>
+              <td>${tax ? money(tax) : '—'}</td>
               <td>${dine ? money(dine) : '—'}</td>
               <td>${del ? money(del) : '—'}</td>
               <td>${card ? money(card) : '—'}</td>
@@ -1594,7 +1597,7 @@
       let table = `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:10px;">
         <tr>
           <th>#</th><th>Type</th><th>Pay</th><th>Items</th>
-          <th>Sub</th><th>Disc</th><th>GST</th>
+          <th>Sub</th><th>Disc</th><th>GST</th><th>Tax</th>
           <th>Dine</th><th>Del</th><th>Card</th><th>Bank</th>
           <th>Total</th><th>Time</th>
         </tr>`;
@@ -1618,6 +1621,7 @@
           <td>${o.subtotal || 0}</td>
           <td>${o.discount_amount || 0}</td>
           <td>${o.gst_amount || 0}</td>
+          <td>${o.tax_amount || 0}</td>
           <td>${o.dine_charge || 0}</td>
           <td>${o.delivery_charge || 0}</td>
           <td>${o.card_charge || 0}</td>
