@@ -1382,7 +1382,10 @@
         ]);
 
         const orders = salesRes.data || salesRes.orders || [];
-        salesCache.orders = Array.isArray(orders) ? orders : [];
+        salesCache.orders = (Array.isArray(orders) ? orders : []).filter(o =>
+          String(o.status || '').toLowerCase() === 'completed' &&
+          String(o.payment_status || '').toLowerCase() === 'paid'
+        );
 
         let totalSales = 0, paidCount = 0, itemsSold = 0;
 
@@ -1468,7 +1471,7 @@
             const payLabel = String(o.payment_status || '—') +
               (o.payment_method ? ' / ' + normPayMethod(o.payment_method) : '');
 
-            return `<tr class="sales-order-row" data-id="${oid}">
+            return `<tr class="sales-order-row" data-id="${oid}" style="cursor:pointer;" title="Click for item details">
               <td>#${esc(o.local_number || o.id)}</td>
               <td>${esc(orderTypeLabel(o.order_type))}</td>
               <td>${esc(o.status || '—')}</td>

@@ -11,6 +11,7 @@ const getSummary = async (restaurantId) => {
   FROM orders o
   WHERE o.restaurant_id = $1
     AND o.payment_status = 'paid'
+    AND o.status = 'completed'
     AND o.paid_at::date = CURRENT_DATE
   `,
   [restaurantId]
@@ -25,6 +26,7 @@ const getSummary = async (restaurantId) => {
   FROM orders o
   WHERE o.restaurant_id = $1
     AND o.payment_status = 'paid'
+    AND o.status = 'completed'
     AND date_trunc('month', o.paid_at)
         = date_trunc('month', CURRENT_DATE)
   `,
@@ -274,6 +276,8 @@ COALESCE(
 
       AND o.payment_status = 'paid'
 
+      AND o.status = 'completed'
+
       AND o.paid_at IS NOT NULL
 
       ${condition}
@@ -334,6 +338,8 @@ const getTopItems = async (
 
       AND o.payment_status = 'paid'
 
+      AND o.status = 'completed'
+
       AND oi.order_deal_id IS NULL
 
       ${dateFilter}
@@ -369,6 +375,7 @@ const getPaymentSummary = async (
 
     dateFilter = `
       AND o.payment_status = 'paid'
+      AND o.status = 'completed'
       AND o.paid_at::date
       BETWEEN $2 AND $3
     `;
@@ -379,6 +386,7 @@ const getPaymentSummary = async (
 
     dateFilter = `
       AND o.payment_status = 'paid'
+      AND o.status = 'completed'
     `;
 
   }
@@ -451,6 +459,8 @@ const getSalesChart = async(
     WHERE o.restaurant_id = $1
 
       AND o.payment_status = 'paid'
+
+      AND o.status = 'completed'
 
       ${dateFilter}
 
