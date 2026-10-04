@@ -1409,14 +1409,23 @@
         const payEl = document.getElementById('salesPayments');
         const payMap = {};
 
-        if (Array.isArray(payData) && payData.length) {
+               if (Array.isArray(payData) && payData.length) {
           payData.forEach(p => {
             const m = normPayMethod(p.payment_method || p.method);
-            const t = Number(p.total || p.amount || p.sum || p.sales || 0);
+            let t = Number(p.total || p.amount || p.sum || p.sales || 0);
             const c = Number(p.count || p.orders || 0);
+            // agar API amount 0 de to orders se sum
+            if (!t && c) {
+              t = salesCache.orders
+                .filter(o =>
+                  String(o.payment_status || '').toLowerCase() === 'paid' &&
+                  normPayMethod(o.payment_method) === m
+                )
+                .reduce((s, o) => s + Number(o.total_amount || o.total || 0), 0);
+            }
             if (!payMap[m]) payMap[m] = { total: 0, count: 0 };
             payMap[m].total += t;
-            payMap[m].count += c;
+            payMap[m].count += c || 0;
           });
         } else {
           // fallback: group from orders
@@ -1521,74 +1530,61 @@
           }).join('');
 
           // Attach click handlers
-          body.querySelectorAll('.sales-order-row').forEach(row => {
-            row.addEventListener('click', async () => {
+                   body.querySelectorAll('.sales-order-row').forEach(row => {
+            row.addEventListener('click', () => {
               const oid = Number(row.dataset.id);
               const detailRow = body.querySelector(`tr[data-detail="${oid}"]`);
               if (!detailRow) return;
 
-              const isHidden = detailRow.style.display === 'none';
-              detailRow.style.display = isHidden ? '' : 'none';
-              if (isHidden) expandedOrders.add(oid);
+              const currentlyHidden = getComputedStyle(detailRow).display === 'none';
+              detailRow.style.display = currentlyHidden ? 'table-row' : 'none';
+              if (currentlyHidden) expandedOrders.add(oid);
               else expandedOrders.delete(oid);
 
-              // Lazy-load detail content
               const inner = detailRow.querySelector(`[data-inner="${oid}"]`);
-              if (inner && inner.dataset.loaded !== '1') {
-                try {
-                  const full = await fetchFullOrder(oid);
-                  const items = orderItemsOf(full);
-                  const itemRows = items.length
-                    ? items.map(it => {
-                        const pkg = (it.package_size && it.package_unit)
-                          ? ` (${esc(it.package_size)}${esc(it.package_unit)})` : '';
-                        const line = Number(it.price) * Number(it.qty);
-                        return `<tr>
-                          <td>${esc(it.name)}${pkg}</td>
-                          <td style="text-align:center;">${it.qty}</td>
-                          <td style="text-align:right;">${money(it.price)}</td>
-                          <td style="text-align:right;">${money(line)}</td>
-                        </tr>`;
-                      }).join('')
-                    : `<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:8px;">No items</td></tr>`;
+              if (!inner || inner.dataset.loaded === '1') return;
 
-                  const payFull = String(full.payment_status || '—') +
-                    (full.payment_method ? ' / ' + normPayMethod(full.payment_method) : '');
+              const o = salesCache.orders.find(x => Number(x.id) === oid) || {};
+              const items = orderItemsOf(o);
+              const itemRows = items.length
+                ? items.map(it => {
+                    const pkg = (it.package_size && it.package_unit)
+                      ? ` (${esc(it.package_size)}${esc(it.package_unit)})` : '';
+                    const line = Number(it.price) * Number(it.qty);
+                    return `<tr>
+                      <td>${esc(it.name)}${pkg}</td>
+                      <td style="text-align:center;">${it.qty}</td>
+                      <td style="text-align:right;">${money(it.price)}</td>
+                      <td style="text-align:right;">${money(line)}</td>
+                    </tr>`;
+                  }).join('')
+                : `<tr><td colspan="4" style="color:var(--muted);text-align:center;">No items</td></tr>`;
 
-                  inner.innerHTML = `
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-                      <div><span class="det-label">Order #</span> <strong>${esc(full.local_number || full.id)}</strong></div>
-                      <div><span class="det-label">Type</span> ${esc(orderTypeLabel(full.order_type))}</div>
-                      <div><span class="det-label">Status</span> ${esc(full.status || '—')}</div>
-                      <div><span class="det-label">Payment</span> ${esc(payFull)}</div>
-                      <div><span class="det-label">Customer</span> ${esc(full.customer_name || '—')}</div>
-                      <div><span class="det-label">Table</span> ${full.table_no ? esc(full.table_no) : '—'}</div>
-                      ${full.delivery_phone ? `<div><span class="det-label">Phone</span> ${esc(full.delivery_phone)}</div>` : ''}
-                      ${full.delivery_address ? `<div style="grid-column:1/-1;"><span class="det-label">Address</span> ${esc(full.delivery_address)}</div>` : ''}
-                    </div>
-                    <table>
-                      <thead><tr>
-                        <th style="color:var(--muted);font-weight:600;font-size:11px;text-align:left;">Item</th>
-                        <th style="color:var(--muted);font-weight:600;font-size:11px;">Qty</th>
-                        <th style="color:var(--muted);font-weight:600;font-size:11px;text-align:right;">Price</th>
-                        <th style="color:var(--muted);font-weight:600;font-size:11px;text-align:right;">Line</th>
-                      </tr></thead>
-                      <tbody>${itemRows}</tbody>
-                    </table>
-                    <div style="margin-top:8px;text-align:right;">
-                      <span class="det-label">Subtotal</span> ${money(full.subtotal || 0)} &nbsp;
-                      ${Number(full.discount_amount) > 0 ? `<span class="det-label">Discount</span> -${money(full.discount_amount)} &nbsp;` : ''}
-                      ${Number(full.gst_amount) > 0 ? `<span class="det-label">GST</span> ${money(full.gst_amount)} &nbsp;` : ''}
-                      ${Number(full.tax_amount) > 0 ? `<span class="det-label">Tax</span> ${money(full.tax_amount)} &nbsp;` : ''}
-                      ${Number(full.delivery_charge) > 0 ? `<span class="det-label">Delivery</span> ${money(full.delivery_charge)} &nbsp;` : ''}
-                      ${Number(full.dine_charge) > 0 ? `<span class="det-label">Dine</span> ${money(full.dine_charge)} &nbsp;` : ''}
-                      <span class="det-total">Total: ${money(full.total_amount || full.total || 0)}</span>
-                    </div>`;
-                  inner.dataset.loaded = '1';
-                } catch (err) {
-                  inner.innerHTML = `<div style="color:var(--danger);padding:8px;">Failed to load: ${esc(err.message)}</div>`;
-                }
-              }
+              const payFull = String(o.payment_status || '—') +
+                (o.payment_method ? ' / ' + normPayMethod(o.payment_method) : '');
+
+              inner.innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;padding:8px;">
+                  <div><span class="det-label">Order #</span> <strong>${esc(o.local_number || o.id)}</strong></div>
+                  <div><span class="det-label">Type</span> ${esc(orderTypeLabel(o.order_type))}</div>
+                  <div><span class="det-label">Payment</span> ${esc(payFull)}</div>
+                  <div><span class="det-label">Customer</span> ${esc(o.customer_name || '—')}</div>
+                </div>
+                <table class="sales-table" style="margin:0 8px 8px;">
+                  <thead><tr>
+                    <th style="text-align:left;">Item</th><th>Qty</th>
+                    <th style="text-align:right;">Price</th>
+                    <th style="text-align:right;">Line</th>
+                  </tr></thead>
+                  <tbody>${itemRows}</tbody>
+                </table>
+                <div style="text-align:right;padding:0 8px 8px;font-size:12px;">
+                  ${Number(o.discount_amount) > 0 ? `Disc ${money(o.discount_amount)} · ` : ''}
+                  ${Number(o.gst_amount) > 0 ? `GST ${money(o.gst_amount)} · ` : ''}
+                  ${Number(o.card_charge) > 0 ? `Card fee ${money(o.card_charge)} · ` : ''}
+                  <strong>Total ${money(o.total_amount || o.total || 0)}</strong>
+                </div>`;
+              inner.dataset.loaded = '1';
             });
           });
         }

@@ -399,7 +399,9 @@ const getPaymentSummary = async (
         'Other'
       ) AS payment_method,
 
-      COUNT(*) AS orders
+      COUNT(*) AS orders,
+
+      COALESCE(SUM(o.total_amount), 0)::numeric(10,2) AS total
 
     FROM orders o
 
