@@ -195,6 +195,10 @@
       display: none; flex-direction: column; gap: 12px;
       padding: 12px 16px 24px; max-width: 1100px; margin: 0 auto; width: 100%;
     }
+
+        #salesPage .sales-table { font-size: 11px; }
+    #salesPage .sales-table th, #salesPage .sales-table td { padding: 8px 6px; white-space: nowrap; }
+    #salesPage .sales-table td:nth-child(4) { white-space: normal; max-width: 180px; }
     #salesPage.open { display: flex; }
     #app-box.sales-open .main { display: none !important; }
     #app-box.sales-open .topbar .sales-hide-on-report { display: none !important; }
@@ -367,12 +371,18 @@
       <div class="sales-table-wrap">
         <table class="sales-table">
           <thead>
-            <tr>
+                       <tr>
               <th>#</th>
               <th>Type</th>
-              <th>Status</th>
               <th>Pay</th>
               <th>Items</th>
+              <th>Subtotal</th>
+              <th>Disc</th>
+              <th>GST</th>
+              <th>Dine</th>
+              <th>Del</th>
+              <th>Card</th>
+              <th>Bank</th>
               <th>Total</th>
               <th>Time</th>
             </tr>
@@ -1476,9 +1486,9 @@
         }
 
                // Orders table — items in column
-        const body = document.getElementById('salesOrdersBody');
+                const body = document.getElementById('salesOrdersBody');
         if (!salesCache.orders.length) {
-          body.innerHTML = '<tr><td colspan="7" style="color:var(--muted);text-align:center;">No orders</td></tr>';
+          body.innerHTML = '<tr><td colspan="13" style="color:var(--muted);text-align:center;">No orders</td></tr>';
         } else {
           body.innerHTML = salesCache.orders.map(o => {
             const t = o.created_at || o.paid_at || '';
@@ -1495,13 +1505,28 @@
                 }).join('<br>')
               : '<span style="color:var(--muted)">—</span>';
 
+            const sub = Number(o.subtotal || 0);
+            const disc = Number(o.discount_amount || 0);
+            const gst = Number(o.gst_amount || 0);
+            const dine = Number(o.dine_charge || 0);
+            const del = Number(o.delivery_charge || 0);
+            const card = Number(o.card_charge || 0);
+            const bank = Number(o.bank_charge || 0);
+            const total = Number(o.total_amount || o.total || 0);
+
             return `<tr>
               <td>#${esc(o.local_number || o.id)}</td>
               <td>${esc(orderTypeLabel(o.order_type))}</td>
-              <td>${esc(o.status || '—')}</td>
               <td>${esc(payLabel)}</td>
-              <td style="font-size:11px;max-width:220px;">${itemsHtml}</td>
-              <td>${money(o.total_amount || o.total || 0)}</td>
+              <td style="font-size:11px;white-space:normal;max-width:180px;">${itemsHtml}</td>
+              <td>${sub ? money(sub) : '—'}</td>
+              <td>${disc ? money(disc) : '—'}</td>
+              <td>${gst ? money(gst) : '—'}</td>
+              <td>${dine ? money(dine) : '—'}</td>
+              <td>${del ? money(del) : '—'}</td>
+              <td>${card ? money(card) : '—'}</td>
+              <td>${bank ? money(bank) : '—'}</td>
+              <td><strong>${money(total)}</strong></td>
               <td>${esc(time)}</td>
             </tr>`;
           }).join('');
@@ -1511,11 +1536,12 @@
       }
     }
 
-        function exportSalesCSV() {
+            function exportSalesCSV() {
       const rows = [[
-        'Local #', 'Order ID', 'Type', 'Status',
-        'Payment', 'Method', 'Items', 'Qty total',
-        'Subtotal', 'Discount', 'GST', 'Card fee', 'Dine', 'Delivery',
+        'Local #', 'Order ID', 'Type', 'Status', 'Payment', 'Method',
+        'Items',
+        'Subtotal', 'Discount', 'GST', 'Tax',
+        'Dine charge', 'Delivery charge', 'Card fee', 'Bank fee',
         'Total', 'Customer', 'Created'
       ]];
 
@@ -1526,7 +1552,6 @@
             ? ` (${i.package_size}${i.package_unit})` : '';
           return `${i.name}${pkg} x${i.qty} @${i.price}`;
         }).join(' | ');
-        const qtyTotal = items.reduce((s, i) => s + Number(i.qty || 0), 0);
 
         rows.push([
           o.local_number || '',
@@ -1536,13 +1561,14 @@
           o.payment_status || '',
           o.payment_method || '',
           itemsStr,
-          qtyTotal,
-          o.subtotal || '',
+          o.subtotal || 0,
           o.discount_amount || 0,
           o.gst_amount || 0,
-          o.card_charge || 0,
+          o.tax_amount || 0,
           o.dine_charge || 0,
           o.delivery_charge || 0,
+          o.card_charge || 0,
+          o.bank_charge || 0,
           o.total_amount || o.total || 0,
           o.customer_name || '',
           o.created_at || o.paid_at || ''
@@ -1565,10 +1591,12 @@
       const brandName = document.getElementById('brandName')?.textContent || 'Cafe';
       const stats = `Orders: ${document.getElementById('stOrders').textContent} | Sales: ${document.getElementById('stSales').textContent} | Avg: ${document.getElementById('stAvg').textContent}`;
 
-      let table = `<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:11px;">
+      let table = `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:10px;">
         <tr>
-          <th>#</th><th>Type</th><th>Status</th><th>Pay</th>
-          <th>Items</th><th>Total</th><th>Time</th>
+          <th>#</th><th>Type</th><th>Pay</th><th>Items</th>
+          <th>Sub</th><th>Disc</th><th>GST</th>
+          <th>Dine</th><th>Del</th><th>Card</th><th>Bank</th>
+          <th>Total</th><th>Time</th>
         </tr>`;
 
       salesCache.orders.forEach(o => {
@@ -1576,19 +1604,25 @@
         const itemsStr = items.map(i => {
           const pkg = (i.package_size && i.package_unit)
             ? ` (${i.package_size}${i.package_unit})` : '';
-          return `${i.name}${pkg} × ${i.qty}`;
+          return `${i.name}${pkg}×${i.qty}`;
         }).join('; ') || '—';
-        const pay = (o.payment_status || '') + (o.payment_method ? ' / ' + o.payment_method : '');
-        const time = o.paid_at || o.created_at
+        const pay = (o.payment_status || '') + (o.payment_method ? '/' + o.payment_method : '');
+        const time = (o.paid_at || o.created_at)
           ? new Date(o.paid_at || o.created_at).toLocaleString() : '';
 
         table += `<tr>
           <td>#${o.local_number || o.id}</td>
           <td>${orderTypeLabel(o.order_type)}</td>
-          <td>${o.status || ''}</td>
           <td>${pay}</td>
           <td>${itemsStr}</td>
-          <td>${o.total_amount || o.total || 0}</td>
+          <td>${o.subtotal || 0}</td>
+          <td>${o.discount_amount || 0}</td>
+          <td>${o.gst_amount || 0}</td>
+          <td>${o.dine_charge || 0}</td>
+          <td>${o.delivery_charge || 0}</td>
+          <td>${o.card_charge || 0}</td>
+          <td>${o.bank_charge || 0}</td>
+          <td><b>${o.total_amount || o.total || 0}</b></td>
           <td>${time}</td>
         </tr>`;
       });
@@ -1597,8 +1631,8 @@
       const w = window.open('', '_blank');
       if (!w) { alert('Allow popups to print'); return; }
       const S1 = '<' + 'script>', S2 = '</' + 'script>';
-      w.document.write(`<!DOCTYPE html><html><head><title>Sales ${from} – ${to}</title>
-        <style>body{font-family:Arial,sans-serif;padding:16px} td,th{vertical-align:top}</style>
+      w.document.write(`<!DOCTYPE html><html><head><title>Sales ${from}–${to}</title>
+        <style>body{font-family:Arial,sans-serif;padding:12px} td,th{vertical-align:top;padding:4px}</style>
         </head><body>
         <h2>${brandName} — Sales Report</h2>
         <p>${from} → ${to}</p><p>${stats}</p>${table}
