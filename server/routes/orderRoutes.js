@@ -13,6 +13,7 @@ const {
 const {
   placeOrder,
   getOrders,
+  getOrder,
   accept,
   confirm,
   ready,
@@ -453,7 +454,12 @@ router.put(
   ),
   updatePricing
 );
-
+router.get(
+  '/:id',
+  authMiddleware,
+  authorize('manager', 'counter', 'waiter', 'kitchen', 'delivery'),
+  getOrder
+);
 
 // ======================================================
 // PAYMENT

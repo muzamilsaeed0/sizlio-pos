@@ -782,73 +782,40 @@ if ((order_type === 'dine_in' || order_type === 'walk_in') && tableNo > 0) {
 // GET ALL ORDERS
 // ======================================================
 
-exports.getOrders = async (
-  req,
-  res
-) => {
-
-  const restaurantId =
-    getRestaurantId(req);
-
-
-  if (
-    !isValidRestaurantId(restaurantId)
-  ) {
-
-    return res.status(401).json({
-
-      success: false,
-
-      message:
-        'Restaurant information is missing'
-
-    });
-
-  }
-
-
+// GET /api/orders/:id
+exports.getOrder = async (req, res) => {
   try {
+    const orderId = Number(req.params.id);
+    const restaurantId = req.user?.restaurant_id;
 
-    const orders =
-      await getAllOrders(
-        restaurantId
-      );
+    if (!Number.isInteger(orderId) || orderId <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid order ID' });
+    }
 
+    const order = await getOrderById(orderId, restaurantId);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
 
-    return res.status(200).json({
+    // optional items
+    let items = [];
+    try {
+      if (typeof getOrderItemsByOrderId === 'function') {
+        items = await getOrderItemsByOrderId(orderId);
+      }
+    } catch (e) {
+      console.warn('getOrder items:', e.message);
+    }
 
+    return res.json({
       success: true,
-
-      count:
-        orders.length,
-
-      orders
-
+      order: { ...order, items: items || order.items || [] }
     });
-
+  } catch (err) {
+    console.error('getOrder:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
-  catch (err) {
-
-    console.error(
-      'getOrders:',
-      err
-    );
-
-
-    return res.status(500).json({
-
-      success: false,
-
-      message:
-        err.message ||
-        'Internal Server Error'
-
-    });
-
-  }
-
 };
-
 
 // ======================================================
 // ACCEPT ORDER

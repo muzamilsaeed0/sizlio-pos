@@ -1051,11 +1051,40 @@
 
     // Fetch full order (with items + payment_method + charges) and cache it
     async function fetchFullOrder(orderId) {
-      if (fullOrderCache.has(orderId)) return fullOrderCache.get(orderId);
-      const full = await api('/orders/' + orderId);
-      const ord = full.order || full.data || full;
-      fullOrderCache.set(orderId, ord);
-      return ord;
+      const id = Number(orderId);
+      if (fullOrderCache.has(id)) return fullOrderCache.get(id);
+
+      // 1) try GET /orders/:id
+      try {
+        const full = await api('/orders/' + id);
+        const ord = full.order || full.data || full;
+        if (ord && ord.id) {
+          fullOrderCache.set(id, ord);
+          return ord;
+        }
+      } catch (e) {
+        console.warn('GET /orders/:id failed, fallback list', e.message);
+      }
+
+      // 2) fallback: active orders list
+      try {
+        const data = await api('/orders');
+        const all = data.orders || data.data || [];
+        const ord = all.find(x => Number(x.id) === id);
+        if (ord) {
+          fullOrderCache.set(id, ord);
+          return ord;
+        }
+      } catch (e) {}
+
+      // 3) fallback: sales cache (details + items)
+      const fromSales = (salesCache.orders || []).find(x => Number(x.id) === id);
+      if (fromSales) {
+        fullOrderCache.set(id, fromSales);
+        return fromSales;
+      }
+
+      throw new Error('Order not found');
     }
 
     async function reprintOrder(orderId) {
@@ -1449,8 +1478,40 @@
             </tr>
             <tr class="sales-order-detail-row" ${isOpen ? '' : 'style="display:none;"'} data-detail="${oid}">
               <td colspan="6">
-                <div class="order-detail-inner" data-inner="${oid}">
-                  <div style="color:var(--muted);font-size:12px;padding:8px;">Loading…</div>
+                <div class="order-detail-inner" data-inner="${oid}" data-loaded="${orderItemsOf(o).length ? '1' : '0'}">
+                  ${(() => {
+                    const items = orderItemsOf(o);
+                    const itemRows = items.length
+                      ? items.map(it => {
+                          const pkg = (it.package_size && it.package_unit)
+                            ? ` (${esc(it.package_size)}${esc(it.package_unit)})` : '';
+                          const line = Number(it.price) * Number(it.qty);
+                          return `<tr>
+                            <td>${esc(it.name)}${pkg}</td>
+                            <td style="text-align:center;">${it.qty}</td>
+                            <td style="text-align:right;">${money(it.price)}</td>
+                            <td style="text-align:right;">${money(line)}</td>
+                          </tr>`;
+                        }).join('')
+                      : `<tr><td colspan="4" style="color:var(--muted);text-align:center;">No items</td></tr>`;
+                    return `
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                        <div><span class="det-label">Order #</span> <strong>${esc(o.local_number || o.id)}</strong></div>
+                        <div><span class="det-label">Type</span> ${esc(orderTypeLabel(o.order_type))}</div>
+                        <div><span class="det-label">Payment</span> ${esc(payLabel)}</div>
+                        <div><span class="det-label">Customer</span> ${esc(o.customer_name || '—')}</div>
+                      </div>
+                      <table class="sales-table">
+                        <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Line</th></tr></thead>
+                        <tbody>${itemRows}</tbody>
+                      </table>
+                      <div style="margin-top:8px;text-align:right;font-size:12px;">
+                        ${Number(o.discount_amount) > 0 ? `Disc ${money(o.discount_amount)} · ` : ''}
+                        ${Number(o.gst_amount) > 0 ? `GST ${money(o.gst_amount)} · ` : ''}
+                        ${Number(o.dine_charge) > 0 ? `Dine ${money(o.dine_charge)} · ` : ''}
+                        <strong>Total ${money(o.total_amount || o.total || 0)}</strong>
+                      </div>`;
+                  })()}
                 </div>
               </td>
             </tr>`;
