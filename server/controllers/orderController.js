@@ -782,7 +782,37 @@ if ((order_type === 'dine_in' || order_type === 'walk_in') && tableNo > 0) {
 // GET ALL ORDERS
 // ======================================================
 
-// GET /api/orders/:id
+// ======================================================
+// GET ALL ORDERS
+// ======================================================
+exports.getOrders = async (req, res) => {
+  try {
+    const restaurantId = getRestaurantId(req);
+    if (!isValidRestaurantId(restaurantId)) {
+      return res.status(401).json({
+        success: false,
+        message: 'Restaurant information is missing'
+      });
+    }
+
+    const orders = await getAllOrders(
+      restaurantId,
+      req.user?.role,
+      req.user?.id
+    );
+
+    return res.json({
+      success: true,
+      orders
+    });
+  } catch (err) {
+    console.error('getOrders:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
 exports.getOrder = async (req, res) => {
   try {
     const orderId = Number(req.params.id);
