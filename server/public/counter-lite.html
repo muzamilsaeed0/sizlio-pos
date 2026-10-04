@@ -367,7 +367,15 @@
       <div class="sales-table-wrap">
         <table class="sales-table">
           <thead>
-            <tr><th>#</th><th>Type</th><th>Status</th><th>Pay</th><th>Total</th><th>Time</th></tr>
+            <tr>
+              <th>#</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Pay</th>
+              <th>Items</th>
+              <th>Total</th>
+              <th>Time</th>
+            </tr>
           </thead>
           <tbody id="salesOrdersBody"></tbody>
         </table>
@@ -1467,143 +1475,83 @@
           topEl.textContent = 'No item data';
         }
 
-        // Orders table with expandable rows
+               // Orders table — items in column
         const body = document.getElementById('salesOrdersBody');
         if (!salesCache.orders.length) {
-          body.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;">No orders</td></tr>';
+          body.innerHTML = '<tr><td colspan="7" style="color:var(--muted);text-align:center;">No orders</td></tr>';
         } else {
           body.innerHTML = salesCache.orders.map(o => {
             const t = o.created_at || o.paid_at || '';
             const time = t ? new Date(t).toLocaleString() : '—';
-            const oid = o.id;
-            const isOpen = expandedOrders.has(oid);
             const payLabel = String(o.payment_status || '—') +
               (o.payment_method ? ' / ' + normPayMethod(o.payment_method) : '');
 
-            return `<tr class="sales-order-row" data-id="${oid}" style="cursor:pointer;" title="Click for item details">
+            const items = orderItemsOf(o);
+            const itemsHtml = items.length
+              ? items.map(it => {
+                  const pkg = (it.package_size && it.package_unit)
+                    ? ` (${esc(String(it.package_size))}${esc(it.package_unit)})` : '';
+                  return `${esc(it.name)}${pkg} × ${it.qty}`;
+                }).join('<br>')
+              : '<span style="color:var(--muted)">—</span>';
+
+            return `<tr>
               <td>#${esc(o.local_number || o.id)}</td>
               <td>${esc(orderTypeLabel(o.order_type))}</td>
               <td>${esc(o.status || '—')}</td>
               <td>${esc(payLabel)}</td>
+              <td style="font-size:11px;max-width:220px;">${itemsHtml}</td>
               <td>${money(o.total_amount || o.total || 0)}</td>
               <td>${esc(time)}</td>
-            </tr>
-            <tr class="sales-order-detail-row" ${isOpen ? '' : 'style="display:none;"'} data-detail="${oid}">
-              <td colspan="6">
-                <div class="order-detail-inner" data-inner="${oid}" data-loaded="${orderItemsOf(o).length ? '1' : '0'}">
-                  ${(() => {
-                    const items = orderItemsOf(o);
-                    const itemRows = items.length
-                      ? items.map(it => {
-                          const pkg = (it.package_size && it.package_unit)
-                            ? ` (${esc(it.package_size)}${esc(it.package_unit)})` : '';
-                          const line = Number(it.price) * Number(it.qty);
-                          return `<tr>
-                            <td>${esc(it.name)}${pkg}</td>
-                            <td style="text-align:center;">${it.qty}</td>
-                            <td style="text-align:right;">${money(it.price)}</td>
-                            <td style="text-align:right;">${money(line)}</td>
-                          </tr>`;
-                        }).join('')
-                      : `<tr><td colspan="4" style="color:var(--muted);text-align:center;">No items</td></tr>`;
-                    return `
-                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-                        <div><span class="det-label">Order #</span> <strong>${esc(o.local_number || o.id)}</strong></div>
-                        <div><span class="det-label">Type</span> ${esc(orderTypeLabel(o.order_type))}</div>
-                        <div><span class="det-label">Payment</span> ${esc(payLabel)}</div>
-                        <div><span class="det-label">Customer</span> ${esc(o.customer_name || '—')}</div>
-                      </div>
-                      <table class="sales-table">
-                        <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Line</th></tr></thead>
-                        <tbody>${itemRows}</tbody>
-                      </table>
-                      <div style="margin-top:8px;text-align:right;font-size:12px;">
-                        ${Number(o.discount_amount) > 0 ? `Disc ${money(o.discount_amount)} · ` : ''}
-                        ${Number(o.gst_amount) > 0 ? `GST ${money(o.gst_amount)} · ` : ''}
-                        ${Number(o.dine_charge) > 0 ? `Dine ${money(o.dine_charge)} · ` : ''}
-                        <strong>Total ${money(o.total_amount || o.total || 0)}</strong>
-                      </div>`;
-                  })()}
-                </div>
-              </td>
             </tr>`;
           }).join('');
-
-          // Attach click handlers
-                   body.querySelectorAll('.sales-order-row').forEach(row => {
-            row.addEventListener('click', () => {
-              const oid = Number(row.dataset.id);
-              const detailRow = body.querySelector(`tr[data-detail="${oid}"]`);
-              if (!detailRow) return;
-
-              const currentlyHidden = getComputedStyle(detailRow).display === 'none';
-              detailRow.style.display = currentlyHidden ? 'table-row' : 'none';
-              if (currentlyHidden) expandedOrders.add(oid);
-              else expandedOrders.delete(oid);
-
-              const inner = detailRow.querySelector(`[data-inner="${oid}"]`);
-              if (!inner || inner.dataset.loaded === '1') return;
-
-              const o = salesCache.orders.find(x => Number(x.id) === oid) || {};
-              const items = orderItemsOf(o);
-              const itemRows = items.length
-                ? items.map(it => {
-                    const pkg = (it.package_size && it.package_unit)
-                      ? ` (${esc(it.package_size)}${esc(it.package_unit)})` : '';
-                    const line = Number(it.price) * Number(it.qty);
-                    return `<tr>
-                      <td>${esc(it.name)}${pkg}</td>
-                      <td style="text-align:center;">${it.qty}</td>
-                      <td style="text-align:right;">${money(it.price)}</td>
-                      <td style="text-align:right;">${money(line)}</td>
-                    </tr>`;
-                  }).join('')
-                : `<tr><td colspan="4" style="color:var(--muted);text-align:center;">No items</td></tr>`;
-
-              const payFull = String(o.payment_status || '—') +
-                (o.payment_method ? ' / ' + normPayMethod(o.payment_method) : '');
-
-              inner.innerHTML = `
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;padding:8px;">
-                  <div><span class="det-label">Order #</span> <strong>${esc(o.local_number || o.id)}</strong></div>
-                  <div><span class="det-label">Type</span> ${esc(orderTypeLabel(o.order_type))}</div>
-                  <div><span class="det-label">Payment</span> ${esc(payFull)}</div>
-                  <div><span class="det-label">Customer</span> ${esc(o.customer_name || '—')}</div>
-                </div>
-                <table class="sales-table" style="margin:0 8px 8px;">
-                  <thead><tr>
-                    <th style="text-align:left;">Item</th><th>Qty</th>
-                    <th style="text-align:right;">Price</th>
-                    <th style="text-align:right;">Line</th>
-                  </tr></thead>
-                  <tbody>${itemRows}</tbody>
-                </table>
-                <div style="text-align:right;padding:0 8px 8px;font-size:12px;">
-                  ${Number(o.discount_amount) > 0 ? `Disc ${money(o.discount_amount)} · ` : ''}
-                  ${Number(o.gst_amount) > 0 ? `GST ${money(o.gst_amount)} · ` : ''}
-                  ${Number(o.card_charge) > 0 ? `Card fee ${money(o.card_charge)} · ` : ''}
-                  <strong>Total ${money(o.total_amount || o.total || 0)}</strong>
-                </div>`;
-              inner.dataset.loaded = '1';
-            });
-          });
         }
       } catch (e) {
         alert(e.message || 'Failed to load sales report');
       }
     }
 
-    function exportSalesCSV() {
-      const rows = [['Order ID', 'Type', 'Status', 'Payment', 'Method', 'Total', 'Created', 'Items']];
+        function exportSalesCSV() {
+      const rows = [[
+        'Local #', 'Order ID', 'Type', 'Status',
+        'Payment', 'Method', 'Items', 'Qty total',
+        'Subtotal', 'Discount', 'GST', 'Card fee', 'Dine', 'Delivery',
+        'Total', 'Customer', 'Created'
+      ]];
+
       salesCache.orders.forEach(o => {
-        const itemsStr = orderItemsOf(o).map(i => `${i.name} x${i.qty} @${i.price}`).join(' | ');
+        const items = orderItemsOf(o);
+        const itemsStr = items.map(i => {
+          const pkg = (i.package_size && i.package_unit)
+            ? ` (${i.package_size}${i.package_unit})` : '';
+          return `${i.name}${pkg} x${i.qty} @${i.price}`;
+        }).join(' | ');
+        const qtyTotal = items.reduce((s, i) => s + Number(i.qty || 0), 0);
+
         rows.push([
-          o.id, orderTypeLabel(o.order_type), o.status || '',
-          o.payment_status || '', o.payment_method || '',
-          o.total_amount || o.total || 0, o.created_at || '', itemsStr
+          o.local_number || '',
+          o.id,
+          orderTypeLabel(o.order_type),
+          o.status || '',
+          o.payment_status || '',
+          o.payment_method || '',
+          itemsStr,
+          qtyTotal,
+          o.subtotal || '',
+          o.discount_amount || 0,
+          o.gst_amount || 0,
+          o.card_charge || 0,
+          o.dine_charge || 0,
+          o.delivery_charge || 0,
+          o.total_amount || o.total || 0,
+          o.customer_name || '',
+          o.created_at || o.paid_at || ''
         ]);
       });
-      const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+
+      const csv = rows.map(r =>
+        r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')
+      ).join('\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -1612,21 +1560,50 @@
       URL.revokeObjectURL(a.href);
     }
 
-    function printSalesReport() {
+        function printSalesReport() {
       const from = salesCache.from, to = salesCache.to;
       const brandName = document.getElementById('brandName')?.textContent || 'Cafe';
       const stats = `Orders: ${document.getElementById('stOrders').textContent} | Sales: ${document.getElementById('stSales').textContent} | Avg: ${document.getElementById('stAvg').textContent}`;
-      let table = '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:12px;"><tr><th>#</th><th>Type</th><th>Status</th><th>Pay</th><th>Total</th></tr>';
+
+      let table = `<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:11px;">
+        <tr>
+          <th>#</th><th>Type</th><th>Status</th><th>Pay</th>
+          <th>Items</th><th>Total</th><th>Time</th>
+        </tr>`;
+
       salesCache.orders.forEach(o => {
-        table += `<tr><td>${o.id}</td><td>${orderTypeLabel(o.order_type)}</td><td>${o.status || ''}</td><td>${o.payment_status || ''}</td><td>${o.total_amount || o.total || 0}</td></tr>`;
+        const items = orderItemsOf(o);
+        const itemsStr = items.map(i => {
+          const pkg = (i.package_size && i.package_unit)
+            ? ` (${i.package_size}${i.package_unit})` : '';
+          return `${i.name}${pkg} × ${i.qty}`;
+        }).join('; ') || '—';
+        const pay = (o.payment_status || '') + (o.payment_method ? ' / ' + o.payment_method : '');
+        const time = o.paid_at || o.created_at
+          ? new Date(o.paid_at || o.created_at).toLocaleString() : '';
+
+        table += `<tr>
+          <td>#${o.local_number || o.id}</td>
+          <td>${orderTypeLabel(o.order_type)}</td>
+          <td>${o.status || ''}</td>
+          <td>${pay}</td>
+          <td>${itemsStr}</td>
+          <td>${o.total_amount || o.total || 0}</td>
+          <td>${time}</td>
+        </tr>`;
       });
       table += '</table>';
+
       const w = window.open('', '_blank');
       if (!w) { alert('Allow popups to print'); return; }
       const S1 = '<' + 'script>', S2 = '</' + 'script>';
-      w.document.write(`<!DOCTYPE html><html><head><title>Sales ${from} – ${to}</title></head><body>
-        <h2>${brandName} — Sales Report</h2><p>${from} → ${to}</p><p>${stats}</p>${table}
-        ${S1}window.onload=function(){window.print();};${S2}</body></html>`);
+      w.document.write(`<!DOCTYPE html><html><head><title>Sales ${from} – ${to}</title>
+        <style>body{font-family:Arial,sans-serif;padding:16px} td,th{vertical-align:top}</style>
+        </head><body>
+        <h2>${brandName} — Sales Report</h2>
+        <p>${from} → ${to}</p><p>${stats}</p>${table}
+        ${S1}window.onload=function(){window.print();};${S2}
+        </body></html>`);
       w.document.close();
     }
 
