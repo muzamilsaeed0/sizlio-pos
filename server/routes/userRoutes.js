@@ -3,15 +3,10 @@ const router = express.Router();
 const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 const userController = require('../controllers/userController');
 
-router.get('/', authMiddleware, authorize('manager'), userController.getStaff);
+router.get('/', authMiddleware, authorize('manager', 'counter'), userController.getStaff);
 router.post('/', authMiddleware, authorize('manager', 'super_admin'), userController.addStaff);
- router.put('/:id', authMiddleware, authorize('manager', 'counter'), userController.editStaff);
+router.put('/:id', authMiddleware, authorize('manager', 'counter'), userController.editStaff);
 router.patch('/:id/deactivate', authMiddleware, authorize('manager'), userController.deactivateStaff);
 router.patch('/:id/activate', authMiddleware, authorize('manager'), userController.activateStaff);
-
-// ✅ NEW: counter/manager rider ka password reset kare
-router.put('/:id/reset-password', authMiddleware, 
-  authorize('manager', 'counter'), 
-  userController.resetPassword);
 
 module.exports = router;
