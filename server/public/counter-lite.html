@@ -448,6 +448,16 @@
         height:360px;
       "></div>
 
+      <hr style="border-color:var(--border);margin:16px 0;" />
+      <h3 style="margin:0 0 10px;">🎁 Add deal</h3>
+      <label>Deal name *</label>
+      <input id="dName" placeholder="e.g. Lunch combo" />
+      <label>Deal price *</label>
+      <input id="dPrice" type="number" min="1" step="0.01" placeholder="0" />
+      <label>Items in this deal</label>
+      <div id="dItemPicks" style="max-height:140px;overflow:auto;font-size:12px;margin-bottom:10px;"></div>
+      <button type="button" class="btn btn-accent" onclick="saveDeal()">Save deal</button>
+      <div id="dealsAdminList" style="margin-top:12px;font-size:12px;"></div>
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeBillPreview()">Close</button>
         <button class="btn btn-accent" onclick="confirmPrintBill()">Print</button>
@@ -920,19 +930,33 @@
       const total = afterDiscount + gstAmount + taxAmount + extra;
       return { sub, discountAmount, gstAmount, taxAmount, extra, total };
     }
-    function renderCart() {
+        function renderCart() {
       const el = document.getElementById('cartList');
-      if (!cart.length) el.innerHTML = '<div class="empty">Tap menu items to add</div>';
-      else {
-        el.innerHTML = cart.map(c => `
-          <div class="cart-row">
-            <div class="nm">${esc(c.name)}${pkgLabel(c) ? ` <span style="color:var(--muted)">(${esc(pkgLabel(c))})</span>` : ''}</div>
-            <button class="qty-btn" onclick="changeQty(${c.id},-1)">−</button>
-            <span>${c.qty}</span>
-            <button class="qty-btn" onclick="changeQty(${c.id},1)">+</button>
-            <strong>${money(c.price * c.qty)}</strong>
-          </div>`).join('');
+
+      const itemRows = cart.map(c => `
+        <div class="cart-row">
+          <div class="nm">${esc(c.name)}${pkgLabel(c) ? ` <span style="color:var(--muted)">(${esc(pkgLabel(c))})</span>` : ''}</div>
+          <button class="qty-btn" onclick="changeQty(${c.id},-1)">−</button>
+          <span>${c.qty}</span>
+          <button class="qty-btn" onclick="changeQty(${c.id},1)">+</button>
+          <strong>${money(c.price * c.qty)}</strong>
+        </div>`).join('');
+
+      const dealRows = dealCart.map(c => `
+        <div class="cart-row">
+          <div class="nm">🎁 ${esc(c.name)}</div>
+          <button class="qty-btn" onclick="changeDealQty(${c.deal_id},-1)">−</button>
+          <span>${c.qty}</span>
+          <button class="qty-btn" onclick="changeDealQty(${c.deal_id},1)">+</button>
+          <strong>${money(c.price * c.qty)}</strong>
+        </div>`).join('');
+
+      if (!cart.length && !dealCart.length) {
+        el.innerHTML = '<div class="empty">Tap menu or deals to add</div>';
+      } else {
+        el.innerHTML = itemRows + dealRows;
       }
+
       const sub = cartTotal();
       const bill = calcBill(sub);
       let lines = `<div class="line"><span>Subtotal</span><span>${money(bill.sub)}</span></div>`;
@@ -944,6 +968,7 @@
         lines += `<div class="line"><span>Tax</span><span>${money(bill.taxAmount)}</span></div>`;
       if (bill.extra > 0)
         lines += `<div class="line"><span>${orderType === 'delivery' ? 'Delivery' : 'Dine'} charge</span><span>${money(bill.extra)}</span></div>`;
+
       const method = document.getElementById('payMethod')?.value || 'Cash';
       let surcharge = 0;
       if (method === 'Card' && Number(posSettings.card_charge) > 0) {
@@ -1009,10 +1034,15 @@
 
       try {
         const data = await api('/orders', { method: 'POST', body: JSON.stringify(body) });
-        const receiptItems = cart.map(c => ({
-          name: c.name, qty: c.qty, price: c.price,
-          package_size: c.package_size, package_unit: c.package_unit
-        }));
+        const receiptItems = [
+          ...cart.map(c => ({
+            name: c.name, qty: c.qty, price: c.price,
+            package_size: c.package_size, package_unit: c.package_unit
+          })),
+          ...dealCart.map(d => ({
+            name: '🎁 ' + d.name, qty: d.qty, price: d.price
+          }))
+        ];
         const receiptBill = bill;
         const receiptType = orderType;
         const receiptTable = tableNo;
@@ -1024,7 +1054,9 @@
         const receiptCard = cardCharge;
         const receiptBank = bankCharge;
 
-        cart = []; renderCart();
+                cart = [];
+        dealCart = [];
+        renderCart();
         document.getElementById('tableNo').value = '';
         document.getElementById('custName').value = '';
         document.getElementById('custPhone').value = '';
@@ -1348,9 +1380,11 @@
     }
 
     /* ================= MENU ADMIN ================= */
-    function openMenuAdmin() {
+       function openMenuAdmin() {
       document.getElementById('menuModal').classList.remove('hidden');
-      resetMenuForm(); renderMenuAdmin();
+      renderMenuAdmin();
+      renderDealItemPicks();
+      renderDealsAdminList();
     }
     function closeMenuAdmin() { document.getElementById('menuModal').classList.add('hidden'); }
     function resetMenuForm() {
@@ -1402,6 +1436,82 @@
         else await api('/menu', { method: 'POST', body: JSON.stringify(body) });
         await loadMenu(); renderMenuAdmin(); resetMenuForm();
       } catch (e) { alert(e.message || 'Save failed'); }
+    }
+
+        function renderDealItemPicks() {
+      const box = document.getElementById('dItemPicks');
+      if (!box) return;
+      if (!menu.length) {
+        box.innerHTML = '<div class="empty">Pehle menu item add karo</div>';
+        return;
+      }
+      box.innerHTML = menu.map(m => `
+        <label style="display:flex;gap:8px;align-items:center;margin:4px 0;flex-wrap:wrap;">
+          <input type="checkbox" class="d-pick" value="${m.id}" />
+          <span style="flex:1;">${esc(m.name)} (${money(m.price)})</span>
+          <input type="number" class="d-qty" data-id="${m.id}" min="1" value="1"
+            style="width:56px;padding:4px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);" />
+        </label>
+      `).join('');
+    }
+
+    function renderDealsAdminList() {
+      const el = document.getElementById('dealsAdminList');
+      if (!el) return;
+      if (!dealsList.length) {
+        el.innerHTML = '<div class="empty">No deals yet</div>';
+        return;
+      }
+      el.innerHTML = '<div style="font-weight:600;margin-bottom:6px;">Active deals</div>' +
+        dealsList.map(d => {
+          const sub = (d.items || []).map(i => `${i.quantity || 1}× ${i.name || ''}`).join(', ');
+          return `<div class="menu-admin-row">
+            <div><strong>🎁 ${esc(d.name)}</strong>
+              <div style="color:var(--muted);">${money(d.price)} · ${esc(sub)}</div>
+            </div>
+          </div>`;
+        }).join('');
+    }
+
+    async function saveDeal() {
+      const name = (document.getElementById('dName').value || '').trim();
+      const price = Number(document.getElementById('dPrice').value);
+      if (!name || !(price > 0)) {
+        alert('Deal name and price required');
+        return;
+      }
+      const items = [];
+      document.querySelectorAll('.d-pick:checked').forEach(cb => {
+        const id = Number(cb.value);
+        const qtyEl = document.querySelector('.d-qty[data-id="' + id + '"]');
+        const quantity = Math.max(1, Number(qtyEl?.value || 1));
+        items.push({ menu_item_id: id, variant_id: null, quantity });
+      });
+      if (!items.length) {
+        alert('Select at least one menu item for the deal');
+        return;
+      }
+      try {
+        await api('/deals', {
+          method: 'POST',
+          body: JSON.stringify({
+            name,
+            price,
+            type: 'deal',
+            category: null,
+            image: null,
+            items
+          })
+        });
+        document.getElementById('dName').value = '';
+        document.getElementById('dPrice').value = '';
+        await loadDeals();
+        renderDealItemPicks();
+        renderDealsAdminList();
+        alert('Deal saved');
+      } catch (e) {
+        alert(e.message || 'Save deal failed');
+      }
     }
 
     /* ================= SALES REPORT ================= */
@@ -1459,6 +1569,16 @@
         price: Number(it.price || it.unit_price || 0),
         package_size: it.package_size,
         package_unit: it.package_unit
+      }));
+    }
+
+        function orderDealsOf(o) {
+      const arr = o.deals || [];
+      if (!Array.isArray(arr)) return [];
+      return arr.map(d => ({
+        name: d.name || d.deal_name || 'Deal',
+        qty: Number(d.quantity || d.qty || 1),
+        price: Number(d.price || 0)
       }));
     }
 
@@ -1573,14 +1693,16 @@
             const payLabel = String(o.payment_status || '—') +
               (o.payment_method ? ' / ' + normPayMethod(o.payment_method) : '');
 
-            const items = orderItemsOf(o);
-            const itemsHtml = items.length
-              ? items.map(it => {
-                  const pkg = (it.package_size && it.package_unit)
-                    ? ` (${esc(String(it.package_size))}${esc(it.package_unit)})` : '';
-                  return `${esc(it.name)}${pkg} × ${it.qty}`;
-                }).join('<br>')
-              : '<span style="color:var(--muted)">—</span>';
+                        const items = orderItemsOf(o);
+            const deals = orderDealsOf(o);
+            const itemsHtml = [
+              ...items.map(it => {
+                const pkg = (it.package_size && it.package_unit)
+                  ? ` (${esc(String(it.package_size))}${esc(it.package_unit)})` : '';
+                return `${esc(it.name)}${pkg} × ${it.qty}`;
+              }),
+              ...deals.map(d => `🎁 ${esc(d.name)} × ${d.qty}`)
+            ].join('<br>') || '<span style="color:var(--muted)">—</span>';
 
             const sub = Number(o.subtotal || 0);
             const disc = Number(o.discount_amount || 0);
