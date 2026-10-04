@@ -753,10 +753,10 @@ const localNumber = lnRes.rows[0].n;
           initialPaymentStatus === 'paid'
             ? createdByUserId
             : null,
-          Number(deliveryCharge || 0),
+                  Number(deliveryCharge || 0),
           Number(dineCharge || 0),
-          0,    
-          0    
+          Number(cardCharge || 0),
+          Number(bankCharge || 0) 
         ]
       );
 
@@ -1169,9 +1169,14 @@ const localNumber = lnRes.rows[0].n;
          const finalDeliveryCharge = Number(deliveryCharge || 0);
     const finalDineCharge = Number(dineCharge || 0);
     
-    const finalCardCharge = 0;
-    const finalBankCharge = 0;
-    const finalTotalAmount = calculated.totalAmount + finalDeliveryCharge + finalDineCharge;
+        const finalCardCharge = Number(cardCharge || 0);
+    const finalBankCharge = Number(bankCharge || 0);
+    const finalTotalAmount =
+      calculated.totalAmount +
+      finalDeliveryCharge +
+      finalDineCharge +
+      finalCardCharge +
+      finalBankCharge;
 
 
     // --------------------------------------------------

@@ -552,7 +552,7 @@
         <div class="cart-list" id="cartList"></div>
         <div class="totals" id="totals"></div>
         <div class="field-row">
-          <select id="payMethod">
+          <select id="payMethod" onchange="renderCart()">
             <option value="Cash">Cash</option>
             <option value="Card">Card</option>
             <option value="Bank">Bank</option>
@@ -779,12 +779,7 @@
       })[c]);
     }
 
-    function pkgLabel(item) {
-      if (item && item.package_size && item.package_unit) {
-        return `${item.package_size} ${item.package_unit}`;
-      }
-      return '';
-    }
+    
 
     function showPassword() { document.getElementById('password').type = 'text'; }
     function hidePassword() { document.getElementById('password').type = 'password'; }
@@ -1251,7 +1246,7 @@
 
       let cardCharge = 0;
       let bankCharge = 0;
-      if (payNow) {
+           if (payNow) {
         if (payMethod === 'Card') {
           cardCharge = bill.total * (Number(posSettings.card_charge || 0) / 100);
         } else if (payMethod === 'Bank') {
@@ -1277,15 +1272,17 @@
         delivery_address: orderType === 'delivery' ? document.getElementById('custAddress').value.trim() : null,
         payment_timing: payNow ? 'PAID_AT_ORDER' : (orderType === 'delivery' ? 'COD' : 'PAY_LATER'),
         payment_method: payNow ? payMethod : null,
-        paid_amount: payNow ? finalTotal : 0,
+              paid_amount: payNow ? finalTotal : 0,
         card_charge: cardCharge,
         bank_charge: bankCharge,
         delivery_charge: orderType === 'delivery' ? Number(posSettings.delivery_charge || 0) : 0,
         dine_charge: orderType === 'dine_in' ? Number(posSettings.dine_charge || 0) : 0,
-        discount_type: posSettings.discount_type || 'none',
-        discount_value: Number(posSettings.discount_value || 0),
-        gst_percent: Number(posSettings.gst_percent || 0),
-        tax_percent: Number(posSettings.tax_percent || 0)
+        pricing: {
+          discount_type: posSettings.discount_type || 'none',
+          discount_value: Number(posSettings.discount_value || 0),
+          gst_percent: Number(posSettings.gst_percent || 0),
+          tax_percent: Number(posSettings.tax_percent || 0)
+        }
       };
 
       try {
@@ -1323,12 +1320,15 @@
 
         /* ✅ Auto-assign rider for delivery orders */
         if (orderType === 'delivery' && data.order?.id) {
-          try {
-            await api('/orders/' + data.order.id + '/auto-assign-rider', { method: 'PUT' });
-          } catch (err) {
-            console.warn('Auto-assign failed:', err.message);
-          }
-        }
+  const mode = localStorage.getItem('cafe_assign_mode') || 'manual';
+  if (mode === 'auto') {
+    try {
+      await api('/orders/' + data.order.id + '/auto-assign-rider', { method: 'PUT' });
+    } catch (err) {
+      console.warn('Auto-assign failed:', err.message);
+    }
+  }
+}
 
         await loadOrders();
         await loadTodaySales();
@@ -1494,83 +1494,96 @@
     }
 
     async function reprintOrder(orderId) {
-      try {
-        const data = await api('/orders');
-        const allOrders = data.orders || data.data || [];
-        const o = allOrders.find(x => Number(x.id) === Number(orderId));
+  try {
+    const data = await api('/orders');
+    const allOrders = data.orders || data.data || [];
+    const o = allOrders.find(x => Number(x.id) === Number(orderId));
 
-        if (!o) {
-          alert('Order not found — may have been completed');
-          return;
-        }
-
-        const items = (o.items || []).map(it => ({
-          name: it.name || it.item_name || 'Item',
-          qty: Number(it.qty || it.quantity || 1),
-          price: Number(it.price || 0),
-          package_size: it.package_size,
-          package_unit: it.package_unit
-        }));
-
-        const sub = Number(o.subtotal || items.reduce((s, i) => s + i.price * i.qty, 0));
-        const bill = {
-          sub,
-          discountAmount: Number(o.discount_amount || 0),
-          gstAmount: Number(o.gst_amount || 0),
-          taxAmount: Number(o.tax_amount || 0),
-          extra: Number(o.delivery_charge || 0) + Number(o.dine_charge || 0),
-          total: Number(o.total_amount || o.total || sub)
-        };
-
-        printBill({
-          orderNo: o.local_number || o.id,
-          orderType: o.order_type,
-          tableNo: o.table_no,
-          customerName: o.customer_name || '',
-          phone: o.delivery_phone || '',
-          address: o.delivery_address || '',
-          items,
-          bill,
-          payNow: String(o.payment_status).toLowerCase() === 'paid',
-          paymentMethod: o.payment_method || 'Cash',
-          cardCharge: Number(o.card_charge || 0),
-          bankCharge: Number(o.bank_charge || 0)
-        });
-      } catch (e) {
-        console.error('reprintOrder:', e);
-        alert(e.message || 'Print failed');
-      }
+    if (!o) {
+      alert('Order not found — may have been completed');
+      return;
     }
+
+    // ✅ Build items safely
+    let items = (o.items || []).map(it => ({
+      name: it.name || it.item_name || 'Item',
+      qty: Number(it.qty || it.quantity || 1),
+      price: Number(it.price || 0),
+      package_size: it.package_size,
+      package_unit: it.package_unit
+    }));
+
+    // If list endpoint didn't include items, fetch full order
+    if (!items.length && o.id) {
+      const full = await api('/orders/' + o.id);
+      const ord = full.order || full.data || full;
+      items = (ord.items || []).map(it => ({
+        name: it.name || it.item_name || 'Item',
+        qty: Number(it.qty || it.quantity || 1),
+        price: Number(it.price || 0),
+        package_size: it.package_size,
+        package_unit: it.package_unit
+      }));
+    }
+
+    const sub = Number(o.subtotal || items.reduce((s, i) => s + i.price * i.qty, 0));
+    const bill = {
+      sub,
+      discountAmount: Number(o.discount_amount || 0),
+      gstAmount: Number(o.gst_amount || 0),
+      taxAmount: Number(o.tax_amount || 0),
+      extra: Number(o.delivery_charge || 0) + Number(o.dine_charge || 0),
+      total: Number(o.total_amount || o.total || sub)
+    };
+
+    printBill({
+      orderNo: o.local_number || o.id,
+      orderType: o.order_type,
+      tableNo: o.table_no,
+      customerName: o.customer_name || '',
+      phone: o.delivery_phone || '',
+      address: o.delivery_address || '',
+      items,
+      bill,
+      payNow: String(o.payment_status).toLowerCase() === 'paid',
+      paymentMethod: o.payment_method || 'Cash',
+      cardCharge: Number(o.card_charge || 0),
+      bankCharge: Number(o.bank_charge || 0)
+    });
+  } catch (e) {
+    console.error('reprintOrder:', e);
+    alert(e.message || 'Print failed');
+  }
+}
 
     async function payOrder(id, amount) {
-      try {
-        const method = document.getElementById('payMethod').value || 'Cash';
+  try {
+    const method = document.getElementById('payMethod')?.value || 'Cash';
+    let cardCharge = 0;
+    let bankCharge = 0;
 
-        let cardCharge = 0;
-        let bankCharge = 0;
-
-        if (method === 'Card') {
-          cardCharge = Number(amount) * (Number(posSettings.card_charge || 0) / 100);
-        } else if (method === 'Bank') {
-          bankCharge = Number(amount) * (Number(posSettings.bank_charge || 0) / 100);
-        }
-
-        await api(`/orders/${id}/pay`, {
-          method: 'PUT',
-          body: JSON.stringify({
-            payment_method: method,
-            paid_amount: Number(amount) + cardCharge + bankCharge,
-            card_charge: cardCharge,
-            bank_charge: bankCharge
-          })
-        });
-
-        await loadOrders();
-        await loadTodaySales();
-      } catch (e) {
-        alert(e.message || 'Payment failed');
-      }
+    if (method === 'Card') {
+      cardCharge = Number(amount) * (Number(posSettings.card_charge || 0) / 100);
+    } else if (method === 'Bank') {
+      bankCharge = Number(amount) * (Number(posSettings.bank_charge || 0) / 100);
     }
+
+    await api(`/orders/${id}/pay`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        payment_method: method,
+        paid_amount: Number(amount) + cardCharge + bankCharge,
+        card_charge: cardCharge,
+        bank_charge: bankCharge
+      })
+    });
+
+    await loadOrders();
+    await loadTodaySales();
+  } catch (e) {
+    alert(e.message || 'Payment failed');
+  }
+}
 
     async function completeOrder(id) {
       try {
@@ -2023,8 +2036,19 @@
     }
 
     function printBill(opts) {
-      showBillPreview(opts);
-    }
+  // Direct print (no modal) — used for auto-print after order & reprint
+  const html = buildBillHtml(opts);
+  const w = window.open('', '_blank', 'width=400,height=600');
+  if (!w) {
+    alert('Allow popups to print bill');
+    return;
+  }
+  w.document.write(
+    html +
+    '<script>window.onload=function(){window.print();setTimeout(function(){window.close();},400);};<\/script>'
+  );
+  w.document.close();
+}
      
     function buildBillHtml(opts) {
       const {
@@ -2121,19 +2145,19 @@
       document.getElementById('billPreviewModal').classList.remove('hidden');
     }
 
-    function refreshBillPreview() {
-  if (!pendingBillOpts) return;
-  const opts = {
-    ...pendingBillOpts,
-    customerName: document.getElementById('bpName').value.trim(),
-    phone: document.getElementById('bpPhone').value.trim(),
-    note: document.getElementById('bpNote').value.trim()
-  };
-  const html = buildBillHtml(opts);
-  // Use srcdoc on an iframe so styles apply correctly
-  document.getElementById('bpPreview').innerHTML =
-    `<iframe style="width:100%;height:100%;border:0;background:#fff;" srcdoc="${html.replace(/"/g, '&quot;')}"></iframe>`;
-}
+        function refreshBillPreview() {
+      if (!pendingBillOpts) return;
+      const opts = {
+        ...pendingBillOpts,
+        customerName: document.getElementById('bpName').value.trim(),
+        phone: document.getElementById('bpPhone').value.trim(),
+        note: document.getElementById('bpNote').value.trim()
+      };
+      const html = buildBillHtml(opts);
+      const m = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+      const box = document.getElementById('bpPreview');
+      box.innerHTML = m ? m[1] : html;
+    }
 
     function closeBillPreview() {
       document.getElementById('billPreviewModal').classList.add('hidden');
