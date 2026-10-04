@@ -176,6 +176,12 @@
       border-radius: 16px; padding: 18px;
     }
     .modal h3 { margin: 0 0 12px; padding-right: 40px; }
+    .modal h4 {
+      margin: 16px 0 8px; font-size: 13px; font-weight: 800;
+      color: var(--accent); text-transform: uppercase; letter-spacing: .5px;
+      border-top: 1px dashed var(--border); padding-top: 14px;
+    }
+    .modal h4:first-of-type { border-top: none; padding-top: 0; margin-top: 4px; }
     .modal label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 4px; font-weight: 600; }
     .modal input, .modal select {
       width: 100%; padding: 10px 12px; border-radius: 10px;
@@ -185,7 +191,6 @@
     .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
     .modal-actions .btn { flex: 1; }
 
-    /* ✅ Corner X close button */
     .modal-close-x {
       position: absolute;
       top: 10px; right: 10px;
@@ -194,15 +199,50 @@
       border: 1px solid var(--border);
       background: var(--panel2);
       color: var(--muted);
-      font-size: 20px;
-      font-weight: 700;
-      line-height: 1;
+      font-size: 20px; font-weight: 700; line-height: 1;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      padding: 0;
-      z-index: 2;
+      padding: 0; z-index: 2;
     }
     .modal-close-x:hover { color: var(--danger); border-color: var(--danger); }
+
+    /* theme toggle switch */
+    .theme-switch {
+      display: flex; gap: 8px; margin-top: 4px;
+    }
+    .theme-opt {
+      flex: 1; padding: 12px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--panel2);
+      color: var(--text); font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: all .15s;
+    }
+    .theme-opt.active {
+      background: var(--accent); color: #14181c; border-color: var(--accent);
+    }
+
+    /* rider list in settings */
+    .rider-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 12px; border: 1px solid var(--border);
+      border-radius: 10px; margin-bottom: 8px; background: var(--panel2);
+      gap: 8px; flex-wrap: wrap;
+    }
+    .rider-row .rinfo { flex: 1; min-width: 0; }
+    .rider-row .rname { font-weight: 700; font-size: 13px; }
+    .rider-row .rsub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .rider-row button {
+      padding: 6px 12px; font-size: 11px; border-radius: 8px;
+    }
+    .reset-pw-box {
+      display: flex; gap: 6px; margin-top: 8px; width: 100%;
+    }
+    .reset-pw-box input {
+      flex: 1; padding: 8px 10px; font-size: 12px; border-radius: 8px;
+    }
+    .reset-pw-box button {
+      padding: 8px 12px; font-size: 11px;
+    }
 
     .menu-admin-row {
       display: flex; justify-content: space-between; align-items: center;
@@ -225,7 +265,6 @@
     .sales-page-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
     .sales-page-header h2 { margin: 0; font-size: 1.25rem; font-weight: 800; }
     #salesPage .sales-table-wrap { max-height: none; overflow: auto; border: 1px solid var(--border); border-radius: 12px; }
-    #salesPage .sales-table th, #salesPage .sales-table td { padding: 10px 8px; }
     .sales-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
     .sales-filters input[type="date"] {
       padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);
@@ -249,9 +288,6 @@
     .sales-table th, .sales-table td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); }
     .sales-table th { color: var(--muted); font-weight: 600; }
     .pay-bar-row { display: flex; justify-content: space-between; font-size: 13px; margin: 4px 0; }
-
-    .sales-order-row { cursor: pointer; }
-    .sales-order-row:hover td { background: rgba(227,162,59,.05); }
 
     @media (max-width: 600px) {
       .brand { max-width: 110px; font-size: 14px; }
@@ -390,20 +426,10 @@
         <table class="sales-table">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Type</th>
-              <th>Pay</th>
-              <th>Items</th>
-              <th>Subtotal</th>
-              <th>Disc</th>
-              <th>GST</th>
-              <th>Tax</th>
-              <th>Dine</th>
-              <th>Del</th>
-              <th>Card</th>
-              <th>Bank</th>
-              <th>Total</th>
-              <th>Time</th>
+              <th>#</th><th>Type</th><th>Pay</th><th>Items</th>
+              <th>Subtotal</th><th>Disc</th><th>GST</th><th>Tax</th>
+              <th>Dine</th><th>Del</th><th>Card</th><th>Bank</th>
+              <th>Total</th><th>Time</th>
             </tr>
           </thead>
           <tbody id="salesOrdersBody"></tbody>
@@ -477,13 +503,11 @@
       <input id="bpPhone" placeholder="Optional" />
       <label>Note on bill</label>
       <input id="bpNote" placeholder="e.g. less spicy / thank you" />
-
       <div id="bpPreview" style="
         margin:12px 0;padding:0;background:#fff;color:#000;
         border-radius:10px;overflow:hidden;border:1px solid var(--border);
         height:360px;
       "></div>
-
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeBillPreview()">Close</button>
         <button class="btn btn-accent" onclick="confirmPrintBill()">Print</button>
@@ -498,29 +522,22 @@
       <h3>Edit bill</h3>
       <input type="hidden" id="ebOrderId" value="" />
       <p id="ebInfo" style="color:var(--muted);font-size:13px;margin:0 0 10px;"></p>
-
       <label>Discount type</label>
       <select id="ebDiscType">
         <option value="none">None</option>
         <option value="percent">Percent %</option>
         <option value="fixed">Fixed Rs</option>
       </select>
-
       <label>Discount value</label>
       <input id="ebDiscVal" type="number" min="0" step="0.01" value="0" />
-
       <label>GST %</label>
       <input id="ebGst" type="number" min="0" max="100" step="0.01" value="0" />
-
       <label>Tax %</label>
       <input id="ebTax" type="number" min="0" max="100" step="0.01" value="0" />
-
       <label>Dine charge (Rs)</label>
       <input id="ebDine" type="number" min="0" step="1" value="0" />
-
       <label>Delivery charge (Rs)</label>
       <input id="ebDel" type="number" min="0" step="1" value="0" />
-
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeEditBill()">Close</button>
         <button class="btn btn-accent" onclick="saveEditBill()">Save</button>
@@ -528,11 +545,21 @@
     </div>
   </div>
 
-  <!-- ================= SETTINGS MODAL ================= -->
+  <!-- ================= SETTINGS MODAL (REDESIGNED) ================= -->
   <div id="settingsModal" class="modal-bg hidden">
-    <div class="modal" style="max-width:420px;">
+    <div class="modal" style="max-width:460px;max-height:90vh;overflow:auto;">
       <button class="modal-close-x" onclick="closeSettings()" title="Close">×</button>
       <h3>Settings</h3>
+
+      <!-- ============ APPEARANCE ============ -->
+      <h4>🎨 Appearance</h4>
+      <div class="theme-switch">
+        <button type="button" class="theme-opt" id="theme-dark" onclick="setTheme('dark')">🌙 Dark</button>
+        <button type="button" class="theme-opt" id="theme-light" onclick="setTheme('light')">☀️ Light</button>
+      </div>
+
+      <!-- ============ BILLING / POS ============ -->
+      <h4>💰 Billing / POS</h4>
       <label>GST %</label>
       <input id="setGst" type="number" min="0" max="100" step="0.01" value="0" />
       <label>Tax % (other)</label>
@@ -553,20 +580,57 @@
       </select>
       <label>Discount value</label>
       <input id="setDiscValue" type="number" min="0" step="0.01" value="0" />
-      <hr style="border-color:var(--border);margin:14px 0;" />
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:12px;">
         <input type="checkbox" id="setAutoPrint" style="width:auto;" />
         Auto-print bill after order
       </label>
-      <hr style="border-color:var(--border);margin:14px 0;" />
       <label>Rider assign mode</label>
       <select id="assignMode">
         <option value="manual">Manual</option>
         <option value="auto">Auto (least load)</option>
       </select>
-      <div class="modal-actions">
+
+      <!-- ============ MY ACCOUNT ============ -->
+      <h4>👤 My Account (Counter Lite)</h4>
+      <label>Username</label>
+      <input id="accUsername" placeholder="Your username" />
+      <label>Current password</label>
+      <div class="pw-wrap" style="margin-bottom:0;">
+        <input id="accCurrentPw" type="password" placeholder="Current password" />
+        <span class="pw-eye"
+              onmousedown="peek('accCurrentPw','text')"
+              onmouseup="peek('accCurrentPw','password')"
+              onmouseleave="peek('accCurrentPw','password')"
+              ontouchstart="peek('accCurrentPw','text')"
+              ontouchend="peek('accCurrentPw','password')">👁</span>
+      </div>
+      <label>New password</label>
+      <div class="pw-wrap" style="margin-bottom:0;">
+        <input id="accNewPw" type="password" placeholder="Leave blank to keep same" />
+        <span class="pw-eye"
+              onmousedown="peek('accNewPw','text')"
+              onmouseup="peek('accNewPw','password')"
+              onmouseleave="peek('accNewPw','password')"
+              ontouchstart="peek('accNewPw','text')"
+              ontouchend="peek('accNewPw','password')">👁</span>
+      </div>
+      <label>Confirm new password</label>
+      <div class="pw-wrap" style="margin-bottom:0;">
+        <input id="accConfirmPw" type="password" placeholder="Confirm new password" />
+      </div>
+      <button type="button" class="btn btn-ok" style="width:100%;margin-top:12px;" onclick="updateMyAccount()">
+        Update account
+      </button>
+
+      <!-- ============ RIDERS PASSWORD RESET ============ -->
+      <h4>🚴 Riders — Password Reset</h4>
+      <div id="ridersListBox">
+        <div class="empty" style="padding:12px;">Loading riders…</div>
+      </div>
+
+      <div class="modal-actions" style="margin-top:20px;">
         <button class="btn btn-ghost" onclick="closeSettings()">Close</button>
-        <button class="btn btn-accent" onclick="saveSettings()">Save</button>
+        <button class="btn btn-accent" onclick="saveSettings()">Save POS settings</button>
       </div>
     </div>
   </div>
@@ -588,6 +652,7 @@
     let dealsList = [];
     let dealCart = [];
     let deliveryRiders = [];
+    let staffList = [];        // for rider password reset section
     let currentShift = null;
     let posSettings = {
       gst_percent: 0, tax_percent: 0, delivery_charge: 0, dine_charge: 0,
@@ -622,6 +687,10 @@
     }
     function showPassword() { document.getElementById('password').type = 'text'; }
     function hidePassword() { document.getElementById('password').type = 'password'; }
+    function peek(id, type) {
+      const el = document.getElementById(id);
+      if (el) el.type = type;
+    }
     function normalizeLogoUrl(value) {
       if (!value) return '';
       const url = String(value).trim();
@@ -849,7 +918,6 @@
           </button>`;
       }).join('');
     }
-
     function addDealToCart(dealId) {
       const d = dealsList.find(x => Number(x.id) === Number(dealId));
       if (!d) return;
@@ -866,7 +934,6 @@
       }
       renderCart();
     }
-
     function changeDealQty(dealId, delta) {
       const row = dealCart.find(c => c.deal_id === Number(dealId));
       if (!row) return;
@@ -874,7 +941,6 @@
       if (row.qty <= 0) dealCart = dealCart.filter(c => c.deal_id !== Number(dealId));
       renderCart();
     }
-
     function renderMenu() {
       const q = (document.getElementById('menuSearch').value || '').toLowerCase();
       const list = menu.filter(m => {
@@ -1467,16 +1533,13 @@
       const id = Number(btn.dataset.id);
       const d = dealsList.find(x => Number(x.id) === id);
       if (!d) return;
-
       document.getElementById('editDealId').value = id;
       document.getElementById('dName').value = d.name || '';
       document.getElementById('dPrice').value = d.price || '';
       const btn2 = document.getElementById('dealSaveBtn');
       if (btn2) btn2.textContent = 'Update deal';
-
       document.querySelectorAll('.d-pick').forEach(cb => { cb.checked = false; });
       document.querySelectorAll('.d-qty').forEach(q => { q.value = 1; });
-
       const items = d.items || [];
       items.forEach(it => {
         const mid = Number(it.menu_item_id || it.id || it.menu_id);
@@ -1485,7 +1548,6 @@
         const qtyEl = document.querySelector('.d-qty[data-id="' + mid + '"]');
         if (qtyEl) qtyEl.value = Math.max(1, Number(it.quantity || it.qty || 1));
       });
-
       const form = document.getElementById('dName');
       if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
       if (form) form.focus();
@@ -1532,15 +1594,10 @@
         items.push({ menu_item_id: id, variant_id: null, quantity });
       });
       if (!items.length) { alert('Select at least one menu item for the deal'); return; }
-
       const payload = { name, price, type: 'deal', category: null, image: null, items };
-
       try {
-        if (editId) {
-          await api('/deals/' + editId, { method: 'PUT', body: JSON.stringify(payload) });
-        } else {
-          await api('/deals', { method: 'POST', body: JSON.stringify(payload) });
-        }
+        if (editId) await api('/deals/' + editId, { method: 'PUT', body: JSON.stringify(payload) });
+        else await api('/deals', { method: 'POST', body: JSON.stringify(payload) });
         resetDealForm();
         await loadDeals();
         renderDealItemPicks();
@@ -1807,7 +1864,6 @@
       const from = salesCache.from, to = salesCache.to;
       const brandName = document.getElementById('brandName')?.textContent || 'Cafe';
       const stats = `Orders: ${document.getElementById('stOrders').textContent} | Sales: ${document.getElementById('stSales').textContent} | Avg: ${document.getElementById('stAvg').textContent}`;
-
       let table = `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:10px;">
         <tr>
           <th>#</th><th>Type</th><th>Pay</th><th>Items</th>
@@ -1843,7 +1899,6 @@
         </tr>`;
       });
       table += '</table>';
-
       const w = window.open('', '_blank');
       if (!w) { alert('Allow popups to print'); return; }
       const S1 = '<' + 'script>', S2 = '</' + 'script>';
@@ -2018,7 +2073,25 @@
     }
 
     /* ================= SETTINGS ================= */
-    function openSettings() {
+    function applyThemeUI() {
+      const isLight = document.body.classList.contains('light');
+      const dk = document.getElementById('theme-dark');
+      const lt = document.getElementById('theme-light');
+      if (dk) dk.classList.toggle('active', !isLight);
+      if (lt) lt.classList.toggle('active', isLight);
+    }
+
+    function setTheme(mode) {
+      if (mode === 'light') document.body.classList.add('light');
+      else document.body.classList.remove('light');
+      localStorage.setItem('cafe_theme', mode);
+      applyThemeUI();
+    }
+
+    async function openSettings() {
+      // theme
+      applyThemeUI();
+      // pos
       document.getElementById('setGst').value = posSettings.gst_percent || 0;
       document.getElementById('setTax').value = posSettings.tax_percent || 0;
       document.getElementById('setDelCharge').value = posSettings.delivery_charge || 0;
@@ -2029,9 +2102,95 @@
       document.getElementById('setDiscValue').value = posSettings.discount_value || 0;
       document.getElementById('setAutoPrint').checked = localStorage.getItem('cafe_auto_print') !== '0';
       document.getElementById('assignMode').value = localStorage.getItem('cafe_assign_mode') || 'manual';
+      // account
+      document.getElementById('accUsername').value = user?.username || user?.name || '';
+      document.getElementById('accCurrentPw').value = '';
+      document.getElementById('accNewPw').value = '';
+      document.getElementById('accConfirmPw').value = '';
+      // riders
+      await loadStaffForSettings();
       document.getElementById('settingsModal').classList.remove('hidden');
     }
+
     function closeSettings() { document.getElementById('settingsModal').classList.add('hidden'); }
+
+    async function loadStaffForSettings() {
+      const box = document.getElementById('ridersListBox');
+      box.innerHTML = '<div class="empty" style="padding:12px;">Loading riders…</div>';
+      try {
+        const data = await api('/users');
+        staffList = data.data || data.staff || data.users || [];
+      } catch (e) {
+        staffList = [];
+        console.warn('loadStaffForSettings:', e.message);
+      }
+      const riders = staffList.filter(u => u.role === 'delivery');
+      if (!riders.length) {
+        box.innerHTML = '<div class="empty" style="padding:12px;">No riders found. Add riders from Manager panel.</div>';
+        return;
+      }
+      box.innerHTML = riders.map(r => `
+        <div class="rider-row" data-rid="${r.id}">
+          <div class="rinfo">
+            <div class="rname">${esc(r.full_name || r.username || 'Rider')}</div>
+            <div class="rsub">@${esc(r.username || '')} · ${r.is_active ? 'Active' : 'Inactive'}</div>
+          </div>
+          <button class="btn btn-ghost" onclick="toggleResetBox(${r.id})">Reset password</button>
+          <div class="reset-pw-box hidden" id="reset-box-${r.id}">
+            <input type="password" id="reset-pw-${r.id}" placeholder="New password" />
+            <button class="btn btn-ok" onclick="doResetRiderPassword(${r.id})">Save</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleResetBox(id) {
+      const box = document.getElementById('reset-box-' + id);
+      if (!box) return;
+      box.classList.toggle('hidden');
+      const inp = document.getElementById('reset-pw-' + id);
+      if (inp && !box.classList.contains('hidden')) inp.focus();
+    }
+
+    async function doResetRiderPassword(id) {
+      const inp = document.getElementById('reset-pw-' + id);
+      const pw = (inp?.value || '').trim();
+      if (pw.length < 4) { alert('Password must be at least 4 characters'); return; }
+      try {
+        await api('/users/' + id, {
+          method: 'PUT',
+          body: JSON.stringify({ password: pw })
+        });
+        inp.value = '';
+        document.getElementById('reset-box-' + id).classList.add('hidden');
+        alert('Password reset ✓');
+      } catch (e) { alert(e.message || 'Reset failed'); }
+    }
+
+    async function updateMyAccount() {
+      const username = document.getElementById('accUsername').value.trim();
+      const currentPw = document.getElementById('accCurrentPw').value;
+      const newPw = document.getElementById('accNewPw').value;
+      const confirmPw = document.getElementById('accConfirmPw').value;
+
+      if (!currentPw) { alert('Current password required'); return; }
+      if (newPw && newPw !== confirmPw) { alert('New passwords do not match'); return; }
+      if (newPw && newPw.length < 4) { alert('New password must be at least 4 characters'); return; }
+
+      const body = { current_password: currentPw };
+      if (username) body.username = username;
+      if (newPw) body.new_password = newPw;
+
+      try {
+        await api('/auth/settings', { method: 'PUT', body: JSON.stringify(body) });
+        alert('Account updated ✓');
+        if (user) user.username = username || user.username;
+        document.getElementById('accCurrentPw').value = '';
+        document.getElementById('accNewPw').value = '';
+        document.getElementById('accConfirmPw').value = '';
+      } catch (e) { alert(e.message || 'Update failed'); }
+    }
+
     async function saveSettings() {
       const payload = {
         gst_percent: Number(document.getElementById('setGst').value || 0),
@@ -2051,19 +2210,22 @@
         localStorage.setItem('cafe_assign_mode', document.getElementById('assignMode').value);
         renderCart();
         closeSettings();
-        alert('Settings saved');
+        alert('POS settings saved ✓');
       } catch (e) { alert(e.message || 'Save failed'); }
     }
 
-    /* ================= THEME ================= */
+    /* ================= THEME (topbar) ================= */
     function toggleTheme() {
-      document.body.classList.toggle('light');
-      localStorage.setItem('cafe_theme', document.body.classList.contains('light') ? 'light' : 'dark');
+      const isLight = document.body.classList.contains('light');
+      setTheme(isLight ? 'dark' : 'light');
     }
 
     /* ================= PAGE LOAD ================= */
     window.addEventListener('load', async () => {
-      if (localStorage.getItem('cafe_theme') === 'light') document.body.classList.add('light');
+      const savedTheme = localStorage.getItem('cafe_theme');
+      if (savedTheme === 'light') document.body.classList.add('light');
+      applyThemeUI();
+
       if (!restaurantId) {
         const saved = localStorage.getItem('cafe_restaurant_id');
         if (saved) restaurantId = Number(saved);
