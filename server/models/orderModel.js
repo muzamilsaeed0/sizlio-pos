@@ -715,7 +715,8 @@ const localNumber = lnRes.rows[0].n;
           $19,
           $20,
           $21,
-          $22
+          $22,
+          $23
         )
 
         RETURNING *
@@ -741,6 +742,7 @@ const localNumber = lnRes.rows[0].n;
           paymentTiming,
 
           initialPaymentStatus,
+          initialPaymentStatus === 'paid' ? (paymentMethod || 'Cash') : null,
           finalPaidAmount,
 
           discountType,
@@ -753,7 +755,7 @@ const localNumber = lnRes.rows[0].n;
           initialPaymentStatus === 'paid'
             ? createdByUserId
             : null,
-                  Number(deliveryCharge || 0),
+           Number(deliveryCharge || 0),
           Number(dineCharge || 0),
           Number(cardCharge || 0),
           Number(bankCharge || 0) 
