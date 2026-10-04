@@ -9,7 +9,8 @@ const {
 const pool = require('../config/db');
 
 function managerOnly(req, res) {
-  if (req.user.role !== 'manager') {
+  // Cafe Lite: counter = manager for deals
+  if (!req.user || !['manager', 'counter'].includes(req.user.role)) {
     res.status(403).json({
       success: false,
       message: 'Only manager can manage deals'

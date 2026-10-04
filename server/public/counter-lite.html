@@ -303,6 +303,10 @@
         </div>
         <input class="search" id="menuSearch" placeholder="Search menu…" oninput="renderMenu()" />
         <div class="cats" id="cats"></div>
+                <div id="dealsSection" style="display:none;margin-bottom:14px;">
+          <div style="font-size:12px;font-weight:700;color:var(--accent);margin:0 0 8px;">🎁 Deals</div>
+          <div class="menu-grid" id="dealsGrid"></div>
+        </div>
         <div class="menu-grid" id="menuGrid"></div>
       </section>
 
@@ -541,6 +545,8 @@
     let menu = [];
     let activeCat = 'All';
     let cart = [];
+    let dealsList = [];
+    let dealCart = [];
     let deliveryRiders = [];
     let currentShift = null;
     let posSettings = {
@@ -688,7 +694,7 @@
       setInterval(() => { loadCafeBrand().catch(() => {}); }, 120000);
 
       await Promise.all([
-        loadShift(), loadMenu(), loadOrders(),
+        loadShift(), loadMenu(),loadDeals(), loadOrders(),
         loadTodaySales(), loadDeliveryRiders()
       ]);
 
@@ -769,6 +775,16 @@
         document.getElementById('menuGrid').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
       }
     }
+        async function loadDeals() {
+      try {
+        const data = await api('/deals');
+        dealsList = Array.isArray(data.data) ? data.data : (data.deals || []);
+      } catch (e) {
+        console.warn('loadDeals:', e.message);
+        dealsList = [];
+      }
+      renderMenu();
+    }
     function renderCats() {
       const cats = ['All', ...new Set(menu.map(m => m.category || 'Other'))];
       document.getElementById('cats').innerHTML = cats.map(c =>
@@ -777,6 +793,55 @@
                  onclick="selectCat(this.dataset.cat)">${esc(c)}</button>`).join('');
     }
     function selectCat(c) { activeCat = c; renderCats(); renderMenu(); }
+
+        function renderDealsGrid() {
+      const section = document.getElementById('dealsSection');
+      const grid = document.getElementById('dealsGrid');
+      if (!section || !grid) return;
+
+      if (!dealsList.length) {
+        section.style.display = 'none';
+        return;
+      }
+      section.style.display = 'block';
+      grid.innerHTML = dealsList.map(d => {
+        const sub = (d.items || [])
+          .map(i => `${i.quantity || i.qty || 1}× ${esc(i.name || '')}`)
+          .join(', ');
+        return `
+          <div class="menu-item" onclick="addDealToCart(${Number(d.id)})" style="border-color:var(--accent);">
+            <div class="nm">🎁 ${esc(d.name)}</div>
+            <div style="font-size:10px;color:var(--muted);margin:4px 0;">${sub || 'Combo'}</div>
+            <div class="pr">${money(d.price)}</div>
+          </div>`;
+      }).join('');
+    }
+
+        function addDealToCart(dealId) {
+      const d = dealsList.find(x => Number(x.id) === Number(dealId));
+      if (!d) return;
+      const row = dealCart.find(c => c.deal_id === Number(dealId));
+      if (row) row.qty += 1;
+      else {
+        dealCart.push({
+          deal_id: Number(d.id),
+          name: d.name,
+          price: Number(d.price),
+          qty: 1,
+          items: d.items || []
+        });
+      }
+      renderCart();
+    }
+
+    function changeDealQty(dealId, delta) {
+      const row = dealCart.find(c => c.deal_id === Number(dealId));
+      if (!row) return;
+      row.qty += delta;
+      if (row.qty <= 0) dealCart = dealCart.filter(c => c.deal_id !== Number(dealId));
+      renderCart();
+    }
+
     function renderMenu() {
       const q = (document.getElementById('menuSearch').value || '').toLowerCase();
       const list = menu.filter(m => {
@@ -794,6 +859,7 @@
         </button>
       `).join('');
       window._filteredMenu = list;
+      renderDealsGrid();
     }
     function addFromGrid(btn) {
       const idx = Number(btn.dataset.idx);
@@ -828,7 +894,11 @@
       if (row.qty <= 0) cart = cart.filter(c => c.id !== id);
       renderCart();
     }
-    function cartTotal() { return cart.reduce((s, c) => s + c.price * c.qty, 0); }
+       function cartTotal() {
+      const items = cart.reduce((s, c) => s + c.price * c.qty, 0);
+      const deals = dealCart.reduce((s, c) => s + c.price * c.qty, 0);
+      return items + deals;
+    }
     function calcBill(subtotal) {
       const sub = Number(subtotal) || 0;
       const discType = posSettings.discount_type || 'none';
@@ -889,7 +959,10 @@
 
     /* ================= PLACE ORDER ================= */
     async function placeOrder(payNow) {
-      if (!cart.length) { alert('Add at least one item'); return; }
+           if (!cart.length && !dealCart.length) {
+        alert('Add at least one item or deal');
+        return;
+      }
       if (orderType === 'delivery') {
         const phone = document.getElementById('custPhone').value.trim();
         const address = document.getElementById('custAddress').value.trim();
@@ -911,7 +984,10 @@
       const items = cart.map(c => ({ menu_item_id: Number(c.id), quantity: Number(c.qty) }));
 
       const body = {
-        items, deals: [],
+        items,         deals: dealCart.map(d => ({
+          deal_id: Number(d.deal_id),
+          quantity: Number(d.qty)
+        })),
         order_type: orderType, order_source: 'COUNTER',
         table_no: tableNo,
         customer_name: document.getElementById('custName').value.trim() || null,
