@@ -170,11 +170,12 @@
       z-index: 50; padding: 16px;
     }
     .modal {
+      position: relative;
       width: 100%; max-width: 480px; max-height: 90vh; overflow: auto;
       background: var(--panel); border: 1px solid var(--border);
       border-radius: 16px; padding: 18px;
     }
-    .modal h3 { margin: 0 0 12px; }
+    .modal h3 { margin: 0 0 12px; padding-right: 40px; }
     .modal label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 4px; font-weight: 600; }
     .modal input, .modal select {
       width: 100%; padding: 10px 12px; border-radius: 10px;
@@ -183,6 +184,26 @@
     .modal input:focus, .modal select:focus { outline: none; border-color: var(--accent); }
     .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
     .modal-actions .btn { flex: 1; }
+
+    /* ✅ Corner X close button */
+    .modal-close-x {
+      position: absolute;
+      top: 10px; right: 10px;
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--muted);
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0;
+      z-index: 2;
+    }
+    .modal-close-x:hover { color: var(--danger); border-color: var(--danger); }
+
     .menu-admin-row {
       display: flex; justify-content: space-between; align-items: center;
       padding: 10px 0; border-bottom: 1px solid var(--border);
@@ -195,8 +216,7 @@
       display: none; flex-direction: column; gap: 12px;
       padding: 12px 16px 24px; max-width: 1100px; margin: 0 auto; width: 100%;
     }
-
-        #salesPage .sales-table { font-size: 11px; }
+    #salesPage .sales-table { font-size: 11px; }
     #salesPage .sales-table th, #salesPage .sales-table td { padding: 8px 6px; white-space: nowrap; }
     #salesPage .sales-table td:nth-child(4) { white-space: normal; max-width: 180px; }
     #salesPage.open { display: flex; }
@@ -232,12 +252,6 @@
 
     .sales-order-row { cursor: pointer; }
     .sales-order-row:hover td { background: rgba(227,162,59,.05); }
-    .sales-order-detail-row td { background: var(--panel2); padding: 0 !important; border-bottom: 1px solid var(--border); }
-    .order-detail-inner { padding: 10px 14px; font-size: 12px; }
-    .order-detail-inner table { width: 100%; border-collapse: collapse; }
-    .order-detail-inner td { padding: 3px 4px; border: none; }
-    .order-detail-inner .det-label { color: var(--muted); font-size: 11px; }
-    .order-detail-inner .det-total { font-weight: 800; color: var(--accent); }
 
     @media (max-width: 600px) {
       .brand { max-width: 110px; font-size: 14px; }
@@ -303,7 +317,7 @@
         </div>
         <input class="search" id="menuSearch" placeholder="Search menu…" oninput="renderMenu()" />
         <div class="cats" id="cats"></div>
-                <div id="dealsSection" style="display:none;margin-bottom:14px;">
+        <div id="dealsSection" style="display:none;margin-bottom:14px;">
           <div style="font-size:12px;font-weight:700;color:var(--accent);margin:0 0 8px;">🎁 Deals</div>
           <div class="menu-grid" id="dealsGrid"></div>
         </div>
@@ -371,11 +385,11 @@
       <div id="salesPayments" class="empty">—</div>
       <div class="sales-section-title">Top items</div>
       <div id="salesTop" class="empty">—</div>
-      <div class="sales-section-title">Orders <span style="color:var(--muted);font-weight:400;text-transform:none;">(click a row for details)</span></div>
+      <div class="sales-section-title">Orders</div>
       <div class="sales-table-wrap">
         <table class="sales-table">
           <thead>
-                       <tr>
+            <tr>
               <th>#</th>
               <th>Type</th>
               <th>Pay</th>
@@ -398,8 +412,10 @@
     </div>
   </div>
 
+  <!-- ================= MENU ADMIN MODAL ================= -->
   <div id="menuModal" class="modal-bg hidden">
-        <div class="modal" style="max-height:90vh;overflow:auto;">
+    <div class="modal" style="max-height:90vh;overflow:auto;">
+      <button class="modal-close-x" onclick="closeMenuAdmin()" title="Close">×</button>
       <h3>Menu items</h3>
       <div id="menuAdminList"></div>
       <hr style="border-color:var(--border);margin:14px 0;" />
@@ -425,11 +441,12 @@
         <option value="Ltr">Ltr</option>
         <option value="pcs">pcs</option>
       </select>
-            <hr style="border-color:var(--border);margin:16px 0;" />
+
+      <hr style="border-color:var(--border);margin:16px 0;" />
       <h3 style="margin:0 0 10px;">🎁 Deals</h3>
       <div id="dealsAdminList" style="margin-bottom:12px;font-size:12px;"></div>
 
-      <h3 style="margin:0 0 10px;font-size:15px;">Add deal</h3>
+      <h3 style="margin:0 0 10px;font-size:15px;">Add / Edit deal</h3>
       <input type="hidden" id="editDealId" value="" />
       <label>Deal name *</label>
       <input id="dName" placeholder="e.g. Lunch combo" />
@@ -438,18 +455,21 @@
       <label>Items in this deal</label>
       <div id="dItemPicks" style="max-height:140px;overflow:auto;font-size:12px;margin-bottom:10px;"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-        <button type="button" class="btn btn-accent" onclick="saveDeal()">Save deal</button>
+        <button type="button" class="btn btn-accent" onclick="saveDeal()" id="dealSaveBtn" style="width:auto;padding:10px 16px;">Save deal</button>
         <button type="button" class="btn btn-ghost" onclick="resetDealForm()">Clear</button>
-      </div>    <div class="modal"></div>
+      </div>
+
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeMenuAdmin()">Close</button>
-        <button class="btn btn-accent" onclick="saveMenuItem()">Save</button>
+        <button class="btn btn-accent" onclick="saveMenuItem()">Save item</button>
       </div>
     </div>
   </div>
 
+  <!-- ================= BILL PREVIEW MODAL ================= -->
   <div id="billPreviewModal" class="modal-bg hidden">
     <div class="modal" style="max-width:440px;max-height:92vh;overflow:auto;">
+      <button class="modal-close-x" onclick="closeBillPreview()" title="Close">×</button>
       <h3>Bill preview</h3>
       <label>Customer name</label>
       <input id="bpName" placeholder="Optional" />
@@ -464,7 +484,6 @@
         height:360px;
       "></div>
 
- 
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeBillPreview()">Close</button>
         <button class="btn btn-accent" onclick="confirmPrintBill()">Print</button>
@@ -472,8 +491,10 @@
     </div>
   </div>
 
+  <!-- ================= EDIT BILL MODAL ================= -->
   <div id="editBillModal" class="modal-bg hidden">
     <div class="modal" style="max-width:400px;">
+      <button class="modal-close-x" onclick="closeEditBill()" title="Close">×</button>
       <h3>Edit bill</h3>
       <input type="hidden" id="ebOrderId" value="" />
       <p id="ebInfo" style="color:var(--muted);font-size:13px;margin:0 0 10px;"></p>
@@ -507,8 +528,10 @@
     </div>
   </div>
 
+  <!-- ================= SETTINGS MODAL ================= -->
   <div id="settingsModal" class="modal-bg hidden">
     <div class="modal" style="max-width:420px;">
+      <button class="modal-close-x" onclick="closeSettings()" title="Close">×</button>
       <h3>Settings</h3>
       <label>GST %</label>
       <input id="setGst" type="number" min="0" max="100" step="0.01" value="0" />
@@ -575,8 +598,6 @@
     let pendingBillOpts = null;
     let salesCache = { orders: [], from: '', to: '', range: 'today' };
     let cafeBrand = { name: 'Cafe', logo: '', address: '', phone: '' };
-    let expandedOrders = new Set();
-    // cache of fully-fetched orders (id -> order object with items + payment_method)
     const fullOrderCache = new Map();
 
     /* ================= HELPERS ================= */
@@ -607,7 +628,6 @@
       if (/^https?:\/\//i.test(url) || url.startsWith('//') || url.startsWith('/')) return url;
       return '/' + url;
     }
-    // Normalize payment_method string: 'Cash' | 'Card' | 'Bank' | 'Other' | 'Unspecified'
     function normPayMethod(v) {
       const s = String(v || '').trim();
       if (!s) return 'Unspecified';
@@ -615,7 +635,7 @@
       if (l === 'cash') return 'Cash';
       if (l === 'card') return 'Card';
       if (l === 'bank') return 'Bank';
-      if (l === 'cod') return 'Cash'; // treat COD as Cash collected
+      if (l === 'cod') return 'Cash';
       if (l === 'online' || l === 'other') return 'Other';
       return s.charAt(0).toUpperCase() + s.slice(1);
     }
@@ -711,7 +731,7 @@
       setInterval(() => { loadCafeBrand().catch(() => {}); }, 120000);
 
       await Promise.all([
-        loadShift(), loadMenu(),loadDeals(), loadOrders(),
+        loadShift(), loadMenu(), loadDeals(), loadOrders(),
         loadTodaySales(), loadDeliveryRiders()
       ]);
 
@@ -792,7 +812,7 @@
         document.getElementById('menuGrid').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
       }
     }
-        async function loadDeals() {
+    async function loadDeals() {
       try {
         const data = await api('/deals');
         dealsList = Array.isArray(data.data) ? data.data : (data.deals || []);
@@ -811,30 +831,26 @@
     }
     function selectCat(c) { activeCat = c; renderCats(); renderMenu(); }
 
-        function renderDealsGrid() {
+    function renderDealsGrid() {
       const section = document.getElementById('dealsSection');
       const grid = document.getElementById('dealsGrid');
       if (!section || !grid) return;
-
-      if (!dealsList.length) {
-        section.style.display = 'none';
-        return;
-      }
+      if (!dealsList.length) { section.style.display = 'none'; return; }
       section.style.display = 'block';
       grid.innerHTML = dealsList.map(d => {
         const sub = (d.items || [])
           .map(i => `${i.quantity || i.qty || 1}× ${esc(i.name || '')}`)
           .join(', ');
         return `
-          <div class="menu-item" onclick="addDealToCart(${Number(d.id)})" style="border-color:var(--accent);">
-            <div class="nm">🎁 ${esc(d.name)}</div>
-            <div style="font-size:10px;color:var(--muted);margin:4px 0;">${sub || 'Combo'}</div>
-            <div class="pr">${money(d.price)}</div>
-          </div>`;
+          <button class="menu-card" onclick="addDealToCart(${Number(d.id)})" style="border-color:var(--accent);">
+            <div class="n">🎁 ${esc(d.name)}</div>
+            <div class="u">${sub || 'Combo'}</div>
+            <div class="p">${money(d.price)}</div>
+          </button>`;
       }).join('');
     }
 
-        function addDealToCart(dealId) {
+    function addDealToCart(dealId) {
       const d = dealsList.find(x => Number(x.id) === Number(dealId));
       if (!d) return;
       const row = dealCart.find(c => c.deal_id === Number(dealId));
@@ -867,15 +883,17 @@
         return true;
       });
       const grid = document.getElementById('menuGrid');
-      if (!list.length) { grid.innerHTML = '<div class="empty">No items. Add from Menu button.</div>'; return; }
-      grid.innerHTML = list.map((m, idx) => `
-        <button class="menu-card" data-idx="${idx}" onclick="addFromGrid(this)">
-          <div class="n">${esc(m.name)}</div>
-          <div class="u">${esc(pkgLabel(m))}</div>
-          <div class="p">${money(m.price)}</div>
-        </button>
-      `).join('');
-      window._filteredMenu = list;
+      if (!list.length) { grid.innerHTML = '<div class="empty">No items. Add from Menu button.</div>'; }
+      else {
+        grid.innerHTML = list.map((m, idx) => `
+          <button class="menu-card" data-idx="${idx}" onclick="addFromGrid(this)">
+            <div class="n">${esc(m.name)}</div>
+            <div class="u">${esc(pkgLabel(m))}</div>
+            <div class="p">${money(m.price)}</div>
+          </button>
+        `).join('');
+        window._filteredMenu = list;
+      }
       renderDealsGrid();
     }
     function addFromGrid(btn) {
@@ -911,7 +929,7 @@
       if (row.qty <= 0) cart = cart.filter(c => c.id !== id);
       renderCart();
     }
-       function cartTotal() {
+    function cartTotal() {
       const items = cart.reduce((s, c) => s + c.price * c.qty, 0);
       const deals = dealCart.reduce((s, c) => s + c.price * c.qty, 0);
       return items + deals;
@@ -937,9 +955,8 @@
       const total = afterDiscount + gstAmount + taxAmount + extra;
       return { sub, discountAmount, gstAmount, taxAmount, extra, total };
     }
-        function renderCart() {
+    function renderCart() {
       const el = document.getElementById('cartList');
-
       const itemRows = cart.map(c => `
         <div class="cart-row">
           <div class="nm">${esc(c.name)}${pkgLabel(c) ? ` <span style="color:var(--muted)">(${esc(pkgLabel(c))})</span>` : ''}</div>
@@ -948,7 +965,6 @@
           <button class="qty-btn" onclick="changeQty(${c.id},1)">+</button>
           <strong>${money(c.price * c.qty)}</strong>
         </div>`).join('');
-
       const dealRows = dealCart.map(c => `
         <div class="cart-row">
           <div class="nm">🎁 ${esc(c.name)}</div>
@@ -957,12 +973,8 @@
           <button class="qty-btn" onclick="changeDealQty(${c.deal_id},1)">+</button>
           <strong>${money(c.price * c.qty)}</strong>
         </div>`).join('');
-
-      if (!cart.length && !dealCart.length) {
-        el.innerHTML = '<div class="empty">Tap menu or deals to add</div>';
-      } else {
-        el.innerHTML = itemRows + dealRows;
-      }
+      if (!cart.length && !dealCart.length) el.innerHTML = '<div class="empty">Tap menu or deals to add</div>';
+      else el.innerHTML = itemRows + dealRows;
 
       const sub = cartTotal();
       const bill = calcBill(sub);
@@ -975,7 +987,6 @@
         lines += `<div class="line"><span>Tax</span><span>${money(bill.taxAmount)}</span></div>`;
       if (bill.extra > 0)
         lines += `<div class="line"><span>${orderType === 'delivery' ? 'Delivery' : 'Dine'} charge</span><span>${money(bill.extra)}</span></div>`;
-
       const method = document.getElementById('payMethod')?.value || 'Cash';
       let surcharge = 0;
       if (method === 'Card' && Number(posSettings.card_charge) > 0) {
@@ -991,10 +1002,7 @@
 
     /* ================= PLACE ORDER ================= */
     async function placeOrder(payNow) {
-           if (!cart.length && !dealCart.length) {
-        alert('Add at least one item or deal');
-        return;
-      }
+      if (!cart.length && !dealCart.length) { alert('Add at least one item or deal'); return; }
       if (orderType === 'delivery') {
         const phone = document.getElementById('custPhone').value.trim();
         const address = document.getElementById('custAddress').value.trim();
@@ -1016,10 +1024,8 @@
       const items = cart.map(c => ({ menu_item_id: Number(c.id), quantity: Number(c.qty) }));
 
       const body = {
-        items,         deals: dealCart.map(d => ({
-          deal_id: Number(d.deal_id),
-          quantity: Number(d.qty)
-        })),
+        items,
+        deals: dealCart.map(d => ({ deal_id: Number(d.deal_id), quantity: Number(d.qty) })),
         order_type: orderType, order_source: 'COUNTER',
         table_no: tableNo,
         customer_name: document.getElementById('custName').value.trim() || null,
@@ -1046,9 +1052,7 @@
             name: c.name, qty: c.qty, price: c.price,
             package_size: c.package_size, package_unit: c.package_unit
           })),
-          ...dealCart.map(d => ({
-            name: '🎁 ' + d.name, qty: d.qty, price: d.price
-          }))
+          ...dealCart.map(d => ({ name: '🎁 ' + d.name, qty: d.qty, price: d.price }))
         ];
         const receiptBill = bill;
         const receiptType = orderType;
@@ -1061,7 +1065,7 @@
         const receiptCard = cardCharge;
         const receiptBank = bankCharge;
 
-                cart = [];
+        cart = [];
         dealCart = [];
         renderCart();
         document.getElementById('tableNo').value = '';
@@ -1183,41 +1187,22 @@
       }
     }
 
-    // Fetch full order (with items + payment_method + charges) and cache it
     async function fetchFullOrder(orderId) {
       const id = Number(orderId);
       if (fullOrderCache.has(id)) return fullOrderCache.get(id);
-
-      // 1) try GET /orders/:id
       try {
         const full = await api('/orders/' + id);
         const ord = full.order || full.data || full;
-        if (ord && ord.id) {
-          fullOrderCache.set(id, ord);
-          return ord;
-        }
-      } catch (e) {
-        console.warn('GET /orders/:id failed, fallback list', e.message);
-      }
-
-      // 2) fallback: active orders list
+        if (ord && ord.id) { fullOrderCache.set(id, ord); return ord; }
+      } catch (e) { console.warn('GET /orders/:id failed, fallback list', e.message); }
       try {
         const data = await api('/orders');
         const all = data.orders || data.data || [];
         const ord = all.find(x => Number(x.id) === id);
-        if (ord) {
-          fullOrderCache.set(id, ord);
-          return ord;
-        }
+        if (ord) { fullOrderCache.set(id, ord); return ord; }
       } catch (e) {}
-
-      // 3) fallback: sales cache (details + items)
       const fromSales = (salesCache.orders || []).find(x => Number(x.id) === id);
-      if (fromSales) {
-        fullOrderCache.set(id, fromSales);
-        return fromSales;
-      }
-
+      if (fromSales) { fullOrderCache.set(id, fromSales); return fromSales; }
       throw new Error('Order not found');
     }
 
@@ -1225,7 +1210,6 @@
       try {
         const o = await fetchFullOrder(orderId);
         if (!o) { alert('Order not found'); return; }
-
         const items = (o.items || []).map(it => ({
           name: it.name || it.item_name || 'Item',
           qty: Number(it.qty || it.quantity || 1),
@@ -1233,7 +1217,6 @@
           package_size: it.package_size,
           package_unit: it.package_unit
         }));
-
         const sub = Number(o.subtotal || items.reduce((s, i) => s + i.price * i.qty, 0));
         const bill = {
           sub,
@@ -1243,7 +1226,6 @@
           extra: Number(o.delivery_charge || 0) + Number(o.dine_charge || 0),
           total: Number(o.total_amount || o.total || sub)
         };
-
         printBill({
           orderNo: o.local_number || o.id,
           orderType: o.order_type,
@@ -1307,7 +1289,6 @@
         let cardCharge = 0, bankCharge = 0;
         if (method === 'Card') cardCharge = Number(amount) * (Number(posSettings.card_charge || 0) / 100);
         else if (method === 'Bank') bankCharge = Number(amount) * (Number(posSettings.bank_charge || 0) / 100);
-
         await api(`/orders/${id}/pay`, {
           method: 'PUT',
           body: JSON.stringify({
@@ -1387,11 +1368,12 @@
     }
 
     /* ================= MENU ADMIN ================= */
-       function openMenuAdmin() {
+    function openMenuAdmin() {
       document.getElementById('menuModal').classList.remove('hidden');
       renderMenuAdmin();
       renderDealItemPicks();
       renderDealsAdminList();
+      resetDealForm();
     }
     function closeMenuAdmin() { document.getElementById('menuModal').classList.add('hidden'); }
     function resetMenuForm() {
@@ -1445,13 +1427,10 @@
       } catch (e) { alert(e.message || 'Save failed'); }
     }
 
-        function renderDealItemPicks() {
+    function renderDealItemPicks() {
       const box = document.getElementById('dItemPicks');
       if (!box) return;
-      if (!menu.length) {
-        box.innerHTML = '<div class="empty">Pehle menu item add karo</div>';
-        return;
-      }
+      if (!menu.length) { box.innerHTML = '<div class="empty">Pehle menu item add karo</div>'; return; }
       box.innerHTML = menu.map(m => `
         <label style="display:flex;gap:8px;align-items:center;margin:4px 0;flex-wrap:wrap;">
           <input type="checkbox" class="d-pick" value="${m.id}" />
@@ -1465,28 +1444,86 @@
     function renderDealsAdminList() {
       const el = document.getElementById('dealsAdminList');
       if (!el) return;
-      if (!dealsList.length) {
-        el.innerHTML = '<div class="empty">No deals yet</div>';
-        return;
-      }
+      if (!dealsList.length) { el.innerHTML = '<div class="empty">No deals yet</div>'; return; }
       el.innerHTML = '<div style="font-weight:600;margin-bottom:6px;">Active deals</div>' +
         dealsList.map(d => {
-          const sub = (d.items || []).map(i => `${i.quantity || 1}× ${i.name || ''}`).join(', ');
+          const sub = (d.items || []).map(i =>
+            `${i.quantity || 1}× ${esc(i.name || '')}`).join(', ');
           return `<div class="menu-admin-row">
-            <div><strong>🎁 ${esc(d.name)}</strong>
-              <div style="color:var(--muted);">${money(d.price)} · ${esc(sub)}</div>
+            <div style="flex:1;min-width:0;">
+              <strong>🎁 ${esc(d.name)}</strong>
+              <div style="color:var(--muted);font-size:12px;">${money(d.price)} · ${esc(sub)}</div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="btn btn-ghost" data-id="${d.id}" onclick="editDealById(this)">Edit</button>
+              <button class="btn btn-ghost" style="color:var(--danger);border-color:var(--danger);"
+                      data-id="${d.id}" onclick="deleteDealById(this)">Delete</button>
             </div>
           </div>`;
         }).join('');
     }
 
+    function editDealById(btn) {
+      const id = Number(btn.dataset.id);
+      const d = dealsList.find(x => Number(x.id) === id);
+      if (!d) return;
+
+      document.getElementById('editDealId').value = id;
+      document.getElementById('dName').value = d.name || '';
+      document.getElementById('dPrice').value = d.price || '';
+      const btn2 = document.getElementById('dealSaveBtn');
+      if (btn2) btn2.textContent = 'Update deal';
+
+      document.querySelectorAll('.d-pick').forEach(cb => { cb.checked = false; });
+      document.querySelectorAll('.d-qty').forEach(q => { q.value = 1; });
+
+      const items = d.items || [];
+      items.forEach(it => {
+        const mid = Number(it.menu_item_id || it.id || it.menu_id);
+        const cb = document.querySelector('.d-pick[value="' + mid + '"]');
+        if (cb) cb.checked = true;
+        const qtyEl = document.querySelector('.d-qty[data-id="' + mid + '"]');
+        if (qtyEl) qtyEl.value = Math.max(1, Number(it.quantity || it.qty || 1));
+      });
+
+      const form = document.getElementById('dName');
+      if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (form) form.focus();
+    }
+
+    async function deleteDealById(btn) {
+      const id = Number(btn.dataset.id);
+      const d = dealsList.find(x => Number(x.id) === id);
+      if (!d) return;
+      if (!confirm(`Delete deal "${d.name}"?`)) return;
+      try {
+        await api('/deals/' + id, { method: 'DELETE' });
+        if (Number(document.getElementById('editDealId').value) === id) resetDealForm();
+        await loadDeals();
+        renderDealItemPicks();
+        renderDealsAdminList();
+        alert('Deal deleted');
+      } catch (e) { alert(e.message || 'Delete failed'); }
+    }
+
+    function resetDealForm() {
+      const eid = document.getElementById('editDealId');
+      const name = document.getElementById('dName');
+      const price = document.getElementById('dPrice');
+      if (eid) eid.value = '';
+      if (name) name.value = '';
+      if (price) price.value = '';
+      const btn2 = document.getElementById('dealSaveBtn');
+      if (btn2) btn2.textContent = 'Save deal';
+      document.querySelectorAll('.d-pick').forEach(cb => { cb.checked = false; });
+      document.querySelectorAll('.d-qty').forEach(q => { q.value = 1; });
+    }
+
     async function saveDeal() {
+      const editId = Number(document.getElementById('editDealId').value || 0);
       const name = (document.getElementById('dName').value || '').trim();
       const price = Number(document.getElementById('dPrice').value);
-      if (!name || !(price > 0)) {
-        alert('Deal name and price required');
-        return;
-      }
+      if (!name || !(price > 0)) { alert('Deal name and price required'); return; }
       const items = [];
       document.querySelectorAll('.d-pick:checked').forEach(cb => {
         const id = Number(cb.value);
@@ -1494,31 +1531,22 @@
         const quantity = Math.max(1, Number(qtyEl?.value || 1));
         items.push({ menu_item_id: id, variant_id: null, quantity });
       });
-      if (!items.length) {
-        alert('Select at least one menu item for the deal');
-        return;
-      }
+      if (!items.length) { alert('Select at least one menu item for the deal'); return; }
+
+      const payload = { name, price, type: 'deal', category: null, image: null, items };
+
       try {
-        await api('/deals', {
-          method: 'POST',
-          body: JSON.stringify({
-            name,
-            price,
-            type: 'deal',
-            category: null,
-            image: null,
-            items
-          })
-        });
-        document.getElementById('dName').value = '';
-        document.getElementById('dPrice').value = '';
+        if (editId) {
+          await api('/deals/' + editId, { method: 'PUT', body: JSON.stringify(payload) });
+        } else {
+          await api('/deals', { method: 'POST', body: JSON.stringify(payload) });
+        }
+        resetDealForm();
         await loadDeals();
         renderDealItemPicks();
         renderDealsAdminList();
-        alert('Deal saved');
-      } catch (e) {
-        alert(e.message || 'Save deal failed');
-      }
+        alert(editId ? 'Deal updated' : 'Deal saved');
+      } catch (e) { alert(e.message || 'Save deal failed'); }
     }
 
     /* ================= SALES REPORT ================= */
@@ -1578,8 +1606,7 @@
         package_unit: it.package_unit
       }));
     }
-
-        function orderDealsOf(o) {
+    function orderDealsOf(o) {
       const arr = o.deals || [];
       if (!Array.isArray(arr)) return [];
       return arr.map(d => ({
@@ -1604,20 +1631,19 @@
         ]);
 
         const orders = salesRes.data || salesRes.orders || [];
-        salesCache.orders = (Array.isArray(orders) ? orders : []).filter(o =>
-          String(o.status || '').toLowerCase() === 'completed' &&
-          String(o.payment_status || '').toLowerCase() === 'paid'
-        );
+        salesCache.orders = (Array.isArray(orders) ? orders : []).filter(o => {
+          const st = String(o.status || '').toLowerCase();
+          const ps = String(o.payment_status || '').toLowerCase();
+          return st === 'completed' && ps === 'paid';
+        });
 
         let totalSales = 0, paidCount = 0, itemsSold = 0;
-
         salesCache.orders.forEach(o => {
           const paid = String(o.payment_status || '').toLowerCase() === 'paid';
           const amt = Number(o.total_amount || o.total || 0);
           if (paid) { totalSales += amt; paidCount += 1; }
           orderItemsOf(o).forEach(it => { itemsSold += Number(it.qty || 0); });
         });
-
         const orderCount = salesCache.orders.length;
         const avg = orderCount ? totalSales / (paidCount || orderCount) : 0;
 
@@ -1626,23 +1652,19 @@
         document.getElementById('stAvg').textContent = money(avg);
         document.getElementById('stItems').textContent = String(itemsSold || '—');
 
-        // ✅ Payment summary: prefer SERVER endpoint, fallback to manual grouping
         const payData = payRes.data || [];
         const payEl = document.getElementById('salesPayments');
         const payMap = {};
 
-               if (Array.isArray(payData) && payData.length) {
+        if (Array.isArray(payData) && payData.length) {
           payData.forEach(p => {
             const m = normPayMethod(p.payment_method || p.method);
             let t = Number(p.total || p.amount || p.sum || p.sales || 0);
             const c = Number(p.count || p.orders || 0);
-            // agar API amount 0 de to orders se sum
             if (!t && c) {
               t = salesCache.orders
-                .filter(o =>
-                  String(o.payment_status || '').toLowerCase() === 'paid' &&
-                  normPayMethod(o.payment_method) === m
-                )
+                .filter(o => String(o.payment_status || '').toLowerCase() === 'paid' &&
+                             normPayMethod(o.payment_method) === m)
                 .reduce((s, o) => s + Number(o.total_amount || o.total || 0), 0);
             }
             if (!payMap[m]) payMap[m] = { total: 0, count: 0 };
@@ -1650,7 +1672,6 @@
             payMap[m].count += c || 0;
           });
         } else {
-          // fallback: group from orders
           salesCache.orders.forEach(o => {
             if (String(o.payment_status || '').toLowerCase() !== 'paid') return;
             const m = normPayMethod(o.payment_method);
@@ -1671,7 +1692,6 @@
           ).join('');
         }
 
-        // Top items
         const topData = topRes.data || [];
         const topEl = document.getElementById('salesTop');
         if (Array.isArray(topData) && topData.length) {
@@ -1689,10 +1709,9 @@
           topEl.textContent = 'No item data';
         }
 
-               // Orders table — items in column
-                const body = document.getElementById('salesOrdersBody');
+        const body = document.getElementById('salesOrdersBody');
         if (!salesCache.orders.length) {
-          body.innerHTML = '<tr><td colspan="13" style="color:var(--muted);text-align:center;">No orders</td></tr>';
+          body.innerHTML = '<tr><td colspan="14" style="color:var(--muted);text-align:center;">No orders</td></tr>';
         } else {
           body.innerHTML = salesCache.orders.map(o => {
             const t = o.created_at || o.paid_at || '';
@@ -1700,7 +1719,7 @@
             const payLabel = String(o.payment_status || '—') +
               (o.payment_method ? ' / ' + normPayMethod(o.payment_method) : '');
 
-                        const items = orderItemsOf(o);
+            const items = orderItemsOf(o);
             const deals = orderDealsOf(o);
             const itemsHtml = [
               ...items.map(it => {
@@ -1721,7 +1740,7 @@
             const bank = Number(o.bank_charge || 0);
             const total = Number(o.total_amount || o.total || 0);
 
-            return `<tr>
+            return `<tr class="sales-order-row">
               <td>#${esc(o.local_number || o.id)}</td>
               <td>${esc(orderTypeLabel(o.order_type))}</td>
               <td>${esc(payLabel)}</td>
@@ -1744,7 +1763,7 @@
       }
     }
 
-            function exportSalesCSV() {
+    function exportSalesCSV() {
       const rows = [[
         'Local #', 'Order ID', 'Type', 'Status', 'Payment', 'Method',
         'Items',
@@ -1752,7 +1771,6 @@
         'Dine charge', 'Delivery charge', 'Card fee', 'Bank fee',
         'Total', 'Customer', 'Created'
       ]];
-
       salesCache.orders.forEach(o => {
         const items = orderItemsOf(o);
         const itemsStr = items.map(i => {
@@ -1760,29 +1778,20 @@
             ? ` (${i.package_size}${i.package_unit})` : '';
           return `${i.name}${pkg} x${i.qty} @${i.price}`;
         }).join(' | ');
-
         rows.push([
-          o.local_number || '',
-          o.id,
+          o.local_number || '', o.id,
           orderTypeLabel(o.order_type),
-          o.status || '',
-          o.payment_status || '',
-          o.payment_method || '',
+          o.status || '', o.payment_status || '', o.payment_method || '',
           itemsStr,
-          o.subtotal || 0,
-          o.discount_amount || 0,
-          o.gst_amount || 0,
-          o.tax_amount || 0,
-          o.dine_charge || 0,
-          o.delivery_charge || 0,
-          o.card_charge || 0,
-          o.bank_charge || 0,
+          o.subtotal || 0, o.discount_amount || 0,
+          o.gst_amount || 0, o.tax_amount || 0,
+          o.dine_charge || 0, o.delivery_charge || 0,
+          o.card_charge || 0, o.bank_charge || 0,
           o.total_amount || o.total || 0,
           o.customer_name || '',
           o.created_at || o.paid_at || ''
         ]);
       });
-
       const csv = rows.map(r =>
         r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')
       ).join('\n');
@@ -1794,7 +1803,7 @@
       URL.revokeObjectURL(a.href);
     }
 
-        function printSalesReport() {
+    function printSalesReport() {
       const from = salesCache.from, to = salesCache.to;
       const brandName = document.getElementById('brandName')?.textContent || 'Cafe';
       const stats = `Orders: ${document.getElementById('stOrders').textContent} | Sales: ${document.getElementById('stSales').textContent} | Avg: ${document.getElementById('stAvg').textContent}`;
@@ -1806,7 +1815,6 @@
           <th>Dine</th><th>Del</th><th>Card</th><th>Bank</th>
           <th>Total</th><th>Time</th>
         </tr>`;
-
       salesCache.orders.forEach(o => {
         const items = orderItemsOf(o);
         const itemsStr = items.map(i => {
@@ -1817,7 +1825,6 @@
         const pay = (o.payment_status || '') + (o.payment_method ? '/' + o.payment_method : '');
         const time = (o.paid_at || o.created_at)
           ? new Date(o.paid_at || o.created_at).toLocaleString() : '';
-
         table += `<tr>
           <td>#${o.local_number || o.id}</td>
           <td>${orderTypeLabel(o.order_type)}</td>
@@ -1859,7 +1866,6 @@
 
     /* ================= BILL / PRINT ================= */
     function printBill(opts) {
-      // Direct print (used by auto-print & reprint button)
       const html = buildBillHtml(opts);
       const w = window.open('', '_blank', 'width=420,height=640');
       if (!w) { alert('Allow popups to print bill'); return; }
@@ -1973,8 +1979,6 @@
         note: document.getElementById('bpNote').value.trim()
       };
       const html = buildBillHtml(opts);
-
-      // ✅ Use a Blob URL on an iframe (works even with CSP that blocks srcdoc)
       const box = document.getElementById('bpPreview');
       box.innerHTML = '';
       const iframe = document.createElement('iframe');
