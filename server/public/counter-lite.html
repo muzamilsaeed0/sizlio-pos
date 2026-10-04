@@ -6,51 +6,27 @@
   <title>Counter Lite</title>
   <style>
     :root {
-      --bg: #0f1419;
-      --panel: #1a222c;
-      --panel2: #232d3a;
-      --text: #f3f0e8;
-      --muted: #9aa3b2;
-      --border: #2e3a48;
-      --accent: #e3a23b;
-      --ok: #2fa37d;
-      --danger: #e15a4c;
+      --bg: #0f1419; --panel: #1a222c; --panel2: #232d3a;
+      --text: #f3f0e8; --muted: #9aa3b2; --border: #2e3a48;
+      --accent: #e3a23b; --ok: #2fa37d; --danger: #e15a4c;
     }
     body.light {
-      --bg: #f4f1ea;
-      --panel: #fff;
-      --panel2: #f0ebe3;
-      --text: #1a1f26;
-      --muted: #6b7280;
-      --border: #e5e0d6;
+      --bg: #f4f1ea; --panel: #fff; --panel2: #f0ebe3;
+      --text: #1a1f26; --muted: #6b7280; --border: #e5e0d6;
     }
     * { box-sizing: border-box; }
     body {
-      margin: 0;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
+      margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh;
     }
     button, input, select { font: inherit; }
     .hidden { display: none !important; }
 
-    #login-box {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
+    #login-box { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
     .login-card {
-      width: 100%;
-      max-width: 380px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 28px;
-      box-shadow: 0 20px 50px rgba(0,0,0,.35);
-      text-align: center;
+      width: 100%; max-width: 380px; background: var(--panel);
+      border: 1px solid var(--border); border-radius: 16px; padding: 28px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.35); text-align: center;
     }
     .login-card h2 { margin: 0 0 6px; font-size: 22px; }
     .login-card p.sub { margin: 0 0 20px; color: var(--muted); font-size: 13px; }
@@ -85,15 +61,9 @@
     .btn-accent:hover { opacity: .92; }
     .btn-ok { background: var(--ok); color: #fff; }
     .btn-danger { background: var(--danger); color: #fff; }
-    .btn-ghost {
-      background: transparent; color: var(--text);
-      border: 1px solid var(--border);
-    }
+    .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
     .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-    #login-error {
-      color: var(--danger); font-size: 13px;
-      min-height: 18px; margin-top: 10px; text-align: center;
-    }
+    #login-error { color: var(--danger); font-size: 13px; min-height: 18px; margin-top: 10px; text-align: center; }
 
     #app-box { display: none; min-height: 100vh; flex-direction: column; }
     #app-box.show { display: flex; }
@@ -103,61 +73,39 @@
       padding: 10px 14px; border-bottom: 1px solid var(--border);
       background: var(--panel); flex-wrap: wrap;
     }
-    .brand-wrap {
-      display: flex; align-items: center; gap: 10px;
-      min-width: 0; flex-shrink: 1;
-    }
-    .brand-logo {
-      width: 32px; height: 32px; border-radius: 8px;
-      object-fit: cover; flex-shrink: 0;
-    }
-    .brand {
-      font-weight: 800; font-size: 16px; white-space: nowrap;
-      overflow: hidden; text-overflow: ellipsis; max-width: 180px;
-    }
+    .brand-wrap { display: flex; align-items: center; gap: 10px; min-width: 0; flex-shrink: 1; }
+    .brand-logo { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+    .brand { font-weight: 800; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
     .pill {
       font-size: 11px; font-weight: 700; padding: 4px 10px;
       border-radius: 999px; background: var(--panel2);
-      color: var(--muted); border: 1px solid var(--border);
-      white-space: nowrap;
+      color: var(--muted); border: 1px solid var(--border); white-space: nowrap;
     }
     .pill.ok { color: var(--ok); border-color: #2fa37d55; }
     .pill.warn { color: var(--accent); border-color: #e3a23b55; }
     .topbar .spacer { flex: 1; min-width: 8px; }
-    .sales-chip {
-      font-size: 13px; font-weight: 700;
-      color: var(--accent); white-space: nowrap;
-    }
+    .sales-chip { font-size: 13px; font-weight: 700; color: var(--accent); white-space: nowrap; }
     .topbar button { padding: 8px 12px; border-radius: 8px; font-size: 12px; }
 
     .main {
-      flex: 1; display: grid;
-      grid-template-columns: 1.2fr 0.9fr 0.85fr;
+      flex: 1; display: grid; grid-template-columns: 1.2fr 0.9fr 0.85fr;
       gap: 12px; padding: 12px; min-height: 0;
     }
     @media (max-width: 1100px) { .main { grid-template-columns: 1fr; } }
     .panel {
       background: var(--panel); border: 1px solid var(--border);
       border-radius: 14px; padding: 12px; display: flex;
-      flex-direction: column; min-height: 280px;
-      max-height: calc(100vh - 90px);
+      flex-direction: column; min-height: 280px; max-height: calc(100vh - 90px);
     }
-    .panel h2 {
-      margin: 0 0 10px; font-size: 14px; letter-spacing: .02em;
-      color: var(--muted); text-transform: uppercase;
-    }
+    .panel h2 { margin: 0 0 10px; font-size: 14px; letter-spacing: .02em; color: var(--muted); text-transform: uppercase; }
     .type-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
     .type-btn {
-      flex: 1; min-width: 90px; padding: 10px;
-      border-radius: 10px; border: 1px solid var(--border);
-      background: var(--panel2); color: var(--text);
-      font-weight: 700; cursor: pointer;
+      flex: 1; min-width: 90px; padding: 10px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--panel2);
+      color: var(--text); font-weight: 700; cursor: pointer;
       transition: background .15s, color .15s;
     }
-    .type-btn.active {
-      background: var(--accent); color: #14181c;
-      border-color: var(--accent);
-    }
+    .type-btn.active { background: var(--accent); color: #14181c; border-color: var(--accent); }
     .search {
       width: 100%; padding: 10px 12px; border-radius: 10px;
       border: 1px solid var(--border); background: var(--bg);
@@ -170,20 +118,12 @@
       border: 1px solid var(--border); background: var(--panel2);
       color: var(--muted); font-size: 12px; cursor: pointer; font-weight: 600;
     }
-    .cat-chip.active {
-      color: var(--accent); border-color: var(--accent);
-      background: rgba(227,162,59,.1);
-    }
-    .menu-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 8px; overflow: auto; flex: 1; align-content: start;
-    }
+    .cat-chip.active { color: var(--accent); border-color: var(--accent); background: rgba(227,162,59,.1); }
+    .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; overflow: auto; flex: 1; align-content: start; }
     .menu-card {
       background: var(--panel2); border: 1px solid var(--border);
       border-radius: 12px; padding: 10px; cursor: pointer;
-      text-align: left; transition: border-color .15s, transform .1s;
-      color: var(--text);
+      text-align: left; transition: border-color .15s, transform .1s; color: var(--text);
     }
     .menu-card:hover { border-color: var(--accent); transform: translateY(-1px); }
     .menu-card .n { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
@@ -196,14 +136,9 @@
       border-radius: 10px; border: 1px solid var(--border);
       background: var(--bg); color: var(--text);
     }
-    .field-row input:focus, .field-row select:focus {
-      outline: none; border-color: var(--accent);
-    }
+    .field-row input:focus, .field-row select:focus { outline: none; border-color: var(--accent); }
     .cart-list { flex: 1; overflow: auto; margin-bottom: 8px; min-height: 80px; }
-    .cart-row {
-      display: flex; align-items: center; gap: 8px;
-      padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px;
-    }
+    .cart-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
     .cart-row:last-child { border-bottom: none; }
     .cart-row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
     .qty-btn {
@@ -223,10 +158,7 @@
       background: var(--panel2); border: 1px solid var(--border);
       border-radius: 12px; padding: 10px; margin-bottom: 8px; font-size: 12px;
     }
-    .order-card .hd {
-      display: flex; justify-content: space-between; font-weight: 700;
-      margin-bottom: 4px; gap: 8px; flex-wrap: wrap;
-    }
+    .order-card .hd { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 4px; gap: 8px; flex-wrap: wrap; }
     .order-card .st { color: var(--accent); text-transform: uppercase; font-size: 11px; }
     .order-card .paid { color: var(--ok); text-transform: uppercase; font-size: 11px; }
     .order-card .actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
@@ -243,17 +175,12 @@
       border-radius: 16px; padding: 18px;
     }
     .modal h3 { margin: 0 0 12px; }
-    .modal label {
-      display: block; font-size: 12px; color: var(--muted);
-      margin: 8px 0 4px; font-weight: 600;
-    }
+    .modal label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 4px; font-weight: 600; }
     .modal input, .modal select {
       width: 100%; padding: 10px 12px; border-radius: 10px;
       border: 1px solid var(--border); background: var(--bg); color: var(--text);
     }
-    .modal input:focus, .modal select:focus {
-      outline: none; border-color: var(--accent);
-    }
+    .modal input:focus, .modal select:focus { outline: none; border-color: var(--accent); }
     .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
     .modal-actions .btn { flex: 1; }
     .menu-admin-row {
@@ -264,26 +191,17 @@
     .menu-admin-row:last-child { border-bottom: none; }
     .empty { color: var(--muted); text-align: center; padding: 24px 8px; font-size: 13px; }
 
-    .sales-modal { max-width: 720px; width: 100%; }
     #salesPage {
       display: none; flex-direction: column; gap: 12px;
-      padding: 12px 16px 24px; max-width: 1100px;
-      margin: 0 auto; width: 100%;
+      padding: 12px 16px 24px; max-width: 1100px; margin: 0 auto; width: 100%;
     }
     #salesPage.open { display: flex; }
     #app-box.sales-open .main { display: none !important; }
     #app-box.sales-open .topbar .sales-hide-on-report { display: none !important; }
-    .sales-page-header {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 12px; flex-wrap: wrap; margin-bottom: 4px;
-    }
+    .sales-page-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
     .sales-page-header h2 { margin: 0; font-size: 1.25rem; font-weight: 800; }
-    #salesPage .sales-table-wrap {
-      max-height: none; overflow: auto;
-      border: 1px solid var(--border); border-radius: 12px;
-    }
-    #salesPage .sales-table th,
-    #salesPage .sales-table td { padding: 10px 8px; }
+    #salesPage .sales-table-wrap { max-height: none; overflow: auto; border: 1px solid var(--border); border-radius: 12px; }
+    #salesPage .sales-table th, #salesPage .sales-table td { padding: 10px 8px; }
     .sales-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
     .sales-filters input[type="date"] {
       padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);
@@ -291,18 +209,12 @@
     }
     .sales-filters .chip-btn {
       padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);
-      background: var(--panel2); color: var(--text); font-weight: 700;
-      cursor: pointer; font-size: 12px;
+      background: var(--panel2); color: var(--text); font-weight: 700; cursor: pointer; font-size: 12px;
     }
-    .sales-filters .chip-btn.active {
-      background: var(--accent); color: #14181c; border-color: var(--accent);
-    }
+    .sales-filters .chip-btn.active { background: var(--accent); color: #14181c; border-color: var(--accent); }
     .sales-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
     @media (max-width: 600px) { .sales-stats { grid-template-columns: 1fr 1fr; } }
-    .sales-stat {
-      background: var(--panel2); border: 1px solid var(--border);
-      border-radius: 12px; padding: 12px;
-    }
+    .sales-stat { background: var(--panel2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
     .sales-stat .lbl { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
     .sales-stat .val { font-size: 16px; font-weight: 800; color: var(--accent); }
     .sales-section-title {
@@ -310,19 +222,13 @@
       margin: 14px 0 8px; font-weight: 700;
     }
     .sales-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .sales-table th, .sales-table td {
-      text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border);
-    }
+    .sales-table th, .sales-table td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); }
     .sales-table th { color: var(--muted); font-weight: 600; }
     .pay-bar-row { display: flex; justify-content: space-between; font-size: 13px; margin: 4px 0; }
 
-    /* expandable order detail rows */
     .sales-order-row { cursor: pointer; }
     .sales-order-row:hover td { background: rgba(227,162,59,.05); }
-    .sales-order-detail-row td {
-      background: var(--panel2); padding: 0 !important;
-      border-bottom: 1px solid var(--border);
-    }
+    .sales-order-detail-row td { background: var(--panel2); padding: 0 !important; border-bottom: 1px solid var(--border); }
     .order-detail-inner { padding: 10px 14px; font-size: 12px; }
     .order-detail-inner table { width: 100%; border-collapse: collapse; }
     .order-detail-inner td { padding: 3px 4px; border: none; }
@@ -340,18 +246,15 @@
 </head>
 <body>
 
-  <!-- LOGIN -->
   <div id="login-box">
     <div class="login-card">
       <h2>Counter Lite</h2>
       <p class="sub">Sign in with your counter account</p>
-
       <div class="field">
         <label>Username</label>
         <input id="username" placeholder="Username" autocomplete="username"
                onkeydown="if (event.key === 'Enter') login()" />
       </div>
-
       <div class="field">
         <label>Password</label>
         <div class="pw-wrap">
@@ -364,13 +267,11 @@
                 ontouchend="hidePassword()" title="Show password">👁</span>
         </div>
       </div>
-
       <button class="btn btn-accent" onclick="login()">Login</button>
       <p id="login-error"></p>
     </div>
   </div>
 
-  <!-- APP -->
   <div id="app-box">
     <div class="topbar">
       <div class="brand-wrap">
@@ -435,7 +336,6 @@
       </section>
     </div>
 
-    <!-- SALES FULL PAGE -->
     <div id="salesPage">
       <div class="sales-page-header">
         <h2>Sales report</h2>
@@ -475,7 +375,6 @@
     </div>
   </div>
 
-  <!-- MENU ADMIN MODAL -->
   <div id="menuModal" class="modal-bg hidden">
     <div class="modal">
       <h3>Menu items</h3>
@@ -510,7 +409,6 @@
     </div>
   </div>
 
-  <!-- BILL PREVIEW MODAL -->
   <div id="billPreviewModal" class="modal-bg hidden">
     <div class="modal" style="max-width:440px;max-height:92vh;overflow:auto;">
       <h3>Bill preview</h3>
@@ -533,7 +431,8 @@
       </div>
     </div>
   </div>
-    <div id="editBillModal" class="modal-bg hidden">
+
+  <div id="editBillModal" class="modal-bg hidden">
     <div class="modal" style="max-width:400px;">
       <h3>Edit bill</h3>
       <input type="hidden" id="ebOrderId" value="" />
@@ -568,7 +467,6 @@
     </div>
   </div>
 
-  <!-- SETTINGS MODAL -->
   <div id="settingsModal" class="modal-bg hidden">
     <div class="modal" style="max-width:420px;">
       <h3>Settings</h3>
@@ -636,41 +534,48 @@
     let salesCache = { orders: [], from: '', to: '', range: 'today' };
     let cafeBrand = { name: 'Cafe', logo: '', address: '', phone: '' };
     let expandedOrders = new Set();
+    // cache of fully-fetched orders (id -> order object with items + payment_method)
+    const fullOrderCache = new Map();
 
     /* ================= HELPERS ================= */
     function money(n) {
       return 'Rs ' + Number(n || 0).toLocaleString('en-PK', { maximumFractionDigits: 2 });
     }
-
     function esc(s) {
       return String(s ?? '').replace(/[&<>"']/g, c => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;',
         '"': '&quot;', "'": '&#39;'
       })[c]);
     }
-
-    // Single pkgLabel (with S/M/L support)
     function pkgLabel(item) {
       if (!item) return '';
       const u = item.package_unit || '';
       const s = item.package_size;
       if (!u && (s === null || s === undefined || s === '')) return '';
-      if (['S', 'M', 'L'].includes(String(u)) && (s === null || s === '' || Number(s) === 0)) {
-        return String(u);
-      }
+      if (['S', 'M', 'L'].includes(String(u)) && (s === null || s === '' || Number(s) === 0)) return String(u);
       if (s !== null && s !== undefined && s !== '' && u) return `${s} ${u}`;
       if (u) return String(u);
       return s != null && s !== '' ? String(s) : '';
     }
-
     function showPassword() { document.getElementById('password').type = 'text'; }
     function hidePassword() { document.getElementById('password').type = 'password'; }
-
     function normalizeLogoUrl(value) {
       if (!value) return '';
       const url = String(value).trim();
       if (/^https?:\/\//i.test(url) || url.startsWith('//') || url.startsWith('/')) return url;
       return '/' + url;
+    }
+    // Normalize payment_method string: 'Cash' | 'Card' | 'Bank' | 'Other' | 'Unspecified'
+    function normPayMethod(v) {
+      const s = String(v || '').trim();
+      if (!s) return 'Unspecified';
+      const l = s.toLowerCase();
+      if (l === 'cash') return 'Cash';
+      if (l === 'card') return 'Card';
+      if (l === 'bank') return 'Bank';
+      if (l === 'cod') return 'Cash'; // treat COD as Cash collected
+      if (l === 'online' || l === 'other') return 'Other';
+      return s.charAt(0).toUpperCase() + s.slice(1);
     }
 
     /* ================= API ================= */
@@ -695,17 +600,11 @@
       const password = document.getElementById('password').value;
       const err = document.getElementById('login-error');
       err.textContent = '';
-
-      if (!username || !password) {
-        err.textContent = 'Username and password required';
-        return;
-      }
-
+      if (!username || !password) { err.textContent = 'Username and password required'; return; }
       if (!restaurantId) {
         const saved = localStorage.getItem('cafe_restaurant_id');
         if (saved) restaurantId = Number(saved);
       }
-
       try {
         const res = await fetch(API + '/auth/login', {
           method: 'POST',
@@ -719,8 +618,7 @@
         const data = await res.json().catch(() => ({}));
         if (!res.ok) { err.textContent = data.message || 'Login failed'; return; }
         if (!data.token || data.user?.role !== 'counter') {
-          err.textContent = 'Counter login required for Cafe Lite';
-          return;
+          err.textContent = 'Counter login required for Cafe Lite'; return;
         }
         token = data.token;
         user = data.user;
@@ -728,10 +626,7 @@
         localStorage.setItem('cafe_token', token);
         localStorage.setItem('cafe_restaurant_id', String(restaurantId));
         await bootApp();
-      } catch (e) {
-        console.error('login:', e);
-        err.textContent = 'Server connection failed';
-      }
+      } catch (e) { console.error('login:', e); err.textContent = 'Server connection failed'; }
     }
 
     /* ================= SOCKET ================= */
@@ -743,11 +638,9 @@
         socket = io({ auth: { token } });
         socket.on('connect', () => console.log('✅ socket connected'));
         socket.on('connect_error', (e) => console.warn('socket:', e.message));
-        [
-          'order_created','order_updated','order_ready','order_out_for_delivery',
-          'order_delivered','order_completed','order_paid',
-          'delivery_rider_assigned','orders_refresh'
-        ].forEach(evt => {
+        ['order_created','order_updated','order_ready','order_out_for_delivery',
+         'order_delivered','order_completed','order_paid',
+         'delivery_rider_assigned','orders_refresh'].forEach(evt => {
           socket.on(evt, () => { loadOrders(); loadTodaySales(); });
         });
       } catch (err) { console.error('Socket connect failed:', err); }
@@ -797,7 +690,6 @@
         };
         document.getElementById('brandName').textContent = cafeBrand.name;
         document.title = `${cafeBrand.name} — Counter Lite`;
-
         const brandLogoEl = document.getElementById('brandLogo');
         if (brandLogoEl) {
           if (cafeBrand.logo) {
@@ -813,10 +705,7 @@
         const planEl = document.getElementById('planPill');
         if (planEl) planEl.textContent = plan;
         return cafeBrand;
-      } catch (e) {
-        console.warn('loadCafeBrand:', e.message);
-        return cafeBrand;
-      }
+      } catch (e) { console.warn('loadCafeBrand:', e.message); return cafeBrand; }
     }
 
     async function loadDeliveryRiders() {
@@ -843,17 +732,11 @@
           pill.style.cursor = 'pointer';
           pill.onclick = startShift;
         }
-      } catch {
-        pill.textContent = 'Shift ?';
-        pill.className = 'pill';
-      }
+      } catch { pill.textContent = 'Shift ?'; pill.className = 'pill'; }
     }
-
     async function startShift() {
-      try {
-        await api('/shifts/start', { method: 'POST' });
-        await loadShift();
-      } catch (e) { alert(e.message || 'Could not start shift'); }
+      try { await api('/shifts/start', { method: 'POST' }); await loadShift(); }
+      catch (e) { alert(e.message || 'Could not start shift'); }
     }
 
     /* ================= MENU ================= */
@@ -864,26 +747,17 @@
         renderCats();
         renderMenu();
       } catch (e) {
-        document.getElementById('menuGrid').innerHTML =
-          `<div class="empty">${esc(e.message)}</div>`;
+        document.getElementById('menuGrid').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
       }
     }
-
     function renderCats() {
       const cats = ['All', ...new Set(menu.map(m => m.category || 'Other'))];
       document.getElementById('cats').innerHTML = cats.map(c =>
         `<button class="cat-chip ${c === activeCat ? 'active' : ''}"
                  data-cat="${esc(c)}"
-                 onclick="selectCat(this.dataset.cat)">${esc(c)}</button>`
-      ).join('');
+                 onclick="selectCat(this.dataset.cat)">${esc(c)}</button>`).join('');
     }
-
-    function selectCat(c) {
-      activeCat = c;
-      renderCats();
-      renderMenu();
-    }
-
+    function selectCat(c) { activeCat = c; renderCats(); renderMenu(); }
     function renderMenu() {
       const q = (document.getElementById('menuSearch').value || '').toLowerCase();
       const list = menu.filter(m => {
@@ -892,10 +766,7 @@
         return true;
       });
       const grid = document.getElementById('menuGrid');
-      if (!list.length) {
-        grid.innerHTML = '<div class="empty">No items. Add from Menu button.</div>';
-        return;
-      }
+      if (!list.length) { grid.innerHTML = '<div class="empty">No items. Add from Menu button.</div>'; return; }
       grid.innerHTML = list.map((m, idx) => `
         <button class="menu-card" data-idx="${idx}" onclick="addFromGrid(this)">
           <div class="n">${esc(m.name)}</div>
@@ -905,7 +776,6 @@
       `).join('');
       window._filteredMenu = list;
     }
-
     function addFromGrid(btn) {
       const idx = Number(btn.dataset.idx);
       const item = (window._filteredMenu || [])[idx];
@@ -932,7 +802,6 @@
       });
       renderCart();
     }
-
     function changeQty(id, d) {
       const row = cart.find(c => c.id === id);
       if (!row) return;
@@ -940,11 +809,7 @@
       if (row.qty <= 0) cart = cart.filter(c => c.id !== id);
       renderCart();
     }
-
-    function cartTotal() {
-      return cart.reduce((s, c) => s + c.price * c.qty, 0);
-    }
-
+    function cartTotal() { return cart.reduce((s, c) => s + c.price * c.qty, 0); }
     function calcBill(subtotal) {
       const sub = Number(subtotal) || 0;
       const discType = posSettings.discount_type || 'none';
@@ -966,12 +831,10 @@
       const total = afterDiscount + gstAmount + taxAmount + extra;
       return { sub, discountAmount, gstAmount, taxAmount, extra, total };
     }
-
     function renderCart() {
       const el = document.getElementById('cartList');
-      if (!cart.length) {
-        el.innerHTML = '<div class="empty">Tap menu items to add</div>';
-      } else {
+      if (!cart.length) el.innerHTML = '<div class="empty">Tap menu items to add</div>';
+      else {
         el.innerHTML = cart.map(c => `
           <div class="cart-row">
             <div class="nm">${esc(c.name)}${pkgLabel(c) ? ` <span style="color:var(--muted)">(${esc(pkgLabel(c))})</span>` : ''}</div>
@@ -979,10 +842,8 @@
             <span>${c.qty}</span>
             <button class="qty-btn" onclick="changeQty(${c.id},1)">+</button>
             <strong>${money(c.price * c.qty)}</strong>
-          </div>
-        `).join('');
+          </div>`).join('');
       }
-
       const sub = cartTotal();
       const bill = calcBill(sub);
       let lines = `<div class="line"><span>Subtotal</span><span>${money(bill.sub)}</span></div>`;
@@ -994,7 +855,6 @@
         lines += `<div class="line"><span>Tax</span><span>${money(bill.taxAmount)}</span></div>`;
       if (bill.extra > 0)
         lines += `<div class="line"><span>${orderType === 'delivery' ? 'Delivery' : 'Dine'} charge</span><span>${money(bill.extra)}</span></div>`;
-
       const method = document.getElementById('payMethod')?.value || 'Cash';
       let surcharge = 0;
       if (method === 'Card' && Number(posSettings.card_charge) > 0) {
@@ -1011,40 +871,29 @@
     /* ================= PLACE ORDER ================= */
     async function placeOrder(payNow) {
       if (!cart.length) { alert('Add at least one item'); return; }
-
       if (orderType === 'delivery') {
         const phone = document.getElementById('custPhone').value.trim();
         const address = document.getElementById('custAddress').value.trim();
         if (!phone || !address) { alert('Delivery needs phone and address'); return; }
       }
-
       let tableNo = 0;
       if (orderType === 'dine_in') {
         const t = Number(document.getElementById('tableNo').value);
         tableNo = Number.isInteger(t) && t > 0 ? t : 0;
       }
-
       const bill = calcBill(cartTotal());
       const payMethod = document.getElementById('payMethod').value || 'Cash';
-
       let cardCharge = 0, bankCharge = 0;
       if (payNow) {
-        if (payMethod === 'Card')
-          cardCharge = bill.total * (Number(posSettings.card_charge || 0) / 100);
-        else if (payMethod === 'Bank')
-          bankCharge = bill.total * (Number(posSettings.bank_charge || 0) / 100);
+        if (payMethod === 'Card') cardCharge = bill.total * (Number(posSettings.card_charge || 0) / 100);
+        else if (payMethod === 'Bank') bankCharge = bill.total * (Number(posSettings.bank_charge || 0) / 100);
       }
       const finalTotal = bill.total + cardCharge + bankCharge;
-
-      const items = cart.map(c => ({
-        menu_item_id: Number(c.id),
-        quantity: Number(c.qty)
-      }));
+      const items = cart.map(c => ({ menu_item_id: Number(c.id), quantity: Number(c.qty) }));
 
       const body = {
         items, deals: [],
-        order_type: orderType,
-        order_source: 'COUNTER',
+        order_type: orderType, order_source: 'COUNTER',
         table_no: tableNo,
         customer_name: document.getElementById('custName').value.trim() || null,
         delivery_phone: orderType === 'delivery' ? document.getElementById('custPhone').value.trim() : null,
@@ -1052,8 +901,7 @@
         payment_timing: payNow ? 'PAID_AT_ORDER' : (orderType === 'delivery' ? 'COD' : 'PAY_LATER'),
         payment_method: payNow ? payMethod : null,
         paid_amount: payNow ? finalTotal : 0,
-        card_charge: cardCharge,
-        bank_charge: bankCharge,
+        card_charge: cardCharge, bank_charge: bankCharge,
         delivery_charge: orderType === 'delivery' ? Number(posSettings.delivery_charge || 0) : 0,
         dine_charge: orderType === 'dine_in' ? Number(posSettings.dine_charge || 0) : 0,
         pricing: {
@@ -1066,7 +914,6 @@
 
       try {
         const data = await api('/orders', { method: 'POST', body: JSON.stringify(body) });
-
         const receiptItems = cart.map(c => ({
           name: c.name, qty: c.qty, price: c.price,
           package_size: c.package_size, package_unit: c.package_unit
@@ -1082,8 +929,7 @@
         const receiptCard = cardCharge;
         const receiptBank = bankCharge;
 
-        cart = [];
-        renderCart();
+        cart = []; renderCart();
         document.getElementById('tableNo').value = '';
         document.getElementById('custName').value = '';
         document.getElementById('custPhone').value = '';
@@ -1092,9 +938,8 @@
         if (orderType === 'delivery' && data.order?.id) {
           const mode = localStorage.getItem('cafe_assign_mode') || 'manual';
           if (mode === 'auto') {
-            try {
-              await api('/orders/' + data.order.id + '/auto-assign-rider', { method: 'PUT' });
-            } catch (err) { console.warn('Auto-assign failed:', err.message); }
+            try { await api('/orders/' + data.order.id + '/auto-assign-rider', { method: 'PUT' }); }
+            catch (err) { console.warn('Auto-assign failed:', err.message); }
           }
         }
 
@@ -1106,8 +951,7 @@
         if (autoPrint) {
           try {
             printBill({
-              orderNo: id, orderType: receiptType,
-              tableNo: receiptTable || null,
+              orderNo: id, orderType: receiptType, tableNo: receiptTable || null,
               customerName: receiptName, phone: receiptPhone, address: receiptAddr,
               items: receiptItems, bill: receiptBill,
               payNow: receiptPayNow, paymentMethod: receiptMethod,
@@ -1115,15 +959,11 @@
             });
           } catch (err) { console.warn('printBill:', err); }
         }
-
         alert(payNow ? `Order #${id} placed & paid` : `Order #${id} placed`);
-      } catch (e) {
-        console.error('placeOrder:', e);
-        alert(e.message || 'Place order failed');
-      }
+      } catch (e) { console.error('placeOrder:', e); alert(e.message || 'Place order failed'); }
     }
 
-    /* ================= ORDERS ================= */
+    /* ================= ORDERS LIST ================= */
     async function loadOrders() {
       try {
         const data = await api('/orders');
@@ -1133,19 +973,15 @@
           return !['completed', 'cancelled'].includes(st);
         });
         const el = document.getElementById('ordersList');
-        if (!orders.length) {
-          el.innerHTML = '<div class="empty">No active orders</div>';
-          return;
-        }
+        if (!orders.length) { el.innerHTML = '<div class="empty">No active orders</div>'; return; }
+
         el.innerHTML = orders.slice(0, 50).map(o => {
           const paid = String(o.payment_status || '').toLowerCase() === 'paid';
           const st = String(o.status || '').toLowerCase();
           const type = o.order_type === 'walk_in' ? 'Takeaway'
-            : o.order_type === 'delivery' ? 'Delivery'
-            : 'Dine-in';
+            : o.order_type === 'delivery' ? 'Delivery' : 'Dine-in';
           const isDelivery = o.order_type === 'delivery';
           const hasRider = !!o.delivery_rider_id;
-
           let actions = '';
 
           if (!isDelivery) {
@@ -1157,63 +993,45 @@
               actions += `<button class="btn btn-accent" onclick="completeOrder(${o.id})">Mark complete</button>`;
             }
           }
-
           if (isDelivery) {
             const riderName = o.delivery_rider_name || o.delivery_rider_username || '';
             const riderInfo = hasRider
-              ? `<div style="margin:6px 0;padding:6px 10px;border-radius:8px;background:rgba(47,163,125,.1);font-size:11px;color:var(--ok);">
-                   🚴 <strong>Rider: ${esc(riderName || 'Assigned')}</strong>
-                 </div>`
+              ? `<div style="margin:6px 0;padding:6px 10px;border-radius:8px;background:rgba(47,163,125,.1);font-size:11px;color:var(--ok);">🚴 <strong>Rider: ${esc(riderName || 'Assigned')}</strong></div>`
               : `<div style="margin:6px 0;font-size:11px;color:var(--muted);">⚠️ No rider assigned</div>`;
             actions += `
               <div style="font-size:11px;color:var(--muted);margin:4px 0;">
                 ${esc(o.delivery_phone || '')} · ${esc(o.delivery_address || '')}
-              </div>
-              ${riderInfo}
-            `;
+              </div>${riderInfo}`;
             if (!hasRider && ['placed', 'preparing', 'ready', 'ready_to_deliver'].includes(st)) {
-              const availableRiders = deliveryRiders.filter(r =>
-                r.is_active !== false && r.shift_active === true
-              );
+              const availableRiders = deliveryRiders.filter(r => r.is_active !== false && r.shift_active === true);
               if (!availableRiders.length) {
-                actions += `
-                  <div style="font-size:11px;color:var(--danger);margin:6px 0;padding:6px 10px;background:rgba(225,90,76,.1);border-radius:8px;">
-                    ⚠️ Koi rider shift pe nahi hai.
-                  </div>`;
+                actions += `<div style="font-size:11px;color:var(--danger);margin:6px 0;padding:6px 10px;background:rgba(225,90,76,.1);border-radius:8px;">⚠️ Koi rider shift pe nahi hai.</div>`;
               } else {
-                const opts = availableRiders
-                  .map(r => `<option value="${r.id}">${esc(r.full_name || r.username || ('Rider ' + r.id))}</option>`)
-                  .join('');
+                const opts = availableRiders.map(r =>
+                  `<option value="${r.id}">${esc(r.full_name || r.username || ('Rider ' + r.id))}</option>`).join('');
                 actions += `
                   <select id="rider-sel-${o.id}" style="width:100%;margin:4px 0;padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);">
-                    <option value="">Select rider…</option>
-                    ${opts}
+                    <option value="">Select rider…</option>${opts}
                   </select>
                   <button class="btn btn-ok" onclick="assignRider(${o.id})">📤 Send to rider</button>
                   <button class="btn btn-ghost" onclick="autoAssignRider(${o.id})">🤖 Auto assign</button>`;
               }
             }
             if (hasRider) {
-              if (['placed', 'preparing', 'ready', 'ready_to_deliver'].includes(st)) {
+              if (['placed', 'preparing', 'ready', 'ready_to_deliver'].includes(st))
                 actions += `<button class="btn btn-ghost" style="color:var(--danger);border-color:var(--danger);" onclick="unassignRider(${o.id})">❌ Unassign rider</button>`;
-              }
-              if (st === 'ready_to_deliver') {
+              if (st === 'ready_to_deliver')
                 actions += `<button class="btn btn-ok" onclick="outForDelivery(${o.id})">🚴 Out for delivery</button>`;
-              }
-              if (st === 'out_for_delivery') {
+              if (st === 'out_for_delivery')
                 actions += `<button class="btn btn-ok" onclick="markDelivered(${o.id})">✓ Mark delivered</button>`;
-              }
               if (!paid && st === 'delivered') {
                 actions += `<button class="btn btn-ghost" onclick="openEditBill(${o.id})">Edit bill</button>`;
                 actions += `<button class="btn btn-ok" onclick="payOrder(${o.id},${Number(o.total_amount) || 0})">💰 Mark paid (COD)</button>`;
-                
               }
-              if (paid && st === 'delivered') {
+              if (paid && st === 'delivered')
                 actions += `<button class="btn btn-accent" onclick="completeOrder(${o.id})">✓ Mark complete</button>`;
-              }
             }
           }
-
           actions += `<button class="btn btn-ghost" onclick="reprintOrder(${o.id})">🖨️ Print</button>`;
 
           return `
@@ -1224,41 +1042,34 @@
               </div>
               <div>${money(o.total_amount)} · ${esc(o.customer_name || '—')}</div>
               ${actions ? `<div class="actions">${actions}</div>` : ''}
-            </div>
-          `;
+            </div>`;
         }).join('');
       } catch (e) {
-        document.getElementById('ordersList').innerHTML =
-          `<div class="empty">${esc(e.message)}</div>`;
+        document.getElementById('ordersList').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
       }
+    }
+
+    // Fetch full order (with items + payment_method + charges) and cache it
+    async function fetchFullOrder(orderId) {
+      if (fullOrderCache.has(orderId)) return fullOrderCache.get(orderId);
+      const full = await api('/orders/' + orderId);
+      const ord = full.order || full.data || full;
+      fullOrderCache.set(orderId, ord);
+      return ord;
     }
 
     async function reprintOrder(orderId) {
       try {
-        const data = await api('/orders');
-        const allOrders = data.orders || data.data || [];
-        const o = allOrders.find(x => Number(x.id) === Number(orderId));
+        const o = await fetchFullOrder(orderId);
         if (!o) { alert('Order not found'); return; }
 
-        let items = (o.items || []).map(it => ({
+        const items = (o.items || []).map(it => ({
           name: it.name || it.item_name || 'Item',
           qty: Number(it.qty || it.quantity || 1),
           price: Number(it.price || 0),
           package_size: it.package_size,
           package_unit: it.package_unit
         }));
-
-        if (!items.length && o.id) {
-          const full = await api('/orders/' + o.id);
-          const ord = full.order || full.data || full;
-          items = (ord.items || []).map(it => ({
-            name: it.name || it.item_name || 'Item',
-            qty: Number(it.qty || it.quantity || 1),
-            price: Number(it.price || 0),
-            package_size: it.package_size,
-            package_unit: it.package_unit
-          }));
-        }
 
         const sub = Number(o.subtotal || items.reduce((s, i) => s + i.price * i.qty, 0));
         const bill = {
@@ -1283,20 +1094,15 @@
           cardCharge: Number(o.card_charge || 0),
           bankCharge: Number(o.bank_charge || 0)
         });
-      } catch (e) {
-        console.error('reprintOrder:', e);
-        alert(e.message || 'Print failed');
-      }
+      } catch (e) { console.error('reprintOrder:', e); alert(e.message || 'Print failed'); }
     }
 
-        async function openEditBill(orderId) {
+    async function openEditBill(orderId) {
       try {
-        const data = await api('/orders/' + orderId);
-        const o = data.order || data.data || data;
+        const o = await fetchFullOrder(orderId);
         if (!o) throw new Error('Order not found');
         if (String(o.payment_status).toLowerCase() === 'paid') {
-          alert('Paid order bill edit nahi ho sakti');
-          return;
+          alert('Paid order bill edit nahi ho sakti'); return;
         }
         document.getElementById('ebOrderId').value = orderId;
         document.getElementById('ebInfo').textContent =
@@ -1308,14 +1114,9 @@
         document.getElementById('ebDine').value = o.dine_charge || 0;
         document.getElementById('ebDel').value = o.delivery_charge || 0;
         document.getElementById('editBillModal').classList.remove('hidden');
-      } catch (e) {
-        alert(e.message || 'Load failed');
-      }
+      } catch (e) { alert(e.message || 'Load failed'); }
     }
-
-    function closeEditBill() {
-      document.getElementById('editBillModal').classList.add('hidden');
-    }
+    function closeEditBill() { document.getElementById('editBillModal').classList.add('hidden'); }
 
     async function saveEditBill() {
       const id = document.getElementById('ebOrderId').value;
@@ -1329,26 +1130,20 @@
         delivery_charge: Number(document.getElementById('ebDel').value || 0)
       };
       try {
-        await api('/orders/' + id + '/pricing', {
-          method: 'PUT',
-          body: JSON.stringify(body)
-        });
+        await api('/orders/' + id + '/pricing', { method: 'PUT', body: JSON.stringify(body) });
+        fullOrderCache.delete(Number(id));
         closeEditBill();
         await loadOrders();
         alert('Bill updated');
-      } catch (e) {
-        alert(e.message || 'Save failed');
-      }
+      } catch (e) { alert(e.message || 'Save failed'); }
     }
 
     async function payOrder(id, amount) {
       try {
         const method = document.getElementById('payMethod')?.value || 'Cash';
         let cardCharge = 0, bankCharge = 0;
-        if (method === 'Card')
-          cardCharge = Number(amount) * (Number(posSettings.card_charge || 0) / 100);
-        else if (method === 'Bank')
-          bankCharge = Number(amount) * (Number(posSettings.bank_charge || 0) / 100);
+        if (method === 'Card') cardCharge = Number(amount) * (Number(posSettings.card_charge || 0) / 100);
+        else if (method === 'Bank') bankCharge = Number(amount) * (Number(posSettings.bank_charge || 0) / 100);
 
         await api(`/orders/${id}/pay`, {
           method: 'PUT',
@@ -1359,6 +1154,7 @@
             bank_charge: bankCharge
           })
         });
+        fullOrderCache.delete(Number(id));
         await loadOrders();
         await loadTodaySales();
       } catch (e) { alert(e.message || 'Payment failed'); }
@@ -1367,6 +1163,7 @@
     async function completeOrder(id) {
       try {
         await api('/orders/' + id + '/completed', { method: 'PUT' });
+        fullOrderCache.delete(Number(id));
         await loadOrders();
         await loadTodaySales();
       } catch (e) { alert(e.message || 'Complete failed'); }
@@ -1378,20 +1175,17 @@
       if (!riderId) { alert('Select a rider'); return; }
       try {
         await api('/orders/' + orderId + '/assign-rider', {
-          method: 'PUT',
-          body: JSON.stringify({ rider_id: riderId })
+          method: 'PUT', body: JSON.stringify({ rider_id: riderId })
         });
         await Promise.all([loadOrders(), loadDeliveryRiders()]);
       } catch (e) { alert(e.message || 'Assign failed'); }
     }
-
     async function autoAssignRider(orderId) {
       try {
         await api('/orders/' + orderId + '/auto-assign-rider', { method: 'PUT' });
         await Promise.all([loadOrders(), loadDeliveryRiders()]);
       } catch (e) { alert(e.message || 'Auto assign failed'); }
     }
-
     async function unassignRider(orderId) {
       if (!confirm('Remove rider from this order?')) return;
       try {
@@ -1399,14 +1193,12 @@
         await Promise.all([loadOrders(), loadDeliveryRiders()]);
       } catch (e) { alert(e.message || 'Unassign failed'); }
     }
-
     async function outForDelivery(id) {
       try {
         await api('/orders/' + id + '/out-for-delivery', { method: 'PUT' });
         await Promise.all([loadOrders(), loadDeliveryRiders()]);
       } catch (e) { alert(e.message || 'Failed'); }
     }
-
     async function markDelivered(id) {
       try {
         await api('/orders/' + id + '/delivered', { method: 'PUT' });
@@ -1428,20 +1220,15 @@
         });
         document.getElementById('todaySales').textContent =
           `Today: ${money(total)} (${orders.length} orders)`;
-      } catch {
-        document.getElementById('todaySales').textContent = 'Today: —';
-      }
+      } catch { document.getElementById('todaySales').textContent = 'Today: —'; }
     }
 
     /* ================= MENU ADMIN ================= */
     function openMenuAdmin() {
       document.getElementById('menuModal').classList.remove('hidden');
-      resetMenuForm();
-      renderMenuAdmin();
+      resetMenuForm(); renderMenuAdmin();
     }
-    function closeMenuAdmin() {
-      document.getElementById('menuModal').classList.add('hidden');
-    }
+    function closeMenuAdmin() { document.getElementById('menuModal').classList.add('hidden'); }
     function resetMenuForm() {
       document.getElementById('editMenuId').value = '';
       document.getElementById('menuFormTitle').textContent = 'Add item';
@@ -1462,8 +1249,7 @@
             <div style="color:var(--muted);font-size:12px;">${money(m.price)} · ${esc(m.category || 'Other')}</div>
           </div>
           <button class="btn btn-ghost" data-idx="${idx}" onclick="editMenuByIdx(this)">Edit</button>
-        </div>
-      `).join('');
+        </div>`).join('');
     }
     function editMenuByIdx(btn) {
       const idx = Number(btn.dataset.idx);
@@ -1490,9 +1276,7 @@
       try {
         if (id) await api('/menu/' + id, { method: 'PUT', body: JSON.stringify(body) });
         else await api('/menu', { method: 'POST', body: JSON.stringify(body) });
-        await loadMenu();
-        renderMenuAdmin();
-        resetMenuForm();
+        await loadMenu(); renderMenuAdmin(); resetMenuForm();
       } catch (e) { alert(e.message || 'Save failed'); }
     }
 
@@ -1509,7 +1293,6 @@
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
     }
-
     function setSalesRange(range) {
       salesCache.range = range;
       ['today', 'week', 'month'].forEach(r => {
@@ -1523,7 +1306,6 @@
       document.getElementById('salesTo').value = to;
       loadSalesReport();
     }
-
     function openSalesReport() {
       const app = document.getElementById('app-box');
       const page = document.getElementById('salesPage');
@@ -1532,22 +1314,18 @@
       if (!document.getElementById('salesFrom').value) setSalesRange('today');
       else loadSalesReport();
     }
-
     function closeSalesReport() {
       const app = document.getElementById('app-box');
       const page = document.getElementById('salesPage');
       if (app) app.classList.remove('sales-open');
       if (page) page.classList.remove('open');
     }
-
     function orderTypeLabel(t) {
       const x = String(t || '').toLowerCase();
       if (x === 'walk_in') return 'Takeaway';
       if (x === 'delivery') return 'Delivery';
       return 'Dine-in';
     }
-
-    // extract items array from an order object robustly
     function orderItemsOf(o) {
       const arr = o.items || o.order_items || o.orderItems || [];
       if (!Array.isArray(arr)) return [];
@@ -1583,13 +1361,8 @@
           const paid = String(o.payment_status || '').toLowerCase() === 'paid';
           const amt = Number(o.total_amount || o.total || 0);
           if (paid) { totalSales += amt; paidCount += 1; }
-          const its = orderItemsOf(o);
-          its.forEach(it => { itemsSold += Number(it.qty || 0); });
+          orderItemsOf(o).forEach(it => { itemsSold += Number(it.qty || 0); });
         });
-
-        if (paidCount === 0 && salesCache.orders.length) {
-          totalSales = salesCache.orders.reduce((s, o) => s + Number(o.total_amount || 0), 0);
-        }
 
         const orderCount = salesCache.orders.length;
         const avg = orderCount ? totalSales / (paidCount || orderCount) : 0;
@@ -1599,29 +1372,28 @@
         document.getElementById('stAvg').textContent = money(avg);
         document.getElementById('stItems').textContent = String(itemsSold || '—');
 
-        // Payment summary — group by payment_method with fallback for missing methods
+        // ✅ Payment summary: prefer SERVER endpoint, fallback to manual grouping
         const payData = payRes.data || [];
         const payEl = document.getElementById('salesPayments');
-
-        // build map: method -> { total, count }
         const payMap = {};
-        // First: use paid orders themselves to compute (most reliable)
-        salesCache.orders.forEach(o => {
-          if (String(o.payment_status || '').toLowerCase() !== 'paid') return;
-          const m = o.payment_method || 'Unspecified';
-          if (!payMap[m]) payMap[m] = { total: 0, count: 0 };
-          payMap[m].total += Number(o.total_amount || o.total || 0);
-          payMap[m].count += 1;
-        });
 
-        // If server gave summary AND payMap is empty, use server data
-        if (!Object.keys(payMap).length && Array.isArray(payData) && payData.length) {
+        if (Array.isArray(payData) && payData.length) {
           payData.forEach(p => {
-            const m = p.payment_method || p.method || 'Other';
-            payMap[m] = {
-              total: Number(p.total || p.amount || p.sum || p.sales || 0),
-              count: Number(p.count || p.orders || 0)
-            };
+            const m = normPayMethod(p.payment_method || p.method);
+            const t = Number(p.total || p.amount || p.sum || p.sales || 0);
+            const c = Number(p.count || p.orders || 0);
+            if (!payMap[m]) payMap[m] = { total: 0, count: 0 };
+            payMap[m].total += t;
+            payMap[m].count += c;
+          });
+        } else {
+          // fallback: group from orders
+          salesCache.orders.forEach(o => {
+            if (String(o.payment_status || '').toLowerCase() !== 'paid') return;
+            const m = normPayMethod(o.payment_method);
+            if (!payMap[m]) payMap[m] = { total: 0, count: 0 };
+            payMap[m].total += Number(o.total_amount || o.total || 0);
+            payMap[m].count += 1;
           });
         }
 
@@ -1632,10 +1404,7 @@
         } else {
           payEl.classList.remove('empty');
           payEl.innerHTML = payKeys.map(k =>
-            `<div class="pay-bar-row">
-               <span>${esc(k)} (${payMap[k].count})</span>
-               <strong>${money(payMap[k].total)}</strong>
-             </div>`
+            `<div class="pay-bar-row"><span>${esc(k)} (${payMap[k].count})</span><strong>${money(payMap[k].total)}</strong></div>`
           ).join('');
         }
 
@@ -1650,15 +1419,14 @@
                 <td>${esc(t.name || t.item_name || 'Item')}</td>
                 <td>${esc(t.quantity || t.qty || t.total_qty || 0)}</td>
                 <td>${money(t.total || t.sales || t.revenue || 0)}</td>
-              </tr>
-            `).join('')
+              </tr>`).join('')
           }</tbody></table>`;
         } else {
           topEl.className = 'empty';
           topEl.textContent = 'No item data';
         }
 
-        // Orders table with expandable detail rows
+        // Orders table with expandable rows
         const body = document.getElementById('salesOrdersBody');
         if (!salesCache.orders.length) {
           body.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;">No orders</td></tr>';
@@ -1668,34 +1436,71 @@
             const time = t ? new Date(t).toLocaleString() : '—';
             const oid = o.id;
             const isOpen = expandedOrders.has(oid);
-            const items = orderItemsOf(o);
-            const itemRows = items.length
-              ? items.map(it => {
-                  const pkg = (it.package_size && it.package_unit)
-                    ? ` (${esc(it.package_size)}${esc(it.package_unit)})` : '';
-                  const line = Number(it.price) * Number(it.qty);
-                  return `<tr>
-                    <td>${esc(it.name)}${pkg}</td>
-                    <td style="text-align:center;">${it.qty}</td>
-                    <td style="text-align:right;">${money(it.price)}</td>
-                    <td style="text-align:right;">${money(line)}</td>
-                  </tr>`;
-                }).join('')
-              : `<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:8px;">Items not available in list response</td></tr>`;
+            const payLabel = String(o.payment_status || '—') +
+              (o.payment_method ? ' / ' + normPayMethod(o.payment_method) : '');
 
-            const detailBlock = `
-              <tr class="sales-order-detail-row" ${isOpen ? '' : 'style="display:none;"'} data-detail="${oid}">
-                <td colspan="6">
-                  <div class="order-detail-inner">
+            return `<tr class="sales-order-row" data-id="${oid}">
+              <td>#${esc(o.local_number || o.id)}</td>
+              <td>${esc(orderTypeLabel(o.order_type))}</td>
+              <td>${esc(o.status || '—')}</td>
+              <td>${esc(payLabel)}</td>
+              <td>${money(o.total_amount || o.total || 0)}</td>
+              <td>${esc(time)}</td>
+            </tr>
+            <tr class="sales-order-detail-row" ${isOpen ? '' : 'style="display:none;"'} data-detail="${oid}">
+              <td colspan="6">
+                <div class="order-detail-inner" data-inner="${oid}">
+                  <div style="color:var(--muted);font-size:12px;padding:8px;">Loading…</div>
+                </div>
+              </td>
+            </tr>`;
+          }).join('');
+
+          // Attach click handlers
+          body.querySelectorAll('.sales-order-row').forEach(row => {
+            row.addEventListener('click', async () => {
+              const oid = Number(row.dataset.id);
+              const detailRow = body.querySelector(`tr[data-detail="${oid}"]`);
+              if (!detailRow) return;
+
+              const isHidden = detailRow.style.display === 'none';
+              detailRow.style.display = isHidden ? '' : 'none';
+              if (isHidden) expandedOrders.add(oid);
+              else expandedOrders.delete(oid);
+
+              // Lazy-load detail content
+              const inner = detailRow.querySelector(`[data-inner="${oid}"]`);
+              if (inner && inner.dataset.loaded !== '1') {
+                try {
+                  const full = await fetchFullOrder(oid);
+                  const items = orderItemsOf(full);
+                  const itemRows = items.length
+                    ? items.map(it => {
+                        const pkg = (it.package_size && it.package_unit)
+                          ? ` (${esc(it.package_size)}${esc(it.package_unit)})` : '';
+                        const line = Number(it.price) * Number(it.qty);
+                        return `<tr>
+                          <td>${esc(it.name)}${pkg}</td>
+                          <td style="text-align:center;">${it.qty}</td>
+                          <td style="text-align:right;">${money(it.price)}</td>
+                          <td style="text-align:right;">${money(line)}</td>
+                        </tr>`;
+                      }).join('')
+                    : `<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:8px;">No items</td></tr>`;
+
+                  const payFull = String(full.payment_status || '—') +
+                    (full.payment_method ? ' / ' + normPayMethod(full.payment_method) : '');
+
+                  inner.innerHTML = `
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-                      <div><span class="det-label">Order #</span> <strong>${esc(o.local_number || o.id)}</strong></div>
-                      <div><span class="det-label">Type</span> ${esc(orderTypeLabel(o.order_type))}</div>
-                      <div><span class="det-label">Status</span> ${esc(o.status || '—')}</div>
-                      <div><span class="det-label">Payment</span> ${esc(o.payment_status || '—')}${o.payment_method ? ' / ' + esc(o.payment_method) : ''}</div>
-                      <div><span class="det-label">Customer</span> ${esc(o.customer_name || '—')}</div>
-                      <div><span class="det-label">Table</span> ${o.table_no ? esc(o.table_no) : '—'}</div>
-                      ${o.delivery_phone ? `<div><span class="det-label">Phone</span> ${esc(o.delivery_phone)}</div>` : ''}
-                      ${o.delivery_address ? `<div style="grid-column:1/-1;"><span class="det-label">Address</span> ${esc(o.delivery_address)}</div>` : ''}
+                      <div><span class="det-label">Order #</span> <strong>${esc(full.local_number || full.id)}</strong></div>
+                      <div><span class="det-label">Type</span> ${esc(orderTypeLabel(full.order_type))}</div>
+                      <div><span class="det-label">Status</span> ${esc(full.status || '—')}</div>
+                      <div><span class="det-label">Payment</span> ${esc(payFull)}</div>
+                      <div><span class="det-label">Customer</span> ${esc(full.customer_name || '—')}</div>
+                      <div><span class="det-label">Table</span> ${full.table_no ? esc(full.table_no) : '—'}</div>
+                      ${full.delivery_phone ? `<div><span class="det-label">Phone</span> ${esc(full.delivery_phone)}</div>` : ''}
+                      ${full.delivery_address ? `<div style="grid-column:1/-1;"><span class="det-label">Address</span> ${esc(full.delivery_address)}</div>` : ''}
                     </div>
                     <table>
                       <thead><tr>
@@ -1707,83 +1512,20 @@
                       <tbody>${itemRows}</tbody>
                     </table>
                     <div style="margin-top:8px;text-align:right;">
-                      <span class="det-label">Subtotal</span> ${money(o.subtotal || 0)} &nbsp;
-                      ${Number(o.discount_amount) > 0 ? `<span class="det-label">Discount</span> -${money(o.discount_amount)} &nbsp;` : ''}
-                      ${Number(o.gst_amount) > 0 ? `<span class="det-label">GST</span> ${money(o.gst_amount)} &nbsp;` : ''}
-                      ${Number(o.tax_amount) > 0 ? `<span class="det-label">Tax</span> ${money(o.tax_amount)} &nbsp;` : ''}
-                      ${Number(o.delivery_charge) > 0 ? `<span class="det-label">Delivery</span> ${money(o.delivery_charge)} &nbsp;` : ''}
-                      ${Number(o.dine_charge) > 0 ? `<span class="det-label">Dine</span> ${money(o.dine_charge)} &nbsp;` : ''}
-                      <span class="det-total">Total: ${money(o.total_amount || o.total || 0)}</span>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            `;
-
-            return `<tr class="sales-order-row" data-id="${oid}">
-              <td>#${esc(o.local_number || o.id)}</td>
-              <td>${esc(orderTypeLabel(o.order_type))}</td>
-              <td>${esc(o.status || '—')}</td>
-              <td>${esc(o.payment_status || '—')}${o.payment_method ? ' / ' + esc(o.payment_method) : ''}</td>
-              <td>${money(o.total_amount || o.total || 0)}</td>
-              <td>${esc(time)}</td>
-            </tr>${detailBlock}`;
-          }).join('');
-
-          // attach click handlers
-          body.querySelectorAll('.sales-order-row').forEach(row => {
-            row.addEventListener('click', async () => {
-              const oid = Number(row.dataset.id);
-              const detailRow = body.querySelector(`tr[data-detail="${oid}"]`);
-              if (!detailRow) return;
-
-              // Lazy fetch items if empty (list endpoint often omits items)
-              const order = salesCache.orders.find(x => Number(x.id) === oid);
-              if (order && orderItemsOf(order).length === 0 && !order._itemsFetched) {
-                try {
-                  const full = await api('/orders/' + oid);
-                  const ord = full.order || full.data || full;
-                  const fetched = (ord.items || []).map(it => ({
-                    name: it.name || it.item_name || it.menu_item_name || 'Item',
-                    qty: Number(it.quantity || it.qty || 1),
-                    price: Number(it.price || it.unit_price || 0),
-                    package_size: it.package_size,
-                    package_unit: it.package_unit
-                  }));
-                  order.items = fetched;
-                  order._itemsFetched = true;
-                  // re-render this detail block
-                  const inner = detailRow.querySelector('.order-detail-inner');
-                  const rowsHtml = fetched.length
-                    ? fetched.map(it => {
-                        const pkg = (it.package_size && it.package_unit)
-                          ? ` (${esc(it.package_size)}${esc(it.package_unit)})` : '';
-                        return `<tr>
-                          <td>${esc(it.name)}${pkg}</td>
-                          <td style="text-align:center;">${it.qty}</td>
-                          <td style="text-align:right;">${money(it.price)}</td>
-                          <td style="text-align:right;">${money(it.price * it.qty)}</td>
-                        </tr>`;
-                      }).join('')
-                    : `<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:8px;">No items</td></tr>`;
-                  const tbody = inner.querySelector('table tbody');
-                  if (tbody) tbody.innerHTML = rowsHtml;
+                      <span class="det-label">Subtotal</span> ${money(full.subtotal || 0)} &nbsp;
+                      ${Number(full.discount_amount) > 0 ? `<span class="det-label">Discount</span> -${money(full.discount_amount)} &nbsp;` : ''}
+                      ${Number(full.gst_amount) > 0 ? `<span class="det-label">GST</span> ${money(full.gst_amount)} &nbsp;` : ''}
+                      ${Number(full.tax_amount) > 0 ? `<span class="det-label">Tax</span> ${money(full.tax_amount)} &nbsp;` : ''}
+                      ${Number(full.delivery_charge) > 0 ? `<span class="det-label">Delivery</span> ${money(full.delivery_charge)} &nbsp;` : ''}
+                      ${Number(full.dine_charge) > 0 ? `<span class="det-label">Dine</span> ${money(full.dine_charge)} &nbsp;` : ''}
+                      <span class="det-total">Total: ${money(full.total_amount || full.total || 0)}</span>
+                    </div>`;
+                  inner.dataset.loaded = '1';
                 } catch (err) {
-                  console.warn('fetch order items failed', err);
+                  inner.innerHTML = `<div style="color:var(--danger);padding:8px;">Failed to load: ${esc(err.message)}</div>`;
                 }
               }
-
-              const isHidden = detailRow.style.display === 'none';
-              detailRow.style.display = isHidden ? '' : 'none';
-              if (isHidden) expandedOrders.add(oid);
-              else expandedOrders.delete(oid);
             });
-          });
-
-          // restore open state on re-render
-          expandedOrders.forEach(oid => {
-            const dr = body.querySelector(`tr[data-detail="${oid}"]`);
-            if (dr) dr.style.display = '';
           });
         }
       } catch (e) {
@@ -1796,14 +1538,9 @@
       salesCache.orders.forEach(o => {
         const itemsStr = orderItemsOf(o).map(i => `${i.name} x${i.qty} @${i.price}`).join(' | ');
         rows.push([
-          o.id,
-          orderTypeLabel(o.order_type),
-          o.status || '',
-          o.payment_status || '',
-          o.payment_method || '',
-          o.total_amount || o.total || 0,
-          o.created_at || '',
-          itemsStr
+          o.id, orderTypeLabel(o.order_type), o.status || '',
+          o.payment_status || '', o.payment_method || '',
+          o.total_amount || o.total || 0, o.created_at || '', itemsStr
         ]);
       });
       const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
@@ -1816,36 +1553,20 @@
     }
 
     function printSalesReport() {
-      const from = salesCache.from;
-      const to = salesCache.to;
+      const from = salesCache.from, to = salesCache.to;
       const brandName = document.getElementById('brandName')?.textContent || 'Cafe';
-
-      const stats = `
-        Orders: ${document.getElementById('stOrders').textContent} |
-        Sales: ${document.getElementById('stSales').textContent} |
-        Avg: ${document.getElementById('stAvg').textContent}
-      `;
-
+      const stats = `Orders: ${document.getElementById('stOrders').textContent} | Sales: ${document.getElementById('stSales').textContent} | Avg: ${document.getElementById('stAvg').textContent}`;
       let table = '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:12px;"><tr><th>#</th><th>Type</th><th>Status</th><th>Pay</th><th>Total</th></tr>';
       salesCache.orders.forEach(o => {
         table += `<tr><td>${o.id}</td><td>${orderTypeLabel(o.order_type)}</td><td>${o.status || ''}</td><td>${o.payment_status || ''}</td><td>${o.total_amount || o.total || 0}</td></tr>`;
       });
       table += '</table>';
-
       const w = window.open('', '_blank');
       if (!w) { alert('Allow popups to print'); return; }
-      const SCRIPT_OPEN = '<' + 'script>';
-      const SCRIPT_CLOSE = '</' + 'script>';
-      w.document.write(`
-        <!DOCTYPE html><html><head><title>Sales ${from} – ${to}</title></head>
-        <body>
-          <h2>${brandName} — Sales Report</h2>
-          <p>${from} → ${to}</p>
-          <p>${stats}</p>
-          ${table}
-          ${SCRIPT_OPEN}window.onload=function(){window.print();};${SCRIPT_CLOSE}
-        </body></html>
-      `);
+      const S1 = '<' + 'script>', S2 = '</' + 'script>';
+      w.document.write(`<!DOCTYPE html><html><head><title>Sales ${from} – ${to}</title></head><body>
+        <h2>${brandName} — Sales Report</h2><p>${from} → ${to}</p><p>${stats}</p>${table}
+        ${S1}window.onload=function(){window.print();};${S2}</body></html>`);
       w.document.close();
     }
 
@@ -1857,8 +1578,14 @@
     }
 
     /* ================= BILL / PRINT ================= */
-       function printBill(opts) {
-      showBillPreview(opts);
+    function printBill(opts) {
+      // Direct print (used by auto-print & reprint button)
+      const html = buildBillHtml(opts);
+      const w = window.open('', '_blank', 'width=420,height=640');
+      if (!w) { alert('Allow popups to print bill'); return; }
+      w.document.open();
+      w.document.write(html + '<script>window.onload=function(){window.focus();window.print();setTimeout(function(){window.close();},600);};<\/script>');
+      w.document.close();
     }
 
     function buildBillHtml(opts) {
@@ -1881,8 +1608,7 @@
       const finalTotal = Number(bill.total || 0) + Number(cardCharge || 0) + Number(bankCharge || 0);
 
       const itemRows = (items || []).map(it => {
-        const pkg = (it.package_size && it.package_unit)
-          ? ` (${it.package_size}${it.package_unit})` : '';
+        const pkg = (it.package_size && it.package_unit) ? ` (${it.package_size}${it.package_unit})` : '';
         const line = Number(it.price) * Number(it.qty);
         return `<tr>
           <td style="text-align:left;">${esc(it.name)}${esc(pkg)}
@@ -1921,7 +1647,8 @@
       return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Bill #${esc(String(orderNo))}</title>
 <style>
   @page{margin:4mm;size:80mm auto;}
-  body{font-family:'Courier New',monospace;font-size:12px;color:#000;width:72mm;margin:0 auto;padding:4px;}
+  html,body{background:#fff;color:#000;}
+  body{font-family:'Courier New',monospace;font-size:12px;width:72mm;margin:0 auto;padding:6px;}
   h1{font-size:16px;text-align:center;margin:0 0 4px;}
   .muted{text-align:center;color:#333;font-size:11px;margin-bottom:6px;}
   hr{border:none;border-top:1px dashed #000;margin:8px 0;}
@@ -1967,12 +1694,13 @@
       };
       const html = buildBillHtml(opts);
 
-      // ✅ Use iframe srcdoc so the bill's <style> tag applies inside the preview
+      // ✅ Use a Blob URL on an iframe (works even with CSP that blocks srcdoc)
       const box = document.getElementById('bpPreview');
       box.innerHTML = '';
       const iframe = document.createElement('iframe');
       iframe.style.cssText = 'width:100%;height:100%;border:0;background:#fff;display:block;';
-      iframe.srcdoc = html;
+      const blob = new Blob([html], { type: 'text/html' });
+      iframe.src = URL.createObjectURL(blob);
       box.appendChild(iframe);
     }
 
@@ -1990,9 +1718,10 @@
         note: document.getElementById('bpNote').value.trim()
       };
       const html = buildBillHtml(opts);
-      const w = window.open('', '_blank', 'width=400,height=600');
+      const w = window.open('', '_blank', 'width=420,height=640');
       if (!w) { alert('Allow popups to print'); return; }
-      w.document.write(html + '<script>window.onload=function(){window.print();setTimeout(function(){window.close();},500);};<\/script>');
+      w.document.open();
+      w.document.write(html + '<script>window.onload=function(){window.focus();window.print();setTimeout(function(){window.close();},600);};<\/script>');
       w.document.close();
       closeBillPreview();
     }
@@ -2014,17 +1743,11 @@
       document.getElementById('setBankCharge').value = posSettings.bank_charge || 0;
       document.getElementById('setDiscType').value = posSettings.discount_type || 'none';
       document.getElementById('setDiscValue').value = posSettings.discount_value || 0;
-      document.getElementById('setAutoPrint').checked =
-        localStorage.getItem('cafe_auto_print') !== '0';
-      document.getElementById('assignMode').value =
-        localStorage.getItem('cafe_assign_mode') || 'manual';
+      document.getElementById('setAutoPrint').checked = localStorage.getItem('cafe_auto_print') !== '0';
+      document.getElementById('assignMode').value = localStorage.getItem('cafe_assign_mode') || 'manual';
       document.getElementById('settingsModal').classList.remove('hidden');
     }
-
-    function closeSettings() {
-      document.getElementById('settingsModal').classList.add('hidden');
-    }
-
+    function closeSettings() { document.getElementById('settingsModal').classList.add('hidden'); }
     async function saveSettings() {
       const payload = {
         gst_percent: Number(document.getElementById('setGst').value || 0),
@@ -2040,8 +1763,7 @@
       try {
         const res = await api('/settings/pos', { method: 'PUT', body: JSON.stringify(payload) });
         posSettings = { ...posSettings, ...(res.data || payload) };
-        localStorage.setItem('cafe_auto_print',
-          document.getElementById('setAutoPrint').checked ? '1' : '0');
+        localStorage.setItem('cafe_auto_print', document.getElementById('setAutoPrint').checked ? '1' : '0');
         localStorage.setItem('cafe_assign_mode', document.getElementById('assignMode').value);
         renderCart();
         closeSettings();
@@ -2052,28 +1774,21 @@
     /* ================= THEME ================= */
     function toggleTheme() {
       document.body.classList.toggle('light');
-      localStorage.setItem('cafe_theme',
-        document.body.classList.contains('light') ? 'light' : 'dark');
+      localStorage.setItem('cafe_theme', document.body.classList.contains('light') ? 'light' : 'dark');
     }
 
     /* ================= PAGE LOAD ================= */
     window.addEventListener('load', async () => {
-      if (localStorage.getItem('cafe_theme') === 'light')
-        document.body.classList.add('light');
-
+      if (localStorage.getItem('cafe_theme') === 'light') document.body.classList.add('light');
       if (!restaurantId) {
         const saved = localStorage.getItem('cafe_restaurant_id');
         if (saved) restaurantId = Number(saved);
       }
-
       if (token) {
         try {
           user = { restaurant_name: 'Cafe', plan: 'Cafe Lite', restaurant_id: restaurantId };
           await bootApp();
-        } catch (err) {
-          console.warn('Session restore failed:', err);
-          logout();
-        }
+        } catch (err) { console.warn('Session restore failed:', err); logout(); }
       }
     });
   </script>
