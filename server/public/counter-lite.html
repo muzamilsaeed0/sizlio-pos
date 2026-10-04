@@ -533,6 +533,40 @@
       </div>
     </div>
   </div>
+    <div id="editBillModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:400px;">
+      <h3>Edit bill</h3>
+      <input type="hidden" id="ebOrderId" value="" />
+      <p id="ebInfo" style="color:var(--muted);font-size:13px;margin:0 0 10px;"></p>
+
+      <label>Discount type</label>
+      <select id="ebDiscType">
+        <option value="none">None</option>
+        <option value="percent">Percent %</option>
+        <option value="fixed">Fixed Rs</option>
+      </select>
+
+      <label>Discount value</label>
+      <input id="ebDiscVal" type="number" min="0" step="0.01" value="0" />
+
+      <label>GST %</label>
+      <input id="ebGst" type="number" min="0" max="100" step="0.01" value="0" />
+
+      <label>Tax %</label>
+      <input id="ebTax" type="number" min="0" max="100" step="0.01" value="0" />
+
+      <label>Dine charge (Rs)</label>
+      <input id="ebDine" type="number" min="0" step="1" value="0" />
+
+      <label>Delivery charge (Rs)</label>
+      <input id="ebDel" type="number" min="0" step="1" value="0" />
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeEditBill()">Close</button>
+        <button class="btn btn-accent" onclick="saveEditBill()">Save</button>
+      </div>
+    </div>
+  </div>
 
   <!-- SETTINGS MODAL -->
   <div id="settingsModal" class="modal-bg hidden">
@@ -1116,6 +1150,7 @@
 
           if (!isDelivery) {
             if (!paid) {
+              actions += `<button class="btn btn-ghost" onclick="openEditBill(${o.id})">Edit bill</button>`;
               actions += `<button class="btn btn-ok" onclick="payOrder(${o.id},${Number(o.total_amount) || 0})">Mark paid</button>`;
             }
             if (paid && st !== 'completed') {
@@ -1169,7 +1204,9 @@
                 actions += `<button class="btn btn-ok" onclick="markDelivered(${o.id})">✓ Mark delivered</button>`;
               }
               if (!paid && st === 'delivered') {
+                actions += `<button class="btn btn-ghost" onclick="openEditBill(${o.id})">Edit bill</button>`;
                 actions += `<button class="btn btn-ok" onclick="payOrder(${o.id},${Number(o.total_amount) || 0})">💰 Mark paid (COD)</button>`;
+                
               }
               if (paid && st === 'delivered') {
                 actions += `<button class="btn btn-accent" onclick="completeOrder(${o.id})">✓ Mark complete</button>`;
@@ -1249,6 +1286,58 @@
       } catch (e) {
         console.error('reprintOrder:', e);
         alert(e.message || 'Print failed');
+      }
+    }
+
+        async function openEditBill(orderId) {
+      try {
+        const data = await api('/orders/' + orderId);
+        const o = data.order || data.data || data;
+        if (!o) throw new Error('Order not found');
+        if (String(o.payment_status).toLowerCase() === 'paid') {
+          alert('Paid order bill edit nahi ho sakti');
+          return;
+        }
+        document.getElementById('ebOrderId').value = orderId;
+        document.getElementById('ebInfo').textContent =
+          `#${o.local_number || o.id} · ${money(o.total_amount || o.total || 0)} · ${o.payment_status || 'unpaid'}`;
+        document.getElementById('ebDiscType').value = o.discount_type || 'none';
+        document.getElementById('ebDiscVal').value = o.discount_value || 0;
+        document.getElementById('ebGst').value = o.gst_percent || 0;
+        document.getElementById('ebTax').value = o.tax_percent || 0;
+        document.getElementById('ebDine').value = o.dine_charge || 0;
+        document.getElementById('ebDel').value = o.delivery_charge || 0;
+        document.getElementById('editBillModal').classList.remove('hidden');
+      } catch (e) {
+        alert(e.message || 'Load failed');
+      }
+    }
+
+    function closeEditBill() {
+      document.getElementById('editBillModal').classList.add('hidden');
+    }
+
+    async function saveEditBill() {
+      const id = document.getElementById('ebOrderId').value;
+      if (!id) return;
+      const body = {
+        discount_type: document.getElementById('ebDiscType').value || 'none',
+        discount_value: Number(document.getElementById('ebDiscVal').value || 0),
+        gst_percent: Number(document.getElementById('ebGst').value || 0),
+        tax_percent: Number(document.getElementById('ebTax').value || 0),
+        dine_charge: Number(document.getElementById('ebDine').value || 0),
+        delivery_charge: Number(document.getElementById('ebDel').value || 0)
+      };
+      try {
+        await api('/orders/' + id + '/pricing', {
+          method: 'PUT',
+          body: JSON.stringify(body)
+        });
+        closeEditBill();
+        await loadOrders();
+        alert('Bill updated');
+      } catch (e) {
+        alert(e.message || 'Save failed');
       }
     }
 

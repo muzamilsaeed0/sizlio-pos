@@ -2393,8 +2393,10 @@ const updateOrderPricing = async (
     // --------------------------------------------------
 
     if (
-      order.status !== 'served' ||
-      order.payment_status !== 'unpaid'
+      order.payment_status !== 'unpaid' ||
+      !['served', 'placed', 'preparing', 'ready', 'payment_pending'].includes(
+        String(order.status || '').toLowerCase()
+      )
     ) {
 
       await client.query('ROLLBACK');
@@ -2580,8 +2582,8 @@ const dineCharge = Number(pricing.dine_charge || 0);
     discount_value = $2,
     gst_percent = $3,
     tax_percent = $4,
-    delivery_charge = $5,     -- ✅ Add
-    dine_charge = $6,         -- ✅ Add
+    delivery_charge = $5,     
+    dine_charge = $6,         
     subtotal = $7,
     discount_amount = $8,
     gst_amount = $9,
@@ -2589,8 +2591,8 @@ const dineCharge = Number(pricing.dine_charge || 0);
     total_amount = $11
   WHERE id = $12
     AND restaurant_id = $13
-    AND status = 'served'
     AND payment_status = 'unpaid'
+AND status IN ('served', 'placed', 'preparing', 'ready', 'payment_pending')
   RETURNING *
   `,
   [
@@ -2598,13 +2600,13 @@ const dineCharge = Number(pricing.dine_charge || 0);
     discountValue.toFixed(2),
     gstPercent.toFixed(2),
     taxPercent.toFixed(2),
-    deliveryCharge.toFixed(2),   // ✅
-    dineCharge.toFixed(2),       // ✅
+    deliveryCharge.toFixed(2),  
+    dineCharge.toFixed(2),       
     calculated.subtotal.toFixed(2),
     calculated.discountAmount.toFixed(2),
     calculated.gstAmount.toFixed(2),
     calculated.taxAmount.toFixed(2),
-    finalTotal.toFixed(2),       // ✅
+    finalTotal.toFixed(2),      
     id,
     restaurantId
   ]
@@ -2655,8 +2657,8 @@ const markPaid = async (
   paymentMethod = 'Cash',
   paidAmount = null,
   paidByUserId = null,
-  cardCharge = 0,      // ✅ NEW
-  bankCharge = 0       // ✅ NEW
+  cardCharge = 0,      
+  bankCharge = 0      
 ) => {
 
   const client =
@@ -2818,6 +2820,7 @@ if (!isCafeLite) {
       );
 
     }
+    message: 'Only unpaid open orders can have pricing updated'
 
 
     // ==================================================
