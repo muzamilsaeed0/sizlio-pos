@@ -35,7 +35,6 @@
     button, input, select { font: inherit; }
     .hidden { display: none !important; }
 
-    /* ================ LOGIN ================ */
     #login-box {
       min-height: 100vh;
       display: flex;
@@ -57,49 +56,28 @@
     .login-card p.sub { margin: 0 0 20px; color: var(--muted); font-size: 13px; }
     .login-card .field { text-align: left; }
     .login-card label {
-      display: block;
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: .3px;
-      font-weight: 700;
+      display: block; font-size: 12px; color: var(--muted);
+      margin-bottom: 6px; text-transform: uppercase;
+      letter-spacing: .3px; font-weight: 700;
     }
     .login-card input {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
-      margin-bottom: 14px;
-      font-size: 14px;
+      width: 100%; padding: 12px 14px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--bg);
+      color: var(--text); margin-bottom: 14px; font-size: 14px;
     }
     .login-card input:focus { outline: none; border-color: var(--accent); }
     .pw-wrap { position: relative; margin-bottom: 14px; }
-    .pw-wrap input {
-      margin: 0 !important;
-      padding-right: 44px !important;
-    }
+    .pw-wrap input { margin: 0 !important; padding-right: 44px !important; }
     .pw-eye {
-      position: absolute;
-      right: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      cursor: pointer;
-      user-select: none;
-      font-size: 16px;
-      opacity: .55;
-      transition: opacity .15s;
+      position: absolute; right: 14px; top: 50%;
+      transform: translateY(-50%); cursor: pointer;
+      user-select: none; font-size: 16px; opacity: .55; transition: opacity .15s;
     }
     .pw-eye:hover { opacity: 1; }
 
     .btn {
-      border: none;
-      border-radius: 10px;
-      padding: 12px 16px;
-      font-weight: 700;
-      cursor: pointer;
+      border: none; border-radius: 10px; padding: 12px 16px;
+      font-weight: 700; cursor: pointer;
       transition: opacity .15s, transform .1s;
     }
     .btn:active { transform: translateY(1px); }
@@ -108,167 +86,103 @@
     .btn-ok { background: var(--ok); color: #fff; }
     .btn-danger { background: var(--danger); color: #fff; }
     .btn-ghost {
-      background: transparent;
-      color: var(--text);
+      background: transparent; color: var(--text);
       border: 1px solid var(--border);
     }
     .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
     #login-error {
-      color: var(--danger);
-      font-size: 13px;
-      min-height: 18px;
-      margin-top: 10px;
-      text-align: center;
+      color: var(--danger); font-size: 13px;
+      min-height: 18px; margin-top: 10px; text-align: center;
     }
 
-    /* ================ APP SHELL ================ */
-    #app-box {
-      display: none;
-      min-height: 100vh;
-      flex-direction: column;
-    }
+    #app-box { display: none; min-height: 100vh; flex-direction: column; }
     #app-box.show { display: flex; }
 
-    /* ================ TOPBAR ================ */
     .topbar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
-      background: var(--panel);
-      flex-wrap: wrap;
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border-bottom: 1px solid var(--border);
+      background: var(--panel); flex-wrap: wrap;
     }
     .brand-wrap {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
-      flex-shrink: 1;
+      display: flex; align-items: center; gap: 10px;
+      min-width: 0; flex-shrink: 1;
     }
     .brand-logo {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      object-fit: cover;
-      flex-shrink: 0;
+      width: 32px; height: 32px; border-radius: 8px;
+      object-fit: cover; flex-shrink: 0;
     }
     .brand {
-      font-weight: 800;
-      font-size: 16px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 180px;
+      font-weight: 800; font-size: 16px; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; max-width: 180px;
     }
     .pill {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: var(--panel2);
-      color: var(--muted);
-      border: 1px solid var(--border);
+      font-size: 11px; font-weight: 700; padding: 4px 10px;
+      border-radius: 999px; background: var(--panel2);
+      color: var(--muted); border: 1px solid var(--border);
       white-space: nowrap;
     }
     .pill.ok { color: var(--ok); border-color: #2fa37d55; }
     .pill.warn { color: var(--accent); border-color: #e3a23b55; }
     .topbar .spacer { flex: 1; min-width: 8px; }
     .sales-chip {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--accent);
-      white-space: nowrap;
+      font-size: 13px; font-weight: 700;
+      color: var(--accent); white-space: nowrap;
     }
     .topbar button { padding: 8px 12px; border-radius: 8px; font-size: 12px; }
 
-    /* ================ MAIN LAYOUT ================ */
     .main {
-      flex: 1;
-      display: grid;
+      flex: 1; display: grid;
       grid-template-columns: 1.2fr 0.9fr 0.85fr;
-      gap: 12px;
-      padding: 12px;
-      min-height: 0;
+      gap: 12px; padding: 12px; min-height: 0;
     }
     @media (max-width: 1100px) { .main { grid-template-columns: 1fr; } }
     .panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      min-height: 280px;
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 14px; padding: 12px; display: flex;
+      flex-direction: column; min-height: 280px;
       max-height: calc(100vh - 90px);
     }
     .panel h2 {
-      margin: 0 0 10px;
-      font-size: 14px;
-      letter-spacing: .02em;
-      color: var(--muted);
-      text-transform: uppercase;
+      margin: 0 0 10px; font-size: 14px; letter-spacing: .02em;
+      color: var(--muted); text-transform: uppercase;
     }
     .type-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
     .type-btn {
-      flex: 1;
-      min-width: 90px;
-      padding: 10px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--panel2);
-      color: var(--text);
-      font-weight: 700;
-      cursor: pointer;
+      flex: 1; min-width: 90px; padding: 10px;
+      border-radius: 10px; border: 1px solid var(--border);
+      background: var(--panel2); color: var(--text);
+      font-weight: 700; cursor: pointer;
       transition: background .15s, color .15s;
     }
     .type-btn.active {
-      background: var(--accent);
-      color: #14181c;
+      background: var(--accent); color: #14181c;
       border-color: var(--accent);
     }
     .search {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
-      margin-bottom: 10px;
+      width: 100%; padding: 10px 12px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--bg);
+      color: var(--text); margin-bottom: 10px;
     }
     .search:focus { outline: none; border-color: var(--accent); }
     .cats { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
     .cat-chip {
-      padding: 6px 12px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: var(--panel2);
-      color: var(--muted);
-      font-size: 12px;
-      cursor: pointer;
-      font-weight: 600;
+      padding: 6px 12px; border-radius: 999px;
+      border: 1px solid var(--border); background: var(--panel2);
+      color: var(--muted); font-size: 12px; cursor: pointer; font-weight: 600;
     }
     .cat-chip.active {
-      color: var(--accent);
-      border-color: var(--accent);
+      color: var(--accent); border-color: var(--accent);
       background: rgba(227,162,59,.1);
     }
     .menu-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 8px;
-      overflow: auto;
-      flex: 1;
-      align-content: start;
+      gap: 8px; overflow: auto; flex: 1; align-content: start;
     }
     .menu-card {
-      background: var(--panel2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px;
-      cursor: pointer;
-      text-align: left;
-      transition: border-color .15s, transform .1s;
+      background: var(--panel2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px; cursor: pointer;
+      text-align: left; transition: border-color .15s, transform .1s;
       color: var(--text);
     }
     .menu-card:hover { border-color: var(--accent); transform: translateY(-1px); }
@@ -278,38 +192,24 @@
 
     .field-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
     .field-row input, .field-row select {
-      flex: 1;
-      min-width: 100px;
-      padding: 10px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
+      flex: 1; min-width: 100px; padding: 10px;
+      border-radius: 10px; border: 1px solid var(--border);
+      background: var(--bg); color: var(--text);
     }
     .field-row input:focus, .field-row select:focus {
-      outline: none;
-      border-color: var(--accent);
+      outline: none; border-color: var(--accent);
     }
     .cart-list { flex: 1; overflow: auto; margin-bottom: 8px; min-height: 80px; }
     .cart-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 13px;
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px;
     }
     .cart-row:last-child { border-bottom: none; }
     .cart-row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
     .qty-btn {
-      width: 28px; height: 28px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--panel2);
-      color: var(--text);
-      cursor: pointer;
-      font-weight: 700;
-      flex-shrink: 0;
+      width: 28px; height: 28px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--panel2);
+      color: var(--text); cursor: pointer; font-weight: 700; flex-shrink: 0;
     }
     .qty-btn:hover { border-color: var(--accent); color: var(--accent); }
     .totals { font-size: 14px; margin-bottom: 10px; }
@@ -320,107 +220,67 @@
 
     .orders-list { flex: 1; overflow: auto; }
     .order-card {
-      background: var(--panel2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px;
-      margin-bottom: 8px;
-      font-size: 12px;
+      background: var(--panel2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px; margin-bottom: 8px; font-size: 12px;
     }
     .order-card .hd {
-      display: flex;
-      justify-content: space-between;
-      font-weight: 700;
-      margin-bottom: 4px;
-      gap: 8px;
-      flex-wrap: wrap;
+      display: flex; justify-content: space-between; font-weight: 700;
+      margin-bottom: 4px; gap: 8px; flex-wrap: wrap;
     }
     .order-card .st { color: var(--accent); text-transform: uppercase; font-size: 11px; }
     .order-card .paid { color: var(--ok); text-transform: uppercase; font-size: 11px; }
     .order-card .actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
     .order-card .actions button { padding: 6px 10px; font-size: 11px; border-radius: 8px; }
 
-    /* ================ MODAL ================ */
     .modal-bg {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.55);
+      position: fixed; inset: 0; background: rgba(0,0,0,.55);
       display: flex; align-items: center; justify-content: center;
       z-index: 50; padding: 16px;
     }
     .modal {
-      width: 100%; max-width: 480px;
-      max-height: 90vh; overflow: auto;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
+      width: 100%; max-width: 480px; max-height: 90vh; overflow: auto;
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 16px; padding: 18px;
     }
     .modal h3 { margin: 0 0 12px; }
     .modal label {
-      display: block;
-      font-size: 12px;
-      color: var(--muted);
-      margin: 8px 0 4px;
-      font-weight: 600;
+      display: block; font-size: 12px; color: var(--muted);
+      margin: 8px 0 4px; font-weight: 600;
     }
     .modal input, .modal select {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
+      width: 100%; padding: 10px 12px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--bg); color: var(--text);
     }
     .modal input:focus, .modal select:focus {
-      outline: none;
-      border-color: var(--accent);
+      outline: none; border-color: var(--accent);
     }
     .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
     .modal-actions .btn { flex: 1; }
     .menu-admin-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 13px;
-      gap: 8px;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+      font-size: 13px; gap: 8px;
     }
     .menu-admin-row:last-child { border-bottom: none; }
     .empty { color: var(--muted); text-align: center; padding: 24px 8px; font-size: 13px; }
 
-    /* ================ SALES REPORT ================ */
     .sales-modal { max-width: 720px; width: 100%; }
     #salesPage {
-      display: none;
-      flex-direction: column;
-      gap: 12px;
-      padding: 12px 16px 24px;
-      max-width: 1100px;
-      margin: 0 auto;
-      width: 100%;
+      display: none; flex-direction: column; gap: 12px;
+      padding: 12px 16px 24px; max-width: 1100px;
+      margin: 0 auto; width: 100%;
     }
     #salesPage.open { display: flex; }
     #app-box.sales-open .main { display: none !important; }
     #app-box.sales-open .topbar .sales-hide-on-report { display: none !important; }
     .sales-page-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 4px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap; margin-bottom: 4px;
     }
-    .sales-page-header h2 {
-      margin: 0;
-      font-size: 1.25rem;
-      font-weight: 800;
-    }
+    .sales-page-header h2 { margin: 0; font-size: 1.25rem; font-weight: 800; }
     #salesPage .sales-table-wrap {
-      max-height: none;
-      overflow: auto;
-      border: 1px solid var(--border);
-      border-radius: 12px;
+      max-height: none; overflow: auto;
+      border: 1px solid var(--border); border-radius: 12px;
     }
     #salesPage .sales-table th,
     #salesPage .sales-table td { padding: 10px 8px; }
@@ -431,18 +291,23 @@
     }
     .sales-filters .chip-btn {
       padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);
-      background: var(--panel2); color: var(--text); font-weight: 700; cursor: pointer; font-size: 12px;
+      background: var(--panel2); color: var(--text); font-weight: 700;
+      cursor: pointer; font-size: 12px;
     }
-    .sales-filters .chip-btn.active { background: var(--accent); color: #14181c; border-color: var(--accent); }
+    .sales-filters .chip-btn.active {
+      background: var(--accent); color: #14181c; border-color: var(--accent);
+    }
     .sales-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
     @media (max-width: 600px) { .sales-stats { grid-template-columns: 1fr 1fr; } }
     .sales-stat {
-      background: var(--panel2); border: 1px solid var(--border); border-radius: 12px; padding: 12px;
+      background: var(--panel2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px;
     }
     .sales-stat .lbl { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
     .sales-stat .val { font-size: 16px; font-weight: 800; color: var(--accent); }
     .sales-section-title {
-      font-size: 12px; text-transform: uppercase; color: var(--muted); margin: 14px 0 8px; font-weight: 700;
+      font-size: 12px; text-transform: uppercase; color: var(--muted);
+      margin: 14px 0 8px; font-weight: 700;
     }
     .sales-table { width: 100%; border-collapse: collapse; font-size: 12px; }
     .sales-table th, .sales-table td {
@@ -451,7 +316,19 @@
     .sales-table th { color: var(--muted); font-weight: 600; }
     .pay-bar-row { display: flex; justify-content: space-between; font-size: 13px; margin: 4px 0; }
 
-    /* ================ RESPONSIVE ================ */
+    /* expandable order detail rows */
+    .sales-order-row { cursor: pointer; }
+    .sales-order-row:hover td { background: rgba(227,162,59,.05); }
+    .sales-order-detail-row td {
+      background: var(--panel2); padding: 0 !important;
+      border-bottom: 1px solid var(--border);
+    }
+    .order-detail-inner { padding: 10px 14px; font-size: 12px; }
+    .order-detail-inner table { width: 100%; border-collapse: collapse; }
+    .order-detail-inner td { padding: 3px 4px; border: none; }
+    .order-detail-inner .det-label { color: var(--muted); font-size: 11px; }
+    .order-detail-inner .det-total { font-weight: 800; color: var(--accent); }
+
     @media (max-width: 600px) {
       .brand { max-width: 110px; font-size: 14px; }
       .brand-logo { width: 26px; height: 26px; }
@@ -463,7 +340,7 @@
 </head>
 <body>
 
-  <!-- ================ LOGIN ================ -->
+  <!-- LOGIN -->
   <div id="login-box">
     <div class="login-card">
       <h2>Counter Lite</h2>
@@ -471,42 +348,29 @@
 
       <div class="field">
         <label>Username</label>
-        <input
-          id="username"
-          placeholder="Username"
-          autocomplete="username"
-          onkeydown="if (event.key === 'Enter') login()"
-        />
+        <input id="username" placeholder="Username" autocomplete="username"
+               onkeydown="if (event.key === 'Enter') login()" />
       </div>
 
       <div class="field">
         <label>Password</label>
         <div class="pw-wrap">
-          <input
-            id="password"
-            type="password"
-            placeholder="Password"
-            autocomplete="current-password"
-            onkeydown="if (event.key === 'Enter') login()"
-          />
-          <span
-            class="pw-eye"
-            onmousedown="showPassword()"
-            onmouseup="hidePassword()"
-            onmouseleave="hidePassword()"
-            ontouchstart="showPassword()"
-            ontouchend="hidePassword()"
-            title="Show password">👁</span>
+          <input id="password" type="password" placeholder="Password"
+                 autocomplete="current-password"
+                 onkeydown="if (event.key === 'Enter') login()" />
+          <span class="pw-eye"
+                onmousedown="showPassword()" onmouseup="hidePassword()"
+                onmouseleave="hidePassword()" ontouchstart="showPassword()"
+                ontouchend="hidePassword()" title="Show password">👁</span>
         </div>
       </div>
 
       <button class="btn btn-accent" onclick="login()">Login</button>
-
       <p id="login-error"></p>
     </div>
   </div>
 
-  <!-- ================ APP ================ -->
+  <!-- APP -->
   <div id="app-box">
     <div class="topbar">
       <div class="brand-wrap">
@@ -571,7 +435,7 @@
       </section>
     </div>
 
-    <!-- ================ SALES FULL PAGE ================ -->
+    <!-- SALES FULL PAGE -->
     <div id="salesPage">
       <div class="sales-page-header">
         <h2>Sales report</h2>
@@ -599,7 +463,7 @@
       <div id="salesPayments" class="empty">—</div>
       <div class="sales-section-title">Top items</div>
       <div id="salesTop" class="empty">—</div>
-      <div class="sales-section-title">Orders</div>
+      <div class="sales-section-title">Orders <span style="color:var(--muted);font-weight:400;text-transform:none;">(click a row for details)</span></div>
       <div class="sales-table-wrap">
         <table class="sales-table">
           <thead>
@@ -611,7 +475,7 @@
     </div>
   </div>
 
-  <!-- ================ MENU ADMIN MODAL ================ -->
+  <!-- MENU ADMIN MODAL -->
   <div id="menuModal" class="modal-bg hidden">
     <div class="modal">
       <h3>Menu items</h3>
@@ -628,7 +492,7 @@
       <label>Package size</label>
       <input id="mPkgSize" type="number" min="0" step="0.01" placeholder="e.g. 250" />
       <label>Package unit</label>
-           <select id="mPkgUnit">
+      <select id="mPkgUnit">
         <option value="">— none —</option>
         <option value="S">S</option>
         <option value="M">M</option>
@@ -645,24 +509,22 @@
       </div>
     </div>
   </div>
-  <!-- ================ BILL PREVIEW ================ -->
-  <div id="billPreviewModal" class="modal-bg hidden">
-    <div class="modal" style="max-width:420px;max-height:90vh;overflow:auto;">
-      <h3>Bill preview</h3>
 
+  <!-- BILL PREVIEW MODAL -->
+  <div id="billPreviewModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:440px;max-height:92vh;overflow:auto;">
+      <h3>Bill preview</h3>
       <label>Customer name</label>
       <input id="bpName" placeholder="Optional" />
-
       <label>Phone</label>
       <input id="bpPhone" placeholder="Optional" />
-
       <label>Note on bill</label>
       <input id="bpNote" placeholder="e.g. less spicy / thank you" />
 
       <div id="bpPreview" style="
-        margin:12px 0;padding:12px;background:#fff;color:#000;
-        border-radius:10px;font-family:'Courier New',monospace;font-size:12px;
-        max-height:320px;overflow:auto;border:1px solid var(--border);
+        margin:12px 0;padding:0;background:#fff;color:#000;
+        border-radius:10px;overflow:hidden;border:1px solid var(--border);
+        height:360px;
       "></div>
 
       <div class="modal-actions">
@@ -671,55 +533,42 @@
       </div>
     </div>
   </div>
-  <!-- ================ SETTINGS MODAL ================ -->
+
+  <!-- SETTINGS MODAL -->
   <div id="settingsModal" class="modal-bg hidden">
     <div class="modal" style="max-width:420px;">
       <h3>Settings</h3>
-
       <label>GST %</label>
       <input id="setGst" type="number" min="0" max="100" step="0.01" value="0" />
-
       <label>Tax % (other)</label>
       <input id="setTax" type="number" min="0" max="100" step="0.01" value="0" />
-
       <label>Delivery charge (Rs)</label>
       <input id="setDelCharge" type="number" min="0" step="1" value="0" />
-
       <label>Dine-in charge (Rs)</label>
       <input id="setDineCharge" type="number" min="0" step="1" value="0" />
-
       <label>Card surcharge %</label>
       <input id="setCardCharge" type="number" min="0" max="100" step="0.01" value="0" />
-
       <label>Bank surcharge %</label>
       <input id="setBankCharge" type="number" min="0" max="100" step="0.01" value="0" />
-
       <label>Discount type</label>
       <select id="setDiscType">
         <option value="none">None</option>
         <option value="percent">Percent %</option>
         <option value="fixed">Fixed Rs</option>
       </select>
-
       <label>Discount value</label>
       <input id="setDiscValue" type="number" min="0" step="0.01" value="0" />
-            <hr style="border-color:var(--border);margin:14px 0;" />
-
+      <hr style="border-color:var(--border);margin:14px 0;" />
       <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
         <input type="checkbox" id="setAutoPrint" style="width:auto;" />
         Auto-print bill after order
       </label>
-
       <hr style="border-color:var(--border);margin:14px 0;" />
-
-
-
       <label>Rider assign mode</label>
       <select id="assignMode">
         <option value="manual">Manual</option>
         <option value="auto">Auto (least load)</option>
       </select>
-
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeSettings()">Close</button>
         <button class="btn btn-accent" onclick="saveSettings()">Save</button>
@@ -730,9 +579,7 @@
   <script src="/socket.io/socket.io.js"></script>
 
   <script>
-    /* =========================================================
-       GLOBAL STATE
-    ========================================================= */
+    /* ================= GLOBAL STATE ================= */
     const API = '/api';
     const params = new URLSearchParams(location.search);
 
@@ -746,40 +593,41 @@
     let deliveryRiders = [];
     let currentShift = null;
     let posSettings = {
-      gst_percent: 0,
-      tax_percent: 0,
-      delivery_charge: 0,
-      dine_charge: 0,
-      card_charge: 0,
-      bank_charge: 0,
-      discount_enabled: false,
-      discount_type: 'none',
-      discount_value: 0
+      gst_percent: 0, tax_percent: 0, delivery_charge: 0, dine_charge: 0,
+      card_charge: 0, bank_charge: 0,
+      discount_enabled: false, discount_type: 'none', discount_value: 0
     };
 
-        let pendingBillOpts = null;
-
+    let pendingBillOpts = null;
     let salesCache = { orders: [], from: '', to: '', range: 'today' };
-        let cafeBrand = { name: 'Cafe', logo: '', address: '', phone: '' };
+    let cafeBrand = { name: 'Cafe', logo: '', address: '', phone: '' };
+    let expandedOrders = new Set();
 
-    /* =========================================================
-       HELPERS
-    ========================================================= */
+    /* ================= HELPERS ================= */
     function money(n) {
       return 'Rs ' + Number(n || 0).toLocaleString('en-PK', { maximumFractionDigits: 2 });
     }
 
     function esc(s) {
       return String(s ?? '').replace(/[&<>"']/g, c => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
+        '&': '&amp;', '<': '&lt;', '>': '&gt;',
+        '"': '&quot;', "'": '&#39;'
       })[c]);
     }
 
-    
+    // Single pkgLabel (with S/M/L support)
+    function pkgLabel(item) {
+      if (!item) return '';
+      const u = item.package_unit || '';
+      const s = item.package_size;
+      if (!u && (s === null || s === undefined || s === '')) return '';
+      if (['S', 'M', 'L'].includes(String(u)) && (s === null || s === '' || Number(s) === 0)) {
+        return String(u);
+      }
+      if (s !== null && s !== undefined && s !== '' && u) return `${s} ${u}`;
+      if (u) return String(u);
+      return s != null && s !== '' ? String(s) : '';
+    }
 
     function showPassword() { document.getElementById('password').type = 'text'; }
     function hidePassword() { document.getElementById('password').type = 'password'; }
@@ -787,15 +635,11 @@
     function normalizeLogoUrl(value) {
       if (!value) return '';
       const url = String(value).trim();
-      if (/^https?:\/\//i.test(url) || url.startsWith('//') || url.startsWith('/')) {
-        return url;
-      }
+      if (/^https?:\/\//i.test(url) || url.startsWith('//') || url.startsWith('/')) return url;
       return '/' + url;
     }
 
-    /* =========================================================
-       API WRAPPER
-    ========================================================= */
+    /* ================= API ================= */
     async function api(path, opts = {}) {
       const res = await fetch(API + path, {
         ...opts,
@@ -805,20 +649,13 @@
           ...(opts.headers || {})
         }
       });
-
-      if (res.status === 401) {
-        logout();
-        throw new Error('Session expired');
-      }
-
+      if (res.status === 401) { logout(); throw new Error('Session expired'); }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || 'Request failed');
       return data;
     }
 
-    /* =========================================================
-       LOGIN
-    ========================================================= */
+    /* ================= LOGIN ================= */
     async function login() {
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
@@ -840,32 +677,22 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            username,
-            password,
+            username, password,
             restaurant_id: restaurantId || undefined,
             role: 'counter'
           })
         });
-
         const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-          err.textContent = data.message || 'Login failed';
-          return;
-        }
-
+        if (!res.ok) { err.textContent = data.message || 'Login failed'; return; }
         if (!data.token || data.user?.role !== 'counter') {
           err.textContent = 'Counter login required for Cafe Lite';
           return;
         }
-
         token = data.token;
         user = data.user;
         restaurantId = data.user.restaurant_id || restaurantId;
-
         localStorage.setItem('cafe_token', token);
         localStorage.setItem('cafe_restaurant_id', String(restaurantId));
-
         await bootApp();
       } catch (e) {
         console.error('login:', e);
@@ -873,72 +700,34 @@
       }
     }
 
-    /* =========================================================
-       SOCKET.IO — Realtime updates
-    ========================================================= */
+    /* ================= SOCKET ================= */
     let socket = null;
-
     function connectSocket() {
-      if (typeof io === 'undefined') {
-        console.warn('Socket.io not available');
-        return;
-      }
-
-      if (socket) {
-        try { socket.disconnect(); } catch (_) {}
-        socket = null;
-      }
-
+      if (typeof io === 'undefined') return;
+      if (socket) { try { socket.disconnect(); } catch (_) {} socket = null; }
       try {
         socket = io({ auth: { token } });
-
-        socket.on('connect', () => {
-          console.log('✅ Counter Lite socket connected');
-        });
-
-        socket.on('connect_error', (err) => {
-          console.warn('Counter Lite socket:', err.message);
-        });
-
+        socket.on('connect', () => console.log('✅ socket connected'));
+        socket.on('connect_error', (e) => console.warn('socket:', e.message));
         [
-          'order_created',
-          'order_updated',
-          'order_ready',
-          'order_out_for_delivery',
-          'order_delivered',
-          'order_completed',
-          'order_paid',
-          'delivery_rider_assigned',
-          'orders_refresh'
+          'order_created','order_updated','order_ready','order_out_for_delivery',
+          'order_delivered','order_completed','order_paid',
+          'delivery_rider_assigned','orders_refresh'
         ].forEach(evt => {
-          socket.on(evt, (payload) => {
-            console.log('Socket event:', evt, payload);
-            loadOrders();
-            loadTodaySales();
-          });
+          socket.on(evt, () => { loadOrders(); loadTodaySales(); });
         });
-      } catch (err) {
-        console.error('Socket connect failed:', err);
-      }
+      } catch (err) { console.error('Socket connect failed:', err); }
     }
 
-    /* =========================================================
-       LOGOUT
-    ========================================================= */
+    /* ================= LOGOUT ================= */
     function logout() {
-      if (socket) {
-        try { socket.disconnect(); } catch (_) {}
-        socket = null;
-      }
-      token = '';
-      user = null;
+      if (socket) { try { socket.disconnect(); } catch (_) {} socket = null; }
+      token = ''; user = null;
       localStorage.removeItem('cafe_token');
       location.reload();
     }
 
-    /* =========================================================
-       BOOT APP
-    ========================================================= */
+    /* ================= BOOT ================= */
     async function bootApp() {
       document.getElementById('login-box').style.display = 'none';
       document.getElementById('app-box').classList.add('show');
@@ -947,38 +736,31 @@
 
       try {
         const posRes = await api('/settings/pos');
-        if (posRes?.data) {
-          posSettings = { ...posSettings, ...posRes.data };
-        }
-      } catch (e) {
-        console.warn('Could not load POS settings:', e.message);
-      }
-            setInterval(() => { loadCafeBrand().catch(() => {}); }, 120000);
+        if (posRes?.data) posSettings = { ...posSettings, ...posRes.data };
+      } catch (e) { console.warn('POS settings:', e.message); }
+
+      setInterval(() => { loadCafeBrand().catch(() => {}); }, 120000);
 
       await Promise.all([
-        loadShift(),
-        loadMenu(),
-        loadOrders(),
-        loadTodaySales(),
-        loadDeliveryRiders()
+        loadShift(), loadMenu(), loadOrders(),
+        loadTodaySales(), loadDeliveryRiders()
       ]);
 
       connectSocket();
       renderCart();
+      bindBillPreviewEditors();
     }
 
-        async function loadCafeBrand() {
+    async function loadCafeBrand() {
       try {
         const info = await api('/restaurants/me');
         if (!info?.data) return cafeBrand;
-
         cafeBrand = {
           name: info.data.name || cafeBrand.name || 'Cafe',
           logo: info.data.logo_url ? normalizeLogoUrl(info.data.logo_url) : '',
           address: info.data.address || '',
           phone: info.data.phone || ''
         };
-
         document.getElementById('brandName').textContent = cafeBrand.name;
         document.title = `${cafeBrand.name} — Counter Lite`;
 
@@ -993,11 +775,9 @@
             brandLogoEl.removeAttribute('src');
           }
         }
-
         const plan = info.data.plan || 'Cafe Lite';
         const planEl = document.getElementById('planPill');
         if (planEl) planEl.textContent = plan;
-
         return cafeBrand;
       } catch (e) {
         console.warn('loadCafeBrand:', e.message);
@@ -1009,24 +789,17 @@
       try {
         const data = await api('/orders/delivery-riders');
         deliveryRiders = Array.isArray(data.riders) ? data.riders : [];
-      } catch (e) {
-        console.warn('riders:', e.message);
-        deliveryRiders = [];
-      }
+      } catch (e) { deliveryRiders = []; }
     }
 
-    /* =========================================================
-       SHIFT
-    ========================================================= */
+    /* ================= SHIFT ================= */
     async function loadShift() {
       const pill = document.getElementById('shiftPill');
       pill.onclick = null;
       pill.style.cursor = 'default';
-
       try {
         const data = await api('/shifts/current');
         currentShift = data.data || data.shift || null;
-
         if (currentShift && (currentShift.id || currentShift.status === 'active')) {
           pill.textContent = 'Shift open';
           pill.className = 'pill ok';
@@ -1046,14 +819,10 @@
       try {
         await api('/shifts/start', { method: 'POST' });
         await loadShift();
-      } catch (e) {
-        alert(e.message || 'Could not start shift');
-      }
+      } catch (e) { alert(e.message || 'Could not start shift'); }
     }
 
-    /* =========================================================
-       MENU
-    ========================================================= */
+    /* ================= MENU ================= */
     async function loadMenu() {
       try {
         const data = await api('/menu');
@@ -1088,13 +857,11 @@
         if (q && !String(m.name).toLowerCase().includes(q)) return false;
         return true;
       });
-
       const grid = document.getElementById('menuGrid');
       if (!list.length) {
         grid.innerHTML = '<div class="empty">No items. Add from Menu button.</div>';
         return;
       }
-
       grid.innerHTML = list.map((m, idx) => `
         <button class="menu-card" data-idx="${idx}" onclick="addFromGrid(this)">
           <div class="n">${esc(m.name)}</div>
@@ -1102,7 +869,6 @@
           <div class="p">${money(m.price)}</div>
         </button>
       `).join('');
-
       window._filteredMenu = list;
     }
 
@@ -1112,9 +878,7 @@
       if (item) addToCart(item);
     }
 
-    /* =========================================================
-       ORDER TYPE
-    ========================================================= */
+    /* ================= ORDER TYPE ================= */
     function setOrderType(t) {
       orderType = t;
       document.getElementById('t-dine').classList.toggle('active', t === 'dine_in');
@@ -1124,23 +888,14 @@
       document.getElementById('deliveryFields').classList.toggle('hidden', t !== 'delivery');
     }
 
-    /* =========================================================
-       CART
-    ========================================================= */
+    /* ================= CART ================= */
     function addToCart(item) {
       const existing = cart.find(c => c.id === item.id);
-      if (existing) {
-        existing.qty += 1;
-      } else {
-        cart.push({
-          id: item.id,
-          name: item.name,
-          price: Number(item.price),
-          qty: 1,
-          package_size: item.package_size,
-          package_unit: item.package_unit
-        });
-      }
+      if (existing) existing.qty += 1;
+      else cart.push({
+        id: item.id, name: item.name, price: Number(item.price), qty: 1,
+        package_size: item.package_size, package_unit: item.package_unit
+      });
       renderCart();
     }
 
@@ -1167,23 +922,19 @@
       }
       discountAmount = Math.min(Math.max(discountAmount, 0), sub);
       const afterDiscount = sub - discountAmount;
-
       const gstPercent = Number(posSettings.gst_percent || 0);
       const taxPercent = Number(posSettings.tax_percent || 0);
       const gstAmount = afterDiscount * (gstPercent / 100);
       const taxAmount = afterDiscount * (taxPercent / 100);
-
       let extra = 0;
       if (orderType === 'delivery') extra += Number(posSettings.delivery_charge || 0);
       if (orderType === 'dine_in') extra += Number(posSettings.dine_charge || 0);
-
       const total = afterDiscount + gstAmount + taxAmount + extra;
       return { sub, discountAmount, gstAmount, taxAmount, extra, total };
     }
 
     function renderCart() {
       const el = document.getElementById('cartList');
-
       if (!cart.length) {
         el.innerHTML = '<div class="empty">Tap menu items to add</div>';
       } else {
@@ -1201,18 +952,14 @@
       const sub = cartTotal();
       const bill = calcBill(sub);
       let lines = `<div class="line"><span>Subtotal</span><span>${money(bill.sub)}</span></div>`;
-      if (bill.discountAmount > 0) {
+      if (bill.discountAmount > 0)
         lines += `<div class="line"><span>Discount</span><span>-${money(bill.discountAmount)}</span></div>`;
-      }
-      if (bill.gstAmount > 0) {
+      if (bill.gstAmount > 0)
         lines += `<div class="line"><span>GST (${posSettings.gst_percent}%)</span><span>${money(bill.gstAmount)}</span></div>`;
-      }
-      if (bill.taxAmount > 0) {
+      if (bill.taxAmount > 0)
         lines += `<div class="line"><span>Tax</span><span>${money(bill.taxAmount)}</span></div>`;
-      }
-      if (bill.extra > 0) {
+      if (bill.extra > 0)
         lines += `<div class="line"><span>${orderType === 'delivery' ? 'Delivery' : 'Dine'} charge</span><span>${money(bill.extra)}</span></div>`;
-      }
 
       const method = document.getElementById('payMethod')?.value || 'Cash';
       let surcharge = 0;
@@ -1223,27 +970,18 @@
         surcharge = bill.total * (Number(posSettings.bank_charge) / 100);
         lines += `<div class="line"><span>Bank (${posSettings.bank_charge}%)</span><span>${money(surcharge)}</span></div>`;
       }
-
       lines += `<div class="line grand"><span>Total</span><span>${money(bill.total + surcharge)}</span></div>`;
       document.getElementById('totals').innerHTML = lines;
     }
 
-    /* =========================================================
-       PLACE ORDER
-    ========================================================= */
+    /* ================= PLACE ORDER ================= */
     async function placeOrder(payNow) {
-      if (!cart.length) {
-        alert('Add at least one item');
-        return;
-      }
+      if (!cart.length) { alert('Add at least one item'); return; }
 
       if (orderType === 'delivery') {
         const phone = document.getElementById('custPhone').value.trim();
         const address = document.getElementById('custAddress').value.trim();
-        if (!phone || !address) {
-          alert('Delivery needs phone and address');
-          return;
-        }
+        if (!phone || !address) { alert('Delivery needs phone and address'); return; }
       }
 
       let tableNo = 0;
@@ -1255,26 +993,22 @@
       const bill = calcBill(cartTotal());
       const payMethod = document.getElementById('payMethod').value || 'Cash';
 
-      let cardCharge = 0;
-      let bankCharge = 0;
-           if (payNow) {
-        if (payMethod === 'Card') {
+      let cardCharge = 0, bankCharge = 0;
+      if (payNow) {
+        if (payMethod === 'Card')
           cardCharge = bill.total * (Number(posSettings.card_charge || 0) / 100);
-        } else if (payMethod === 'Bank') {
+        else if (payMethod === 'Bank')
           bankCharge = bill.total * (Number(posSettings.bank_charge || 0) / 100);
-        }
       }
       const finalTotal = bill.total + cardCharge + bankCharge;
 
-      /* ✅ items PEHLE banao */
       const items = cart.map(c => ({
         menu_item_id: Number(c.id),
         quantity: Number(c.qty)
       }));
 
       const body = {
-        items,
-        deals: [],
+        items, deals: [],
         order_type: orderType,
         order_source: 'COUNTER',
         table_no: tableNo,
@@ -1283,7 +1017,7 @@
         delivery_address: orderType === 'delivery' ? document.getElementById('custAddress').value.trim() : null,
         payment_timing: payNow ? 'PAID_AT_ORDER' : (orderType === 'delivery' ? 'COD' : 'PAY_LATER'),
         payment_method: payNow ? payMethod : null,
-              paid_amount: payNow ? finalTotal : 0,
+        paid_amount: payNow ? finalTotal : 0,
         card_charge: cardCharge,
         bank_charge: bankCharge,
         delivery_charge: orderType === 'delivery' ? Number(posSettings.delivery_charge || 0) : 0,
@@ -1297,18 +1031,11 @@
       };
 
       try {
-        const data = await api('/orders', {
-          method: 'POST',
-          body: JSON.stringify(body)
-        });
+        const data = await api('/orders', { method: 'POST', body: JSON.stringify(body) });
 
-        /* Snapshot for receipt */
         const receiptItems = cart.map(c => ({
-          name: c.name,
-          qty: c.qty,
-          price: c.price,
-          package_size: c.package_size,
-          package_unit: c.package_unit
+          name: c.name, qty: c.qty, price: c.price,
+          package_size: c.package_size, package_unit: c.package_unit
         }));
         const receiptBill = bill;
         const receiptType = orderType;
@@ -1323,23 +1050,19 @@
 
         cart = [];
         renderCart();
-
         document.getElementById('tableNo').value = '';
         document.getElementById('custName').value = '';
         document.getElementById('custPhone').value = '';
         document.getElementById('custAddress').value = '';
 
-        /* ✅ Auto-assign rider for delivery orders */
         if (orderType === 'delivery' && data.order?.id) {
-  const mode = localStorage.getItem('cafe_assign_mode') || 'manual';
-  if (mode === 'auto') {
-    try {
-      await api('/orders/' + data.order.id + '/auto-assign-rider', { method: 'PUT' });
-    } catch (err) {
-      console.warn('Auto-assign failed:', err.message);
-    }
-  }
-}
+          const mode = localStorage.getItem('cafe_assign_mode') || 'manual';
+          if (mode === 'auto') {
+            try {
+              await api('/orders/' + data.order.id + '/auto-assign-rider', { method: 'PUT' });
+            } catch (err) { console.warn('Auto-assign failed:', err.message); }
+          }
+        }
 
         await loadOrders();
         await loadTodaySales();
@@ -1349,22 +1072,14 @@
         if (autoPrint) {
           try {
             printBill({
-              orderNo: id,
-              orderType: receiptType,
+              orderNo: id, orderType: receiptType,
               tableNo: receiptTable || null,
-              customerName: receiptName,
-              phone: receiptPhone,
-              address: receiptAddr,
-              items: receiptItems,
-              bill: receiptBill,
-              payNow: receiptPayNow,
-              paymentMethod: receiptMethod,
-              cardCharge: receiptCard,
-              bankCharge: receiptBank
+              customerName: receiptName, phone: receiptPhone, address: receiptAddr,
+              items: receiptItems, bill: receiptBill,
+              payNow: receiptPayNow, paymentMethod: receiptMethod,
+              cardCharge: receiptCard, bankCharge: receiptBank
             });
-          } catch (err) {
-            console.warn('printBill:', err);
-          }
+          } catch (err) { console.warn('printBill:', err); }
         }
 
         alert(payNow ? `Order #${id} placed & paid` : `Order #${id} placed`);
@@ -1374,25 +1089,20 @@
       }
     }
 
-    /* =========================================================
-       ORDERS
-    ========================================================= */
+    /* ================= ORDERS ================= */
     async function loadOrders() {
       try {
         const data = await api('/orders');
         const allOrders = data.orders || data.data || [];
-
         const orders = allOrders.filter(o => {
           const st = String(o.status || '').toLowerCase();
           return !['completed', 'cancelled'].includes(st);
         });
-
         const el = document.getElementById('ordersList');
         if (!orders.length) {
           el.innerHTML = '<div class="empty">No active orders</div>';
           return;
         }
-
         el.innerHTML = orders.slice(0, 50).map(o => {
           const paid = String(o.payment_status || '').toLowerCase() === 'paid';
           const st = String(o.status || '').toLowerCase();
@@ -1404,7 +1114,6 @@
 
           let actions = '';
 
-          /* Dine-in / Takeaway */
           if (!isDelivery) {
             if (!paid) {
               actions += `<button class="btn btn-ok" onclick="payOrder(${o.id},${Number(o.total_amount) || 0})">Mark paid</button>`;
@@ -1414,77 +1123,60 @@
             }
           }
 
-          /* Delivery */
           if (isDelivery) {
             const riderName = o.delivery_rider_name || o.delivery_rider_username || '';
             const riderInfo = hasRider
               ? `<div style="margin:6px 0;padding:6px 10px;border-radius:8px;background:rgba(47,163,125,.1);font-size:11px;color:var(--ok);">
                    🚴 <strong>Rider: ${esc(riderName || 'Assigned')}</strong>
                  </div>`
-              : `<div style="margin:6px 0;font-size:11px;color:var(--muted);">
-                   ⚠️ No rider assigned
-                 </div>`;
-
+              : `<div style="margin:6px 0;font-size:11px;color:var(--muted);">⚠️ No rider assigned</div>`;
             actions += `
               <div style="font-size:11px;color:var(--muted);margin:4px 0;">
                 ${esc(o.delivery_phone || '')} · ${esc(o.delivery_address || '')}
               </div>
               ${riderInfo}
             `;
-
-            /* UNASSIGNED — Manual + Auto */
             if (!hasRider && ['placed', 'preparing', 'ready', 'ready_to_deliver'].includes(st)) {
               const availableRiders = deliveryRiders.filter(r =>
                 r.is_active !== false && r.shift_active === true
               );
-
               if (!availableRiders.length) {
                 actions += `
                   <div style="font-size:11px;color:var(--danger);margin:6px 0;padding:6px 10px;background:rgba(225,90,76,.1);border-radius:8px;">
-                    ⚠️ Koi rider shift pe nahi hai. Rider se shift start karwao.
-                  </div>
-                `;
+                    ⚠️ Koi rider shift pe nahi hai.
+                  </div>`;
               } else {
                 const opts = availableRiders
                   .map(r => `<option value="${r.id}">${esc(r.full_name || r.username || ('Rider ' + r.id))}</option>`)
                   .join('');
-
                 actions += `
                   <select id="rider-sel-${o.id}" style="width:100%;margin:4px 0;padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);">
                     <option value="">Select rider…</option>
                     ${opts}
                   </select>
                   <button class="btn btn-ok" onclick="assignRider(${o.id})">📤 Send to rider</button>
-                  <button class="btn btn-ghost" onclick="autoAssignRider(${o.id})">🤖 Auto assign</button>
-                `;
+                  <button class="btn btn-ghost" onclick="autoAssignRider(${o.id})">🤖 Auto assign</button>`;
               }
             }
-
-            /* ASSIGNED — Unassign + Workflow */
             if (hasRider) {
               if (['placed', 'preparing', 'ready', 'ready_to_deliver'].includes(st)) {
                 actions += `<button class="btn btn-ghost" style="color:var(--danger);border-color:var(--danger);" onclick="unassignRider(${o.id})">❌ Unassign rider</button>`;
               }
-
               if (st === 'ready_to_deliver') {
                 actions += `<button class="btn btn-ok" onclick="outForDelivery(${o.id})">🚴 Out for delivery</button>`;
               }
-
               if (st === 'out_for_delivery') {
                 actions += `<button class="btn btn-ok" onclick="markDelivered(${o.id})">✓ Mark delivered</button>`;
               }
-
               if (!paid && st === 'delivered') {
                 actions += `<button class="btn btn-ok" onclick="payOrder(${o.id},${Number(o.total_amount) || 0})">💰 Mark paid (COD)</button>`;
               }
-
               if (paid && st === 'delivered') {
                 actions += `<button class="btn btn-accent" onclick="completeOrder(${o.id})">✓ Mark complete</button>`;
               }
             }
           }
 
-          /* ✅ Print button HAR order card pe */
           actions += `<button class="btn btn-ghost" onclick="reprintOrder(${o.id})">🖨️ Print</button>`;
 
           return `
@@ -1505,178 +1197,139 @@
     }
 
     async function reprintOrder(orderId) {
-  try {
-    const data = await api('/orders');
-    const allOrders = data.orders || data.data || [];
-    const o = allOrders.find(x => Number(x.id) === Number(orderId));
+      try {
+        const data = await api('/orders');
+        const allOrders = data.orders || data.data || [];
+        const o = allOrders.find(x => Number(x.id) === Number(orderId));
+        if (!o) { alert('Order not found'); return; }
 
-    if (!o) {
-      alert('Order not found — may have been completed');
-      return;
+        let items = (o.items || []).map(it => ({
+          name: it.name || it.item_name || 'Item',
+          qty: Number(it.qty || it.quantity || 1),
+          price: Number(it.price || 0),
+          package_size: it.package_size,
+          package_unit: it.package_unit
+        }));
+
+        if (!items.length && o.id) {
+          const full = await api('/orders/' + o.id);
+          const ord = full.order || full.data || full;
+          items = (ord.items || []).map(it => ({
+            name: it.name || it.item_name || 'Item',
+            qty: Number(it.qty || it.quantity || 1),
+            price: Number(it.price || 0),
+            package_size: it.package_size,
+            package_unit: it.package_unit
+          }));
+        }
+
+        const sub = Number(o.subtotal || items.reduce((s, i) => s + i.price * i.qty, 0));
+        const bill = {
+          sub,
+          discountAmount: Number(o.discount_amount || 0),
+          gstAmount: Number(o.gst_amount || 0),
+          taxAmount: Number(o.tax_amount || 0),
+          extra: Number(o.delivery_charge || 0) + Number(o.dine_charge || 0),
+          total: Number(o.total_amount || o.total || sub)
+        };
+
+        printBill({
+          orderNo: o.local_number || o.id,
+          orderType: o.order_type,
+          tableNo: o.table_no,
+          customerName: o.customer_name || '',
+          phone: o.delivery_phone || '',
+          address: o.delivery_address || '',
+          items, bill,
+          payNow: String(o.payment_status).toLowerCase() === 'paid',
+          paymentMethod: o.payment_method || 'Cash',
+          cardCharge: Number(o.card_charge || 0),
+          bankCharge: Number(o.bank_charge || 0)
+        });
+      } catch (e) {
+        console.error('reprintOrder:', e);
+        alert(e.message || 'Print failed');
+      }
     }
-
-    // ✅ Build items safely
-    let items = (o.items || []).map(it => ({
-      name: it.name || it.item_name || 'Item',
-      qty: Number(it.qty || it.quantity || 1),
-      price: Number(it.price || 0),
-      package_size: it.package_size,
-      package_unit: it.package_unit
-    }));
-
-    // If list endpoint didn't include items, fetch full order
-    if (!items.length && o.id) {
-      const full = await api('/orders/' + o.id);
-      const ord = full.order || full.data || full;
-      items = (ord.items || []).map(it => ({
-        name: it.name || it.item_name || 'Item',
-        qty: Number(it.qty || it.quantity || 1),
-        price: Number(it.price || 0),
-        package_size: it.package_size,
-        package_unit: it.package_unit
-      }));
-    }
-
-    const sub = Number(o.subtotal || items.reduce((s, i) => s + i.price * i.qty, 0));
-    const bill = {
-      sub,
-      discountAmount: Number(o.discount_amount || 0),
-      gstAmount: Number(o.gst_amount || 0),
-      taxAmount: Number(o.tax_amount || 0),
-      extra: Number(o.delivery_charge || 0) + Number(o.dine_charge || 0),
-      total: Number(o.total_amount || o.total || sub)
-    };
-
-    printBill({
-      orderNo: o.local_number || o.id,
-      orderType: o.order_type,
-      tableNo: o.table_no,
-      customerName: o.customer_name || '',
-      phone: o.delivery_phone || '',
-      address: o.delivery_address || '',
-      items,
-      bill,
-      payNow: String(o.payment_status).toLowerCase() === 'paid',
-      paymentMethod: o.payment_method || 'Cash',
-      cardCharge: Number(o.card_charge || 0),
-      bankCharge: Number(o.bank_charge || 0)
-    });
-  } catch (e) {
-    console.error('reprintOrder:', e);
-    alert(e.message || 'Print failed');
-  }
-}
 
     async function payOrder(id, amount) {
-  try {
-    const method = document.getElementById('payMethod')?.value || 'Cash';
-    let cardCharge = 0;
-    let bankCharge = 0;
+      try {
+        const method = document.getElementById('payMethod')?.value || 'Cash';
+        let cardCharge = 0, bankCharge = 0;
+        if (method === 'Card')
+          cardCharge = Number(amount) * (Number(posSettings.card_charge || 0) / 100);
+        else if (method === 'Bank')
+          bankCharge = Number(amount) * (Number(posSettings.bank_charge || 0) / 100);
 
-    if (method === 'Card') {
-      cardCharge = Number(amount) * (Number(posSettings.card_charge || 0) / 100);
-    } else if (method === 'Bank') {
-      bankCharge = Number(amount) * (Number(posSettings.bank_charge || 0) / 100);
+        await api(`/orders/${id}/pay`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            payment_method: method,
+            paid_amount: Number(amount) + cardCharge + bankCharge,
+            card_charge: cardCharge,
+            bank_charge: bankCharge
+          })
+        });
+        await loadOrders();
+        await loadTodaySales();
+      } catch (e) { alert(e.message || 'Payment failed'); }
     }
-
-    await api(`/orders/${id}/pay`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        payment_method: method,
-        paid_amount: Number(amount) + cardCharge + bankCharge,
-        card_charge: cardCharge,
-        bank_charge: bankCharge
-      })
-    });
-
-    await loadOrders();
-    await loadTodaySales();
-  } catch (e) {
-    alert(e.message || 'Payment failed');
-  }
-}
 
     async function completeOrder(id) {
       try {
         await api('/orders/' + id + '/completed', { method: 'PUT' });
         await loadOrders();
         await loadTodaySales();
-      } catch (e) {
-        alert(e.message || 'Complete failed');
-      }
+      } catch (e) { alert(e.message || 'Complete failed'); }
     }
 
     async function assignRider(orderId) {
       const sel = document.getElementById('rider-sel-' + orderId);
       const riderId = Number(sel && sel.value);
-      if (!riderId) {
-        alert('Select a rider');
-        return;
-      }
+      if (!riderId) { alert('Select a rider'); return; }
       try {
         await api('/orders/' + orderId + '/assign-rider', {
           method: 'PUT',
           body: JSON.stringify({ rider_id: riderId })
         });
         await Promise.all([loadOrders(), loadDeliveryRiders()]);
-      } catch (e) {
-        alert(e.message || 'Assign failed');
-      }
+      } catch (e) { alert(e.message || 'Assign failed'); }
     }
 
     async function autoAssignRider(orderId) {
       try {
         await api('/orders/' + orderId + '/auto-assign-rider', { method: 'PUT' });
         await Promise.all([loadOrders(), loadDeliveryRiders()]);
-      } catch (e) {
-        alert(e.message || 'Auto assign failed — try manual');
-      }
+      } catch (e) { alert(e.message || 'Auto assign failed'); }
     }
 
-    /* =========================================================
-       UNASSIGN RIDER
-    ========================================================= */
     async function unassignRider(orderId) {
-      if (!confirm('Remove rider from this order?\n\nOrder will go back to unassigned state.')) {
-        return;
-      }
-
+      if (!confirm('Remove rider from this order?')) return;
       try {
-        await api('/orders/' + orderId + '/unassign-rider', {
-          method: 'PUT'
-        });
+        await api('/orders/' + orderId + '/unassign-rider', { method: 'PUT' });
         await Promise.all([loadOrders(), loadDeliveryRiders()]);
-      } catch (e) {
-        alert(e.message || 'Unassign failed');
-      }
+      } catch (e) { alert(e.message || 'Unassign failed'); }
     }
 
     async function outForDelivery(id) {
       try {
         await api('/orders/' + id + '/out-for-delivery', { method: 'PUT' });
         await Promise.all([loadOrders(), loadDeliveryRiders()]);
-      } catch (e) {
-        alert(e.message || 'Failed');
-      }
+      } catch (e) { alert(e.message || 'Failed'); }
     }
 
     async function markDelivered(id) {
       try {
         await api('/orders/' + id + '/delivered', { method: 'PUT' });
         await Promise.all([loadOrders(), loadDeliveryRiders()]);
-      } catch (e) {
-        alert(e.message || 'Failed');
-      }
+      } catch (e) { alert(e.message || 'Failed'); }
     }
 
-    /* =========================================================
-       TODAY SALES
-    ========================================================= */
+    /* ================= TODAY SALES ================= */
     async function loadTodaySales() {
       try {
         const from = todayISO();
-        const to = from;
-        const salesRes = await api(`/reports/sales?from=${from}&to=${to}`);
+        const salesRes = await api(`/reports/sales?from=${from}&to=${from}`);
         const orders = salesRes.data || [];
         let total = 0;
         orders.forEach(o => {
@@ -1691,19 +1344,15 @@
       }
     }
 
-    /* =========================================================
-       MENU ADMIN
-    ========================================================= */
+    /* ================= MENU ADMIN ================= */
     function openMenuAdmin() {
       document.getElementById('menuModal').classList.remove('hidden');
       resetMenuForm();
       renderMenuAdmin();
     }
-
     function closeMenuAdmin() {
       document.getElementById('menuModal').classList.add('hidden');
     }
-
     function resetMenuForm() {
       document.getElementById('editMenuId').value = '';
       document.getElementById('menuFormTitle').textContent = 'Add item';
@@ -1713,13 +1362,9 @@
       document.getElementById('mPkgSize').value = '';
       document.getElementById('mPkgUnit').value = '';
     }
-
     function renderMenuAdmin() {
       const el = document.getElementById('menuAdminList');
-      if (!menu.length) {
-        el.innerHTML = '<div class="empty">No items yet</div>';
-        return;
-      }
+      if (!menu.length) { el.innerHTML = '<div class="empty">No items yet</div>'; return; }
       el.innerHTML = menu.map((m, idx) => `
         <div class="menu-admin-row">
           <div>
@@ -1731,12 +1376,10 @@
         </div>
       `).join('');
     }
-
     function editMenuByIdx(btn) {
       const idx = Number(btn.dataset.idx);
       const m = menu[idx];
       if (!m) return;
-
       document.getElementById('editMenuId').value = m.id;
       document.getElementById('menuFormTitle').textContent = 'Edit item';
       document.getElementById('mName').value = m.name || '';
@@ -1745,7 +1388,6 @@
       document.getElementById('mPkgSize').value = m.package_size || '';
       document.getElementById('mPkgUnit').value = m.package_unit || '';
     }
-
     async function saveMenuItem() {
       const id = document.getElementById('editMenuId').value;
       const body = {
@@ -1755,48 +1397,18 @@
         package_size: document.getElementById('mPkgSize').value || null,
         package_unit: document.getElementById('mPkgUnit').value || null
       };
-
-      if (!body.name || !body.price) {
-        alert('Name and price required');
-        return;
-      }
-
+      if (!body.name || !body.price) { alert('Name and price required'); return; }
       try {
-        if (id) {
-          await api('/menu/' + id, { method: 'PUT', body: JSON.stringify(body) });
-        } else {
-          await api('/menu', { method: 'POST', body: JSON.stringify(body) });
-        }
+        if (id) await api('/menu/' + id, { method: 'PUT', body: JSON.stringify(body) });
+        else await api('/menu', { method: 'POST', body: JSON.stringify(body) });
         await loadMenu();
         renderMenuAdmin();
         resetMenuForm();
-      } catch (e) {
-        alert(e.message || 'Save failed');
-      }
+      } catch (e) { alert(e.message || 'Save failed'); }
     }
 
-        function pkgLabel(item) {
-      if (!item) return '';
-      const u = item.package_unit || '';
-      const s = item.package_size;
-      if (!u && (s === null || s === undefined || s === '')) return '';
-      // size optional for S/M/L
-      if (['S', 'M', 'L'].includes(String(u)) && (s === null || s === '' || Number(s) === 0)) {
-        return String(u);
-      }
-      if (s !== null && s !== undefined && s !== '' && u) return `${s} ${u}`;
-      if (u) return String(u);
-      return s != null && s !== '' ? String(s) : '';
-    }
-
-    /* =========================================================
-       SALES REPORT
-    ========================================================= */
-    function todayISO() {
-      const d = new Date();
-      return d.toISOString().slice(0, 10);
-    }
-
+    /* ================= SALES REPORT ================= */
+    function todayISO() { return new Date().toISOString().slice(0, 10); }
     function startOfWeekISO() {
       const d = new Date();
       const day = d.getDay();
@@ -1804,7 +1416,6 @@
       d.setDate(d.getDate() + diff);
       return d.toISOString().slice(0, 10);
     }
-
     function startOfMonthISO() {
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
@@ -1816,12 +1427,9 @@
         const el = document.getElementById('sf-' + r);
         if (el) el.classList.toggle('active', r === range);
       });
-
-      let from = todayISO();
-      let to = todayISO();
+      let from = todayISO(), to = todayISO();
       if (range === 'week') from = startOfWeekISO();
       if (range === 'month') from = startOfMonthISO();
-
       document.getElementById('salesFrom').value = from;
       document.getElementById('salesTo').value = to;
       loadSalesReport();
@@ -1832,11 +1440,8 @@
       const page = document.getElementById('salesPage');
       if (app) app.classList.add('sales-open');
       if (page) page.classList.add('open');
-      if (!document.getElementById('salesFrom').value) {
-        setSalesRange('today');
-      } else {
-        loadSalesReport();
-      }
+      if (!document.getElementById('salesFrom').value) setSalesRange('today');
+      else loadSalesReport();
     }
 
     function closeSalesReport() {
@@ -1853,13 +1458,24 @@
       return 'Dine-in';
     }
 
+    // extract items array from an order object robustly
+    function orderItemsOf(o) {
+      const arr = o.items || o.order_items || o.orderItems || [];
+      if (!Array.isArray(arr)) return [];
+      return arr.map(it => ({
+        name: it.name || it.item_name || it.menu_item_name || 'Item',
+        qty: Number(it.quantity || it.qty || 1),
+        price: Number(it.price || it.unit_price || 0),
+        package_size: it.package_size,
+        package_unit: it.package_unit
+      }));
+    }
+
     async function loadSalesReport() {
       const from = document.getElementById('salesFrom').value || todayISO();
       const to = document.getElementById('salesTo').value || todayISO();
-
       salesCache.from = from;
       salesCache.to = to;
-
       const q = `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
 
       try {
@@ -1872,21 +1488,14 @@
         const orders = salesRes.data || salesRes.orders || [];
         salesCache.orders = Array.isArray(orders) ? orders : [];
 
-        let totalSales = 0;
-        let paidCount = 0;
-        let itemsSold = 0;
+        let totalSales = 0, paidCount = 0, itemsSold = 0;
 
         salesCache.orders.forEach(o => {
           const paid = String(o.payment_status || '').toLowerCase() === 'paid';
           const amt = Number(o.total_amount || o.total || 0);
-          if (paid) {
-            totalSales += amt;
-            paidCount += 1;
-          }
-          const items = o.items || o.order_items || [];
-          if (Array.isArray(items)) {
-            items.forEach(it => { itemsSold += Number(it.quantity || it.qty || 0); });
-          }
+          if (paid) { totalSales += amt; paidCount += 1; }
+          const its = orderItemsOf(o);
+          its.forEach(it => { itemsSold += Number(it.qty || 0); });
         });
 
         if (paidCount === 0 && salesCache.orders.length) {
@@ -1901,45 +1510,49 @@
         document.getElementById('stAvg').textContent = money(avg);
         document.getElementById('stItems').textContent = String(itemsSold || '—');
 
+        // Payment summary — group by payment_method with fallback for missing methods
         const payData = payRes.data || [];
         const payEl = document.getElementById('salesPayments');
 
-        if (Array.isArray(payData) && payData.length) {
-          payEl.classList.remove('empty');
-          payEl.innerHTML = payData.map(p => {
-            const method = p.payment_method || p.method || 'Other';
-            let total = Number(p.total || p.amount || p.sum || p.sales || 0);
-            const cnt = p.count || p.orders || '';
-            if (!total) {
-              total = salesCache.orders
-                .filter(o => String(o.payment_status).toLowerCase() === 'paid'
-                  && (o.payment_method || 'Cash') === method)
-                .reduce((s, o) => s + Number(o.total_amount || o.total || 0), 0);
-            }
-            return `<div class="pay-bar-row"><span>${esc(method)}${cnt ? ` (${esc(cnt)})` : ''}</span><strong>${money(total)}</strong></div>`;
-          }).join('');
-        } else {
-          const map = {};
-          salesCache.orders.forEach(o => {
-            if (String(o.payment_status).toLowerCase() !== 'paid') return;
-            const m = o.payment_method || 'Cash';
-            map[m] = (map[m] || 0) + Number(o.total_amount || o.total || 0);
+        // build map: method -> { total, count }
+        const payMap = {};
+        // First: use paid orders themselves to compute (most reliable)
+        salesCache.orders.forEach(o => {
+          if (String(o.payment_status || '').toLowerCase() !== 'paid') return;
+          const m = o.payment_method || 'Unspecified';
+          if (!payMap[m]) payMap[m] = { total: 0, count: 0 };
+          payMap[m].total += Number(o.total_amount || o.total || 0);
+          payMap[m].count += 1;
+        });
+
+        // If server gave summary AND payMap is empty, use server data
+        if (!Object.keys(payMap).length && Array.isArray(payData) && payData.length) {
+          payData.forEach(p => {
+            const m = p.payment_method || p.method || 'Other';
+            payMap[m] = {
+              total: Number(p.total || p.amount || p.sum || p.sales || 0),
+              count: Number(p.count || p.orders || 0)
+            };
           });
-          const keys = Object.keys(map);
-          if (!keys.length) {
-            payEl.className = 'empty';
-            payEl.textContent = 'No payments in range';
-          } else {
-            payEl.classList.remove('empty');
-            payEl.innerHTML = keys.map(k =>
-              `<div class="pay-bar-row"><span>${esc(k)}</span><strong>${money(map[k])}</strong></div>`
-            ).join('');
-          }
         }
 
+        const payKeys = Object.keys(payMap);
+        if (!payKeys.length) {
+          payEl.className = 'empty';
+          payEl.textContent = 'No payments in range';
+        } else {
+          payEl.classList.remove('empty');
+          payEl.innerHTML = payKeys.map(k =>
+            `<div class="pay-bar-row">
+               <span>${esc(k)} (${payMap[k].count})</span>
+               <strong>${money(payMap[k].total)}</strong>
+             </div>`
+          ).join('');
+        }
+
+        // Top items
         const topData = topRes.data || [];
         const topEl = document.getElementById('salesTop');
-
         if (Array.isArray(topData) && topData.length) {
           topEl.classList.remove('empty');
           topEl.innerHTML = `<table class="sales-table"><thead><tr><th>Item</th><th>Qty</th><th>Sales</th></tr></thead><tbody>${
@@ -1956,6 +1569,7 @@
           topEl.textContent = 'No item data';
         }
 
+        // Orders table with expandable detail rows
         const body = document.getElementById('salesOrdersBody');
         if (!salesCache.orders.length) {
           body.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;">No orders</td></tr>';
@@ -1963,15 +1577,125 @@
           body.innerHTML = salesCache.orders.map(o => {
             const t = o.created_at || o.paid_at || '';
             const time = t ? new Date(t).toLocaleString() : '—';
-            return `<tr>
+            const oid = o.id;
+            const isOpen = expandedOrders.has(oid);
+            const items = orderItemsOf(o);
+            const itemRows = items.length
+              ? items.map(it => {
+                  const pkg = (it.package_size && it.package_unit)
+                    ? ` (${esc(it.package_size)}${esc(it.package_unit)})` : '';
+                  const line = Number(it.price) * Number(it.qty);
+                  return `<tr>
+                    <td>${esc(it.name)}${pkg}</td>
+                    <td style="text-align:center;">${it.qty}</td>
+                    <td style="text-align:right;">${money(it.price)}</td>
+                    <td style="text-align:right;">${money(line)}</td>
+                  </tr>`;
+                }).join('')
+              : `<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:8px;">Items not available in list response</td></tr>`;
+
+            const detailBlock = `
+              <tr class="sales-order-detail-row" ${isOpen ? '' : 'style="display:none;"'} data-detail="${oid}">
+                <td colspan="6">
+                  <div class="order-detail-inner">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                      <div><span class="det-label">Order #</span> <strong>${esc(o.local_number || o.id)}</strong></div>
+                      <div><span class="det-label">Type</span> ${esc(orderTypeLabel(o.order_type))}</div>
+                      <div><span class="det-label">Status</span> ${esc(o.status || '—')}</div>
+                      <div><span class="det-label">Payment</span> ${esc(o.payment_status || '—')}${o.payment_method ? ' / ' + esc(o.payment_method) : ''}</div>
+                      <div><span class="det-label">Customer</span> ${esc(o.customer_name || '—')}</div>
+                      <div><span class="det-label">Table</span> ${o.table_no ? esc(o.table_no) : '—'}</div>
+                      ${o.delivery_phone ? `<div><span class="det-label">Phone</span> ${esc(o.delivery_phone)}</div>` : ''}
+                      ${o.delivery_address ? `<div style="grid-column:1/-1;"><span class="det-label">Address</span> ${esc(o.delivery_address)}</div>` : ''}
+                    </div>
+                    <table>
+                      <thead><tr>
+                        <th style="color:var(--muted);font-weight:600;font-size:11px;text-align:left;">Item</th>
+                        <th style="color:var(--muted);font-weight:600;font-size:11px;">Qty</th>
+                        <th style="color:var(--muted);font-weight:600;font-size:11px;text-align:right;">Price</th>
+                        <th style="color:var(--muted);font-weight:600;font-size:11px;text-align:right;">Line</th>
+                      </tr></thead>
+                      <tbody>${itemRows}</tbody>
+                    </table>
+                    <div style="margin-top:8px;text-align:right;">
+                      <span class="det-label">Subtotal</span> ${money(o.subtotal || 0)} &nbsp;
+                      ${Number(o.discount_amount) > 0 ? `<span class="det-label">Discount</span> -${money(o.discount_amount)} &nbsp;` : ''}
+                      ${Number(o.gst_amount) > 0 ? `<span class="det-label">GST</span> ${money(o.gst_amount)} &nbsp;` : ''}
+                      ${Number(o.tax_amount) > 0 ? `<span class="det-label">Tax</span> ${money(o.tax_amount)} &nbsp;` : ''}
+                      ${Number(o.delivery_charge) > 0 ? `<span class="det-label">Delivery</span> ${money(o.delivery_charge)} &nbsp;` : ''}
+                      ${Number(o.dine_charge) > 0 ? `<span class="det-label">Dine</span> ${money(o.dine_charge)} &nbsp;` : ''}
+                      <span class="det-total">Total: ${money(o.total_amount || o.total || 0)}</span>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            `;
+
+            return `<tr class="sales-order-row" data-id="${oid}">
               <td>#${esc(o.local_number || o.id)}</td>
               <td>${esc(orderTypeLabel(o.order_type))}</td>
               <td>${esc(o.status || '—')}</td>
               <td>${esc(o.payment_status || '—')}${o.payment_method ? ' / ' + esc(o.payment_method) : ''}</td>
               <td>${money(o.total_amount || o.total || 0)}</td>
               <td>${esc(time)}</td>
-            </tr>`;
+            </tr>${detailBlock}`;
           }).join('');
+
+          // attach click handlers
+          body.querySelectorAll('.sales-order-row').forEach(row => {
+            row.addEventListener('click', async () => {
+              const oid = Number(row.dataset.id);
+              const detailRow = body.querySelector(`tr[data-detail="${oid}"]`);
+              if (!detailRow) return;
+
+              // Lazy fetch items if empty (list endpoint often omits items)
+              const order = salesCache.orders.find(x => Number(x.id) === oid);
+              if (order && orderItemsOf(order).length === 0 && !order._itemsFetched) {
+                try {
+                  const full = await api('/orders/' + oid);
+                  const ord = full.order || full.data || full;
+                  const fetched = (ord.items || []).map(it => ({
+                    name: it.name || it.item_name || it.menu_item_name || 'Item',
+                    qty: Number(it.quantity || it.qty || 1),
+                    price: Number(it.price || it.unit_price || 0),
+                    package_size: it.package_size,
+                    package_unit: it.package_unit
+                  }));
+                  order.items = fetched;
+                  order._itemsFetched = true;
+                  // re-render this detail block
+                  const inner = detailRow.querySelector('.order-detail-inner');
+                  const rowsHtml = fetched.length
+                    ? fetched.map(it => {
+                        const pkg = (it.package_size && it.package_unit)
+                          ? ` (${esc(it.package_size)}${esc(it.package_unit)})` : '';
+                        return `<tr>
+                          <td>${esc(it.name)}${pkg}</td>
+                          <td style="text-align:center;">${it.qty}</td>
+                          <td style="text-align:right;">${money(it.price)}</td>
+                          <td style="text-align:right;">${money(it.price * it.qty)}</td>
+                        </tr>`;
+                      }).join('')
+                    : `<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:8px;">No items</td></tr>`;
+                  const tbody = inner.querySelector('table tbody');
+                  if (tbody) tbody.innerHTML = rowsHtml;
+                } catch (err) {
+                  console.warn('fetch order items failed', err);
+                }
+              }
+
+              const isHidden = detailRow.style.display === 'none';
+              detailRow.style.display = isHidden ? '' : 'none';
+              if (isHidden) expandedOrders.add(oid);
+              else expandedOrders.delete(oid);
+            });
+          });
+
+          // restore open state on re-render
+          expandedOrders.forEach(oid => {
+            const dr = body.querySelector(`tr[data-detail="${oid}"]`);
+            if (dr) dr.style.display = '';
+          });
         }
       } catch (e) {
         alert(e.message || 'Failed to load sales report');
@@ -1979,8 +1703,9 @@
     }
 
     function exportSalesCSV() {
-      const rows = [['Order ID', 'Type', 'Status', 'Payment', 'Method', 'Total', 'Created']];
+      const rows = [['Order ID', 'Type', 'Status', 'Payment', 'Method', 'Total', 'Created', 'Items']];
       salesCache.orders.forEach(o => {
+        const itemsStr = orderItemsOf(o).map(i => `${i.name} x${i.qty} @${i.price}`).join(' | ');
         rows.push([
           o.id,
           orderTypeLabel(o.order_type),
@@ -1988,7 +1713,8 @@
           o.payment_status || '',
           o.payment_method || '',
           o.total_amount || o.total || 0,
-          o.created_at || ''
+          o.created_at || '',
+          itemsStr
         ]);
       });
       const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
@@ -2019,22 +1745,17 @@
 
       const w = window.open('', '_blank');
       if (!w) { alert('Allow popups to print'); return; }
-
       const SCRIPT_OPEN = '<' + 'script>';
       const SCRIPT_CLOSE = '</' + 'script>';
-
       w.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head><title>Sales ${from} – ${to}</title></head>
+        <!DOCTYPE html><html><head><title>Sales ${from} – ${to}</title></head>
         <body>
           <h2>${brandName} — Sales Report</h2>
           <p>${from} → ${to}</p>
           <p>${stats}</p>
           ${table}
           ${SCRIPT_OPEN}window.onload=function(){window.print();};${SCRIPT_CLOSE}
-        </body>
-        </html>
+        </body></html>
       `);
       w.document.close();
     }
@@ -2046,21 +1767,11 @@
       return 'Dine-in';
     }
 
-    function printBill(opts) {
-  // Direct print (no modal) — used for auto-print after order & reprint
-  const html = buildBillHtml(opts);
-  const w = window.open('', '_blank', 'width=400,height=600');
-  if (!w) {
-    alert('Allow popups to print bill');
-    return;
-  }
-  w.document.write(
-    html +
-    '<script>window.onload=function(){window.print();setTimeout(function(){window.close();},400);};<\/script>'
-  );
-  w.document.close();
-}
-     
+    /* ================= BILL / PRINT ================= */
+       function printBill(opts) {
+      showBillPreview(opts);
+    }
+
     function buildBillHtml(opts) {
       const {
         orderNo, orderType: ot, tableNo, customerName, phone, address,
@@ -2147,7 +1858,8 @@
   <p class="center">Thank you!</p>
 </body></html>`;
     }
-        function showBillPreview(opts) {
+
+    function showBillPreview(opts) {
       pendingBillOpts = { ...opts };
       document.getElementById('bpName').value = opts.customerName || '';
       document.getElementById('bpPhone').value = opts.phone || '';
@@ -2156,7 +1868,7 @@
       document.getElementById('billPreviewModal').classList.remove('hidden');
     }
 
-        function refreshBillPreview() {
+    function refreshBillPreview() {
       if (!pendingBillOpts) return;
       const opts = {
         ...pendingBillOpts,
@@ -2165,9 +1877,14 @@
         note: document.getElementById('bpNote').value.trim()
       };
       const html = buildBillHtml(opts);
-      const m = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+
+      // ✅ Use iframe srcdoc so the bill's <style> tag applies inside the preview
       const box = document.getElementById('bpPreview');
-      box.innerHTML = m ? m[1] : html;
+      box.innerHTML = '';
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = 'width:100%;height:100%;border:0;background:#fff;display:block;';
+      iframe.srcdoc = html;
+      box.appendChild(iframe);
     }
 
     function closeBillPreview() {
@@ -2185,17 +1902,12 @@
       };
       const html = buildBillHtml(opts);
       const w = window.open('', '_blank', 'width=400,height=600');
-      if (!w) {
-        alert('Allow popups to print');
-        return;
-      }
-      w.document.write(html + '<script>window.onload=function(){window.print();setTimeout(function(){window.close();},400);};<\/script>');
+      if (!w) { alert('Allow popups to print'); return; }
+      w.document.write(html + '<script>window.onload=function(){window.print();setTimeout(function(){window.close();},500);};<\/script>');
       w.document.close();
       closeBillPreview();
     }
 
-    // name/phone/note change pe preview update
-    // (page load pe bind)
     function bindBillPreviewEditors() {
       ['bpName', 'bpPhone', 'bpNote'].forEach(id => {
         const el = document.getElementById(id);
@@ -2203,9 +1915,7 @@
       });
     }
 
-    /* =========================================================
-       SETTINGS
-    ========================================================= */
+    /* ================= SETTINGS ================= */
     function openSettings() {
       document.getElementById('setGst').value = posSettings.gst_percent || 0;
       document.getElementById('setTax').value = posSettings.tax_percent || 0;
@@ -2215,7 +1925,7 @@
       document.getElementById('setBankCharge').value = posSettings.bank_charge || 0;
       document.getElementById('setDiscType').value = posSettings.discount_type || 'none';
       document.getElementById('setDiscValue').value = posSettings.discount_value || 0;
-            document.getElementById('setAutoPrint').checked =
+      document.getElementById('setAutoPrint').checked =
         localStorage.getItem('cafe_auto_print') !== '0';
       document.getElementById('assignMode').value =
         localStorage.getItem('cafe_assign_mode') || 'manual';
@@ -2238,44 +1948,29 @@
         discount_type: document.getElementById('setDiscType').value || 'none',
         discount_value: Number(document.getElementById('setDiscValue').value || 0)
       };
-
       try {
-        const res = await api('/settings/pos', {
-          method: 'PUT',
-          body: JSON.stringify(payload)
-        });
+        const res = await api('/settings/pos', { method: 'PUT', body: JSON.stringify(payload) });
         posSettings = { ...posSettings, ...(res.data || payload) };
-                localStorage.setItem(
-          'cafe_auto_print',
-          document.getElementById('setAutoPrint').checked ? '1' : '0'
-        );
+        localStorage.setItem('cafe_auto_print',
+          document.getElementById('setAutoPrint').checked ? '1' : '0');
         localStorage.setItem('cafe_assign_mode', document.getElementById('assignMode').value);
         renderCart();
         closeSettings();
         alert('Settings saved');
-      } catch (e) {
-        alert(e.message || 'Save failed');
-      }
+      } catch (e) { alert(e.message || 'Save failed'); }
     }
 
-    /* =========================================================
-       THEME
-    ========================================================= */
+    /* ================= THEME ================= */
     function toggleTheme() {
       document.body.classList.toggle('light');
-      localStorage.setItem(
-        'cafe_theme',
-        document.body.classList.contains('light') ? 'light' : 'dark'
-      );
+      localStorage.setItem('cafe_theme',
+        document.body.classList.contains('light') ? 'light' : 'dark');
     }
 
-    /* =========================================================
-       PAGE LOAD
-    ========================================================= */
+    /* ================= PAGE LOAD ================= */
     window.addEventListener('load', async () => {
-      if (localStorage.getItem('cafe_theme') === 'light') {
+      if (localStorage.getItem('cafe_theme') === 'light')
         document.body.classList.add('light');
-      }
 
       if (!restaurantId) {
         const saved = localStorage.getItem('cafe_restaurant_id');
@@ -2286,7 +1981,6 @@
         try {
           user = { restaurant_name: 'Cafe', plan: 'Cafe Lite', restaurant_id: restaurantId };
           await bootApp();
-                bindBillPreviewEditors();
         } catch (err) {
           console.warn('Session restore failed:', err);
           logout();

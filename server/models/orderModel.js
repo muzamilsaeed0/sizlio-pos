@@ -344,8 +344,9 @@ const createOrder = async (
   createdByUserId = null,
   deliveryCharge = 0,
   dineCharge = 0,
-  cardCharge = 0,      // ✅ NEW
-  bankCharge = 0       // ✅ NEW
+  cardCharge = 0,      
+  bankCharge = 0,
+  paymentMethod = null       
 ) => {
 
   const client =
@@ -703,7 +704,6 @@ const localNumber = lnRes.rows[0].n;
           $10,
 
           $11,
-          NULL,
           $12,
           $13,
           $14,
@@ -1209,7 +1209,7 @@ const localNumber = lnRes.rows[0].n;
     const updatedOrderResult =
   await client.query(
     `
-    UPDATE orders
+        UPDATE orders
     SET
       subtotal = $1,
       discount_amount = $2,
@@ -1220,23 +1220,27 @@ const localNumber = lnRes.rows[0].n;
       bank_charge = $7,
       payment_status = $8::varchar,
       paid_amount = $9,
-      payment_method = CASE WHEN $8::varchar = 'paid' THEN 'Cash' ELSE NULL END,
+      payment_method = $12,
       paid_at = CASE WHEN $8::varchar = 'paid' THEN NOW() ELSE NULL END
     WHERE id = $10 AND restaurant_id = $11
     RETURNING *
     `,
     [
+          
       calculated.subtotal.toFixed(2),
       calculated.discountAmount.toFixed(2),
       calculated.gstAmount.toFixed(2),
       calculated.taxAmount.toFixed(2),
       finalTotalAmount.toFixed(2),
-      finalCardCharge.toFixed(2),     // ✅ NEW
-      finalBankCharge.toFixed(2),     // ✅ NEW
+      finalCardCharge.toFixed(2),
+      finalBankCharge.toFixed(2),
       initialPaymentStatus,
       finalPaidAmount.toFixed(2),
       order.id,
-      restaurantId
+      restaurantId,
+      (initialPaymentStatus === 'paid'
+        ? (paymentMethod || 'Cash')
+        : null)
     ]
   );
    

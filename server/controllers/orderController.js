@@ -171,8 +171,9 @@ exports.placeOrder = async (
     deals = [],
     delivery_charge = 0,
     dine_charge = 0,
-    card_charge = 0,        // ✅ NEW
-    bank_charge = 0         // ✅ NEW
+    card_charge = 0,        
+    bank_charge = 0,
+    payment_method = null         
   } = req.body;
 
 
@@ -704,7 +705,8 @@ if ((order_type === 'dine_in' || order_type === 'walk_in') && tableNo > 0) {
         Number(delivery_charge || 0),    
         Number(dine_charge || 0),
         Number(card_charge || 0),       
-        Number(bank_charge || 0)         
+        Number(bank_charge || 0),
+        payment_method || null         
       );
 
 
