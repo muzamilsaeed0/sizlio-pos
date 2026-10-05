@@ -364,6 +364,38 @@ async function settleQrPayment({
             throw new Error('Order payment could not be finalized');
         }
 
+        // Immutable accounting event for the successful QR settlement.
+        await client.query(
+            `
+            INSERT INTO payment_transactions
+            (
+                restaurant_id,
+                order_id,
+                qr_payment_id,
+                amount,
+                payment_method,
+                status,
+                provider_ref,
+                reference,
+                metadata
+            )
+            VALUES ($1, $2, $3, $4, 'completed', 'completed', $5, $6, $7::jsonb)
+            `,
+            [
+                tenantId,
+                order.id,
+                payment.id,
+                amount.toFixed(2),
+                providerRef,
+                qrId,
+                JSON.stringify({
+                    source: 'qr_payment',
+                    provider: payment.provider || null,
+                    expected_qr_amount: expectedQrAmount
+                })
+            ]
+        );
+
         await client.query('COMMIT');
 
         return {
