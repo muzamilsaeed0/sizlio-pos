@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const crypto = require('crypto');
 
 const { getAllMenuItems } = require('../models/menuModel');
 const { getAllDeals } = require('../models/dealModel');
@@ -24,6 +25,20 @@ exports.serverInfo = (req, res) => {
 
 
 
+
+const QR_TABLE_SECRET = process.env.QR_TABLE_SECRET || process.env.JWT_SECRET;
+
+if (!QR_TABLE_SECRET) throw new Error('QR_TABLE_SECRET or JWT_SECRET must be configured');
+
+const createTableQrToken = (restaurantId, tableNo) => crypto.createHmac('sha256', QR_TABLE_SECRET).update(`sizlio-table-qr:v1:${restaurantId}:${tableNo}`).digest('hex');
+
+const isValidTableQrToken = (restaurantId, tableNo, suppliedToken) => {
+  if (!suppliedToken || typeof suppliedToken !== 'string') return false;
+  const expected = createTableQrToken(restaurantId, tableNo);
+  const supplied = suppliedToken.trim().toLowerCase();
+  if (supplied.length !== expected.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(supplied, 'utf8'), Buffer.from(expected, 'utf8'));
+};
 
 const validateRestaurant = async (restaurantId) => {
 
@@ -167,20 +182,16 @@ exports.callWaiter = async (req, res) => {
       });
     }
 
-    const { table_no } = req.body;
-
-    if (!table_no) {
-      return res.status(400).json({
-        success: false,
-        message: 'table_no is required'
-      });
-    }
+    const { table_no, table_token } = req.body;
+    const tableNo = Number(table_no);
+    if (!Number.isInteger(tableNo) || tableNo < 1 || tableNo > 100) return res.status(400).json({ success: false, message: 'Valid table_no is required' });
+    if (!isValidTableQrToken(restaurantId, tableNo, table_token)) return res.status(403).json({ success: false, message: 'Invalid or expired table QR code' });
 
     req.app
       .get('io')
       .to(`restaurant_${restaurantId}`)
       .emit('waiter_call', {
-        table_no,
+        table_no: tableNo,
         time: new Date().toISOString()
       });
 
@@ -222,10 +233,15 @@ exports.placePublicOrder = async (req, res) => {
 
     const {
       table_no,
+      table_token,
       items = [],
       customer_name,
       deals = []
     } = req.body;
+
+    const tableNo = Number(table_no);
+    if (!Number.isInteger(tableNo) || tableNo < 1 || tableNo > 100) return res.status(400).json({ success: false, message: 'Valid table_no is required' });
+    if (!isValidTableQrToken(restaurantId, tableNo, table_token)) return res.status(403).json({ success: false, message: 'Invalid or expired table QR code' });
 
     if (
       (!items || !items.length) &&
@@ -237,16 +253,9 @@ exports.placePublicOrder = async (req, res) => {
       });
     }
 
-    if (!table_no) {
-      return res.status(400).json({
-        success: false,
-        message: 'table_no is required'
-      });
-    }
-
     const existingOrder =
       await getActiveOrderForTable(
-        table_no,
+        tableNo,
         restaurantId
       );
 
@@ -285,7 +294,7 @@ exports.placePublicOrder = async (req, res) => {
 
     const order =
       await createOrder(
-        table_no,
+        tableNo,
         items,
         restaurantId,
         customer_name,
@@ -337,6 +346,25 @@ exports.placePublicOrder = async (req, res) => {
   }
 
 };
+
+exports.getTableTokens = async (req, res) => {
+  try {
+    const restaurantId = Number(req.params.restaurantId);
+    if (req.user.role !== 'super_admin' && Number(req.user.restaurant_id) !== restaurantId) return res.status(403).json({ success: false, message: 'Access denied' });
+    const validation = await validateRestaurant(restaurantId);
+    if (!validation.success) return res.status(validation.status).json({ success: false, message: validation.message });
+    const rawTables = String(req.query.tables || '1');
+    const tables = [...new Set(rawTables.split(',').map(v => Number(v.trim())).filter(v => Number.isInteger(v) && v >= 1 && v <= 100))];
+    if (!tables.length || tables.length > 100) return res.status(400).json({ success: false, message: 'tables must contain 1 to 100 valid table numbers' });
+    const tokens = {};
+    for (const tableNo of tables) tokens[tableNo] = createTableQrToken(restaurantId, tableNo);
+    return res.json({ success: true, data: { restaurant_id: restaurantId, tokens } });
+  } catch (err) {
+    console.error('getTableTokens:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 
 exports.getRestaurantInfo = async (req, res) => {
   try {
