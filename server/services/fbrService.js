@@ -101,6 +101,7 @@ async function submitInvoiceForOrder(orderOrId, orderItems) {
     const result = await submitToFbr(payload, restaurant);
     await fbrModel.markInvoiceSubmitted(
       invoiceLogId,
+      order.restaurant_id,
       result.invoiceNumber || result.InvoiceNumber || null,
       result.qrCode || result.QRCode || null,
       result
@@ -108,7 +109,7 @@ async function submitInvoiceForOrder(orderOrId, orderItems) {
     return { success: true, invoiceLogId, result };
   } catch (err) {
     const message = err.response?.data ? JSON.stringify(err.response.data) : err.message;
-    await fbrModel.markInvoiceFailed(invoiceLogId, message);
+    await fbrModel.markInvoiceFailed(invoiceLogId, order.restaurant_id, message);
     return { success: false, invoiceLogId, error: message };
   }
 }
@@ -137,6 +138,7 @@ async function retryPendingInvoices(restaurantId = null) {
       const result = await submitToFbr(invoice.request_payload, restaurant);
       await fbrModel.markInvoiceSubmitted(
         invoice.id,
+        invoice.restaurant_id,
         result.invoiceNumber || result.InvoiceNumber || null,
         result.qrCode || result.QRCode || null,
         result
@@ -144,7 +146,7 @@ async function retryPendingInvoices(restaurantId = null) {
       results.push({ id: invoice.id, success: true });
     } catch (err) {
       const message = err.response?.data ? JSON.stringify(err.response.data) : err.message;
-      await fbrModel.markInvoiceFailed(invoice.id, message);
+      await fbrModel.markInvoiceFailed(invoice.id, invoice.restaurant_id, message);
       results.push({ id: invoice.id, success: false, error: message });
     }
   }
