@@ -4639,7 +4639,7 @@ async function recalculateOrderPricing(orderId, restaurantId) {
 
     let subtotal = 0;
     itemsResult.rows.forEach(row => {
-      subtotal += Number(row.quantity) * Number(row.price);
+      subtotal += Number(row.line_total || 0);
     });
 
     // ✅ Card/bank bhi fetch karo
