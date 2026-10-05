@@ -2929,6 +2929,16 @@ if (!isCafeLite) {
       (totalAmount + addCard + addBank).toFixed(2)
     );
 
+    // If the caller did not specify a paid amount, default to the
+    // complete server-calculated amount, including surcharge.
+    if (
+      paidAmount === null ||
+      paidAmount === undefined ||
+      paidAmount === ''
+    ) {
+      finalPaidAmount = newTotalAmount;
+    }
+
     // Paid amount must cover the final amount actually charged.
     if (
       finalPaidAmount <
