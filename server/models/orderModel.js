@@ -2824,6 +2824,41 @@ if (!isCafeLite) {
 
 
     // ==================================================
+    // SERVER-SIDE PAYMENT SURCHARGE
+    //
+    // Request-supplied card_charge / bank_charge are NOT trusted.
+    // Restaurant settings contain the surcharge percentage.
+    // ==================================================
+
+    const surchargeResult = await client.query(
+      `SELECT card_charge, bank_charge
+       FROM restaurants
+       WHERE id = $1`,
+      [restaurantId]
+    );
+
+    if (!surchargeResult.rows.length) {
+      throw new Error('Restaurant not found.');
+    }
+
+    const configuredCardPercent =
+      Number(surchargeResult.rows[0].card_charge || 0);
+
+    const configuredBankPercent =
+      Number(surchargeResult.rows[0].bank_charge || 0);
+
+    if (
+      !Number.isFinite(configuredCardPercent) ||
+      configuredCardPercent < 0 ||
+      configuredCardPercent > 100 ||
+      !Number.isFinite(configuredBankPercent) ||
+      configuredBankPercent < 0 ||
+      configuredBankPercent > 100
+    ) {
+      throw new Error('Invalid restaurant payment surcharge configuration.');
+    }
+
+    // ==================================================
     // PAID AMOUNT
     // ==================================================
 
@@ -2875,9 +2910,24 @@ if (!isCafeLite) {
         order.total_amount || 0
       );
 
-    const addCard = Number(cardCharge) || 0;
-    const addBank = Number(bankCharge) || 0;
-    const newTotalAmount = totalAmount + addCard + addBank;
+    // Surcharge is selected from the payment method and calculated
+    // from the server-side restaurant percentage.
+    let addCard = 0;
+    let addBank = 0;
+
+    if (paymentMethod === 'Card') {
+      addCard = Number(
+        (totalAmount * configuredCardPercent / 100).toFixed(2)
+      );
+    } else if (paymentMethod === 'Bank') {
+      addBank = Number(
+        (totalAmount * configuredBankPercent / 100).toFixed(2)
+      );
+    }
+
+    const newTotalAmount = Number(
+      (totalAmount + addCard + addBank).toFixed(2)
+    );
 
     // Paid amount must cover the final amount actually charged.
     if (
