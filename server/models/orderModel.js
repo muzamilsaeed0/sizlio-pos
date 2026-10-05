@@ -5808,7 +5808,7 @@ const getOrderById = async (orderId, restaurantId = null) => {
 // GET ORDER ITEMS BY ORDER ID (for FBR submission)
 // ======================================================
 
-const getOrderItemsByOrderId = async (orderId) => {
+const getOrderItemsByOrderId = async (orderId, restaurantId = null) => {
   const result = await pool.query(
     `SELECT
        oi.id,
@@ -5820,11 +5820,13 @@ const getOrderItemsByOrderId = async (orderId) => {
        oi.line_total AS line_total,
        miv.label AS variant_label
      FROM order_items oi
+     INNER JOIN orders o ON o.id = oi.order_id
      INNER JOIN menu_items m ON m.id = oi.menu_item_id
      LEFT JOIN menu_item_variants miv ON miv.id = oi.variant_id
      WHERE oi.order_id = $1
+       AND ($2::integer IS NULL OR o.restaurant_id = $2)
      ORDER BY oi.id`,
-    [orderId]
+    [orderId, restaurantId]
   );
   return result.rows;
 };
