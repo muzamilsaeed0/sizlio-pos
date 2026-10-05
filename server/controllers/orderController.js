@@ -4614,8 +4614,13 @@ async function refreshDealItems(orderDealId, newDealQuantity, orderId, restauran
      LEFT JOIN menu_item_variants miv
        ON miv.id = di.variant_id
       AND miv.menu_item_id = di.menu_item_id
-     WHERE od.id = $1`,
-    [orderDealId]
+     WHERE od.id = $1
+       AND od.order_id = $2
+       AND EXISTS (
+         SELECT 1 FROM orders o
+         WHERE o.id = od.order_id AND o.restaurant_id = $3
+       )`,
+    [orderDealId, orderId, restaurantId]
   );
 
   if (dealItemsResult.rows.length === 0) return;
