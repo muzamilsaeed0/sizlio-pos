@@ -15,6 +15,15 @@ const PAYMENT_CONFIG = {
    CREATE QR
    ============================================================ */
 async function createQrPayment({ restaurantId, orderId, amount, description }) {
+    // Tenant boundary: the order must belong to the same restaurant as the logged-in staff.
+    const orderCheck = await pool.query(
+        `SELECT id FROM orders WHERE id = $1 AND restaurant_id = $2 LIMIT 1`,
+        [orderId, restaurantId]
+    );
+    if (!orderCheck.rows.length) {
+        throw new Error('Order not found for this restaurant');
+    }
+
     const qrId = `QR-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
 
     const result = await pool.query(
@@ -92,17 +101,18 @@ async function buildManualQr(qrId, amount, restaurantId) {
 /* ============================================================
    GET STATUS (polling)
    ============================================================ */
-async function getQrStatus(qrId) {
+async function getQrStatus(qrId, restaurantId) {
     const r = await pool.query(
         `SELECT status, paid_at, paid_amount, payment_method, provider_ref, expires_at
-         FROM qr_payments WHERE qr_id = $1`,
-        [qrId]
+         FROM qr_payments
+         WHERE qr_id = $1 AND restaurant_id = $2`,
+        [qrId, restaurantId]
     );
     if (!r.rows.length) return { status: 'not_found' };
     const p = r.rows[0];
 
     if (p.status === 'pending' && new Date(p.expires_at) < new Date()) {
-        await pool.query(`UPDATE qr_payments SET status = 'expired' WHERE qr_id = $1`, [qrId]);
+        await pool.query(`UPDATE qr_payments SET status = 'expired' WHERE qr_id = $1 AND restaurant_id = $2`, [qrId, restaurantId]);
         p.status = 'expired';
     }
 
@@ -119,14 +129,14 @@ async function getQrStatus(qrId) {
 /* ============================================================
    MANUAL CONFIRM
    ============================================================ */
-async function manualConfirmPayment(qrId, staffUserId) {
+async function manualConfirmPayment(qrId, staffUserId, restaurantId) {
     const r = await pool.query(
         `UPDATE qr_payments
          SET status = 'paid', paid_at = NOW(), paid_amount = amount,
              payment_method = 'manual_confirm', updated_at = NOW()
-         WHERE qr_id = $1 AND status = 'pending'
+         WHERE qr_id = $1 AND restaurant_id = $2 AND status = 'pending'
          RETURNING *`,
-        [qrId]
+        [qrId, restaurantId]
     );
     if (!r.rows.length) throw new Error('QR not found or already processed');
     return r.rows[0];
