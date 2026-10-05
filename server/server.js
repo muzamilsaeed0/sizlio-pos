@@ -15,6 +15,8 @@ const app = express();
 
 const pushRoutes = require("./routes/pushRoutes");
 
+const wholesaleRoutes = require("./routes/wholesaleRoutes");
+
 /* =====================================================
    TRUST PROXY
    Railway ke peechhe 'loopback' hi enough hai.
@@ -85,6 +87,7 @@ app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 console.log("Static folder path:", path.join(__dirname, "public"));
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/images", express.static(path.join(__dirname, "public", "images")));
+
 
 /* =====================================================
    RATE LIMITERS
@@ -213,6 +216,13 @@ app.get("/counter-lite", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "counter-lite.html"));
 });
 
+app.get("/wholesale", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "wholesale.html"));
+});
+app.get("/wholesale.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "wholesale.html"));
+});
+
 /* =====================================================
    API ROUTES
 ===================================================== */
@@ -234,7 +244,7 @@ app.use("/api/shifts", require("./routes/shiftRoutes"));
 app.use("/api/push", pushRoutes);
 app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/settings", require("./routes/settingsRoutes"));
-
+app.use("/api/wholesale", wholesaleRoutes);
 /* =====================================================
    HTTP SERVER + SOCKET.IO
 ===================================================== */
