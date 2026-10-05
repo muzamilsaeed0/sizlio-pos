@@ -1369,8 +1369,8 @@ const getAllOrders = async (
                 d.name AS deal_name,
                 d.type AS deal_type,
                 od.quantity,
-                d.price,
-                d.price * od.quantity AS subtotal,
+                od.unit_price AS price,
+                od.line_total AS subtotal,
 
                 COALESCE(
                   (
@@ -4111,7 +4111,7 @@ const recalculateOrderPricing = async (client, orderId, restaurantId) => {
 
   // Subtotal (deals)
   const dealsSubtotalResult = await client.query(`
-    SELECT COALESCE(SUM(d.price * od.quantity), 0) AS subtotal
+    SELECT COALESCE(SUM(od.line_total), 0) AS subtotal
     FROM order_deals od
     INNER JOIN deals d ON d.id = od.deal_id
     WHERE od.order_id = $1 AND d.restaurant_id = $2
@@ -5030,18 +5030,12 @@ const getMyDeliveryOrders = async (
                 miv.label AS variant_label,
                 m.name,
 
-                COALESCE(
-                  miv.price,
-                  m.price
-                ) AS price,
+                oi.unit_price AS price,
 
                 oi.quantity,
                 oi.new_quantity,
 
-                COALESCE(
-                  miv.price,
-                  m.price
-                ) * oi.quantity AS subtotal
+                oi.line_total AS subtotal
 
               FROM order_items oi
 
