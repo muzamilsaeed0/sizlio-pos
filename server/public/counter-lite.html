@@ -1386,7 +1386,7 @@
           extra: Number(o.delivery_charge || 0) + Number(o.dine_charge || 0),
           total: Number(o.total_amount || o.total || sub)
         };
-        printBill({
+        showBillPreview({
           orderNo: o.local_number || o.id,
           orderType: o.order_type,
           tableNo: o.table_no,
