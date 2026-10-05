@@ -2896,9 +2896,6 @@ if (!isCafeLite) {
       );
 
     }
-    message: 'Only unpaid open orders can have pricing updated'
-
-
     // ==================================================
     // TOTAL AMOUNT + PAYMENT SURCHARGES
     // ==================================================
