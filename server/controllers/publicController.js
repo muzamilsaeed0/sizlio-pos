@@ -539,6 +539,15 @@ exports.placePublicOrder = async (req, res) => {
         deals
       );
 
+      // Mark the idempotency request complete immediately after the
+      // order mutation succeeds. If the response fetch fails, a retry
+      // returns the same order instead of applying the items again.
+      await completePublicOrderRequest(
+        restaurantId,
+        idempotencyKey,
+        existingOrder.id
+      );
+
       const orders =
         await getAllOrders(restaurantId);
 
@@ -546,12 +555,6 @@ exports.placePublicOrder = async (req, res) => {
         orders.find(
           o => o.id === existingOrder.id
         );
-
-      await completePublicOrderRequest(
-        restaurantId,
-        idempotencyKey,
-        existingOrder.id
-      );
 
       await completePublicOrderRequest(
         restaurantId,
