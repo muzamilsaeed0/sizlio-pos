@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const authMiddleware = require('../middleware/authMiddleware');
+const { authorize } = authMiddleware;
 
 const {
   serverInfo,
@@ -7,7 +9,8 @@ const {
   getPublicDeals,
   callWaiter,
   placePublicOrder,
-  getRestaurantInfo
+  getRestaurantInfo,
+  getTableTokens
 } = require('../controllers/publicController');
 
 // ======================================================
@@ -20,6 +23,9 @@ router.get('/:restaurantId/deals', getPublicDeals);
 router.get('/:restaurantId/info', getRestaurantInfo);
 router.post('/:restaurantId/order', placePublicOrder);
 router.post('/:restaurantId/call-waiter', callWaiter);
+
+// Authenticated QR generation for restaurant managers/super admins.
+router.get('/:restaurantId/table-tokens', authMiddleware, authorize('manager', 'super_admin'), getTableTokens);
 
 
 // ======================================================
