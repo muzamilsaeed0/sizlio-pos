@@ -3029,16 +3029,25 @@ if (!isCafeLite) {
       finalPaidAmount = newTotalAmount;
     }
 
-    // Paid amount must cover the final amount actually charged.
-    if (
-      finalPaidAmount <
-      newTotalAmount
-    ) {
+    // Non-cash payments must settle the exact server-calculated amount.
+    // Cash may exceed the bill; the excess is recorded as customer change.
+    const changeAmount = paymentMethod === 'Cash'
+      ? Number(Math.max(finalPaidAmount - newTotalAmount, 0).toFixed(2))
+      : 0;
 
+    if (
+      paymentMethod !== 'Cash' &&
+      finalPaidAmount !== newTotalAmount
+    ) {
+      throw new Error(
+        'Card, Bank and Other payments must match the exact total amount.'
+      );
+    }
+
+    if (paymentMethod === 'Cash' && finalPaidAmount < newTotalAmount) {
       throw new Error(
         'Paid amount cannot be less than total amount.'
       );
-
     }
 
 
@@ -3068,6 +3077,7 @@ if (!isCafeLite) {
           payment_status = 'paid',
           payment_method = $3,
           paid_amount = $4,
+          change_amount = $5,
           paid_at = NOW(),
           paid_by_user_id = $5,
           card_charge = $6,
@@ -3084,6 +3094,7 @@ if (!isCafeLite) {
           restaurantId,
           paymentMethod,
           finalPaidAmount.toFixed(2),
+          changeAmount.toFixed(2),
           paidByUserId,
           addCard.toFixed(2),
           addBank.toFixed(2),
