@@ -3677,18 +3677,20 @@ const updateOrderItemQuantity = async (
       await client.query(
         `
         UPDATE order_items
-
-        SET
-
-          quantity = $1
-
-        WHERE id = $2
-
-        RETURNING *
+         SET quantity = $1
+         WHERE id = $2
+           AND EXISTS (
+             SELECT 1
+             FROM orders o
+             WHERE o.id = order_items.order_id
+               AND o.restaurant_id = $3
+           )
+         RETURNING *
         `,
         [
           quantity,
-          orderItemId
+          orderItemId,
+          restaurantId
         ]
       );
 
@@ -3904,10 +3906,14 @@ const removeOrderItem = async (
       await client.query(
         `
         DELETE FROM order_items
-
-        WHERE id = $1
-
-        RETURNING id
+         WHERE id = $1
+           AND EXISTS (
+             SELECT 1
+             FROM orders o
+             WHERE o.id = order_items.order_id
+               AND o.restaurant_id = $2
+           )
+         RETURNING id
         `,
         [
           orderItemId
