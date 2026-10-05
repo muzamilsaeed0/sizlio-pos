@@ -184,7 +184,7 @@ exports.getInvoiceStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
-    const invoice = await fbrModel.getInvoiceByOrder(orderId);
+    const invoice = await fbrModel.getInvoiceByOrder(orderId, order.restaurant_id);
     if (!invoice) {
       return res.status(404).json({
         success: false,
