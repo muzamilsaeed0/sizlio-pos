@@ -40,6 +40,101 @@ const isValidTableQrToken = (restaurantId, tableNo, suppliedToken) => {
   return crypto.timingSafeEqual(Buffer.from(supplied, 'utf8'), Buffer.from(expected, 'utf8'));
 };
 
+const createPublicOrderRequestHash = (payload) => {
+  return crypto
+    .createHash('sha256')
+    .update(JSON.stringify({
+      table_no: Number(payload.table_no),
+      customer_name: payload.customer_name || null,
+      items: Array.isArray(payload.items) ? payload.items : [],
+      deals: Array.isArray(payload.deals) ? payload.deals : []
+    }))
+    .digest('hex');
+};
+
+const reservePublicOrderRequest = async (restaurantId, idempotencyKey, requestHash) => {
+  const inserted = await pool.query(
+    `
+      INSERT INTO public.public_order_requests
+        (restaurant_id, idempotency_key, request_hash, status)
+      VALUES
+        ($1, $2, $3, 'processing')
+      ON CONFLICT (restaurant_id, idempotency_key) DO NOTHING
+      RETURNING id
+    `,
+    [restaurantId, idempotencyKey, requestHash]
+  );
+
+  if (inserted.rowCount) {
+    return { state: 'new' };
+  }
+
+  const existing = await pool.query(
+    `
+      SELECT id, order_id, request_hash, status, updated_at
+      FROM public.public_order_requests
+      WHERE restaurant_id = $1
+        AND idempotency_key = $2
+      LIMIT 1
+    `,
+    [restaurantId, idempotencyKey]
+  );
+
+  if (!existing.rowCount) {
+    return { state: 'retry' };
+  }
+
+  const row = existing.rows[0];
+
+  if (row.request_hash !== requestHash) {
+    return { state: 'conflict' };
+  }
+
+  if (row.order_id) {
+    return { state: 'duplicate', orderId: Number(row.order_id) };
+  }
+
+  // Recover a request abandoned by a crashed/terminated process.
+  if (
+    row.status === 'processing' &&
+    row.updated_at &&
+    new Date(row.updated_at).getTime() < Date.now() - (5 * 60 * 1000)
+  ) {
+    const takeover = await pool.query(
+      `
+        UPDATE public.public_order_requests
+        SET status = 'processing', updated_at = NOW()
+        WHERE id = $1
+          AND order_id IS NULL
+          AND status = 'processing'
+          AND updated_at < NOW() - INTERVAL '5 minutes'
+        RETURNING id
+      `,
+      [row.id]
+    );
+
+    if (takeover.rowCount) {
+      return { state: 'new' };
+    }
+  }
+
+  return { state: 'processing' };
+};
+
+const completePublicOrderRequest = async (restaurantId, idempotencyKey, orderId) => {
+  await pool.query(
+    `
+      UPDATE public.public_order_requests
+      SET order_id = $3, status = 'completed', updated_at = NOW()
+      WHERE restaurant_id = $1
+        AND idempotency_key = $2
+        AND status = 'processing'
+        AND order_id IS NULL
+    `,
+    [restaurantId, idempotencyKey, orderId]
+  );
+};
+
 const validateRestaurant = async (restaurantId) => {
 
   const result = await pool.query(
@@ -239,6 +334,17 @@ exports.placePublicOrder = async (req, res) => {
       deals = []
     } = req.body;
 
+    const idempotencyKey = String(
+      req.get('Idempotency-Key') || req.body?.idempotency_key || ''
+    ).trim();
+
+    if (!idempotencyKey || idempotencyKey.length < 16 || idempotencyKey.length > 128) {
+      return res.status(400).json({
+        success: false,
+        message: 'A valid Idempotency-Key is required'
+      });
+    }
+
     const tableNo = Number(table_no);
     if (!Number.isInteger(tableNo) || tableNo < 1 || tableNo > 100) return res.status(400).json({ success: false, message: 'Valid table_no is required' });
     if (!isValidTableQrToken(restaurantId, tableNo, table_token)) return res.status(403).json({ success: false, message: 'Invalid or expired table QR code' });
@@ -250,6 +356,51 @@ exports.placePublicOrder = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'table_no, and at least one item or deal, are required'
+      });
+    }
+
+    const requestHash = createPublicOrderRequestHash({
+      table_no: tableNo,
+      customer_name,
+      items,
+      deals
+    });
+
+    const requestState = await reservePublicOrderRequest(
+      restaurantId,
+      idempotencyKey,
+      requestHash
+    );
+
+    if (requestState.state === 'conflict') {
+      return res.status(409).json({
+        success: false,
+        message: 'Idempotency-Key was already used with a different order request'
+      });
+    }
+
+    if (requestState.state === 'processing') {
+      return res.status(409).json({
+        success: false,
+        message: 'This order request is already being processed. Please wait and retry.'
+      });
+    }
+
+    if (requestState.state === 'duplicate') {
+      const orders = await getAllOrders(restaurantId);
+      const order = orders.find(o => o.id === requestState.orderId);
+
+      if (!order) {
+        return res.status(409).json({
+          success: false,
+          message: 'Previous order response is no longer available'
+        });
+      }
+
+      return res.json({
+        success: true,
+        duplicate: true,
+        data: order
       });
     }
 
@@ -276,6 +427,12 @@ exports.placePublicOrder = async (req, res) => {
         orders.find(
           o => o.id === existingOrder.id
         );
+
+      await completePublicOrderRequest(
+        restaurantId,
+        idempotencyKey,
+        existingOrder.id
+      );
 
       req.app
         .get('io')
@@ -309,6 +466,12 @@ exports.placePublicOrder = async (req, res) => {
         deals
       );
 
+    await completePublicOrderRequest(
+      restaurantId,
+      idempotencyKey,
+      order.id
+    );
+
     req.app
       .get('io')
       .to(`restaurant_${restaurantId}`)
@@ -325,7 +488,24 @@ exports.placePublicOrder = async (req, res) => {
     } catch (err) {
     console.error('placePublicOrder:', err);
 
-    
+    // Allow the same Idempotency-Key to be retried after a failed order attempt.
+    const failedKey = String(
+      req.get('Idempotency-Key') || req.body?.idempotency_key || ''
+    ).trim();
+
+    if (failedKey) {
+      await pool.query(
+        `
+          DELETE FROM public.public_order_requests
+          WHERE restaurant_id = $1
+            AND idempotency_key = $2
+            AND order_id IS NULL
+            AND status = 'processing'
+        `,
+        [Number(req.params.restaurantId), failedKey]
+      ).catch(cleanupErr => console.error('Idempotency cleanup:', cleanupErr));
+    }
+
     if (err.error === 'INSUFFICIENT_KITCHEN_STOCK' || err.error === 'KITCHEN_STOCK_NOT_FOUND') {
       return res.status(409).json({
         success: false,
