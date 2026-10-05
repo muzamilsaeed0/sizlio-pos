@@ -152,7 +152,7 @@ exports.submitOrderInvoice = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
-    const orderItems = await getOrderItemsByOrderId(orderId);
+    const orderItems = await getOrderItemsByOrderId(orderId, order.restaurant_id);
     const result = await fbrService.submitInvoiceForOrder(order, orderItems);
     res.json({ success: !result.skipped && !!result.success, ...result });
   } catch (err) {
