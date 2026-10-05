@@ -207,14 +207,15 @@
   const params = new URLSearchParams(window.location.search);
   const restaurantId = params.get('r');
   const tableNo = params.get('t');
+  const tableToken = params.get('q');
   let cart = [];
   let dealCart = [];
   let groupedMenu = {};
   let searchTerm = '';
 
-  if (!restaurantId || !tableNo) {
+  if (!restaurantId || !tableNo || !tableToken) {
     document.body.innerHTML = "<h2 style='text-align:center;margin-top:60px;'>Invalid QR Code</h2>";
-    throw new Error("Restaurant ID or Table Number missing");
+    throw new Error("Restaurant ID, Table Number or Table QR Token missing");
   }
 
   document.getElementById('table-label').innerText = 'Table ' + tableNo;
@@ -774,7 +775,7 @@ function showLocationBlockedScreen(message) {
       const res = await fetch(`/api/public/${restaurantId}/call-waiter`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ table_no: Number(tableNo) })
+        body: JSON.stringify({ table_no: Number(tableNo), table_token: tableToken })
       });
       if (!res.ok) {
         showToast('Unable to call waiter', true);
@@ -803,6 +804,7 @@ function showLocationBlockedScreen(message) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           table_no: Number(tableNo),
+          table_token: tableToken,
           customer_name,
           items: cart.map(i => ({
             menu_item_id: i.menu_item_id,
