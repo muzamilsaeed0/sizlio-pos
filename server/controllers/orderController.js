@@ -702,11 +702,9 @@ if ((order_type === 'dine_in' || order_type === 'walk_in') && tableNo > 0) {
         initialPaidAmount,
         normalizedDeals,
         req.user?.id || null,             
-        Number(delivery_charge || 0),    
+        Number(delivery_charge || 0),
         Number(dine_charge || 0),
-        Number(card_charge || 0),       
-        Number(bank_charge || 0),
-        payment_method || null         
+        payment_method || null
       );
 
 
