@@ -843,12 +843,14 @@ const localNumber = lnRes.rows[0].n;
       }
 
 
+      let unitPrice = Number(menuCheck.rows[0].price);
+
       if (variantId !== null) {
 
         const variantCheck =
           await client.query(
             `
-            SELECT id
+            SELECT id, price
 
             FROM menu_item_variants
 
@@ -871,6 +873,8 @@ const localNumber = lnRes.rows[0].n;
           );
 
         }
+
+        unitPrice = Number(variantCheck.rows[0].price);
 
       }
 
@@ -904,19 +908,13 @@ const localNumber = lnRes.rows[0].n;
           item.quantity,
           Number(
             variantId !== null
-              ? (await client.query(
-                  `SELECT price FROM menu_item_variants WHERE id = $1 AND menu_item_id = $2`,
-                  [variantId, item.menu_item_id]
-                )).rows[0]?.price
-              : menuCheck.rows[0]?.price
+              ? variantCheck.rows[0].price
+              : menuCheck.rows[0].price
           ),
           item.quantity * Number(
             variantId !== null
-              ? (await client.query(
-                  `SELECT price FROM menu_item_variants WHERE id = $1 AND menu_item_id = $2`,
-                  [variantId, item.menu_item_id]
-                )).rows[0]?.price
-              : menuCheck.rows[0]?.price
+              ? variantCheck.rows[0].price
+              : menuCheck.rows[0].price
           )
         ]
       );
