@@ -4629,7 +4629,7 @@ async function recalculateOrderPricing(orderId, restaurantId) {
     const itemsResult = await client.query(
       `SELECT 
          oi.quantity, 
-         COALESCE(miv.price, m.price) as price
+         oi.line_total as line_total
        FROM order_items oi
        JOIN menu_items m ON m.id = oi.menu_item_id
        LEFT JOIN menu_item_variants miv ON miv.id = oi.variant_id
