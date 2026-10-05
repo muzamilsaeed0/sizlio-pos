@@ -45,13 +45,57 @@ async function saveFbrConfig(restaurantId, cfg) {
 
 /** Create a pending invoice log row before calling the FBR API. */
 async function createInvoiceLog(orderId, restaurantId, requestPayload) {
-  const { rows } = await pool.query(
-    `INSERT INTO fbr_invoices (order_id, restaurant_id, status, request_payload)
-     VALUES ($1, $2, 'pending', $3)
-     RETURNING id`,
-    [orderId, restaurantId, requestPayload]
-  );
-  return rows[0].id;
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // Serialize invoice creation per order so concurrent payment callbacks
+    // cannot create multiple FBR invoice rows for the same order.
+    const orderCheck = await client.query(
+      `SELECT id
+       FROM orders
+       WHERE id = $1 AND restaurant_id = $2
+       FOR UPDATE`,
+      [orderId, restaurantId]
+    );
+
+    if (!orderCheck.rowCount) {
+      throw new Error('Order not found for FBR invoice creation');
+    }
+
+    const existing = await client.query(
+      `SELECT id
+       FROM fbr_invoices
+       WHERE order_id = $1
+         AND restaurant_id = $2
+         AND status IN ('pending', 'submitted')
+       ORDER BY id DESC
+       LIMIT 1
+       FOR UPDATE`,
+      [orderId, restaurantId]
+    );
+
+    if (existing.rowCount) {
+      await client.query('COMMIT');
+      return existing.rows[0].id;
+    }
+
+    const inserted = await client.query(
+      `INSERT INTO fbr_invoices (order_id, restaurant_id, status, request_payload)
+       VALUES ($1, $2, 'pending', $3)
+       RETURNING id`,
+      [orderId, restaurantId, requestPayload]
+    );
+
+    await client.query('COMMIT');
+    return inserted.rows[0].id;
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch {}
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 /** Mark an invoice log row as submitted. */
