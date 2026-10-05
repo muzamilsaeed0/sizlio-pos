@@ -379,13 +379,14 @@ async function settleQrPayment({
                 reference,
                 metadata
             )
-            VALUES ($1, $2, $3, $4, 'completed', 'completed', $5, $6, $7::jsonb)
+            VALUES ($1, $2, $3, $4, $5, 'completed', $6, $7, $8::jsonb)
             `,
             [
                 tenantId,
                 order.id,
                 payment.id,
                 amount.toFixed(2),
+                paymentMethod,
                 providerRef,
                 qrId,
                 JSON.stringify({
