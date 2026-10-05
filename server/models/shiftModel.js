@@ -85,7 +85,7 @@ const getShiftSummary = async (shiftId, restaurantId) => {
         SUM(
           CASE
             WHEN payment_status = 'paid' AND paid_by_user_id = $1
-              THEN paid_amount
+              THEN total_amount
             ELSE 0
           END
         ),
@@ -238,7 +238,7 @@ const listShifts = async (restaurantId, filters = {}) => {
           SUM(
             CASE
               WHEN payment_status = 'paid' AND paid_by_user_id = s.user_id
-                THEN paid_amount
+                THEN total_amount
             ELSE 0
           END
         ),
@@ -350,7 +350,7 @@ const getAllShiftsForManager = async (restaurantId, filters = {}) => {
           SUM(
             CASE
               WHEN payment_status = 'paid'
-                THEN COALESCE(paid_amount, total_amount)
+                THEN total_amount
               ELSE 0
             END
           ),
