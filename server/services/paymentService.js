@@ -15,54 +15,118 @@ const PAYMENT_CONFIG = {
    CREATE QR
    ============================================================ */
 async function createQrPayment({ restaurantId, orderId, amount, description }) {
-    // Tenant boundary: the order must belong to the same restaurant as the logged-in staff.
-    const orderCheck = await pool.query(
-        `SELECT id FROM orders WHERE id = $1 AND restaurant_id = $2 LIMIT 1`,
-        [orderId, restaurantId]
-    );
-    if (!orderCheck.rows.length) {
-        throw new Error('Order not found for this restaurant');
-    }
+    const client = await pool.connect();
 
-    const qrId = `QR-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
-
-    const result = await pool.query(
-        `INSERT INTO qr_payments
-            (restaurant_id, order_id, qr_id, provider, amount, status, expires_at)
-         VALUES ($1, $2, $3, $4, $5, 'pending', NOW() + INTERVAL '10 minutes')
-         RETURNING *`,
-        [restaurantId, orderId, qrId, PAYMENT_CONFIG.provider, amount]
-    );
-    const payment = result.rows[0];
-
-    let providerData;
     try {
-        providerData = await createQrWithProvider({
-            qrId, amount,
-            description: description || `Order #${orderId}`,
-            restaurantId,
-        });
+        await client.query('BEGIN');
+
+        // Tenant boundary + server-side amount calculation.
+        const orderCheck = await client.query(
+            `SELECT id, total_amount, paid_amount, payment_status
+             FROM orders
+             WHERE id = $1 AND restaurant_id = $2
+             FOR UPDATE`,
+            [orderId, restaurantId]
+        );
+
+        if (!orderCheck.rows.length) {
+            throw new Error('Order not found for this restaurant');
+        }
+
+        const order = orderCheck.rows[0];
+
+        if (order.payment_status === 'paid') {
+            throw new Error('Order is already paid');
+        }
+
+        const orderTotal = Number(order.total_amount || 0);
+        const paidAmount = Number(order.paid_amount || 0);
+        const outstandingAmount = Number((orderTotal - paidAmount).toFixed(2));
+
+        if (!Number.isFinite(outstandingAmount) || outstandingAmount <= 0) {
+            throw new Error('No outstanding amount remains for this order');
+        }
+
+        // Only one pending QR is allowed for an order at a time.
+        const existingQr = await client.query(
+            `SELECT *
+             FROM qr_payments
+             WHERE order_id = $1
+               AND restaurant_id = $2
+               AND status = 'pending'
+               AND expires_at > NOW()
+             ORDER BY id DESC
+             LIMIT 1
+             FOR UPDATE`,
+            [orderId, restaurantId]
+        );
+
+        if (existingQr.rows.length) {
+            const existing = existingQr.rows[0];
+
+            await client.query('COMMIT');
+
+            return {
+                qr_id: existing.qr_id,
+                order_id: orderId,
+                amount: Number(existing.amount),
+                qr_string: existing.qr_string,
+                qr_image_url: existing.qr_image_url,
+                expires_at: existing.expires_at,
+                status: existing.status,
+                reused: true,
+            };
+        }
+
+        const qrId = `QR-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+
+        const result = await client.query(
+            `INSERT INTO qr_payments
+                (restaurant_id, order_id, qr_id, provider, amount, status, expires_at)
+             VALUES ($1, $2, $3, $4, $5, 'pending', NOW() + INTERVAL '10 minutes')
+             RETURNING *`,
+            [restaurantId, orderId, qrId, PAYMENT_CONFIG.provider, outstandingAmount]
+        );
+        const payment = result.rows[0];
+
+        let providerData;
+        try {
+            providerData = await createQrWithProvider({
+                qrId,
+                amount: outstandingAmount,
+                description: description || `Order #${orderId}`,
+                restaurantId,
+            });
+        } catch (err) {
+            console.warn('Provider failed, using manual fallback:', err.message);
+            providerData = await buildManualQr(qrId, outstandingAmount, restaurantId);
+        }
+
+        await client.query(
+            `UPDATE qr_payments
+             SET qr_string = $1, qr_image_url = $2, provider_ref = $3, updated_at = NOW()
+             WHERE id = $4`,
+            [providerData.qrString, providerData.qrImageUrl, providerData.providerRef, payment.id]
+        );
+
+        await client.query('COMMIT');
+
+        return {
+            qr_id: qrId,
+            order_id: orderId,
+            amount: outstandingAmount,
+            qr_string: providerData.qrString,
+            qr_image_url: providerData.qrImageUrl,
+            expires_at: payment.expires_at,
+            status: 'pending',
+            reused: false,
+        };
     } catch (err) {
-        console.warn('Provider failed, using manual fallback:', err.message);
-        providerData = await buildManualQr(qrId, amount, restaurantId);
+        try { await client.query('ROLLBACK'); } catch {}
+        throw err;
+    } finally {
+        client.release();
     }
-
-    await pool.query(
-        `UPDATE qr_payments
-         SET qr_string = $1, qr_image_url = $2, provider_ref = $3, updated_at = NOW()
-         WHERE id = $4`,
-        [providerData.qrString, providerData.qrImageUrl, providerData.providerRef, payment.id]
-    );
-
-    return {
-        qr_id: qrId,
-        order_id: orderId,
-        amount,
-        qr_string: providerData.qrString,
-        qr_image_url: providerData.qrImageUrl,
-        expires_at: payment.expires_at,
-        status: 'pending',
-    };
 }
 
 /* ============================================================
