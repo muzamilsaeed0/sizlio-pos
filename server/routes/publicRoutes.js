@@ -1,5 +1,35 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const router = express.Router();
+
+/*
+ * Public endpoints are intentionally unauthenticated, so protect the
+ * expensive/action endpoints separately from the global API limiter.
+ *
+ * Limits are per client IP. They are high enough for normal restaurant
+ * usage while stopping simple order/call-waiter spam.
+ */
+const publicOrderLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many public orders. Please try again later.'
+  }
+});
+
+const callWaiterLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many waiter calls. Please wait before trying again.'
+  }
+});
 const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 
 const {
@@ -20,8 +50,8 @@ router.get('/server-info', serverInfo);
 router.get('/:restaurantId/menu', getPublicMenu);
 router.get('/:restaurantId/deals', getPublicDeals);
 router.get('/:restaurantId/info', getRestaurantInfo);
-router.post('/:restaurantId/order', placePublicOrder);
-router.post('/:restaurantId/call-waiter', callWaiter);
+router.post('/:restaurantId/order', publicOrderLimiter, placePublicOrder);
+router.post('/:restaurantId/call-waiter', callWaiterLimiter, callWaiter);
 
 // Authenticated QR generation for restaurant managers/super admins.
 router.get('/:restaurantId/table-tokens', authMiddleware, authorize('manager', 'super_admin'), getTableTokens);
