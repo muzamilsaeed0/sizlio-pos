@@ -344,9 +344,7 @@ const createOrder = async (
   createdByUserId = null,
   deliveryCharge = 0,
   dineCharge = 0,
-  cardCharge = 0,      
-  bankCharge = 0,
-  paymentMethod = null       
+  paymentMethod = null
 ) => {
 
   const client =
@@ -1216,8 +1214,42 @@ const createOrder = async (
          const finalDeliveryCharge = Number(deliveryCharge || 0);
     const finalDineCharge = Number(dineCharge || 0);
     
-        const finalCardCharge = Number(cardCharge || 0);
-    const finalBankCharge = Number(bankCharge || 0);
+        // Card/bank surcharge is always calculated from restaurant settings.
+    // Never trust surcharge amounts supplied by the client.
+    const surchargeResult = await client.query(
+      `SELECT card_charge, bank_charge
+       FROM restaurants
+       WHERE id = $1
+       FOR SHARE`,
+      [restaurantId]
+    );
+
+    if (!surchargeResult.rows.length) {
+      throw new Error('Restaurant not found.');
+    }
+
+    const configuredCardPercent = Number(surchargeResult.rows[0].card_charge || 0);
+    const configuredBankPercent = Number(surchargeResult.rows[0].bank_charge || 0);
+
+    if (
+      !Number.isFinite(configuredCardPercent) ||
+      configuredCardPercent < 0 ||
+      configuredCardPercent > 100 ||
+      !Number.isFinite(configuredBankPercent) ||
+      configuredBankPercent < 0 ||
+      configuredBankPercent > 100
+    ) {
+      throw new Error('Invalid restaurant payment surcharge configuration.');
+    }
+
+    const normalizedPaymentMethod = String(paymentMethod || 'Cash');
+    const finalCardCharge = normalizedPaymentMethod === 'Card'
+      ? Number((calculated.totalAmount * configuredCardPercent / 100).toFixed(2))
+      : 0;
+    const finalBankCharge = normalizedPaymentMethod === 'Bank'
+      ? Number((calculated.totalAmount * configuredBankPercent / 100).toFixed(2))
+      : 0;
+
     const finalTotalAmount =
       calculated.totalAmount +
       finalDeliveryCharge +
@@ -1292,6 +1324,38 @@ const createOrder = async (
   );
    
 
+
+    // Record an immutable accounting event when the order was paid at creation.
+    if (initialPaymentStatus === 'paid') {
+      await client.query(
+        `
+        INSERT INTO payment_transactions
+        (
+          restaurant_id,
+          order_id,
+          amount,
+          payment_method,
+          status,
+          actor_user_id,
+          metadata
+        )
+        VALUES ($1, $2, $3, $4, 'completed', $5, $6::jsonb)
+        `,
+        [
+          restaurantId,
+          order.id,
+          finalPaidAmount.toFixed(2),
+          normalizedPaymentMethod,
+          createdByUserId,
+          JSON.stringify({
+            source: 'paid_at_order',
+            order_total: finalTotalAmount.toFixed(2),
+            card_surcharge: finalCardCharge.toFixed(2),
+            bank_surcharge: finalBankCharge.toFixed(2)
+          })
+        ]
+      );
+    }
 
     await client.query('COMMIT');
 
