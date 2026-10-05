@@ -645,12 +645,24 @@ const createOrder = async (
     // CREATE ORDER
     // --------------------------------------------------
 
-    const lnRes = await client.query(
-  `SELECT COALESCE(MAX(local_number), 0) + 1 AS n
-   FROM orders WHERE restaurant_id = $1`,
-  [restaurantId]
-);
-const localNumber = lnRes.rows[0].n;
+    // Atomically allocate the next restaurant-local order number.
+    // The counter row is locked by PostgreSQL during the UPDATE/INSERT,
+    // so concurrent orders cannot calculate the same local_number.
+    const counterResult = await client.query(
+      `
+      INSERT INTO restaurant_order_counters
+        (restaurant_id, next_number)
+      VALUES
+        ($1, 2)
+      ON CONFLICT (restaurant_id)
+      DO UPDATE
+        SET next_number = restaurant_order_counters.next_number + 1
+      RETURNING next_number - 1 AS local_number
+      `,
+      [restaurantId]
+    );
+
+    const localNumber = Number(counterResult.rows[0].local_number);
 
     const orderResult =
       await client.query(
