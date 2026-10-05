@@ -1021,6 +1021,21 @@ const localNumber = lnRes.rows[0].n;
 
         for (const dealItem of dealItemsResult.rows) {
 
+          const dealItemPriceResult = await client.query(
+            `SELECT COALESCE(miv.price, m.price) AS price
+             FROM menu_items m
+             LEFT JOIN menu_item_variants miv
+               ON miv.id = $2 AND miv.menu_item_id = m.id
+             WHERE m.id = $1 AND m.restaurant_id = $3`,
+            [dealItem.menu_item_id, dealItem.variant_id, restaurantId]
+          );
+
+          if (!dealItemPriceResult.rowCount) {
+            throw new Error(`Deal menu item ${dealItem.menu_item_id} not found.`);
+          }
+
+          const dealItemUnitPrice = Number(dealItemPriceResult.rows[0].price);
+
           await client.query(
             `
             INSERT INTO order_items
@@ -1029,7 +1044,9 @@ const localNumber = lnRes.rows[0].n;
               menu_item_id,
               variant_id,
               quantity,
-              order_deal_id
+              order_deal_id,
+              unit_price,
+              line_total
             )
 
             VALUES
@@ -1038,7 +1055,9 @@ const localNumber = lnRes.rows[0].n;
               $2,
               $3,
               $4,
-              $5
+              $5,
+              $6,
+              $4 * $6
             )
             `,
             [
@@ -1046,7 +1065,8 @@ const localNumber = lnRes.rows[0].n;
               dealItem.menu_item_id,
               dealItem.variant_id,
               dealItem.quantity * dealQuantity,
-              orderDealId
+              orderDealId,
+              dealItemUnitPrice
             ]
           );
 
@@ -3417,6 +3437,22 @@ WHERE id = $2
 
                   for (const dealItem of dealItemsResult.rows) {
             const qty = dealItem.quantity * dealQuantity;
+
+            const dealItemPriceResult = await client.query(
+              `SELECT COALESCE(miv.price, m.price) AS price
+               FROM menu_items m
+               LEFT JOIN menu_item_variants miv
+                 ON miv.id = $2 AND miv.menu_item_id = m.id
+               WHERE m.id = $1 AND m.restaurant_id = $3`,
+              [dealItem.menu_item_id, dealItem.variant_id, restaurantId]
+            );
+
+            if (!dealItemPriceResult.rowCount) {
+              throw new Error(`Deal menu item ${dealItem.menu_item_id} not found.`);
+            }
+
+            const dealItemUnitPrice = Number(dealItemPriceResult.rows[0].price);
+
             await client.query(
               `
               INSERT INTO order_items
@@ -3426,7 +3462,9 @@ WHERE id = $2
                 variant_id,
                 quantity,
                 new_quantity,
-                order_deal_id
+                order_deal_id,
+                unit_price,
+                line_total
               )
               VALUES
               (
@@ -3434,8 +3472,9 @@ WHERE id = $2
                 $2,
                 $3,
                 $4,
-                $4,       
-                $5
+                $4,
+                $5,
+                $4 * $6
               )
               `,
               [
@@ -3443,7 +3482,8 @@ WHERE id = $2
                 dealItem.menu_item_id,
                 dealItem.variant_id,
                 qty,
-                orderDealId
+                orderDealId,
+                dealItemUnitPrice
               ]
             );
           }
