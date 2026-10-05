@@ -55,28 +55,30 @@ async function createInvoiceLog(orderId, restaurantId, requestPayload) {
 }
 
 /** Mark an invoice log row as submitted. */
-async function markInvoiceSubmitted(invoiceLogId, fbrInvoiceNumber, fbrQrCode, responsePayload) {
+async function markInvoiceSubmitted(invoiceLogId, restaurantId, fbrInvoiceNumber, fbrQrCode, responsePayload) {
   await pool.query(
     `UPDATE fbr_invoices SET
        status = 'submitted',
-       fbr_invoice_number = $2,
-       fbr_qr_code = $3,
-       response_payload = $4,
+       fbr_invoice_number = $3,
+       fbr_qr_code = $4,
+       response_payload = $5,
        submitted_at = NOW()
-     WHERE id = $1`,
-    [invoiceLogId, fbrInvoiceNumber, fbrQrCode, responsePayload]
+     WHERE id = $1
+       AND restaurant_id = $2`,
+    [invoiceLogId, restaurantId, fbrInvoiceNumber, fbrQrCode, responsePayload]
   );
 }
 
 /** Mark an invoice log row as failed, bump retry_count. */
-async function markInvoiceFailed(invoiceLogId, errorMessage) {
+async function markInvoiceFailed(invoiceLogId, restaurantId, errorMessage) {
   await pool.query(
     `UPDATE fbr_invoices SET
        status = 'failed',
        retry_count = retry_count + 1,
-       last_error = $2
-     WHERE id = $1`,
-    [invoiceLogId, errorMessage]
+       last_error = $3
+     WHERE id = $1
+       AND restaurant_id = $2`,
+    [invoiceLogId, restaurantId, errorMessage]
   );
 }
 
@@ -93,10 +95,15 @@ async function getPendingInvoices(maxRetries = 5) {
 }
 
 /** Look up the FBR invoice status for a given order. */
-async function getInvoiceByOrder(orderId) {
+async function getInvoiceByOrder(orderId, restaurantId = null) {
   const { rows } = await pool.query(
-    `SELECT * FROM fbr_invoices WHERE order_id = $1 ORDER BY id DESC LIMIT 1`,
-    [orderId]
+    `SELECT *
+     FROM fbr_invoices
+     WHERE order_id = $1
+       AND ($2::integer IS NULL OR restaurant_id = $2)
+     ORDER BY id DESC
+     LIMIT 1`,
+    [orderId, restaurantId]
   );
   return rows[0] || null;
 }
