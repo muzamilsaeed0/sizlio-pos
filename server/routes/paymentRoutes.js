@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const paymentService = require('../services/paymentService');
-const { authMiddleware } = require('../middleware/authMiddleware');
+const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 const pool = require('../config/db');
 
 /* Create QR */
@@ -25,7 +25,7 @@ router.post('/qr/create', authMiddleware, async (req, res) => {
 /* Poll status */
 router.get('/qr/status/:qrId', authMiddleware, async (req, res) => {
     try {
-        const result = await paymentService.getQrStatus(req.params.qrId);
+        const result = await paymentService.getQrStatus(req.params.qrId, req.user.restaurant_id);
         res.json({ success: true, data: result });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -35,7 +35,7 @@ router.get('/qr/status/:qrId', authMiddleware, async (req, res) => {
 /* Manual confirm */
 router.post('/qr/manual-confirm/:qrId', authMiddleware, async (req, res) => {
     try {
-        const result = await paymentService.manualConfirmPayment(req.params.qrId, req.user.id);
+        const result = await paymentService.manualConfirmPayment(req.params.qrId, req.user.id, req.user.restaurant_id);
         if (global.io) global.io.emit('qr_payment_update', { qr_id: req.params.qrId, status: 'paid' });
         res.json({ success: true, data: result });
     } catch (err) {
@@ -48,8 +48,8 @@ router.post('/qr/cancel/:qrId', authMiddleware, async (req, res) => {
     try {
         await pool.query(
             `UPDATE qr_payments SET status='cancelled', updated_at=NOW()
-             WHERE qr_id=$1 AND status='pending'`,
-            [req.params.qrId]
+             WHERE qr_id=$1 AND restaurant_id=$2 AND status='pending'`,
+            [req.params.qrId, req.user.restaurant_id]
         );
         res.json({ success: true });
     } catch (err) {
