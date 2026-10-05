@@ -1496,39 +1496,61 @@ function isWholesale() {
       printWindow.document.write(`<!DOCTYPE html><html><head><title>Table ${table} QR Code</title><style>@page{size:A4;margin:20mm}body{font-family:Arial,sans-serif;text-align:center;color:#111;padding-top:30px}h1{margin-bottom:10px}img{width:500px;max-width:90vw}.url{margin-top:15px;font-size:12px;color:#555;word-break:break-all}</style></head><body><h1>Table ${table}</h1><img src="${qrUrl}" alt="QR Code for Table ${table}" onload="window.print()"><div class="url">Scan to order — Table ${table}</div></body></html>`);
       printWindow.document.close();
     }
-    function generateQRs() {
+    async function generateQRs() {
       if (!restaurantId) { alert("Restaurant ID not found. Please login again."); return; }
       let count = Number(document.getElementById("qr-count").value);
       if (!Number.isFinite(count)) count = 1;
       count = Math.min(100, Math.max(1, Math.floor(count)));
       document.getElementById("qr-count").value = count;
-      const base = window.location.origin + "/customer.html?r=" + encodeURIComponent(restaurantId) + "&t=";
+
       const grid = document.getElementById("qr-grid");
-      grid.innerHTML = "";
-      for (let table = 1; table <= count; table++) {
-        const url = base + table;
-        const card = document.createElement("div");
-        card.style.cssText = "background: #f6f3ec; border-radius: 12px; padding: 14px; text-align: center;";
-        const img = document.createElement("img");
-        img.src = "https://api.qrserver.com/v1/create-qr-code/" + "?size=220x220&data=" + encodeURIComponent(url);
-        img.alt = `QR Code for Table ${table}`;
-        img.style.width = "100%";
-        img.onerror = function () { this.alt = "QR code unavailable"; };
-        card.appendChild(img);
-        const title = document.createElement("div");
-        title.innerText = "Table " + table;
-        title.style.cssText = "color: #14181c; font-weight: 700; margin-top: 8px;";
-        card.appendChild(title);
-        const printBtn = document.createElement("button");
-        printBtn.innerText = "🖨️ Print";
-        printBtn.type = "button";
-        printBtn.style.cssText = "margin-top: 10px; width: 100%; padding: 9px 12px; border: 0; border-radius: 8px; background: #14181c; color: #ffffff; font-weight: 700; cursor: pointer;";
-        printBtn.onclick = function () { printTableQR(table, url); };
-        card.appendChild(printBtn);
-        grid.appendChild(card);
+      grid.innerHTML = "<div style='padding:20px;text-align:center;color:#888;'>Generating secure table QR codes...</div>";
+
+      try {
+        const tableList = Array.from({ length: count }, (_, i) => i + 1).join(",");
+        const res = await fetch("/api/public/" + encodeURIComponent(restaurantId) + "/table-tokens?tables=" + encodeURIComponent(tableList), { headers: authHeaders() });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success || !data.data?.tokens) {
+          grid.innerHTML = "";
+          alert(data.message || "Unable to generate secure table QR codes.");
+          return;
+        }
+
+        const tokens = data.data.tokens;
+        const base = window.location.origin + "/customer.html?r=" + encodeURIComponent(restaurantId) + "&t=";
+        grid.innerHTML = "";
+
+        for (let table = 1; table <= count; table++) {
+          const token = tokens[String(table)] || tokens[table];
+          if (!token) continue;
+          const url = base + table + "&q=" + encodeURIComponent(token);
+          const card = document.createElement("div");
+          card.style.cssText = "background: #f6f3ec; border-radius: 12px; padding: 14px; text-align: center;";
+          const img = document.createElement("img");
+          img.src = "https://api.qrserver.com/v1/create-qr-code/" + "?size=220x220&data=" + encodeURIComponent(url);
+          img.alt = "QR Code for Table " + table;
+          img.style.width = "100%";
+          img.onerror = function () { this.alt = "QR code unavailable"; };
+          card.appendChild(img);
+          const title = document.createElement("div");
+          title.innerText = "Table " + table;
+          title.style.cssText = "color: #14181c; font-weight: 700; margin-top: 8px;";
+          card.appendChild(title);
+          const printBtn = document.createElement("button");
+          printBtn.innerText = "🖨️ Print";
+          printBtn.type = "button";
+          printBtn.style.cssText = "margin-top: 10px; width: 100%; padding: 9px 12px; border: 0; border-radius: 8px; background: #14181c; color: #ffffff; font-weight: 700; cursor: pointer;";
+          printBtn.onclick = function () { printTableQR(table, url); };
+          card.appendChild(printBtn);
+          grid.appendChild(card);
+        }
+      } catch (error) {
+        console.error("generateQRs:", error);
+        grid.innerHTML = "";
+        alert("Server connection failed while generating QR codes.");
       }
     }
-
     /* SETTINGS */
     function closeSettings() { document.getElementById("settings-modal").classList.remove("open"); ["set-username", "set-current-password", "set-new-password"].forEach(id => { document.getElementById(id).value = ""; }); }
     async function saveSettings() {
