@@ -2699,9 +2699,7 @@ const markPaid = async (
   restaurantId,
   paymentMethod = 'Cash',
   paidAmount = null,
-  paidByUserId = null,
-  cardCharge = 0,      
-  bankCharge = 0      
+  paidByUserId = null
 ) => {
 
   const client =
@@ -3012,6 +3010,38 @@ if (!isCafeLite) {
       return null;
 
     }
+
+    // Immutable payment ledger entry.
+    // The order row remains the current payment state; this record is the
+    // append-only accounting event for the successful settlement.
+    await client.query(
+      `
+      INSERT INTO payment_transactions
+      (
+        restaurant_id,
+        order_id,
+        amount,
+        payment_method,
+        status,
+        actor_user_id,
+        metadata
+      )
+      VALUES ($1, $2, $3, $4, 'completed', $5, $6::jsonb)
+      `,
+      [
+        restaurantId,
+        id,
+        finalPaidAmount.toFixed(2),
+        paymentMethod,
+        paidByUserId,
+        JSON.stringify({
+          source: 'staff_payment',
+          order_total: newTotalAmount.toFixed(2),
+          card_surcharge: addCard.toFixed(2),
+          bank_surcharge: addBank.toFixed(2)
+        })
+      ]
+    );
 
 
     await client.query('COMMIT');
