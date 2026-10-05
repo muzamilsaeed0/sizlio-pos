@@ -159,7 +159,16 @@ CREATE TABLE public.order_items (
     id integer NOT NULL,
     order_id integer,
     menu_item_id integer,
-    quantity integer DEFAULT 1 NOT NULL
+    quantity integer DEFAULT 1 NOT NULL,
+
+    /*
+     * Historical pricing snapshot.
+     * These values preserve the price charged at the time
+     * the item was added to the order, even if menu_items.price
+     * changes later.
+     */
+    unit_price numeric(12,2) NOT NULL,
+    line_total numeric(12,2) NOT NULL
 );
 
 
