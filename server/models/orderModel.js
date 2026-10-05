@@ -1158,9 +1158,7 @@ const localNumber = lnRes.rows[0].n;
         SELECT
 
           COALESCE(
-            SUM(
-              d.price * od.quantity
-            ),
+            SUM(od.line_total),
             0
           ) AS subtotal
 
@@ -2563,9 +2561,7 @@ const dineCharge = Number(pricing.dine_charge || 0);
         SELECT
 
           COALESCE(
-            SUM(
-              d.price * od.quantity
-            ),
+            SUM(od.line_total),
             0
           ) AS subtotal
 
@@ -5065,8 +5061,8 @@ const getMyDeliveryOrders = async (
                 d.name AS deal_name,
                 d.type AS deal_type,
                 od.quantity,
-                d.price,
-                d.price * od.quantity AS subtotal,
+                od.unit_price AS price,
+                od.line_total AS subtotal,
 
                 COALESCE(
                   (
