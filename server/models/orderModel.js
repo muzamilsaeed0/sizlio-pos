@@ -2867,7 +2867,7 @@ if (!isCafeLite) {
 
 
     // ==================================================
-    // TOTAL AMOUNT
+    // TOTAL AMOUNT + PAYMENT SURCHARGES
     // ==================================================
 
     const totalAmount =
@@ -2875,10 +2875,14 @@ if (!isCafeLite) {
         order.total_amount || 0
       );
 
+    const addCard = Number(cardCharge) || 0;
+    const addBank = Number(bankCharge) || 0;
+    const newTotalAmount = totalAmount + addCard + addBank;
 
+    // Paid amount must cover the final amount actually charged.
     if (
       finalPaidAmount <
-      totalAmount
+      newTotalAmount
     ) {
 
       throw new Error(
@@ -2891,11 +2895,6 @@ if (!isCafeLite) {
     // ==================================================
     // MARK PAID
     // ==================================================
-
-    // ✅ Naye totals calculate karein
-    const addCard = Number(cardCharge) || 0;
-    const addBank = Number(bankCharge) || 0;
-    const newTotalAmount = totalAmount + addCard + addBank;
 
     const statusList = isCafeLite
       ? [
