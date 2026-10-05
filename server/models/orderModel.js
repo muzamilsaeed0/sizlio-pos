@@ -767,8 +767,8 @@ const createOrder = async (
             : null,
            Number(deliveryCharge || 0),
           Number(dineCharge || 0),
-          Number(cardCharge || 0),
-          Number(bankCharge || 0) 
+          finalCardCharge,
+          finalBankCharge 
         ]
       );
 
