@@ -1333,10 +1333,10 @@ const getAllOrders = async (
                 oi.variant_id,
                 miv.label AS variant_label,
                 m.name,
-                COALESCE(miv.price, m.price) AS price,
+                oi.unit_price AS price,
                 oi.quantity,
                 oi.new_quantity,
-                oi.unit_price * oi.quantity AS subtotal
+                oi.line_total AS subtotal
 
               FROM order_items oi
 
@@ -5796,7 +5796,8 @@ const getOrderItemsByOrderId = async (orderId) => {
        oi.variant_id,
        oi.quantity,
        m.name,
-       COALESCE(miv.price, m.price) AS price,
+       oi.unit_price AS price,
+       oi.line_total AS line_total,
        miv.label AS variant_label
      FROM order_items oi
      INNER JOIN menu_items m ON m.id = oi.menu_item_id
