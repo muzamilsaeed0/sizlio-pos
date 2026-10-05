@@ -153,16 +153,55 @@ async function handleWebhook({ headers, body }) {
     if (!reference) throw new Error('Missing reference in webhook');
 
     if (status === 'SUCCESS' || status === 'PAID') {
+        const payment = await pool.query(
+            `SELECT id, amount, status, expires_at
+             FROM qr_payments
+             WHERE qr_id = $1
+             LIMIT 1`,
+            [reference]
+        );
+
+        if (!payment.rows.length) {
+            throw new Error('Payment reference not found');
+        }
+
+        const current = payment.rows[0];
+
+        // Ignore duplicate/replayed webhooks after the payment is already processed.
+        if (current.status !== 'pending') {
+            return { ok: true, duplicate: true };
+        }
+
+        // Never mark a payment as paid when the provider-reported amount differs.
+        const expectedAmount = Number(current.amount);
+        const receivedAmount = Number(amount);
+        if (!Number.isFinite(receivedAmount) || receivedAmount !== expectedAmount) {
+            throw new Error('Webhook amount mismatch');
+        }
+
+        // Do not accept a successful webhook for an expired QR payment.
+        if (current.expires_at && new Date(current.expires_at) < new Date()) {
+            await pool.query(
+                `UPDATE qr_payments
+                 SET status = 'expired', raw_response = $1, updated_at = NOW()
+                 WHERE id = $2 AND status = 'pending'`,
+                [body, current.id]
+            );
+            throw new Error('Payment QR has expired');
+        }
+
         await pool.query(
             `UPDATE qr_payments
              SET status = 'paid', paid_at = $1, paid_amount = $2,
                  payment_method = $3, provider_ref = $4, raw_response = $5, updated_at = NOW()
-             WHERE qr_id = $6 AND status = 'pending'`,
-            [paid_at || new Date(), amount, payment_method || 'raast', transaction_id, body, reference]
+             WHERE id = $6 AND status = 'pending' AND amount = $7`,
+            [paid_at || new Date(), receivedAmount, payment_method || 'raast', transaction_id, body, current.id, expectedAmount]
         );
     } else if (status === 'FAILED') {
         await pool.query(
-            `UPDATE qr_payments SET status = 'cancelled', raw_response = $1 WHERE qr_id = $2`,
+            `UPDATE qr_payments
+             SET status = 'cancelled', raw_response = $1, updated_at = NOW()
+             WHERE qr_id = $2 AND status = 'pending'`,
             [body, reference]
         );
     }
