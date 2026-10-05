@@ -211,17 +211,52 @@ router.put(
     try {
       const pool = require('../config/db');
       
-      await pool.query(
-        `UPDATE restaurants 
-         SET latitude = $1, longitude = $2, gps_radius_meters = $3 
-         WHERE id = $4`,
+      const requestedRestaurantId = Number(req.params.id);
+      const userRestaurantId = Number(req.user?.restaurant_id);
+
+      // Managers may only change their own restaurant location.
+      // Super admins may explicitly target any restaurant.
+      const targetRestaurantId =
+        req.user?.role === 'super_admin'
+          ? requestedRestaurantId
+          : userRestaurantId;
+
+      if (!Number.isInteger(targetRestaurantId) || targetRestaurantId <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid restaurant id'
+        });
+      }
+
+      if (
+        req.user?.role !== 'super_admin' &&
+        requestedRestaurantId !== userRestaurantId
+      ) {
+        return res.status(403).json({
+          success: false,
+          message: 'Not allowed for this restaurant'
+        });
+      }
+
+      const updateResult = await pool.query(
+        `UPDATE restaurants
+         SET latitude = $1, longitude = $2, gps_radius_meters = $3
+         WHERE id = $4
+         RETURNING id`,
         [
-          Number(latitude), 
-          Number(longitude), 
-          Number(gps_radius_meters) || 100, 
-          Number(req.params.id)
+          Number(latitude),
+          Number(longitude),
+          Number(gps_radius_meters) || 100,
+          targetRestaurantId
         ]
       );
+
+      if (!updateResult.rowCount) {
+        return res.status(404).json({
+          success: false,
+          message: 'Restaurant not found'
+        });
+      }
       
       res.json({ 
         success: true, 
