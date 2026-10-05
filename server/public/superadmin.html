@@ -1211,8 +1211,9 @@
 
       document.getElementById('detail-topbar-title').innerText = r.name;
 
-      /* ✅ Build login URLs box based on plan */
+      
       const isCafeLite = (r.plan === 'Cafe Lite');
+const isWholesale = (r.business_type === 'wholesale');
 
       const loginUrlsBox = `
         <div class="login-urls-box">
@@ -2060,6 +2061,18 @@
       document.getElementById('staff-list-title').innerText =
         roleDisplayNames[role] || role + ' Accounts';
 
+        const counterUrl = isWholesale
+  ? `/wholesale.html?restaurant=${r.id}`
+  : isCafeLite
+    ? `/counter-lite.html?restaurant=${r.id}`
+    : `/counter.html?restaurant=${r.id}`;
+
+const counterLabel = isWholesale
+  ? '📦 Wholesale'
+  : isCafeLite
+    ? '☕ Counter Lite'
+    : '🧾 Counter';
+
       /* ✅ Login URL hint for counter/rider */
       const plan = activeRestaurant?.plan || 'Basic';
       const isCafeLite = plan === 'Cafe Lite';
@@ -2067,9 +2080,11 @@
       let loginUrlHint = '';
 
       if (role === 'counter') {
-        const url = isCafeLite
-          ? `${origin}/counter-lite.html?restaurant=${restaurantId}`
-          : `${origin}/counter.html?restaurant=${restaurantId}`;
+      const url = isWholesale
+  ? `${origin}/wholesale.html?restaurant=${restaurantId}`
+  : isCafeLite
+    ? `${origin}/counter-lite.html?restaurant=${restaurantId}`
+    : `${origin}/counter.html?restaurant=${restaurantId}`;
         const label = isCafeLite ? '☕ Counter Lite Login URL' : '🧾 Counter Login URL';
 
         loginUrlHint = `

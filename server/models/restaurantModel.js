@@ -330,6 +330,17 @@ if (manager_username && manager_password) {
 
 const planLimits = PLAN_LIMITS[selectedPlan];
 
+// WHOLESALE: only 1 counter — no waiter/kitchen/display/rider
+if (selectedBusinessType === 'wholesale') {
+  const username = `${slug}_counter1`;
+  const password = '0000'; // or generatePassword()
+  await createStaffUser('counter', 'Counter 1', username, password);
+  // optional: 1 manager if you want
+  // skip waiter, kitchen, display, delivery loops entirely
+} else {
+  // existing for loops: waiter, kitchen, counter, display, delivery...
+}
+
 const generatedStaff = {
   waiter: [],
   kitchen: [],
@@ -337,6 +348,7 @@ const generatedStaff = {
   display: [],
   delivery: []
 };
+
 
 
 // ======================================================
