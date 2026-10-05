@@ -3073,8 +3073,8 @@ exports.pay = async (
 
 (async () => {
   try {
-    const orderForFbr = await getOrderById(order.id);
-    const itemsForFbr = await getOrderItemsByOrderId(order.id);
+    const orderForFbr = await getOrderById(order.id, restaurantId);
+    const itemsForFbr = await getOrderItemsByOrderId(order.id, restaurantId);
     
     if (orderForFbr) {
       await submitInvoiceForOrder(orderForFbr, itemsForFbr);
