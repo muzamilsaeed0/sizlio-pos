@@ -205,7 +205,7 @@ COALESCE(
 
               od.quantity,
 
-              d.price,
+              od.unit_price,
 
               COALESCE(
                 (
