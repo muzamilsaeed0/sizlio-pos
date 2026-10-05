@@ -1293,21 +1293,23 @@ const createOrder = async (
     // PAID AT ORDER VALIDATION
     // --------------------------------------------------
 
-    if (
-      paymentTiming === 'PAID_AT_ORDER'
-    ) {
+    let initialChangeAmount = 0;
 
-      if (
-        finalPaidAmount <
-        finalTotalAmount
-      ) {
+    if (paymentTiming === 'PAID_AT_ORDER') {
+      const normalizedMethod = String(paymentMethod || 'Cash');
 
-        throw new Error(
-          'Paid amount cannot be less than total amount.'
+      if (normalizedMethod === 'Cash') {
+        if (finalPaidAmount < finalTotalAmount) {
+          throw new Error('Paid amount cannot be less than total amount.');
+        }
+        initialChangeAmount = Number(
+          Math.max(finalPaidAmount - finalTotalAmount, 0).toFixed(2)
         );
-
+      } else if (finalPaidAmount !== finalTotalAmount) {
+        throw new Error(
+          'Card, Bank and Other payments must match the exact total amount.'
+        );
       }
-
     }
 
 
@@ -1330,6 +1332,7 @@ const createOrder = async (
       bank_charge = $7,
       payment_status = $8::varchar,
       paid_amount = $9,
+      change_amount = $13,
       payment_method = $12,
       paid_at = CASE WHEN $8::varchar = 'paid' THEN NOW() ELSE NULL END
     WHERE id = $10 AND restaurant_id = $11
@@ -1350,7 +1353,8 @@ const createOrder = async (
       restaurantId,
       (initialPaymentStatus === 'paid'
         ? (paymentMethod || 'Cash')
-        : null)
+        : null),
+      initialChangeAmount.toFixed(2)
     ]
   );
    
@@ -2545,8 +2549,36 @@ const updateOrderPricing = async (
 
     }
 
-    const deliveryCharge = Number(pricing.delivery_charge || 0);
-const dineCharge = Number(pricing.dine_charge || 0);
+    const chargeResult = await client.query(
+      `SELECT delivery_charge, dine_charge
+       FROM restaurants
+       WHERE id = $1
+       FOR SHARE`,
+      [restaurantId]
+    );
+
+    if (!chargeResult.rows.length) {
+      throw new Error('Restaurant not found.');
+    }
+
+    const configuredDeliveryCharge = Number(chargeResult.rows[0].delivery_charge || 0);
+    const configuredDineCharge = Number(chargeResult.rows[0].dine_charge || 0);
+
+    if (
+      !Number.isFinite(configuredDeliveryCharge) ||
+      configuredDeliveryCharge < 0 ||
+      !Number.isFinite(configuredDineCharge) ||
+      configuredDineCharge < 0
+    ) {
+      throw new Error('Invalid restaurant charge configuration.');
+    }
+
+    const deliveryCharge = order.order_type === 'delivery'
+      ? configuredDeliveryCharge
+      : 0;
+    const dineCharge = order.order_type === 'dine_in'
+      ? configuredDineCharge
+      : 0;
 
 
     const discountType =
