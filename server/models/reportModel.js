@@ -132,12 +132,10 @@ COALESCE(
         'qty', oi.quantity,
 
         'price',
-        COALESCE(miv.price, m.price)::numeric(10,2),
+        oi.unit_price::numeric(10,2),
 
         'total',
-        (
-          oi.quantity * COALESCE(miv.price, m.price)
-        )::numeric(10,2)
+        oi.line_total::numeric(10,2)
 
       )
 
