@@ -2510,6 +2510,7 @@ const updateOrderPricing = async (
           status,
           payment_status,
           paid_amount,
+          order_type,
           card_charge,
           bank_charge
         FROM orders
