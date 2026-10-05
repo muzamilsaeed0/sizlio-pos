@@ -33,7 +33,7 @@ router.get('/qr/status/:qrId', authMiddleware, async (req, res) => {
 });
 
 /* Manual confirm */
-router.post('/qr/manual-confirm/:qrId', authMiddleware, async (req, res) => {
+router.post('/qr/manual-confirm/:qrId', authMiddleware, authorize('manager', 'counter'), async (req, res) => {
     try {
         const result = await paymentService.manualConfirmPayment(req.params.qrId, req.user.id, req.user.restaurant_id);
         if (global.io) global.io.emit('qr_payment_update', { qr_id: req.params.qrId, status: 'paid' });
