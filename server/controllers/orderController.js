@@ -2997,26 +2997,7 @@ exports.pay = async (
   
 
 
-  // ✅ NEW: Card / Bank surcharge amounts
-  const cardCharge = Number(req.body.card_charge || 0);
-  const bankCharge = Number(req.body.bank_charge || 0);
-
-  if (!Number.isFinite(cardCharge) || cardCharge < 0) {
-    return res.status(400).json({
-      success: false,
-      message: 'Invalid card charge'
-    });
-  }
-
-  if (!Number.isFinite(bankCharge) || bankCharge < 0) {
-    return res.status(400).json({
-      success: false,
-      message: 'Invalid bank charge'
-    });
-  }
-
-
-  const restaurantId =
+  // Card/bank surcharge is calculated server-side from restaurant settings.\n\n  const restaurantId =
     getRestaurantId(req);
 
 
@@ -3049,12 +3030,7 @@ exports.pay = async (
 
         paidAmount,
 
-        req.user?.id || null,
-
-        cardCharge,          // ✅ NEW
-        bankCharge           // ✅ NEW
-
-      );
+        req.user?.id || null\n      );
 
 
     if (!order) {
