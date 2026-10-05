@@ -316,7 +316,7 @@ const getTopItems = async (
 
       COALESCE(
         SUM(
-          oi.quantity * COALESCE(miv.price, m.price)
+          oi.line_total
         ),
         0
       )::numeric(10,2) AS sales
