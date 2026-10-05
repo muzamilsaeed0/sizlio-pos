@@ -4496,12 +4496,6 @@ exports.updateDealQuantity = async (req, res) => {
        FROM order_deals od
        JOIN orders o ON o.id = od.order_id
        WHERE od.id = $1
-       AND od.order_id = $2
-       AND EXISTS (
-         SELECT 1 FROM orders o
-         WHERE o.id = od.order_id
-           AND o.restaurant_id = $3
-       )
          AND o.restaurant_id = $2`,
       [dealId, restaurantId]
     );
@@ -4536,7 +4530,17 @@ exports.updateDealQuantity = async (req, res) => {
     // 3. Update or delete deal
     if (newQuantity <= 0) {
       // Delete deal and its items
-      await pool.query('DELETE FROM order_items WHERE order_deal_id = $1', [dealId]);
+      await pool.query(
+        `DELETE FROM order_items
+         WHERE order_deal_id = $1
+           AND EXISTS (
+             SELECT 1
+             FROM orders o
+             WHERE o.id = order_items.order_id
+               AND o.restaurant_id = $2
+           )`,
+        [dealId, restaurantId]
+      );
       await pool.query(
         'DELETE FROM order_deals WHERE id = $1 AND order_id = $2',
         [dealId, orderId]
@@ -4601,10 +4605,15 @@ exports.updateDealQuantity = async (req, res) => {
 async function refreshDealItems(orderDealId, newDealQuantity, orderId, restaurantId) {
   // 1. Get deal_items from deal definition
   const dealItemsResult = await pool.query(
-    `SELECT di.menu_item_id, di.variant_id, di.quantity
+    `SELECT di.menu_item_id, di.variant_id, di.quantity,
+            COALESCE(miv.price, mi.price) AS unit_price
      FROM order_deals od
      JOIN deals d ON d.id = od.deal_id
      JOIN deal_items di ON di.deal_id = d.id
+     JOIN menu_items mi ON mi.id = di.menu_item_id
+     LEFT JOIN menu_item_variants miv
+       ON miv.id = di.variant_id
+      AND miv.menu_item_id = di.menu_item_id
      WHERE od.id = $1`,
     [orderDealId]
   );
@@ -4612,16 +4621,21 @@ async function refreshDealItems(orderDealId, newDealQuantity, orderId, restauran
   if (dealItemsResult.rows.length === 0) return;
 
   // 2. Delete existing order_items for this deal
-  await pool.query('DELETE FROM order_items WHERE order_deal_id = $1', [orderDealId]);
+  await pool.query(
+    `DELETE FROM order_items
+     WHERE order_deal_id = $1
+       AND order_id = $2`,
+    [orderDealId, orderId]
+  );
 
   // 3. Re-insert with new quantity
   for (const item of dealItemsResult.rows) {
     const newQty = Number(item.quantity) * newDealQuantity;
     await pool.query(
       `INSERT INTO order_items
-       (order_id, menu_item_id, variant_id, quantity, order_deal_id)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [orderId, item.menu_item_id, item.variant_id, newQty, orderDealId]
+       (order_id, menu_item_id, variant_id, quantity, order_deal_id, unit_price, line_total)
+       VALUES ($1, $2, $3, $4, $5, $6, $4 * $6)`,
+      [orderId, item.menu_item_id, item.variant_id, newQty, orderDealId, Number(item.unit_price)]
     );
   }
 }
