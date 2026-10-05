@@ -191,19 +191,211 @@ async function getQrStatus(qrId, restaurantId) {
 }
 
 /* ============================================================
+   ATOMIC QR SETTLEMENT
+   QR payment + order payment MUST commit together.
+   ============================================================ */
+async function settleQrPayment({
+    qrId,
+    restaurantId = null,
+    receivedAmount,
+    paymentMethod = 'raast',
+    paidAt = null,
+    providerRef = null,
+    rawResponse = null,
+}) {
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        // Lock QR payment first so duplicate webhook/manual-confirm
+        // requests cannot settle it concurrently.
+        const paymentResult = await client.query(
+            `SELECT
+                qp.*,
+                o.id AS order_id,
+                o.restaurant_id AS order_restaurant_id,
+                o.total_amount AS order_total_amount,
+                o.paid_amount AS order_paid_amount,
+                o.payment_status AS order_payment_status
+             FROM qr_payments qp
+             INNER JOIN orders o ON o.id = qp.order_id
+             WHERE qp.qr_id = $1
+               AND ($2::integer IS NULL OR qp.restaurant_id = $2)
+             FOR UPDATE OF qp`,
+            [qrId, restaurantId]
+        );
+
+        if (!paymentResult.rows.length) {
+            throw new Error('Payment reference not found');
+        }
+
+        const payment = paymentResult.rows[0];
+        const tenantId = Number(payment.order_restaurant_id);
+
+        if (restaurantId !== null && tenantId !== Number(restaurantId)) {
+            throw new Error('Payment does not belong to this restaurant');
+        }
+
+        // A replayed webhook/manual-confirm is harmless.
+        if (payment.status !== 'pending') {
+            await client.query('COMMIT');
+            return {
+                duplicate: true,
+                qrPayment: payment,
+                order: null,
+            };
+        }
+
+        const expectedQrAmount = Number(payment.amount);
+        const amount = Number(receivedAmount);
+
+        if (!Number.isFinite(amount) || amount !== expectedQrAmount) {
+            throw new Error('Payment amount mismatch');
+        }
+
+        if (payment.expires_at && new Date(payment.expires_at) < new Date()) {
+            await client.query(
+                `UPDATE qr_payments
+                 SET status = 'expired',
+                     raw_response = $1,
+                     updated_at = NOW()
+                 WHERE id = $2 AND status = 'pending'`,
+                [rawResponse, payment.id]
+            );
+            throw new Error('Payment QR has expired');
+        }
+
+        // Lock the order and re-check its live outstanding amount.
+        // This prevents a stale QR from overpaying an order that was
+        // paid/partially paid through another channel meanwhile.
+        const orderResult = await client.query(
+            `SELECT
+                id,
+                restaurant_id,
+                total_amount,
+                paid_amount,
+                payment_status,
+                status
+             FROM orders
+             WHERE id = $1
+               AND restaurant_id = $2
+             FOR UPDATE`,
+            [payment.order_id, tenantId]
+        );
+
+        if (!orderResult.rows.length) {
+            throw new Error('Order not found for this payment');
+        }
+
+        const order = orderResult.rows[0];
+
+        if (order.payment_status === 'paid') {
+            throw new Error('Order is already paid');
+        }
+
+        const totalAmount = Number(order.total_amount || 0);
+        const currentPaidAmount = Number(order.paid_amount || 0);
+        const outstandingAmount = Number(
+            (totalAmount - currentPaidAmount).toFixed(2)
+        );
+
+        if (
+            !Number.isFinite(outstandingAmount) ||
+            outstandingAmount <= 0
+        ) {
+            throw new Error('No outstanding amount remains for this order');
+        }
+
+        if (amount !== outstandingAmount) {
+            throw new Error(
+                'QR amount no longer matches the order outstanding amount'
+            );
+        }
+
+        const finalPaidAmount = Number(
+            (currentPaidAmount + amount).toFixed(2)
+        );
+
+        // Keep the QR payment and order payment in the SAME transaction.
+        await client.query(
+            `UPDATE qr_payments
+             SET status = 'paid',
+                 paid_at = $1,
+                 paid_amount = $2,
+                 payment_method = $3,
+                 provider_ref = $4,
+                 raw_response = $5,
+                 updated_at = NOW()
+             WHERE id = $6
+               AND status = 'pending'`,
+            [
+                paidAt || new Date(),
+                amount.toFixed(2),
+                paymentMethod,
+                providerRef,
+                rawResponse,
+                payment.id
+            ]
+        );
+
+        const orderUpdate = await client.query(
+            `UPDATE orders
+             SET payment_status = 'paid',
+                 payment_method = $3,
+                 paid_amount = $4,
+                 paid_at = $5
+             WHERE id = $1
+               AND restaurant_id = $2
+               AND payment_status = 'unpaid'
+             RETURNING *`,
+            [
+                order.id,
+                tenantId,
+                paymentMethod,
+                finalPaidAmount.toFixed(2),
+                paidAt || new Date()
+            ]
+        );
+
+        if (!orderUpdate.rows.length) {
+            throw new Error('Order payment could not be finalized');
+        }
+
+        await client.query('COMMIT');
+
+        return {
+            duplicate: false,
+            qrPayment: {
+                ...payment,
+                status: 'paid',
+                paid_amount: amount.toFixed(2),
+                payment_method: paymentMethod,
+                provider_ref: providerRef,
+            },
+            order: orderUpdate.rows[0],
+            restaurantId: tenantId,
+        };
+    } catch (err) {
+        try { await client.query('ROLLBACK'); } catch {}
+        throw err;
+    } finally {
+        client.release();
+    }
+}
+
+/* ============================================================
    MANUAL CONFIRM
    ============================================================ */
 async function manualConfirmPayment(qrId, staffUserId, restaurantId) {
-    const r = await pool.query(
-        `UPDATE qr_payments
-         SET status = 'paid', paid_at = NOW(), paid_amount = amount,
-             payment_method = 'manual_confirm', updated_at = NOW()
-         WHERE qr_id = $1 AND restaurant_id = $2 AND status = 'pending'
-         RETURNING *`,
-        [qrId, restaurantId]
-    );
-    if (!r.rows.length) throw new Error('QR not found or already processed');
-    return r.rows[0];
+    const result = await settleQrPayment({
+        qrId,
+        restaurantId,
+        receivedAmount: null,
+        paymentMethod: 'manual_confirm',
+    });
+
+    return result.qrPayment;
 }
 
 /* ============================================================
@@ -213,66 +405,71 @@ async function handleWebhook({ headers, body }) {
     if (!verifyWebhookSignature(headers, body)) {
         throw new Error('Invalid signature');
     }
-    const { reference, transaction_id, amount, status, payment_method, paid_at } = body;
-    if (!reference) throw new Error('Missing reference in webhook');
+
+    const {
+        reference,
+        transaction_id,
+        amount,
+        status,
+        payment_method,
+        paid_at
+    } = body;
+
+    if (!reference) {
+        throw new Error('Missing reference in webhook');
+    }
 
     if (status === 'SUCCESS' || status === 'PAID') {
-        const payment = await pool.query(
-            `SELECT id, amount, status, expires_at
-             FROM qr_payments
-             WHERE qr_id = $1
-             LIMIT 1`,
-            [reference]
-        );
+        const result = await settleQrPayment({
+            qrId: reference,
+            receivedAmount: amount,
+            paymentMethod: payment_method || 'raast',
+            paidAt: paid_at || new Date(),
+            providerRef: transaction_id || null,
+            rawResponse: body,
+        });
 
-        if (!payment.rows.length) {
-            throw new Error('Payment reference not found');
+        if (global.io && result.restaurantId) {
+            global.io
+                .to(`restaurant_${result.restaurantId}`)
+                .emit('qr_payment_update', {
+                    qr_id: reference,
+                    status: 'PAID',
+                    order_id: result.order?.id || null,
+                });
         }
 
-        const current = payment.rows[0];
+        return {
+            ok: true,
+            duplicate: result.duplicate
+        };
+    }
 
-        // Ignore duplicate/replayed webhooks after the payment is already processed.
-        if (current.status !== 'pending') {
-            return { ok: true, duplicate: true };
-        }
-
-        // Never mark a payment as paid when the provider-reported amount differs.
-        const expectedAmount = Number(current.amount);
-        const receivedAmount = Number(amount);
-        if (!Number.isFinite(receivedAmount) || receivedAmount !== expectedAmount) {
-            throw new Error('Webhook amount mismatch');
-        }
-
-        // Do not accept a successful webhook for an expired QR payment.
-        if (current.expires_at && new Date(current.expires_at) < new Date()) {
-            await pool.query(
-                `UPDATE qr_payments
-                 SET status = 'expired', raw_response = $1, updated_at = NOW()
-                 WHERE id = $2 AND status = 'pending'`,
-                [body, current.id]
-            );
-            throw new Error('Payment QR has expired');
-        }
-
-        await pool.query(
-            `UPDATE qr_payments
-             SET status = 'paid', paid_at = $1, paid_amount = $2,
-                 payment_method = $3, provider_ref = $4, raw_response = $5, updated_at = NOW()
-             WHERE id = $6 AND status = 'pending' AND amount = $7`,
-            [paid_at || new Date(), receivedAmount, payment_method || 'raast', transaction_id, body, current.id, expectedAmount]
-        );
-    } else if (status === 'FAILED') {
-        await pool.query(
-            `UPDATE qr_payments
-             SET status = 'cancelled', raw_response = $1, updated_at = NOW()
-             WHERE qr_id = $2 AND status = 'pending'`,
+    if (status === 'FAILED') {
+        const result = await pool.query(
+            `UPDATE qr_payments qp
+             SET status = 'cancelled',
+                 raw_response = $1,
+                 updated_at = NOW()
+             FROM orders o
+             WHERE qp.qr_id = $2
+               AND qp.order_id = o.id
+               AND qp.status = 'pending'
+             RETURNING qp.restaurant_id, qp.order_id`,
             [body, reference]
         );
+
+        if (global.io && result.rows.length) {
+            global.io
+                .to(`restaurant_${result.rows[0].restaurant_id}`)
+                .emit('qr_payment_update', {
+                    qr_id: reference,
+                    status: 'FAILED',
+                    order_id: result.rows[0].order_id,
+                });
+        }
     }
 
-    if (global.io) {
-        global.io.emit('qr_payment_update', { qr_id: reference, status });
-    }
     return { ok: true };
 }
 
