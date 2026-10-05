@@ -941,7 +941,7 @@ const localNumber = lnRes.rows[0].n;
         const dealCheck =
           await client.query(
             `
-            SELECT id
+            SELECT id, price
 
             FROM deals
 
@@ -993,7 +993,8 @@ const localNumber = lnRes.rows[0].n;
             [
               order.id,
               dealId,
-              dealQuantity
+              dealQuantity,
+              Number(dealCheck.rows[0].price)
             ]
           );
 
