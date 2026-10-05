@@ -436,8 +436,8 @@ async function manualConfirmPayment(qrId, staffUserId, restaurantId) {
 /* ============================================================
    WEBHOOK — bank yahan call karega
    ============================================================ */
-async function handleWebhook({ headers, body }) {
-    if (!verifyWebhookSignature(headers, body)) {
+async function handleWebhook({ headers, body, rawBody = null }) {
+    if (!verifyWebhookSignature(headers, body, rawBody)) {
         throw new Error('Invalid signature');
     }
 
@@ -508,7 +508,7 @@ async function handleWebhook({ headers, body }) {
     return { ok: true };
 }
 
-function verifyWebhookSignature(headers, body) {
+function verifyWebhookSignature(headers, body, rawBody = null) {
     if (PAYMENT_CONFIG.provider === 'manual') {
         const secret = process.env.PAYMENT_WEBHOOK_SECRET;
         if (!secret) return false;
@@ -516,7 +516,9 @@ function verifyWebhookSignature(headers, body) {
         const signature = headers['x-webhook-signature'] || headers['x-signature'];
         if (!signature) return false;
 
-        const payload = typeof body === 'string' ? body : JSON.stringify(body);
+        const payload = rawBody && Buffer.isBuffer(rawBody)
+            ? rawBody
+            : (typeof body === 'string' ? body : JSON.stringify(body));
         const expected = crypto
             .createHmac('sha256', secret)
             .update(payload)
