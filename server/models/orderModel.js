@@ -974,14 +974,18 @@ const localNumber = lnRes.rows[0].n;
             (
               order_id,
               deal_id,
-              quantity
+              quantity,
+              unit_price,
+              line_total
             )
 
             VALUES
             (
               $1,
               $2,
-              $3
+              $3,
+              $4,
+              $3 * $4
             )
 
             RETURNING id
@@ -3390,14 +3394,18 @@ WHERE id = $2
             (
               order_id,
               deal_id,
-              quantity
+              quantity,
+              unit_price,
+              line_total
             )
 
             VALUES
             (
               $1,
               $2,
-              $3
+              $3,
+              $4,
+              $3 * $4
             )
 
             RETURNING id
@@ -3405,7 +3413,8 @@ WHERE id = $2
             [
               orderId,
               dealId,
-              dealQuantity
+              dealQuantity,
+              Number(dealCheck.rows[0].price)
             ]
           );
 
