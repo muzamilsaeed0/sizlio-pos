@@ -44,7 +44,7 @@ app.use(
 );
 
 /* =====================================================
-   HELMET + CSP (proper directives, error fixed)
+   HELMET + CSP
 ===================================================== */
 app.use(
   helmet({
@@ -56,9 +56,9 @@ app.use(
           "'unsafe-inline'",
           "https://cdn.socket.io",
           "https://api.qrserver.com",
-          "https://cdn.jsdelivr.net", 
+          "https://cdn.jsdelivr.net",
         ],
-         scriptSrcAttr: ["'unsafe-inline'"],
+        scriptSrcAttr: ["'unsafe-inline'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "https:", "blob:"],
         connectSrc: ["'self'", "wss:", "https:"],
@@ -69,7 +69,7 @@ app.use(
       },
     },
     crossOriginEmbedderPolicy: false,
-crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
   })
 );
 
@@ -92,8 +92,8 @@ app.use("/images", express.static(path.join(__dirname, "public", "images")));
 
 // 1) Global limiter (sab API pe)
 const globalLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 min
-  max: 300,             // 300 req/min/IP
+  windowMs: 60 * 1000,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -135,7 +135,6 @@ app.use("/api/auth/login", (req, res, next) => {
       })
       .catch((err) => {
         console.error("Login rate-limit role check:", err);
-        // DB fail ho to security ke liye normal limiter apply karo
         return loginLimiter(req, res, next);
       });
 
@@ -151,7 +150,7 @@ app.use("/api/auth/login", (req, res, next) => {
 pool.query("SELECT NOW()", (err, result) => {
   if (err) {
     console.error("❌ Database Connection Failed:", err.message);
-    process.exit(1); // Railway restart karega
+    process.exit(1);
   } else {
     console.log("✅ Database Connected Successfully");
     console.log("Server Time:", result.rows[0].now);
@@ -248,46 +247,176 @@ const io = new Server(server, {
   },
 });
 
+/* ---------- Socket user validation ---------- */
+/*
+ * JWT is only the identity proof. Before accepting a socket,
+ * re-check the database so disabled users, suspended/expired
+ * restaurants, and old sessions cannot use a stale token.
+ */
+const getSocketUser = async (decoded) => {
+  if (!decoded?.id || !decoded?.sessionId) {
+    throw new Error("Invalid session");
+  }
+
+  const result = await pool.query(
+    `
+      SELECT
+        u.id,
+        u.role,
+        u.restaurant_id,
+        u.is_active,
+        u.current_session,
+        r.status,
+        r.expiry_date
+      FROM users u
+      LEFT JOIN restaurants r
+        ON r.id = u.restaurant_id
+      WHERE u.id = $1
+      LIMIT 1
+    `,
+    [decoded.id]
+  );
+
+  if (!result.rowCount) {
+    throw new Error("User not found");
+  }
+
+  const user = result.rows[0];
+
+  if (!user.is_active) {
+    throw new Error("User account disabled");
+  }
+
+  if (user.current_session !== decoded.sessionId) {
+    throw new Error("Session expired");
+  }
+
+  if (user.role !== "super_admin" && user.status !== "Active") {
+    throw new Error("Restaurant suspended");
+  }
+
+  if (
+    user.role !== "super_admin" &&
+    user.expiry_date &&
+    new Date(user.expiry_date) < new Date()
+  ) {
+    throw new Error("Restaurant subscription expired");
+  }
+
+  return {
+    id: user.id,
+    role: user.role,
+    restaurant_id: user.restaurant_id,
+  };
+};
+
 /* ---------- Socket auth ---------- */
-io.use((socket, next) => {
+io.use(async (socket, next) => {
   try {
     const token = socket.handshake.auth?.token;
+
     if (!token) {
       return next(new Error("Authentication required"));
     }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    socket.user = decoded;
+    const user = await getSocketUser(decoded);
+
+    // Never trust role/restaurant_id from a stale JWT payload.
+    socket.user = user;
     next();
   } catch (err) {
-    next(new Error("Invalid token"));
+    console.error("Socket auth rejected:", err.message);
+    next(new Error("Invalid or expired session"));
   }
 });
 
+/*
+ * Revalidate the DB session before every client -> server event.
+ * This makes logout-from-another-device, account disable,
+ * restaurant suspension, and subscription expiry effective
+ * without waiting for the socket to reconnect.
+ */
+io.use((socket, next) => {
+  socket.use(async (packet, packetNext) => {
+    try {
+      const token = socket.handshake.auth?.token;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await getSocketUser(decoded);
+
+      socket.user = user;
+      packetNext();
+    } catch (err) {
+      console.error("Socket session rejected:", err.message);
+      socket.disconnect(true);
+      packetNext(new Error("Session expired. Please login again."));
+    }
+  });
+
+  next();
+});
+
 /* ---------- Online users tracker ---------- */
+/*
+ * One user can have multiple tabs/devices. Track every socket
+ * independently so disconnecting one socket does not mark the
+ * whole user offline.
+ *
+ * Map<userId, Map<socketId, metadata>>
+ */
 const connectedUsers = new Map();
 
-/* ---------- SINGLE connection handler ---------- */
-io.on("connection", (socket) => {
-  const roomName = `restaurant_${socket.user.restaurant_id}`;
-  socket.join(roomName);
+const addConnectedSocket = (socket) => {
+  const userId = socket.user.id;
 
-  connectedUsers.set(socket.user.id, {
+  if (!connectedUsers.has(userId)) {
+    connectedUsers.set(userId, new Map());
+  }
+
+  connectedUsers.get(userId).set(socket.id, {
     id: socket.user.id,
     role: socket.user.role,
     restaurant_id: socket.user.restaurant_id,
     connected_at: new Date(),
     socket_id: socket.id,
   });
+};
+
+const removeConnectedSocket = (socket) => {
+  const userId = socket.user?.id;
+  if (!userId) return;
+
+  const userSockets = connectedUsers.get(userId);
+  if (!userSockets) return;
+
+  userSockets.delete(socket.id);
+
+  if (userSockets.size === 0) {
+    connectedUsers.delete(userId);
+  }
+};
+
+/* ---------- SINGLE connection handler ---------- */
+io.on("connection", (socket) => {
+  const restaurantId = socket.user.restaurant_id;
+  const roomName = restaurantId ? `restaurant_${restaurantId}` : null;
+
+  if (roomName) {
+    socket.join(roomName);
+    console.log("ROOM JOINED:", roomName);
+  }
+
+  addConnectedSocket(socket);
 
   console.log(
-    `✅ ONLINE: User ${socket.user.id} (${socket.user.role}) | Restaurant ${socket.user.restaurant_id} | Socket ${socket.id} | Total: ${connectedUsers.size}`
+    `✅ ONLINE: User ${socket.user.id} (${socket.user.role}) | Restaurant ${socket.user.restaurant_id} | Socket ${socket.id} | Users: ${connectedUsers.size}`
   );
-  console.log("ROOM JOINED:", roomName);
 
   socket.on("disconnect", (reason) => {
-    connectedUsers.delete(socket.user.id);
+    removeConnectedSocket(socket);
+
     console.log(
-      `❌ OFFLINE: User ${socket.user.id} | ${reason} | Total: ${connectedUsers.size}`
+      `❌ OFFLINE SOCKET: User ${socket.user.id} | Socket ${socket.id} | ${reason} | Users: ${connectedUsers.size}`
     );
   });
 });
@@ -310,7 +439,23 @@ app.get("/api/admin/online-users", authMiddleware, (req, res) => {
   if (req.user.role !== "super_admin") {
     return res.status(403).json({ success: false, message: "Forbidden" });
   }
-  const online = Array.from(connectedUsers.values());
+
+  // Return one record per online user, even if they have
+  // multiple tabs/devices connected.
+  const online = Array.from(connectedUsers.entries()).map(
+    ([userId, sockets]) => {
+      const first = sockets.values().next().value;
+
+      return {
+        id: Number(userId),
+        role: first.role,
+        restaurant_id: first.restaurant_id,
+        connected_at: first.connected_at,
+        socket_count: sockets.size,
+      };
+    }
+  );
+
   res.json({
     success: true,
     count: online.length,
@@ -330,7 +475,7 @@ try {
 }
 
 /* =====================================================
-   GLOBAL ERROR HANDLER (must be last)
+   GLOBAL ERROR HANDLER
 ===================================================== */
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);
