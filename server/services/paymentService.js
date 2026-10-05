@@ -174,8 +174,28 @@ async function handleWebhook({ headers, body }) {
 }
 
 function verifyWebhookSignature(headers, body) {
-    if (PAYMENT_CONFIG.provider === 'manual') return true;
-    return true;
+    if (PAYMENT_CONFIG.provider === 'manual') {
+        const secret = process.env.PAYMENT_WEBHOOK_SECRET;
+        if (!secret) return false;
+
+        const signature = headers['x-webhook-signature'] || headers['x-signature'];
+        if (!signature) return false;
+
+        const payload = typeof body === 'string' ? body : JSON.stringify(body);
+        const expected = crypto
+            .createHmac('sha256', secret)
+            .update(payload)
+            .digest('hex');
+
+        const provided = String(signature).replace(/^sha256=/i, '').trim();
+        const expectedBuf = Buffer.from(expected, 'utf8');
+        const providedBuf = Buffer.from(provided, 'utf8');
+
+        return expectedBuf.length === providedBuf.length &&
+            crypto.timingSafeEqual(expectedBuf, providedBuf);
+    }
+
+    return false;
 }
 
 module.exports = {
