@@ -774,7 +774,10 @@ function showLocationBlockedScreen(message) {
     try {
       const res = await fetch(`/api/public/${restaurantId}/call-waiter`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': getOrderIdempotencyKey()
+        },
         body: JSON.stringify({ table_no: Number(tableNo), table_token: tableToken })
       });
       if (!res.ok) {
@@ -788,6 +791,18 @@ function showLocationBlockedScreen(message) {
       showToast('Server error', true);
       btn.disabled = false; btn.classList.remove('called');
     }
+  }
+
+  let pendingOrderIdempotencyKey = null;
+
+  function getOrderIdempotencyKey() {
+    if (!pendingOrderIdempotencyKey) {
+      pendingOrderIdempotencyKey =
+        (window.crypto && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    }
+    return pendingOrderIdempotencyKey;
   }
 
   async function placeOrder() {
@@ -831,7 +846,8 @@ function showLocationBlockedScreen(message) {
         return;
       }
 
-      showToast('✅ Order sent to waiter');
+      showToast(data.duplicate ? '✅ Order already received' : '✅ Order sent to waiter');
+      pendingOrderIdempotencyKey = null;
       cart = [];
       dealCart = [];
       updateMenuButtons();
