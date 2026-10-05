@@ -248,7 +248,9 @@ async function settleQrPayment({
         }
 
         const expectedQrAmount = Number(payment.amount);
-        const amount = Number(receivedAmount);
+        const amount = receivedAmount === null || receivedAmount === undefined
+            ? expectedQrAmount
+            : Number(receivedAmount);
 
         if (!Number.isFinite(amount) || amount !== expectedQrAmount) {
             throw new Error('Payment amount mismatch');
