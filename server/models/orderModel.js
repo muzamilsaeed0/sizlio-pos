@@ -3173,7 +3173,9 @@ if (!isCafeLite) {
           source: 'staff_payment',
           order_total: newTotalAmount.toFixed(2),
           card_surcharge: addCard.toFixed(2),
-          bank_surcharge: addBank.toFixed(2)
+          bank_surcharge: addBank.toFixed(2),
+          tendered_amount: finalPaidAmount.toFixed(2),
+          change_amount: changeAmount.toFixed(2)
         })
       ]
     );
