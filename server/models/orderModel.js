@@ -906,16 +906,8 @@ const localNumber = lnRes.rows[0].n;
           item.menu_item_id,
           variantId,
           item.quantity,
-          Number(
-            variantId !== null
-              ? variantCheck.rows[0].price
-              : menuCheck.rows[0].price
-          ),
-          item.quantity * Number(
-            variantId !== null
-              ? variantCheck.rows[0].price
-              : menuCheck.rows[0].price
-          )
+          unitPrice,
+          item.quantity * unitPrice
         ]
       );
 
@@ -3125,7 +3117,7 @@ const addItemsToOrder = async (
       const menuCheck =
         await client.query(
           `
-          SELECT id
+          SELECT id, price
 
           FROM menu_items
 
@@ -3149,12 +3141,14 @@ const addItemsToOrder = async (
       }
 
 
+      let unitPrice = Number(menuCheck.rows[0].price);
+
       if (variantId !== null) {
 
         const variantCheck =
           await client.query(
             `
-            SELECT id
+            SELECT id, price
 
             FROM menu_item_variants
 
@@ -3177,6 +3171,8 @@ const addItemsToOrder = async (
           );
 
         }
+
+        unitPrice = Number(variantCheck.rows[0].price);
 
       }
 
@@ -3215,7 +3211,10 @@ SET
     quantity + $1,
 
   new_quantity =
-    new_quantity + $1
+    new_quantity + $1,
+
+  line_total =
+    (quantity + $1) * unit_price
 
 WHERE id = $2
           `,
@@ -3237,7 +3236,9 @@ WHERE id = $2
             menu_item_id,
             variant_id,
             quantity,
-            new_quantity
+            new_quantity,
+            unit_price,
+            line_total
           )
 
           VALUES
@@ -3246,14 +3247,17 @@ WHERE id = $2
             $2,
             $3,
             $4,
-            $4
+            $4,
+            $5,
+            $4 * $5
           )
           `,
           [
             orderId,
             item.menu_item_id,
             variantId,
-            item.quantity
+            item.quantity,
+            unitPrice
           ]
         );
 
