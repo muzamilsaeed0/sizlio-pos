@@ -4495,8 +4495,15 @@ exports.updateDealQuantity = async (req, res) => {
          o.restaurant_id
        FROM order_deals od
        JOIN orders o ON o.id = od.order_id
-       WHERE od.id = $1`,
-      [dealId]
+       WHERE od.id = $1
+       AND od.order_id = $2
+       AND EXISTS (
+         SELECT 1 FROM orders o
+         WHERE o.id = od.order_id
+           AND o.restaurant_id = $3
+       )
+         AND o.restaurant_id = $2`,
+      [dealId, restaurantId]
     );
 
     if (dealResult.rows.length === 0) {
@@ -4530,16 +4537,19 @@ exports.updateDealQuantity = async (req, res) => {
     if (newQuantity <= 0) {
       // Delete deal and its items
       await pool.query('DELETE FROM order_items WHERE order_deal_id = $1', [dealId]);
-      await pool.query('DELETE FROM order_deals WHERE id = $1', [dealId]);
+      await pool.query(
+        'DELETE FROM order_deals WHERE id = $1 AND order_id = $2',
+        [dealId, orderId]
+      );
     } else {
       // Update deal quantity
       await pool.query(
-        'UPDATE order_deals SET quantity = $1 WHERE id = $2',
-        [newQuantity, dealId]
+        'UPDATE order_deals SET quantity = $1 WHERE id = $2 AND order_id = $3',
+        [newQuantity, dealId, orderId]
       );
 
       // Refresh deal items (delete old, reinsert with new quantity)
-      await refreshDealItems(dealId, newQuantity, orderId);
+      await refreshDealItems(dealId, newQuantity, orderId, restaurantId);
     }
 
     // 4. Recalculate order pricing
@@ -4588,7 +4598,7 @@ exports.updateDealQuantity = async (req, res) => {
 // HELPER: REFRESH DEAL ITEMS
 // ======================================================
 
-async function refreshDealItems(orderDealId, newDealQuantity, orderId) {
+async function refreshDealItems(orderDealId, newDealQuantity, orderId, restaurantId) {
   // 1. Get deal_items from deal definition
   const dealItemsResult = await pool.query(
     `SELECT di.menu_item_id, di.variant_id, di.quantity
