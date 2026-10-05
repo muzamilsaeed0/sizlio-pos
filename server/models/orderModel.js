@@ -817,7 +817,7 @@ const localNumber = lnRes.rows[0].n;
       const menuCheck =
         await client.query(
           `
-          SELECT id
+          SELECT id, price
 
           FROM menu_items
 
@@ -882,7 +882,9 @@ const localNumber = lnRes.rows[0].n;
           order_id,
           menu_item_id,
           variant_id,
-          quantity
+          quantity,
+          unit_price,
+          line_total
         )
 
         VALUES
@@ -890,14 +892,32 @@ const localNumber = lnRes.rows[0].n;
           $1,
           $2,
           $3,
-          $4
+          $4,
+          $5,
+          $6
         )
         `,
         [
           order.id,
           item.menu_item_id,
           variantId,
-          item.quantity
+          item.quantity,
+          Number(
+            variantId !== null
+              ? (await client.query(
+                  `SELECT price FROM menu_item_variants WHERE id = $1 AND menu_item_id = $2`,
+                  [variantId, item.menu_item_id]
+                )).rows[0]?.price
+              : menuCheck.rows[0]?.price
+          ),
+          item.quantity * Number(
+            variantId !== null
+              ? (await client.query(
+                  `SELECT price FROM menu_item_variants WHERE id = $1 AND menu_item_id = $2`,
+                  [variantId, item.menu_item_id]
+                )).rows[0]?.price
+              : menuCheck.rows[0]?.price
+          )
         ]
       );
 
@@ -1092,7 +1112,7 @@ const localNumber = lnRes.rows[0].n;
 
           COALESCE(
             SUM(
-              COALESCE(miv.price, m.price) * oi.quantity
+              oi.unit_price * oi.quantity
             ),
             0
           ) AS subtotal
@@ -1306,7 +1326,7 @@ const getAllOrders = async (
                 COALESCE(miv.price, m.price) AS price,
                 oi.quantity,
                 oi.new_quantity,
-                COALESCE(miv.price, m.price) * oi.quantity AS subtotal
+                oi.unit_price * oi.quantity AS subtotal
 
               FROM order_items oi
 
@@ -2497,7 +2517,7 @@ const dineCharge = Number(pricing.dine_charge || 0);
 
           COALESCE(
             SUM(
-              COALESCE(miv.price, m.price) * oi.quantity
+              oi.unit_price * oi.quantity
             ),
             0
           ) AS subtotal
@@ -4031,7 +4051,7 @@ const recalculateOrderPricing = async (client, orderId, restaurantId) => {
 
   // Subtotal (items)
   const subtotalResult = await client.query(`
-    SELECT COALESCE(SUM(COALESCE(miv.price, m.price) * oi.quantity), 0) AS subtotal
+    SELECT COALESCE(SUM(oi.unit_price * oi.quantity), 0) AS subtotal
     FROM order_items oi
     INNER JOIN menu_items m ON m.id = oi.menu_item_id
     LEFT JOIN menu_item_variants miv ON miv.id = oi.variant_id
