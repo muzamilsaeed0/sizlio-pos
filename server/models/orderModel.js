@@ -765,10 +765,10 @@ const createOrder = async (
           initialPaymentStatus === 'paid'
             ? createdByUserId
             : null,
-           Number(deliveryCharge || 0),
-          Number(dineCharge || 0),
-          finalCardCharge,
-          finalBankCharge 
+          0,
+          0,
+          0,
+          0
         ]
       );
 
@@ -1379,14 +1379,16 @@ const createOrder = async (
         [
           restaurantId,
           order.id,
-          finalPaidAmount.toFixed(2),
+          finalTotalAmount.toFixed(2),
           normalizedPaymentMethod,
           createdByUserId,
           JSON.stringify({
             source: 'paid_at_order',
             order_total: finalTotalAmount.toFixed(2),
             card_surcharge: finalCardCharge.toFixed(2),
-            bank_surcharge: finalBankCharge.toFixed(2)
+            bank_surcharge: finalBankCharge.toFixed(2),
+            tendered_amount: finalPaidAmount.toFixed(2),
+            change_amount: initialChangeAmount.toFixed(2)
           })
         ]
       );
@@ -3111,13 +3113,13 @@ if (!isCafeLite) {
           paid_amount = $4,
           change_amount = $5,
           paid_at = NOW(),
-          paid_by_user_id = $5,
-          card_charge = $6,
-          bank_charge = $7,
-          total_amount = $8
+          paid_by_user_id = $6,
+          card_charge = $7,
+          bank_charge = $8,
+          total_amount = $9
         WHERE id = $1
           AND restaurant_id = $2
-          AND status = ANY($9::text[])
+          AND status = ANY($10::text[])
           AND payment_status = 'unpaid'
         RETURNING *
         `,
@@ -3166,7 +3168,7 @@ if (!isCafeLite) {
       [
         restaurantId,
         id,
-        finalPaidAmount.toFixed(2),
+        newTotalAmount.toFixed(2),
         paymentMethod,
         paidByUserId,
         JSON.stringify({
