@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS public.payment_transactions (
   id BIGSERIAL PRIMARY KEY,
   restaurant_id INTEGER NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
   order_id INTEGER NOT NULL REFERENCES public.orders(id) ON DELETE RESTRICT,
-  qr_payment_id BIGINT REFERENCES public.qr_payments(id) ON DELETE SET NULL,
+  qr_payment_id BIGINT,
   amount NUMERIC(12,2) NOT NULL CHECK (amount > 0),
   payment_method VARCHAR(50) NOT NULL,
   status VARCHAR(20) NOT NULL DEFAULT 'completed'
