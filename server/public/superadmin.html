@@ -1212,15 +1212,24 @@
       document.getElementById('detail-topbar-title').innerText = r.name;
 
       
-      const isCafeLite = (r.plan === 'Cafe Lite');
-const isWholesale = (r.business_type === 'wholesale');
+           const isCafeLite = (r.plan === 'Cafe Lite');
+      const isWholesale = (r.business_type === 'wholesale');
 
       const loginUrlsBox = `
         <div class="login-urls-box">
           <div class="title">🔗 Login URLs — Share with staff</div>
           <div class="urls">
 
-            ${isCafeLite
+            ${isWholesale
+              ? `
+                <div>
+                  📦 <b>Wholesale:</b>
+                  <a href="/wholesale.html?restaurant=${r.id}" target="_blank">
+                    /wholesale.html?restaurant=${r.id}
+                  </a>
+                </div>
+              `
+              : isCafeLite
               ? `
                 <div>
                   ☕ <b>Counter Lite:</b>
@@ -1239,39 +1248,41 @@ const isWholesale = (r.business_type === 'wholesale');
               `
             }
 
-            <div>
-              👔 <b>Manager:</b>
-              <a href="/manager.html?restaurant=${r.id}" target="_blank">
-                /manager.html?restaurant=${r.id}
-              </a>
-            </div>
-
-            <div>
-              🏍️ <b>Rider:</b>
-              <a href="/rider.html?restaurant=${r.id}" target="_blank">
-                /rider.html?restaurant=${r.id}
-              </a>
-            </div>
-            <div>
-              🖥️ <b>Display:</b>
-              <a href="/display.html?restaurant=${r.id}" target="_blank">
-                /display.html?restaurant=${r.id}
-              </a>
-            </div>
-            <div>
-              🧑‍🍳 <b>Kitchen:</b>
-              <a href="/kitchen.html?restaurant=${r.id}" target="_blank">
-                /kitchen.html?restaurant=${r.id}
-              </a>
-              </div>
-              <div>
-                🧑‍🍳<b>Waiter:</b>
-                <a href="/waiter.html?restaurant=${r.id}" target="_blank">
-                  /waiter.html?restaurant=${r.id}
-                </a>  
+            ${!isWholesale
+              ? `
+                <div>
+                  👔 <b>Manager:</b>
+                  <a href="/manager.html?restaurant=${r.id}" target="_blank">
+                    /manager.html?restaurant=${r.id}
+                  </a>
                 </div>
-                
-
+                <div>
+                  🏍️ <b>Rider:</b>
+                  <a href="/rider.html?restaurant=${r.id}" target="_blank">
+                    /rider.html?restaurant=${r.id}
+                  </a>
+                </div>
+                <div>
+                  🖥️ <b>Display:</b>
+                  <a href="/display.html?restaurant=${r.id}" target="_blank">
+                    /display.html?restaurant=${r.id}
+                  </a>
+                </div>
+                <div>
+                  🧑‍🍳 <b>Kitchen:</b>
+                  <a href="/kitchen.html?restaurant=${r.id}" target="_blank">
+                    /kitchen.html?restaurant=${r.id}
+                  </a>
+                </div>
+                <div>
+                  🧑‍🍳 <b>Waiter:</b>
+                  <a href="/waiter.html?restaurant=${r.id}" target="_blank">
+                    /waiter.html?restaurant=${r.id}
+                  </a>
+                </div>
+              `
+              : ''
+            }
 
           </div>
         </div>
@@ -2074,18 +2085,23 @@ const counterLabel = isWholesale
     : '🧾 Counter';
 
       /* ✅ Login URL hint for counter/rider */
-      const plan = activeRestaurant?.plan || 'Basic';
+     const plan = activeRestaurant?.plan || 'Basic';
       const isCafeLite = plan === 'Cafe Lite';
+      const isWholesale = (activeRestaurant?.business_type === 'wholesale');
       const origin = window.location.origin;
       let loginUrlHint = '';
 
       if (role === 'counter') {
-      const url = isWholesale
-  ? `${origin}/wholesale.html?restaurant=${restaurantId}`
-  : isCafeLite
-    ? `${origin}/counter-lite.html?restaurant=${restaurantId}`
-    : `${origin}/counter.html?restaurant=${restaurantId}`;
-        const label = isCafeLite ? '☕ Counter Lite Login URL' : '🧾 Counter Login URL';
+        const url = isWholesale
+          ? `${origin}/wholesale.html?restaurant=${restaurantId}`
+          : isCafeLite
+            ? `${origin}/counter-lite.html?restaurant=${restaurantId}`
+            : `${origin}/counter.html?restaurant=${restaurantId}`;
+        const label = isWholesale
+          ? '📦 Wholesale Login URL'
+          : isCafeLite
+            ? '☕ Counter Lite Login URL'
+            : '🧾 Counter Login URL';
 
         loginUrlHint = `
           <div class="staff-url-hint">

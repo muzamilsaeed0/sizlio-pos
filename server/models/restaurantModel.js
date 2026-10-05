@@ -330,17 +330,6 @@ if (manager_username && manager_password) {
 
 const planLimits = PLAN_LIMITS[selectedPlan];
 
-// WHOLESALE: only 1 counter — no waiter/kitchen/display/rider
-if (selectedBusinessType === 'wholesale') {
-  const username = `${slug}_counter1`;
-  const password = '0000'; // or generatePassword()
-  await createStaffUser('counter', 'Counter 1', username, password);
-  // optional: 1 manager if you want
-  // skip waiter, kitchen, display, delivery loops entirely
-} else {
-  // existing for loops: waiter, kitchen, counter, display, delivery...
-}
-
 const generatedStaff = {
   waiter: [],
   kitchen: [],
@@ -348,8 +337,6 @@ const generatedStaff = {
   display: [],
   delivery: []
 };
-
-
 
 // ======================================================
 // HELPER: CREATE STAFF USER
@@ -376,15 +363,9 @@ const createStaffUser = async (
       role,
       restaurant_id
     )
-
     VALUES
     (
-      $1,
-      $2,
-      $3,
-      $4,
-      $5,
-      $6
+      $1, $2, $3, $4, $5, $6
     )
     `,
     [
@@ -404,135 +385,88 @@ const createStaffUser = async (
 
 };
 
-
 // ======================================================
-// WAITER
-// ======================================================
-
-for (
-  let i = 1;
-  i <= planLimits.waiter;
-  i++
-) {
-
-  const username =
-    `${slug}_waiter${i}`;
-
-  const password =
-    generatePassword();
-
-  await createStaffUser(
-    'waiter',
-    `Waiter ${i}`,
-    username,
-    password
-  );
-
-}
-
-
-// ======================================================
-// KITCHEN
+// STAFF BY BUSINESS TYPE
 // ======================================================
 
-for (
-  let i = 1;
-  i <= planLimits.kitchen;
-  i++
-) {
+if (selectedBusinessType === 'wholesale') {
 
-  const username =
-    `${slug}_kitchen${i}`;
-
-  const password =
-    generatePassword();
-
-  await createStaffUser(
-    'kitchen',
-    `Kitchen ${i}`,
-    username,
-    password
-  );
-
-}
-
-
-// ======================================================
-// COUNTER
-// ======================================================
-
-for (
-  let i = 1;
-  i <= planLimits.counter;
-  i++
-) {
-
-  const username =
-    `${slug}_counter${i}`;
-
-  const password =
-    generatePassword();
+  // Wholesale: ONLY 1 counter — no waiter/kitchen/display/rider
+  const username = `${slug}_counter1`;
+  const password = '0000';
 
   await createStaffUser(
     'counter',
-    `Counter ${i}`,
+    'Counter 1',
     username,
     password
   );
 
+} else {
+
+  // ---------- WAITER ----------
+  for (let i = 1; i <= planLimits.waiter; i++) {
+    const username = `${slug}_waiter${i}`;
+    const password = generatePassword();
+    await createStaffUser(
+      'waiter',
+      `Waiter ${i}`,
+      username,
+      password
+    );
+  }
+
+  // ---------- KITCHEN ----------
+  for (let i = 1; i <= planLimits.kitchen; i++) {
+    const username = `${slug}_kitchen${i}`;
+    const password = generatePassword();
+    await createStaffUser(
+      'kitchen',
+      `Kitchen ${i}`,
+      username,
+      password
+    );
+  }
+
+  // ---------- COUNTER ----------
+  for (let i = 1; i <= planLimits.counter; i++) {
+    const username = `${slug}_counter${i}`;
+    const password = generatePassword();
+    await createStaffUser(
+      'counter',
+      `Counter ${i}`,
+      username,
+      password
+    );
+  }
+
+  // ---------- DISPLAY ----------
+  for (let i = 1; i <= planLimits.display; i++) {
+    const username = `${slug}_display${i}`;
+    const password = generatePassword();
+    await createStaffUser(
+      'display',
+      `Display ${i}`,
+      username,
+      password
+    );
+  }
+
+  // ---------- RIDER ----------
+  for (let i = 1; i <= planLimits.rider; i++) {
+    const username = `${slug}_rider${i}`;
+    const password = generatePassword();
+    await createStaffUser(
+      'delivery',
+      `Rider ${i}`,
+      username,
+      password
+    );
+  }
+
 }
 
 
-// ======================================================
-// DISPLAY
-// ======================================================
-
-for (
-  let i = 1;
-  i <= planLimits.display;
-  i++
-) {
-
-  const username =
-    `${slug}_display${i}`;
-
-  const password =
-    generatePassword();
-
-  await createStaffUser(
-    'display',
-    `Display ${i}`,
-    username,
-    password
-  );
-
-}
-
-
-// ======================================================
-// RIDER
-// ======================================================
-
-for (
-  let i = 1;
-  i <= planLimits.rider;
-  i++
-) {
-
-  const username =
-    `${slug}_rider${i}`;
-
-  const password =
-    generatePassword();
-
-  await createStaffUser(
-    'delivery',
-    `Rider ${i}`,
-    username,
-    password
-  );
-
-}
 
     
 
