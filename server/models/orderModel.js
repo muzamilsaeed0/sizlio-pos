@@ -3916,7 +3916,8 @@ const removeOrderItem = async (
          RETURNING id
         `,
         [
-          orderItemId
+          orderItemId,
+          restaurantId
         ]
       );
 
