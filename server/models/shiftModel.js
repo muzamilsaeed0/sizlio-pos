@@ -18,18 +18,56 @@ const getActiveShift = async (userId, restaurantId) => {
 };
 
 const startShift = async (userId, restaurantId) => {
-  const result = await pool.query(
-    `
-    INSERT INTO shifts
-      (user_id, restaurant_id, status)
-    VALUES
-      ($1, $2, 'active')
-    RETURNING *
-    `,
-    [userId, restaurantId]
-  );
+  const client = await pool.connect();
 
-  return result.rows[0];
+  try {
+    await client.query('BEGIN');
+
+    // Serialize concurrent shift starts for the same user/restaurant.
+    // This prevents two simultaneous requests from creating two active shifts.
+    await client.query(
+      'SELECT pg_advisory_xact_lock($1, $2)',
+      [Number(userId), Number(restaurantId)]
+    );
+
+    const existing = await client.query(
+      `
+      SELECT *
+      FROM shifts
+      WHERE user_id = $1
+        AND restaurant_id = $2
+        AND status = 'active'
+      ORDER BY started_at DESC
+      LIMIT 1
+      FOR UPDATE
+      `,
+      [userId, restaurantId]
+    );
+
+    if (existing.rowCount) {
+      await client.query('COMMIT');
+      return existing.rows[0];
+    }
+
+    const result = await client.query(
+      `
+      INSERT INTO shifts
+        (user_id, restaurant_id, status)
+      VALUES
+        ($1, $2, 'active')
+      RETURNING *
+      `,
+      [userId, restaurantId]
+    );
+
+    await client.query('COMMIT');
+    return result.rows[0];
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch {}
+    throw err;
+  } finally {
+    client.release();
+  }
 };
 
 const endShift = async (shiftId, userId, restaurantId) => {
@@ -368,15 +406,15 @@ const getAllShiftsForManager = async (restaurantId, filters = {}) => {
         -- ✅ Rider ke liye: assigned delivery orders count karo
         --    Baaki roles ke liye: created_by_user_id
         AND (
-          -- 🚴 Rider: jo orders usne deliver kiye
+          -- 🚴 Rider: assigned delivery orders
           (u.role = 'delivery' AND delivery_rider_id = s.user_id)
 
-          -- 💰 Counter / 🍽️ Waiter: jo orders unhone banaye
+          -- 💰 Counter / 🍽️ Waiter: orders they created
           OR (u.role IN ('counter', 'waiter') AND created_by_user_id = s.user_id)
 
-          -- 🍳 Kitchen: koi user filter nahi — shift ke doran ke SAARE orders
-          -- (kyunki kitchen staff order create nahi karte, sirf prepare karte hain)
-          OR (u.role = 'kitchen')
+          -- 🍳 Kitchen: there is currently no kitchen-user attribution
+          -- column on orders, so do not attribute restaurant-wide orders
+          -- to every kitchen staff member.
         )
 
     ) o_stats ON true
