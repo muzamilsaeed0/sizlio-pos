@@ -171,9 +171,7 @@ exports.placeOrder = async (
     deals = [],
     delivery_charge = 0,
     dine_charge = 0,
-    card_charge = 0,        
-    bank_charge = 0,
-    payment_method = null         
+    payment_method = null
   } = req.body;
 
 
