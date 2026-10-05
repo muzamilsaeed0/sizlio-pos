@@ -10,13 +10,20 @@ ALTER TABLE public.order_items
 
 UPDATE public.order_items oi
 SET
-  unit_price = COALESCE(miv.price, m.price),
-  line_total = COALESCE(miv.price, m.price) * oi.quantity
+  unit_price = miv.price,
+  line_total = miv.price * oi.quantity
+FROM public.menu_item_variants miv
+WHERE oi.variant_id = miv.id
+  AND oi.menu_item_id = miv.menu_item_id
+  AND (oi.unit_price IS NULL OR oi.line_total IS NULL);
+
+UPDATE public.order_items oi
+SET
+  unit_price = m.price,
+  line_total = m.price * oi.quantity
 FROM public.menu_items m
-LEFT JOIN public.menu_item_variants miv
-  ON miv.id = oi.variant_id
-  AND miv.menu_item_id = m.id
 WHERE oi.menu_item_id = m.id
+  AND oi.variant_id IS NULL
   AND (oi.unit_price IS NULL OR oi.line_total IS NULL);
 
 DO $$
