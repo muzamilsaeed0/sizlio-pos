@@ -5,7 +5,7 @@ const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 const pool = require('../config/db');
 
 /* Create QR */
-router.post('/qr/create', authMiddleware, async (req, res) => {
+router.post('/qr/create', authMiddleware, authorize('manager', 'counter'), async (req, res) => {
     try {
         const { order_id, amount, description } = req.body;
         const restaurantId = req.user.restaurant_id;
@@ -44,7 +44,7 @@ router.post('/qr/manual-confirm/:qrId', authMiddleware, authorize('manager', 'co
 });
 
 /* Cancel */
-router.post('/qr/cancel/:qrId', authMiddleware, async (req, res) => {
+router.post('/qr/cancel/:qrId', authMiddleware, authorize('manager', 'counter'), async (req, res) => {
     try {
         await pool.query(
             `UPDATE qr_payments SET status='cancelled', updated_at=NOW()
