@@ -1211,8 +1211,39 @@ const createOrder = async (
         taxPercent
       );
 
-         const finalDeliveryCharge = Number(deliveryCharge || 0);
-    const finalDineCharge = Number(dineCharge || 0);
+         // Delivery/dine-in charges are restaurant-configured amounts.
+    // Never trust client-supplied charge values.
+    const chargeResult = await client.query(
+      `SELECT delivery_charge, dine_charge
+       FROM restaurants
+       WHERE id = $1
+       FOR SHARE`,
+      [restaurantId]
+    );
+
+    if (!chargeResult.rows.length) {
+      throw new Error('Restaurant not found.');
+    }
+
+    const configuredDeliveryCharge = Number(chargeResult.rows[0].delivery_charge || 0);
+    const configuredDineCharge = Number(chargeResult.rows[0].dine_charge || 0);
+
+    if (
+      !Number.isFinite(configuredDeliveryCharge) ||
+      configuredDeliveryCharge < 0 ||
+      !Number.isFinite(configuredDineCharge) ||
+      configuredDineCharge < 0
+    ) {
+      throw new Error('Invalid restaurant charge configuration.');
+    }
+
+    const finalDeliveryCharge = orderType === 'delivery'
+      ? configuredDeliveryCharge
+      : 0;
+
+    const finalDineCharge = orderType === 'dine_in'
+      ? configuredDineCharge
+      : 0;
     
         // Card/bank surcharge is always calculated from restaurant settings.
     // Never trust surcharge amounts supplied by the client.
