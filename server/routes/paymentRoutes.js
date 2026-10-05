@@ -70,7 +70,11 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
     try {
         let body;
         try { body = JSON.parse(req.body.toString()); } catch { body = req.body; }
-        const result = await paymentService.handleWebhook({ headers: req.headers, body });
+        const result = await paymentService.handleWebhook({
+            headers: req.headers,
+            body,
+            rawBody: req.rawBody || null
+        });
         res.json(result);
     } catch (err) {
         console.error('Webhook error:', err);
