@@ -4028,7 +4028,7 @@ const updateOrderItemQuantity = async (
 
     const beforeItemsResult = await client.query(
       `SELECT menu_item_id, variant_id, quantity FROM order_items WHERE order_id = $1`,
-      [orderId]
+      [order.id]
     );
     const beforeItems = beforeItemsResult.rows;
 
