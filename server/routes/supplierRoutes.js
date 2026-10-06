@@ -6,24 +6,24 @@ const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 router.use(authMiddleware);
 
 // Suppliers
-router.get('/', authorize('manager'), controller.list);
-router.post('/', authorize('manager'), controller.create);
-router.get('/aging', authorize('manager'), controller.getAging);              // must be BEFORE /:id
-router.get('/:id', authorize('manager'), controller.getOne);
-router.put('/:id', authorize('manager'), controller.update);
-router.delete('/:id', authorize('manager'), controller.remove);
+router.get('/', authorize('manager', 'counter'), controller.list);
+router.post('/', authorize('manager', 'counter'), controller.create);
+router.get('/aging', authorize('manager', 'counter'), controller.getAging);              // must be BEFORE /:id
+router.get('/:id', authorize('manager', 'counter'), controller.getOne);
+router.put('/:id', authorize('manager', 'counter'), controller.update);
+router.delete('/:id', authorize('manager', 'counter'), controller.remove);
 
 // Ledger
-router.get('/:id/ledger', authorize('manager'), controller.getLedger);
+router.get('/:id/ledger', authorize('manager', 'counter'), controller.getLedger);
 
 // Purchases
-router.get('/:id/purchases', authorize('manager'), controller.listPurchases);
-router.post('/:id/purchases', authorize('manager'), controller.createPurchase);
-router.delete('/purchases/:purchaseId', authorize('manager'), controller.deletePurchase);
+router.get('/:id/purchases', authorize('manager', 'counter'), controller.listPurchases);
+router.post('/:id/purchases', authorize('manager', 'counter'), controller.createPurchase);
+router.delete('/purchases/:purchaseId', authorize('manager', 'counter'), controller.deletePurchase);
 
 // Payments
-router.get('/:id/payments', authorize('manager'), controller.listPayments);
-router.post('/:id/payments', authorize('manager'), controller.createPayment);
-router.delete('/payments/:paymentId', authorize('manager'), controller.deletePayment);
+router.get('/:id/payments', authorize('manager', 'counter'), controller.listPayments);
+router.post('/:id/payments', authorize('manager', 'counter'), controller.createPayment);
+router.delete('/payments/:paymentId', authorize('manager', 'counter'), controller.deletePayment);
 
 module.exports = router;
