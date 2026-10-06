@@ -20,7 +20,8 @@ router.get('/', authMiddleware, async (req, res) => {
          ii.minimum_stock
        FROM kitchen_inventory ki
        JOIN inventory_items ii ON ii.id = ki.inventory_id
-       WHERE ki.restaurant_id = $1`,
+       WHERE ki.restaurant_id = $1
+         AND ii.restaurant_id = $1`,
       [restaurantId]
     );
     res.json({ success: true, data: result.rows });
@@ -56,9 +57,12 @@ router.get('/:inventoryId/transactions', authMiddleware, async (req, res) => {
          ki.unit
        FROM kitchen_inventory_transactions kit
        JOIN kitchen_inventory ki ON ki.id = kit.kitchen_inventory_id
+       INNER JOIN inventory_items ii ON ii.id = ki.inventory_id
        WHERE kit.kitchen_inventory_id = $1
+         AND ki.restaurant_id = $2
+         AND ii.restaurant_id = $2
        ORDER BY kit.created_at DESC`,
-      [kitchenInventoryId]
+      [kitchenInventoryId, restaurantId]
     );
 
     res.json({ success: true, data: result.rows });
