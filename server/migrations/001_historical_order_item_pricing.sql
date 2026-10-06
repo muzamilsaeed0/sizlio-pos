@@ -56,7 +56,7 @@ FROM public.deals d
 WHERE od.deal_id = d.id
   AND (od.unit_price IS NULL OR od.line_total IS NULL);
 
-DO $
+DO $$
 BEGIN
   IF EXISTS (
     SELECT 1
@@ -65,7 +65,7 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'Historical deal pricing migration failed: NULL order deal prices remain';
   END IF;
-END $;
+END $$;
 
 ALTER TABLE public.order_deals
   ALTER COLUMN unit_price SET NOT NULL,
