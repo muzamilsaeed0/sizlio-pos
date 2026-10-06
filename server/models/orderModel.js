@@ -63,6 +63,24 @@ const calculatePricing = (
 
 
 const deductStockForOrder = async (client, orderId, restaurantId) => {
+    // Idempotency guard: the same order must never consume physical stock twice.
+    const orderState = await client.query(
+        `SELECT inventory_deducted_at
+         FROM orders
+         WHERE id = $1
+           AND restaurant_id = $2
+         FOR UPDATE`,
+        [orderId, restaurantId]
+    );
+
+    if (!orderState.rowCount) {
+        throw new Error('Order not found for inventory deduction.');
+    }
+
+    if (orderState.rows[0].inventory_deducted_at) {
+        return false;
+    }
+
     const ingredientsResult = await client.query(
         `SELECT mii.inventory_id, mii.quantity AS recipe_quantity, oi.quantity AS order_quantity
          FROM order_items oi
@@ -72,7 +90,27 @@ const deductStockForOrder = async (client, orderId, restaurantId) => {
          WHERE oi.order_id = $1 AND mi.restaurant_id = $2`,
         [orderId, restaurantId]
     );
-    if (!ingredientsResult.rows.length) return;
+    if (!ingredientsResult.rows.length) {
+        await client.query(
+            `UPDATE orders
+             SET inventory_deducted_at = COALESCE(inventory_deducted_at, NOW())
+             WHERE id = $1
+               AND restaurant_id = $2`,
+            [orderId, restaurantId]
+        );
+
+        await client.query(
+            `UPDATE inventory_reservations
+             SET status = 'consumed',
+                 released_at = NULL
+             WHERE order_id = $1
+               AND restaurant_id = $2
+               AND status = 'reserved'`,
+            [orderId, restaurantId]
+        );
+
+        return true;
+    }
 
     const requiredStock = {};
     for (const row of ingredientsResult.rows) {
@@ -125,6 +163,28 @@ const deductStockForOrder = async (client, orderId, restaurantId) => {
             throw new Error(`Insufficient kitchen stock for inventory item \${inventoryId}.`);
         }
     }
+
+    // Mark the order consumed only after every stock deduction succeeded.
+    await client.query(
+        `UPDATE orders
+         SET inventory_deducted_at = COALESCE(inventory_deducted_at, NOW())
+         WHERE id = $1
+           AND restaurant_id = $2`,
+        [orderId, restaurantId]
+    );
+
+    // Reservations are consumed together with the physical deduction.
+    await client.query(
+        `UPDATE inventory_reservations
+         SET status = 'consumed',
+             released_at = NULL
+         WHERE order_id = $1
+           AND restaurant_id = $2
+           AND status = 'reserved'`,
+        [orderId, restaurantId]
+    );
+
+    return true;
 };
 
 
@@ -2235,6 +2295,19 @@ const markServed = async (
 
     }
 
+
+    // --------------------------------------------------
+    // Mark physical stock consumption as complete.
+    // markServed locks the order, so this is atomic with the deduction.
+    // --------------------------------------------------
+
+    await client.query(
+      `UPDATE orders
+       SET inventory_deducted_at = COALESCE(inventory_deducted_at, NOW())
+       WHERE id = $1
+         AND restaurant_id = $2`,
+      [order.id, restaurantId]
+    );
 
     // --------------------------------------------------
     // CONSUME INVENTORY RESERVATIONS (still relevant)
