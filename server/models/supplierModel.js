@@ -146,6 +146,14 @@ async function createPurchase(supplierId, restaurantId, data, userId) {
   try {
     await client.query('BEGIN');
 
+    const supplierCheck = await client.query(
+      `SELECT id FROM suppliers WHERE id = $1 AND restaurant_id = $2 AND is_active = true FOR UPDATE`,
+      [supplierId, restaurantId]
+    );
+    if (!supplierCheck.rowCount) {
+      throw new Error('Supplier not found or inactive');
+    }
+
     const items = Array.isArray(data.items) ? data.items : [];
 
     // 1. Insert purchase
@@ -278,6 +286,14 @@ async function listPayments(supplierId, restaurantId, filters = {}) {
 }
 
 async function createPayment(supplierId, restaurantId, data, userId) {
+  const supplierCheck = await pool.query(
+    `SELECT id FROM suppliers WHERE id = $1 AND restaurant_id = $2 AND is_active = true`,
+    [supplierId, restaurantId]
+  );
+  if (!supplierCheck.rowCount) {
+    throw new Error('Supplier not found or inactive');
+  }
+
   const result = await pool.query(`
     INSERT INTO supplier_payments
       (restaurant_id, supplier_id, payment_date, amount,
