@@ -19,7 +19,7 @@ router.get('/sales/custom', authMiddleware, authorize('manager', 'counter'), sal
 
 
 
-router.get('/sales', authMiddleware, salesDetails);
+router.get('/sales', authMiddleware, authorize('manager', 'counter'), salesDetails);
 
 router.get(
   '/top-items',
