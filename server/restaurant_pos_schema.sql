@@ -212,6 +212,8 @@ CREATE TABLE public.orders (
 
     served_at timestamp without time zone,
 
+    inventory_deducted_at timestamp without time zone,
+
     payment_status character varying(20)
         DEFAULT 'unpaid'::character varying,
 
