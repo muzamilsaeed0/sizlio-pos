@@ -100,13 +100,13 @@ const getSalesDetails = async (
 
       o.tax_amount,
 
-      o.delivery_charge,          
+      o.delivery_charge,
 
       o.dine_charge,
-      
-      o.card_charge, 
-                     
-      o.bank_charge,
+
+      COALESCE(o.card_charge, 0)::numeric(10,2) AS card_charge,
+
+      COALESCE(o.bank_charge, 0)::numeric(10,2) AS bank_charge,
 
       o.total_amount::numeric(10,2) AS total,
 
@@ -205,7 +205,7 @@ COALESCE(
 
               od.quantity,
 
-              od.unit_price,
+              od.unit_price AS price,
 
               COALESCE(
                 (
