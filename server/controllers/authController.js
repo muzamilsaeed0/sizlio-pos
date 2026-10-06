@@ -225,8 +225,10 @@ exports.updateSettings = async (req, res) => {
       }
 
       const hashed = await bcrypt.hash(new_password, 10);
-      updates.push(`password = $${idx++}`);
+      updates.push(`password = ${idx++}`);
       values.push(hashed);
+      // Password changes invalidate the current JWT immediately.
+      updates.push('current_session = NULL');
 
     }
 
