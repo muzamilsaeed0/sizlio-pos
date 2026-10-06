@@ -70,15 +70,26 @@ async function submitToFbr(payload, restaurant) {
  * Main entry point — call this once an order is completed/paid.
  * Flexible: accepts either a full order object OR an orderId (number).
  */
-async function submitInvoiceForOrder(orderOrId, orderItems) {
+async function submitInvoiceForOrder(orderOrId, orderItems, restaurantId = null) {
   let order;
   let items;
 
   // ✅ Flexible: agar orderId (number) diya gaya hai to khud fetch karo
   if (typeof orderOrId === 'number' || typeof orderOrId === 'string') {
     const { getOrderById, getOrderItemsByOrderId } = require('../models/orderModel');
-    order = await getOrderById(Number(orderOrId));
-    items = await getOrderItemsByOrderId(Number(orderOrId));
+    if (!Number.isInteger(Number(restaurantId)) || Number(restaurantId) <= 0) {
+      throw new Error('Restaurant scope is required for FBR order submission');
+    }
+
+    order = await getOrderById(Number(orderOrId), Number(restaurantId));
+    if (!order) {
+      throw new Error('Order not found for this restaurant');
+    }
+
+    items = await getOrderItemsByOrderId(
+      Number(orderOrId),
+      Number(restaurantId)
+    );
   } else {
     order = orderOrId;
     items = orderItems;
