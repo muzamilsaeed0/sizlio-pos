@@ -255,7 +255,9 @@ const updateStaff = async (id, restaurantId, fullName, username, password) => {
 
 const setStaffActive = async (id, restaurantId, isActive) => {
   const result = await pool.query(
-    `UPDATE users SET is_active = $1
+    `UPDATE users SET
+       is_active = $1,
+       current_session = CASE WHEN $1 = false THEN NULL ELSE current_session END
      WHERE id = $2 AND restaurant_id = $3
        AND role IN ('waiter','kitchen','counter','delivery','display')
      RETURNING id, username, full_name, role, is_active`,
