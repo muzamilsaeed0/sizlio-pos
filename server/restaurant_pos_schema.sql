@@ -457,6 +457,9 @@ CREATE TABLE public.users (
                     'manager'::text,
                     'waiter'::text,
                     'kitchen'::text,
+                    'counter'::text,
+                    'delivery'::text,
+                    'display'::text,
                     'super_admin'::text
                 ]
             )
