@@ -8,12 +8,10 @@ const {
   removeVariant
 } = require('../controllers/menuVariantController');
 
-// List / add options for a specific menu item
 router.get('/item/:itemId', authMiddleware, getVariants);
-router.post('/item/:itemId', authMiddleware, authorize('manager'), addVariant);
+router.post('/item/:itemId', authMiddleware, authorize('manager', 'counter'), addVariant);
 
-// Edit / remove a specific option
-router.put('/:id', authMiddleware, authorize('manager'), editVariant);
-router.delete('/:id', authMiddleware, authorize('manager'), removeVariant);
+router.put('/:id', authMiddleware, authorize('manager', 'counter'), editVariant);
+router.delete('/:id', authMiddleware, authorize('manager', 'counter'), removeVariant);
 
 module.exports = router;
