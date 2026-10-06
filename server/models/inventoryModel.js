@@ -88,6 +88,16 @@ async function createItem({
   try {
     await client.query("BEGIN");
 
+    if (supplier_id !== null && supplier_id !== undefined) {
+      const supplierCheck = await client.query(
+        `SELECT id FROM suppliers WHERE id = $1 AND restaurant_id = $2`,
+        [Number(supplier_id), restaurant_id]
+      );
+      if (!supplierCheck.rowCount) {
+        throw new Error("Supplier not found");
+      }
+    }
+
     const openingStock = Number(stock_quantity);
     if (!Number.isFinite(openingStock) || openingStock < 0) {
       throw new Error("Opening stock must be 0 or greater");
@@ -142,17 +152,11 @@ async function createItem({
 
 async function updateItem(id, restaurantId, data) {
   const allowedFields = {
-    name: "name",
-    category: "category",
-    unit: "unit",
-    package_size: "package_size",
-    package_unit: "package_unit",
-    minimum_stock: "minimum_stock",
-    purchase_price: "purchase_price",
-    supplier: "supplier",
-    supplier_id: "supplier_id"
+    name: "name", category: "category", unit: "unit",
+    package_size: "package_size", package_unit: "package_unit",
+    minimum_stock: "minimum_stock", purchase_price: "purchase_price",
+    supplier: "supplier", supplier_id: "supplier_id"
   };
-
   const updates = [];
   const values = [];
   let index = 1;
@@ -165,24 +169,41 @@ async function updateItem(id, restaurantId, data) {
     }
   }
 
-  if (updates.length === 0) {
-    return getItemById(id, restaurantId);
+  if (updates.length === 0) return getItemById(id, restaurantId);
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    if (data.supplier_id !== undefined && data.supplier_id !== null) {
+      const supplierId = Number(data.supplier_id);
+      if (!Number.isInteger(supplierId) || supplierId <= 0) {
+        throw new Error("Invalid supplier");
+      }
+      const supplierCheck = await client.query(
+        `SELECT id FROM suppliers WHERE id = $1 AND restaurant_id = $2`,
+        [supplierId, restaurantId]
+      );
+      if (!supplierCheck.rowCount) throw new Error("Supplier not found");
+    }
+
+    values.push(id, restaurantId);
+    const query = `
+      UPDATE inventory_items
+      SET ${updates.join(", ")}
+      WHERE id = $${index} AND restaurant_id = $${index + 1}
+      RETURNING *
+    `;
+    const result = await client.query(query, values);
+    await client.query("COMMIT");
+    return result.rows[0] || null;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
   }
-
-  values.push(id);
-  values.push(restaurantId);
-
-  const query = `
-    UPDATE inventory_items
-    SET ${updates.join(", ")}
-    WHERE id = $${index} AND restaurant_id = $${index + 1}
-    RETURNING *
-  `;
-
-  const result = await pool.query(query, values);
-  return result.rows[0] || null;
 }
-
 // ======================================================
 // ACTIVATE / DEACTIVATE
 // ======================================================
@@ -397,7 +418,13 @@ async function updateRecipeIngredient(id, quantity, restaurantId) {
     UPDATE menu_item_ingredients mii
     SET quantity = $1
     FROM inventory_items i
-    WHERE mii.id = $2 AND i.id = mii.inventory_id AND i.restaurant_id = $3
+    WHERE mii.id = $2
+      AND i.id = mii.inventory_id
+      AND i.restaurant_id = $3
+      AND EXISTS (
+        SELECT 1 FROM menu_items m
+        WHERE m.id = mii.menu_item_id AND m.restaurant_id = $3
+      )
     RETURNING mii.*
   `;
   const result = await pool.query(query, [quantity, id, restaurantId]);
@@ -408,7 +435,13 @@ async function deleteRecipeIngredient(id, restaurantId) {
   const query = `
     DELETE FROM menu_item_ingredients mii
     USING inventory_items i
-    WHERE mii.id = $1 AND i.id = mii.inventory_id AND i.restaurant_id = $2
+    WHERE mii.id = $1
+      AND i.id = mii.inventory_id
+      AND i.restaurant_id = $2
+      AND EXISTS (
+        SELECT 1 FROM menu_items m
+        WHERE m.id = mii.menu_item_id AND m.restaurant_id = $2
+      )
     RETURNING mii.*
   `;
   const result = await pool.query(query, [id, restaurantId]);
