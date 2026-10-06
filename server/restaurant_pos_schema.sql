@@ -409,12 +409,6 @@ CREATE TABLE public.restaurants (
     status character varying(20) DEFAULT 'Active'::character varying,
     expiry_date date,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    manager_username character varying(50),
-    manager_password character varying(50),
-    waiter_username character varying(50),
-    waiter_password character varying(50),
-    kitchen_username character varying(50),
-    kitchen_password character varying(50),
     logo_url character varying(255)
 );
 
