@@ -166,6 +166,19 @@ async function createPurchase(supplierId, restaurantId, data, userId) {
 
     const items = Array.isArray(data.items) ? data.items : [];
 
+    // Purchase total must reconcile with its inventory line totals.
+    // Otherwise supplier liability and inventory valuation can disagree.
+    if (items.length > 0) {
+      const lineTotal = items.reduce((sum, item) => {
+        const qty = Number(item.quantity);
+        const unitPrice = Number(item.unit_price || 0);
+        return sum + (qty * unitPrice);
+      }, 0);
+      if (Math.abs(lineTotal - totalAmount) > 0.01) {
+        throw new Error('Purchase total does not match purchase item totals');
+      }
+    }
+
     // Validate all purchase lines before changing inventory.
     for (const item of items) {
       const inventoryId = Number(item.inventory_id);
