@@ -15,6 +15,12 @@ function assertRestaurantAccess(req, restaurantIdParam) {
   const userRestaurantId = getRestaurantIdFromUser(req);
   const targetId = Number(restaurantIdParam);
 
+  if (req.user?.role === 'super_admin') {
+    if (!Number.isInteger(targetId) || targetId <= 0) {
+      return { ok: false, status: 400, message: 'Invalid restaurant id' };
+    }
+    return { ok: true, restaurantId: targetId };
+  }
   if (!userRestaurantId) {
     return { ok: false, status: 401, message: 'Restaurant information is missing' };
   }
@@ -212,15 +218,18 @@ exports.retryNow = async (req, res) => {
   try {
     const restaurantId = getRestaurantIdFromUser(req);
 
-    if (!restaurantId) {
+    // Super Admin can intentionally retry the global FBR queue.
+    // Tenant users remain strictly restaurant-scoped.
+    const results = await fbrService.retryPendingInvoices(
+      req.user?.role === 'super_admin' ? null : restaurantId
+    );
+
+    if (req.user?.role !== 'super_admin' && !restaurantId) {
       return res.status(401).json({
         success: false,
         message: 'Restaurant information is missing',
       });
     }
-
-    // ✅ Restaurant-scoped retry
-    const results = await fbrService.retryPendingInvoices(restaurantId);
     res.json({ success: true, results });
   } catch (err) {
     console.error('retryNow:', err);
@@ -233,14 +242,18 @@ exports.getPendingInvoices = async (req, res) => {
   try {
     const restaurantId = getRestaurantIdFromUser(req);
 
-    if (!restaurantId) {
+    const invoices = req.user?.role === 'super_admin'
+      ? await fbrModel.getPendingInvoices()
+      : restaurantId
+        ? await fbrModel.getPendingInvoicesForRestaurant(restaurantId)
+        : null;
+
+    if (!invoices) {
       return res.status(401).json({
         success: false,
         message: 'Restaurant information is missing',
       });
     }
-
-    const invoices = await fbrModel.getPendingInvoicesForRestaurant(restaurantId);
 
     return res.json({
       success: true,
