@@ -9,13 +9,14 @@ const {
 
 const inventoryController = require("../controllers/inventoryController");
 
-router.get("/", authMiddleware, inventoryController.getAllItems);
+router.get("/", authMiddleware, authorize("manager", "kitchen"), inventoryController.getAllItems);
 
 router.post("/", authMiddleware, authorize("manager"), inventoryController.addItem);
 
 router.get(
   "/recipe/:menuItemId",
   authMiddleware,
+  authorize("manager", "kitchen"),
   inventoryController.getRecipe
 );
 
@@ -43,12 +44,14 @@ router.delete(
 router.get(
   "/dashboard",
   authMiddleware,
+  authorize("manager"),
   inventoryController.getDashboard
 );
 
 router.get(
   '/list-for-purchase',
    authMiddleware,
+   authorize("manager"),
     inventoryController.listForPurchase
   );
 
@@ -69,6 +72,7 @@ router.post(
 router.get(
   "/:id/transactions",
   authMiddleware,
+  authorize("manager"),
   inventoryController.getTransactions
 );
 
