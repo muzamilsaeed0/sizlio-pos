@@ -4,7 +4,7 @@ BEGIN;
 ALTER TABLE public.order_items
   ADD COLUMN IF NOT EXISTS variant_id integer;
 
-DO $
+DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint WHERE conname = 'order_items_variant_id_fkey'
@@ -15,7 +15,7 @@ BEGIN
       ON DELETE SET NULL
       NOT VALID;
   END IF;
-END $;
+END $$;
 
 ALTER TABLE public.orders
   DROP CONSTRAINT IF EXISTS orders_type_check;
