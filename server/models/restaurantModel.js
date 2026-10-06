@@ -1075,7 +1075,7 @@ const addStaffMember = async (
     "counter",
     "display",
     "kitchen",
-    "rider"
+    "delivery"
   ];
 
 
