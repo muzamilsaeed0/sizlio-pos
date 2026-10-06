@@ -97,6 +97,7 @@ CREATE TABLE public.menu_item_ingredients (
     id integer NOT NULL,
     menu_item_id integer NOT NULL,
     inventory_id integer NOT NULL,
+    variant_id integer,
     quantity numeric(10,2) NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );
