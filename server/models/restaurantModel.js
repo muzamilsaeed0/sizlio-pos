@@ -100,7 +100,7 @@ const getAllRestaurants = async () => {
         WHERE u.role = 'display'
       ) AS display_count,
       COUNT(*) FILTER (
-        WHERE u.role IN ('rider', 'delivery_rider','delivery')
+        WHERE u.role = 'delivery'
       ) AS delivery_rider_count
 
     FROM restaurants r
