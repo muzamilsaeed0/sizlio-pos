@@ -4258,15 +4258,6 @@ const updateOrderItemQuantity = async (
     }
 
 
-    if (order.status === 'served' && order.payment_status === 'unpaid') {
-      await adjustServedOrderInventory(
-        client,
-        orderId,
-        restaurantId,
-        beforeItems
-      );
-    }
-
     await recalculateOrderPricing(
       client,
       orderId,
@@ -4461,16 +4452,6 @@ const removeOrderItem = async (
 
     const orderId =
       order.id;
-
-    if (order.status === 'served' && order.payment_status === 'unpaid') {
-      await adjustServedOrderInventory(
-        client,
-        orderId,
-        restaurantId,
-        beforeItems
-      );
-    }
-
 
     const items =
       await client.query(
