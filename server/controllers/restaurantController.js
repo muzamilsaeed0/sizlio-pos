@@ -1191,9 +1191,7 @@ async (req, res) => {
       success: true,
 
       message:
-        `Password updated for ${user.username}`,
-
-      new_password
+        `Password updated for ${user.username}`
 
     });
 
