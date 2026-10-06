@@ -108,7 +108,8 @@ exports.addVariant = async (req, res) => {
     const variant = await createVariant(
       itemId,
       label,
-      price
+      price,
+      req.user.restaurant_id
     );
 
     return res.status(201).json({
