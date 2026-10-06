@@ -77,17 +77,53 @@ const deductStockForOrder = async (client, orderId, restaurantId) => {
     const requiredStock = {};
     for (const row of ingredientsResult.rows) {
         const reqQty = Number(row.recipe_quantity) * Number(row.order_quantity);
+        if (!Number.isFinite(reqQty) || reqQty <= 0) {
+            throw new Error('Invalid recipe quantity.');
+        }
         if (!requiredStock[row.inventory_id]) requiredStock[row.inventory_id] = 0;
         requiredStock[row.inventory_id] += reqQty;
     }
 
+    // Lock each kitchen stock row before checking/deducting it. This prevents
+    // concurrent serve operations from both reading the same stock level.
     for (const inventoryId of Object.keys(requiredStock)) {
         const qty = requiredStock[inventoryId];
-        await client.query(
-            `UPDATE kitchen_inventory SET quantity = GREATEST(0, quantity - $1), updated_at = NOW() 
-             WHERE restaurant_id = $2 AND inventory_id = $3`,
-            [qty, restaurantId, inventoryId]
+
+        const stockResult = await client.query(
+            `SELECT quantity
+             FROM kitchen_inventory
+             WHERE restaurant_id = $1
+               AND inventory_id = $2
+             FOR UPDATE`,
+            [restaurantId, Number(inventoryId)]
         );
+
+        if (!stockResult.rowCount) {
+            throw new Error(`Kitchen inventory item \${inventoryId} not found.`);
+        }
+
+        const currentStock = Number(stockResult.rows[0].quantity || 0);
+
+        if (!Number.isFinite(currentStock) || currentStock < qty) {
+            throw new Error(
+                `Insufficient kitchen stock for inventory item \${inventoryId} (available: \${currentStock}, required: \${qty})`
+            );
+        }
+
+        const updated = await client.query(
+            `UPDATE kitchen_inventory
+             SET quantity = quantity - $1,
+                 updated_at = NOW()
+             WHERE restaurant_id = $2
+               AND inventory_id = $3
+               AND quantity >= $1
+             RETURNING quantity`,
+            [qty, restaurantId, Number(inventoryId)]
+        );
+
+        if (!updated.rowCount) {
+            throw new Error(`Insufficient kitchen stock for inventory item \${inventoryId}.`);
+        }
     }
 };
 
