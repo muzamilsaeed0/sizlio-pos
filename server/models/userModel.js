@@ -237,8 +237,6 @@ const updateStaff = async (id, restaurantId, fullName, username, password) => {
     values.push(hashed);
 
     
-    updates.push(`plain_password = $${idx++}`);
-    values.push(password);
   }
 
   if (!updates.length) return null;
@@ -249,7 +247,7 @@ const updateStaff = async (id, restaurantId, fullName, username, password) => {
     `UPDATE users SET ${updates.join(', ')}
      WHERE id = $${idx++} AND restaurant_id = $${idx}
        AND role IN ('waiter','kitchen','counter','delivery','display')
-     RETURNING id, username, full_name, role, is_active`
+     RETURNING id, username, full_name, role, is_active`,
     values
   );
   return result.rows[0];
