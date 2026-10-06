@@ -3,7 +3,8 @@ const express = require('express');
 const router = express.Router();
 
 const {
-  authMiddleware
+  authMiddleware,
+  authorize
 } = require('../middleware/authMiddleware');
 
 const {
@@ -29,18 +30,21 @@ router.get(
 router.post(
   '/',
   authMiddleware,
+  authorize('manager', 'counter'),
   createDeal
 );
 
 router.put(
   '/:id',
   authMiddleware,
+  authorize('manager', 'counter'),
   updateDeal
 );
 
 router.delete(
   '/:id',
   authMiddleware,
+  authorize('manager', 'counter'),
   removeDeal
 );
 
