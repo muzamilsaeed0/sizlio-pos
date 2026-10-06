@@ -17,6 +17,7 @@ ALTER TABLE public.orders
         'confirmed',
         'ready',
         'served',
+        'payment_pending',
         'ready_to_dispatch',
         'ready_to_deliver',
         'out_for_delivery',
