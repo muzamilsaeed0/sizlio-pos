@@ -1248,8 +1248,17 @@
               `
             }
 
-            ${!isWholesale
+                        ${isCafeLite
               ? `
+                <div>
+                  🏍️ <b>Rider:</b>
+                  <a href="/rider.html?restaurant=${r.id}" target="_blank">
+                    /rider.html?restaurant=${r.id}
+                  </a>
+                </div>
+              `
+              : !isWholesale
+                ? `
                 <div>
                   👔 <b>Manager:</b>
                   <a href="/manager.html?restaurant=${r.id}" target="_blank">
@@ -1281,7 +1290,7 @@
                   </a>
                 </div>
               `
-              : ''
+                : ''
             }
 
           </div>
@@ -1335,6 +1344,19 @@
 
         <div class="section-title">Staff Accounts</div>
 
+        ${isCafeLite
+          ? `
+        <div class="row" style="cursor:pointer;" onclick="openStaffList(${r.id}, 'counter')">
+          <span>☕ Counter Lite</span>
+          <b>${r.counter_count || 0}</b>
+        </div>
+
+        <div class="row" style="cursor:pointer;" onclick="openStaffList(${r.id}, 'rider')">
+          <span>🏍️ Delivery Rider</span>
+          <b>${r.delivery_rider_count || 0}</b>
+        </div>
+          `
+          : `
         <div class="row" style="cursor:pointer;" onclick="openStaffList(${r.id}, 'manager')">
           <span>👤 Manager</span>
           <b>${r.manager_username ? 1 : 0}</b>
@@ -1364,6 +1386,8 @@
           <span>🏍️ Delivery Rider</span>
           <b>${r.delivery_rider_count || 0}</b>
         </div>
+          `
+        }
 
         <button class="primary" onclick="openAddMemberModal()">+ Add Member</button>
 
@@ -1474,7 +1498,7 @@
     document.getElementById('subscription-plan-limits').innerHTML = `
       <strong>${plan} Plan Limits</strong><br>
       Waiter: ${limits.waiter}
-      · Counter: ${limits.counter}
+      · ${plan === 'Cafe Lite' ? 'Counter Lite' : 'Counter'}: ${limits.counter}
       · Display: ${limits.display}
       · Manager: ${limits.manager}
       · Kitchen: ${limits.kitchen}
@@ -1897,7 +1921,7 @@
 
     const roleNames = {
       waiter: 'Waiter',
-      counter: 'Counter',
+      counter: isCafeLite ? 'Counter Lite' : 'Counter',
       display: 'Display',
       kitchen: 'Kitchen',
       rider: 'Delivery Rider'
