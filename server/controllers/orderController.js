@@ -829,7 +829,7 @@ exports.getOrder = async (req, res) => {
     let items = [];
     try {
       if (typeof getOrderItemsByOrderId === 'function') {
-        items = await getOrderItemsByOrderId(orderId);
+        items = await getOrderItemsByOrderId(orderId, restaurantId);
       }
     } catch (e) {
       console.warn('getOrder items:', e.message);
