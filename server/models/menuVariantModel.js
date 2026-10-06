@@ -33,19 +33,22 @@ const findMenuItemForRestaurant = async (menuItemId, restaurantId) => {
   return result.rows[0];
 };
 
-const createVariant = async (menuItemId, label, price) => {
+const createVariant = async (menuItemId, label, price, restaurantId) => {
   const result = await pool.query(
     `
     INSERT INTO menu_item_variants
       (menu_item_id, label, price, active)
-    VALUES
-      ($1, $2, $3, true)
+    SELECT mi.id, $2, $3, true
+    FROM menu_items mi
+    WHERE mi.id = $1
+      AND mi.restaurant_id = $4
+      AND mi.active = true
     RETURNING *
     `,
-    [menuItemId, label, price]
+    [menuItemId, label, price, restaurantId]
   );
 
-  return result.rows[0];
+  return result.rows[0] || null;
 };
 
 const updateVariant = async (id, label, price, restaurantId) => {
