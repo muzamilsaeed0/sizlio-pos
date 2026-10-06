@@ -4,7 +4,7 @@ const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 const c = require('../controllers/wholesaleController');
 
 // counter / manager of that shop
-const staff = authorize('counter', 'manager', 'wholesale');
+const staff = authorize('counter', 'manager');
 
 router.get('/products', authMiddleware, staff, c.getProducts);
 router.post('/products', authMiddleware, staff, c.addProduct);
