@@ -3,10 +3,8 @@ const router = express.Router();
 const { authMiddleware } = require('../middleware/authMiddleware');
 const settingsController = require('../controllers/settingsController');
 
-// All settings routes require login
 router.use(authMiddleware);
 
-/* -------- Manager-only guard -------- */
 function managerOnly(req, res, next) {
   if (!req.user || req.user.role !== 'manager') {
     return res.status(403).json({ success: false, message: 'Manager only' });
@@ -14,12 +12,6 @@ function managerOnly(req, res, next) {
   next();
 }
 
-/* =====================================================
-   POS SETTINGS
-   - GET  : both counter + manager (counter needs to read)
-   - PUT  : manager only
-===================================================== */
-router.get('/pos', managerOrCounter, settingsController.getPosSettings);
 function managerOrCounter(req, res, next) {
   if (!req.user || !['manager', 'counter'].includes(req.user.role)) {
     return res.status(403).json({ success: false, message: 'Manager or counter only' });
@@ -27,13 +19,12 @@ function managerOrCounter(req, res, next) {
   next();
 }
 
-router.put('/pos', managerOnly, settingsController.savePosSettings);
+/* Counter Lite is a full single-screen POS:
+   POS charge settings are editable by both manager and counter. */
+router.get('/pos', managerOrCounter, settingsController.getPosSettings);
+router.put('/pos', managerOrCounter, settingsController.savePosSettings);
 
-/* =====================================================
-   RAAST QR
-   - GET  : both counter + manager
-   - PUT  : manager only
-===================================================== */
+/* RAAST QR remains manager-only configuration. */
 router.get('/raast-qr', managerOrCounter, settingsController.getRaastQr);
 router.put('/raast-qr', managerOnly, settingsController.saveRaastQr);
 
