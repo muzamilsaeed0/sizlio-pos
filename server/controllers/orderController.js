@@ -3079,7 +3079,7 @@ exports.pay = async (
     const itemsForFbr = await getOrderItemsByOrderId(order.id, restaurantId);
     
     if (orderForFbr) {
-      await submitInvoiceForOrder(orderForFbr, itemsForFbr);
+      await submitInvoiceForOrder(orderForFbr, itemsForFbr, restaurantId);
     }
   } catch (fbrErr) {
     console.error('FBR submission error:', fbrErr);
