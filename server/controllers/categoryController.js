@@ -77,7 +77,7 @@ function allowedCategoriesForFoodType(foodType) {
 async function getRestaurantFoodType(restaurantId) {
   const result = await pool.query(
     `
-    SELECT food_type
+    SELECT food_type, plan
     FROM restaurants
     WHERE id = $1
     LIMIT 1
@@ -85,7 +85,14 @@ async function getRestaurantFoodType(restaurantId) {
     [restaurantId]
   );
 
-  return result.rows[0]?.food_type || 'Fast Food';
+  return {
+    foodType: result.rows[0]?.food_type || 'Fast Food',
+    plan: result.rows[0]?.plan || 'Basic'
+  };
+}
+
+function isCafeLiteCounter(req, restaurant) {
+  return req.user?.role === 'counter' && restaurant?.plan === 'Cafe Lite';
 }
 
 
@@ -145,19 +152,17 @@ exports.addCategory = async (req, res) => {
   }
 
   try {
-    const foodType = await getRestaurantFoodType(
+    const restaurant = await getRestaurantFoodType(
       req.user.restaurant_id
     );
 
-    const allowed = allowedCategoriesForFoodType(
-      foodType
-    );
-
+    const unrestricted = isCafeLiteCounter(req, restaurant);
+    const foodType = restaurant.foodType;
+    const allowed = unrestricted ? null : allowedCategoriesForFoodType(foodType);
     const requested = normalize(name);
-
-    const matched = allowed.find(
-      category => normalize(category) === requested
-    );
+    const matched = unrestricted
+      ? name
+      : allowed.find(category => normalize(category) === requested);
 
     if (!matched) {
       return res.status(403).json({
@@ -169,7 +174,7 @@ exports.addCategory = async (req, res) => {
       });
     }
 
-        const existing = await findCategory(
+    const existing = await findCategory(
       matched,
       req.user.restaurant_id
     );
@@ -247,19 +252,17 @@ exports.updateCategory = async (req, res) => {
   }
 
   try {
-    const foodType = await getRestaurantFoodType(
+    const restaurant = await getRestaurantFoodType(
       req.user.restaurant_id
     );
 
-    const allowed = allowedCategoriesForFoodType(
-      foodType
-    );
-
+    const unrestricted = isCafeLiteCounter(req, restaurant);
+    const foodType = restaurant.foodType;
+    const allowed = unrestricted ? null : allowedCategoriesForFoodType(foodType);
     const requested = normalize(name);
-
-    const matched = allowed.find(
-      category => normalize(category) === requested
-    );
+    const matched = unrestricted
+      ? name
+      : allowed.find(category => normalize(category) === requested);
 
     if (!matched) {
       return res.status(403).json({
@@ -395,17 +398,19 @@ exports.removeCategory = async (req, res) => {
 
 exports.getCategoryPolicy = async (req, res) => {
   try {
-    const foodType = await getRestaurantFoodType(
+    const restaurant = await getRestaurantFoodType(
       req.user.restaurant_id
     );
 
-    const allowed = allowedCategoriesForFoodType(
-      foodType
-    );
+    const unrestricted = isCafeLiteCounter(req, restaurant);
+    const allowed = unrestricted
+      ? null
+      : allowedCategoriesForFoodType(restaurant.foodType);
 
     return res.json({
       success: true,
-      food_type: foodType,
+      food_type: restaurant.foodType,
+      unrestricted,
       allowed_categories: allowed
     });
 
