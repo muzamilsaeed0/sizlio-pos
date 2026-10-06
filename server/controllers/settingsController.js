@@ -84,8 +84,21 @@ exports.savePosSettings = async (req, res) => {
     };
 
     await pool.query(
-      `UPDATE restaurants SET pos_settings = $2::jsonb WHERE id = $1`,
-      [restaurantId, JSON.stringify(settings)]
+      `UPDATE restaurants SET
+         pos_settings = $2::jsonb,
+         delivery_charge = $3,
+         dine_charge = $4,
+         card_charge = $5,
+         bank_charge = $6
+       WHERE id = $1`,
+      [
+        restaurantId,
+        JSON.stringify(settings),
+        settings.delivery_charge,
+        settings.dine_charge,
+        settings.card_charge,
+        settings.bank_charge
+      ]
     );
 
     return res.json({ success: true, message: 'POS settings saved', data: settings });
@@ -129,4 +142,3 @@ exports.saveRaastQr = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
-
