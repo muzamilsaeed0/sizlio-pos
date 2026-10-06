@@ -154,7 +154,30 @@ async function createPurchase(supplierId, restaurantId, data, userId) {
       throw new Error('Supplier not found or inactive');
     }
 
+    const totalAmount = Number(data.total_amount);
+    const paidAmount = Number(data.paid_amount || 0);
+
+    if (!Number.isFinite(totalAmount) || totalAmount <= 0) {
+      throw new Error('Purchase total must be greater than 0');
+    }
+    if (!Number.isFinite(paidAmount) || paidAmount < 0 || paidAmount > totalAmount) {
+      throw new Error('Paid amount must be between 0 and the purchase total');
+    }
+
     const items = Array.isArray(data.items) ? data.items : [];
+
+    // Validate all purchase lines before changing inventory.
+    for (const item of items) {
+      const inventoryId = Number(item.inventory_id);
+      const qty = Number(item.quantity);
+      const unitPrice = Number(item.unit_price || 0);
+
+      if (!Number.isInteger(inventoryId) || inventoryId <= 0 ||
+          !Number.isFinite(qty) || qty <= 0 ||
+          !Number.isFinite(unitPrice) || unitPrice < 0) {
+        throw new Error('Invalid purchase item');
+      }
+    }
 
     // 1. Insert purchase
     const purchaseResult = await client.query(`
@@ -168,8 +191,8 @@ async function createPurchase(supplierId, restaurantId, data, userId) {
       supplierId,
       data.purchase_date || new Date().toISOString().slice(0, 10),
       data.invoice_no || null,
-      Number(data.total_amount),
-      Number(data.paid_amount || 0),
+      totalAmount,
+      paidAmount,
       data.note || null,
       userId || null,
       JSON.stringify(items)
@@ -184,7 +207,9 @@ async function createPurchase(supplierId, restaurantId, data, userId) {
         const qty = Number(item.quantity);
         const newPrice = Number(item.unit_price || 0);
 
-        if (!inventoryId || !qty || qty <= 0) continue;
+        if (!Number.isInteger(inventoryId) || inventoryId <= 0 || !Number.isFinite(qty) || qty <= 0 || !Number.isFinite(newPrice) || newPrice < 0) {
+          throw new Error('Invalid purchase item');
+        }
 
         // Get current stock + price
         const currentRes = await client.query(`
@@ -194,7 +219,9 @@ async function createPurchase(supplierId, restaurantId, data, userId) {
           FOR UPDATE
         `, [inventoryId, restaurantId]);
 
-        if (!currentRes.rows.length) continue;
+        if (!currentRes.rows.length) {
+          throw new Error(`Inventory item ${inventoryId} not found`);
+        }
 
         const current = currentRes.rows[0];
         const currentQty = Number(current.stock_quantity || 0);
@@ -252,11 +279,9 @@ async function createPurchase(supplierId, restaurantId, data, userId) {
 }
 
 async function deletePurchase(id, restaurantId) {
-  const result = await pool.query(
-    `DELETE FROM supplier_purchases WHERE id = $1 AND restaurant_id = $2 RETURNING id`,
-    [id, restaurantId]
-  );
-  return result.rows[0] || null;
+  // Purchases affect inventory and supplier balances; deleting them would
+  // silently corrupt both ledgers because inventory reversal is not automatic.
+  throw new Error('Purchase deletion is disabled; use a reversal/void workflow instead');
 }
 
 /* =====================================================
@@ -314,11 +339,8 @@ async function createPayment(supplierId, restaurantId, data, userId) {
 }
 
 async function deletePayment(id, restaurantId) {
-  const result = await pool.query(
-    `DELETE FROM supplier_payments WHERE id = $1 AND restaurant_id = $2 RETURNING id`,
-    [id, restaurantId]
-  );
-  return result.rows[0] || null;
+  // Supplier payments are financial ledger entries and must remain immutable.
+  throw new Error('Payment deletion is disabled; use a reversal/void workflow instead');
 }
 
 /* =====================================================
