@@ -1,29 +1,29 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/supplierController');
-const { authMiddleware } = require('../middleware/authMiddleware');
+const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 
 router.use(authMiddleware);
 
 // Suppliers
 router.get('/', controller.list);
-router.post('/', controller.create);
+router.post('/', authorize('manager'), controller.create);
 router.get('/aging', controller.getAging);              // must be BEFORE /:id
 router.get('/:id', controller.getOne);
-router.put('/:id', controller.update);
-router.delete('/:id', controller.remove);
+router.put('/:id', authorize('manager'), controller.update);
+router.delete('/:id', authorize('manager'), controller.remove);
 
 // Ledger
 router.get('/:id/ledger', controller.getLedger);
 
 // Purchases
 router.get('/:id/purchases', controller.listPurchases);
-router.post('/:id/purchases', controller.createPurchase);
-router.delete('/purchases/:purchaseId', controller.deletePurchase);
+router.post('/:id/purchases', authorize('manager'), controller.createPurchase);
+router.delete('/purchases/:purchaseId', authorize('manager'), controller.deletePurchase);
 
 // Payments
 router.get('/:id/payments', controller.listPayments);
-router.post('/:id/payments', controller.createPayment);
-router.delete('/payments/:paymentId', controller.deletePayment);
+router.post('/:id/payments', authorize('manager'), controller.createPayment);
+router.delete('/payments/:paymentId', authorize('manager'), controller.deletePayment);
 
 module.exports = router;
