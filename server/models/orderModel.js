@@ -2940,23 +2940,12 @@ const markPaid = async (
     // delivered → paid
     // ==================================================
 
-   // Restaurant plan fetch karo
-const planRes = await client.query(
-  `SELECT plan FROM restaurants WHERE id = $1`,
-  [restaurantId]
-);
-const plan = planRes.rows[0]?.plan || 'Basic';
-const isCafeLite = plan === 'Cafe Lite';
+   const allowedStatuses = ['served', 'payment_pending', 'delivered', 'completed'];
 
-// Cafe Lite mein koi status check nahi
-if (!isCafeLite) {
-  const allowedStatuses = ['served', 'payment_pending', 'delivered'];
-  if (!allowedStatuses.includes(order.status)) {
-    await client.query('ROLLBACK');
-    return null;
-  }
+if (!allowedStatuses.includes(order.status)) {
+  await client.query('ROLLBACK');
+  return null;
 }
-
 
     // ==================================================
     // ALREADY PAID
