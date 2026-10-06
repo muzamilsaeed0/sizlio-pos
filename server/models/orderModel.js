@@ -1329,7 +1329,11 @@ const createOrder = async (
          // Delivery/dine-in charges are restaurant-configured amounts.
     // Never trust client-supplied charge values.
     const chargeResult = await client.query(
-      `SELECT delivery_charge, dine_charge
+      `SELECT
+         COALESCE(NULLIF(pos_settings->>'delivery_charge','')::numeric, delivery_charge, 0) AS delivery_charge,
+         COALESCE(NULLIF(pos_settings->>'dine_charge','')::numeric, dine_charge, 0) AS dine_charge,
+         COALESCE(NULLIF(pos_settings->>'card_charge','')::numeric, card_charge, 0) AS card_charge,
+         COALESCE(NULLIF(pos_settings->>'bank_charge','')::numeric, bank_charge, 0) AS bank_charge
        FROM restaurants
        WHERE id = $1
        FOR SHARE`,
@@ -1362,17 +1366,8 @@ const createOrder = async (
     
         // Card/bank surcharge is always calculated from restaurant settings.
     // Never trust surcharge amounts supplied by the client.
-    const surchargeResult = await client.query(
-      `SELECT card_charge, bank_charge
-       FROM restaurants
-       WHERE id = $1
-       FOR SHARE`,
-      [restaurantId]
-    );
-
-    if (!surchargeResult.rows.length) {
-      throw new Error('Restaurant not found.');
-    }
+    // Reuse charge row (already includes pos_settings card/bank %)
+    const surchargeResult = chargeResult;
 
     const configuredCardPercent = Number(surchargeResult.rows[0].card_charge || 0);
     const configuredBankPercent = Number(surchargeResult.rows[0].bank_charge || 0);
@@ -1389,19 +1384,26 @@ const createOrder = async (
     }
 
     const normalizedPaymentMethod = String(paymentMethod || 'Cash');
+    // Surcharge base = goods total + delivery/dine (matches counter-lite bill)
+    const surchargeBase = Number(
+      (calculated.totalAmount + finalDeliveryCharge + finalDineCharge).toFixed(2)
+    );
     const finalCardCharge = normalizedPaymentMethod === 'Card'
-      ? Number((calculated.totalAmount * configuredCardPercent / 100).toFixed(2))
+      ? Number((surchargeBase * configuredCardPercent / 100).toFixed(2))
       : 0;
     const finalBankCharge = normalizedPaymentMethod === 'Bank'
-      ? Number((calculated.totalAmount * configuredBankPercent / 100).toFixed(2))
+      ? Number((surchargeBase * configuredBankPercent / 100).toFixed(2))
       : 0;
 
-    const finalTotalAmount =
-      calculated.totalAmount +
-      finalDeliveryCharge +
-      finalDineCharge +
-      finalCardCharge +
-      finalBankCharge;
+    const finalTotalAmount = Number(
+      (
+        calculated.totalAmount +
+        finalDeliveryCharge +
+        finalDineCharge +
+        finalCardCharge +
+        finalBankCharge
+      ).toFixed(2)
+    );
 
 
     // --------------------------------------------------
@@ -1412,15 +1414,17 @@ const createOrder = async (
 
     if (paymentTiming === 'PAID_AT_ORDER') {
       const normalizedMethod = String(paymentMethod || 'Cash');
+      const paid = Number(Number(finalPaidAmount).toFixed(2));
+      const due = Number(finalTotalAmount.toFixed(2));
 
       if (normalizedMethod === 'Cash') {
-        if (finalPaidAmount < finalTotalAmount) {
+        if (paid < due - 0.05) {
           throw new Error('Paid amount cannot be less than total amount.');
         }
         initialChangeAmount = Number(
-          Math.max(finalPaidAmount - finalTotalAmount, 0).toFixed(2)
+          Math.max(paid - due, 0).toFixed(2)
         );
-      } else if (finalPaidAmount !== finalTotalAmount) {
+      } else if (Math.abs(paid - due) > 0.05) {
         throw new Error(
           'Card, Bank and Other payments must match the exact total amount.'
         );
@@ -2719,7 +2723,9 @@ const updateOrderPricing = async (
     }
 
     const chargeResult = await client.query(
-      `SELECT delivery_charge, dine_charge
+      `SELECT
+         COALESCE(NULLIF(pos_settings->>'delivery_charge','')::numeric, delivery_charge, 0) AS delivery_charge,
+         COALESCE(NULLIF(pos_settings->>'dine_charge','')::numeric, dine_charge, 0) AS dine_charge
        FROM restaurants
        WHERE id = $1
        FOR SHARE`,
@@ -3122,7 +3128,9 @@ if (!allowedStatuses.includes(order.status)) {
     // ==================================================
 
     const surchargeResult = await client.query(
-      `SELECT card_charge, bank_charge
+      `SELECT
+         COALESCE(NULLIF(pos_settings->>'card_charge','')::numeric, card_charge, 0) AS card_charge,
+         COALESCE(NULLIF(pos_settings->>'bank_charge','')::numeric, bank_charge, 0) AS bank_charge
        FROM restaurants
        WHERE id = $1`,
       [restaurantId]
