@@ -27,7 +27,7 @@ function managerOrCounter(req, res, next) {
   next();
 }
 
-router.put('/pos', managerOrCounter, settingsController.savePosSettings);
+router.put('/pos', managerOnly, settingsController.savePosSettings);
 
 /* =====================================================
    RAAST QR
