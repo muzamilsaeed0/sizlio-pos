@@ -776,6 +776,12 @@ const createOrder = async (
     const order =
       orderResult.rows[0];
 
+    const beforeItemsResult = await client.query(
+      `SELECT menu_item_id, variant_id, quantity FROM order_items WHERE order_id = $1`,
+      [orderId]
+    );
+    const beforeItems = beforeItemsResult.rows;
+
 
     // --------------------------------------------------
     // ADD ORDER ITEMS
@@ -3242,6 +3248,141 @@ const getActiveOrderForTable = async (tableNo, restaurantId) => {
 // ADD ITEMS TO EXISTING ORDER
 // ======================================================
 
+
+// ======================================================
+// ADJUST SERVED-ORDER INVENTORY
+//
+// Served unpaid bills may be edited by manager/counter.
+// At that point the original recipe stock has already been
+// consumed, so editing the bill must apply only the delta
+// between the old and new recipe requirements.
+// ======================================================
+
+const adjustServedOrderInventory = async (
+  client,
+  orderId,
+  restaurantId,
+  beforeItems
+) => {
+  const afterResult = await client.query(
+    `
+    SELECT menu_item_id, variant_id, quantity
+    FROM order_items
+    WHERE order_id = $1
+    `,
+    [orderId]
+  );
+
+  const calculateRequirements = async (items) => {
+    const totals = {};
+
+    for (const item of items || []) {
+      const recipeResult = await client.query(
+        `
+        SELECT inventory_id, quantity
+        FROM menu_item_ingredients
+        WHERE menu_item_id = $1
+          AND (variant_id IS NULL OR variant_id = $2)
+        `,
+        [item.menu_item_id, item.variant_id ?? null]
+      );
+
+      for (const recipe of recipeResult.rows) {
+        const required =
+          Number(recipe.quantity || 0) * Number(item.quantity || 0);
+
+        if (!Number.isFinite(required) || required < 0) {
+          throw new Error('Invalid recipe quantity.');
+        }
+
+        const inventoryId = Number(recipe.inventory_id);
+        totals[inventoryId] = (totals[inventoryId] || 0) + required;
+      }
+    }
+
+    return totals;
+  };
+
+  const beforeTotals = await calculateRequirements(beforeItems);
+  const afterTotals = await calculateRequirements(afterResult.rows);
+
+  const inventoryIds = new Set([
+    ...Object.keys(beforeTotals),
+    ...Object.keys(afterTotals)
+  ]);
+
+  for (const inventoryId of inventoryIds) {
+    const beforeQty = Number(beforeTotals[inventoryId] || 0);
+    const afterQty = Number(afterTotals[inventoryId] || 0);
+    const delta = afterQty - beforeQty;
+
+    if (delta === 0) continue;
+
+    const stockResult = await client.query(
+      `
+      SELECT ki.id, ki.quantity, ii.name, ii.unit
+      FROM kitchen_inventory ki
+      INNER JOIN inventory_items ii ON ii.id = ki.inventory_id
+      WHERE ki.restaurant_id = $1
+        AND ki.inventory_id = $2
+      FOR UPDATE
+      `,
+      [restaurantId, Number(inventoryId)]
+    );
+
+    if (!stockResult.rowCount) {
+      throw new Error(`Kitchen inventory not found for inventory item ${inventoryId}.`);
+    }
+
+    const kitchenInventory = stockResult.rows[0];
+    const currentStock = Number(kitchenInventory.quantity || 0);
+
+    if (!Number.isFinite(currentStock) || currentStock < 0) {
+      throw new Error(`Invalid kitchen stock for "${kitchenInventory.name}".`);
+    }
+
+    if (delta > 0 && currentStock < delta) {
+      const err = new Error(
+        `Insufficient kitchen stock for "${kitchenInventory.name}". Available: ${currentStock} ${kitchenInventory.unit}, Required: ${delta} ${kitchenInventory.unit}.`
+      );
+      err.error = 'INSUFFICIENT_KITCHEN_STOCK';
+      err.ingredient = kitchenInventory.name;
+      err.available = currentStock;
+      err.required = delta;
+      err.unit = kitchenInventory.unit;
+      throw err;
+    }
+
+    const nextStock = currentStock - delta;
+
+    await client.query(
+      `
+      UPDATE kitchen_inventory
+      SET quantity = $1, updated_at = NOW()
+      WHERE id = $2
+      `,
+      [nextStock, kitchenInventory.id]
+    );
+
+    await client.query(
+      `
+      INSERT INTO kitchen_inventory_transactions
+      (kitchen_inventory_id, type, quantity, note, order_id)
+      VALUES ($1, $2, $3, $4, $5)
+      `,
+      [
+        kitchenInventory.id,
+        delta > 0 ? 'OUT' : 'IN',
+        Math.abs(delta),
+        delta > 0
+          ? `Order #${orderId} served-bill edit: additional consumption`
+          : `Order #${orderId} served-bill edit: stock restored`,
+        orderId
+      ]
+    );
+  }
+};
+
 const addItemsToOrder = async (
   orderId,
   items,
@@ -3767,6 +3908,15 @@ if (
     restaurantId
   );
 
+} else if (order.status === 'served' && order.payment_status === 'unpaid') {
+
+  await adjustServedOrderInventory(
+    client,
+    orderId,
+    restaurantId,
+    beforeItems
+  );
+
 }
 
 
@@ -3982,6 +4132,15 @@ const updateOrderItemQuantity = async (
     }
 
 
+    if (order.status === 'served' && order.payment_status === 'unpaid') {
+      await adjustServedOrderInventory(
+        client,
+        orderId,
+        restaurantId,
+        beforeItems
+      );
+    }
+
     await recalculateOrderPricing(
       client,
       orderId,
@@ -4160,9 +4319,17 @@ const removeOrderItem = async (
 
     }
 
-
     const orderId =
       order.id;
+
+    if (order.status === 'served' && order.payment_status === 'unpaid') {
+      await adjustServedOrderInventory(
+        client,
+        orderId,
+        restaurantId,
+        beforeItems
+      );
+    }
 
 
     const items =
@@ -4760,6 +4927,18 @@ const cancelOrder = async (
 
     const order =
       orderResult.rows[0];
+
+    const beforeItemsResult = await client.query(
+      `SELECT menu_item_id, variant_id, quantity FROM order_items WHERE order_id = $1`,
+      [orderId]
+    );
+    const beforeItems = beforeItemsResult.rows;
+
+    const beforeItemsResult = await client.query(
+      `SELECT menu_item_id, variant_id, quantity FROM order_items WHERE order_id = $1`,
+      [orderId]
+    );
+    const beforeItems = beforeItemsResult.rows;
 
 
     // --------------------------------------------------
