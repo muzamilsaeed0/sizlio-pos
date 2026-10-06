@@ -215,6 +215,13 @@ CREATE TABLE public.orders (
 
     inventory_deducted_at timestamp without time zone,
 
+    local_number integer,
+
+    delivery_charge numeric(12,2) DEFAULT 0,
+    dine_charge numeric(12,2) DEFAULT 0,
+    card_charge numeric(12,2) DEFAULT 0,
+    bank_charge numeric(12,2) DEFAULT 0,
+
     payment_status character varying(20)
         DEFAULT 'unpaid'::character varying,
 
