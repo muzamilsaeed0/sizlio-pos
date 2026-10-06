@@ -162,6 +162,22 @@ const deductStockForOrder = async (client, orderId, restaurantId) => {
         if (!updated.rowCount) {
             throw new Error(`Insufficient kitchen stock for inventory item \${inventoryId}.`);
         }
+        
+        await client.query(
+            `INSERT INTO kitchen_inventory_transactions
+             (kitchen_inventory_id, type, quantity, note, order_id)
+             SELECT id, 'OUT', $1, $2, $3
+             FROM kitchen_inventory
+             WHERE restaurant_id = $4
+               AND inventory_id = $5`,
+            [
+                qty,
+                `Order #${orderId} completed — inventory consumption`,
+                orderId,
+                restaurantId,
+                Number(inventoryId)
+            ]
+        );
     }
 
     // Mark the order consumed only after every stock deduction succeeded.
