@@ -3215,19 +3215,9 @@ if (!allowedStatuses.includes(order.status)) {
     // MARK PAID
     // ==================================================
 
-    const statusList = isCafeLite
-      ? [
-          'placed',
-          'pending',
-          'accepted',
-          'confirmed',
-          'preparing',
-          'ready',
-          'served',
-          'payment_pending',
-          'delivered'
-        ]
-      : ['served', 'payment_pending', 'delivered'];
+    // Payment is intentionally restricted to the settlement states.
+    // Cafe Lite must not bypass the normal payment workflow.
+    const statusList = ['served', 'payment_pending', 'delivered'];
 
     const result =
       await client.query(
