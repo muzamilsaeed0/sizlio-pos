@@ -233,8 +233,10 @@ const updateStaff = async (id, restaurantId, fullName, username, password) => {
       throw new Error('Password must be at least 4 characters');
     }
     const hashed = await bcrypt.hash(password, 10);
-    updates.push(`password = $${idx++}`);
+    updates.push(`password = ${idx++}`);
     values.push(hashed);
+    // Force re-login after an admin changes a staff password.
+    updates.push('current_session = NULL');
 
     
   }
