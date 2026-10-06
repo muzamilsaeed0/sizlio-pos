@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require('../middleware/authMiddleware');
+const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 const {
   getCurrent,
   start,
@@ -11,7 +11,7 @@ const {
 } = require('../controllers/shiftController');
 
 // ✅ Specific routes PEHLE
-router.get('/all', authMiddleware, getAllShiftsForManager);   // ✅ NEW
+router.get('/all', authMiddleware, authorize('manager'), getAllShiftsForManager);   // ✅ NEW
 router.get('/current', authMiddleware, getCurrent);
 router.post('/start', authMiddleware, start);
 
