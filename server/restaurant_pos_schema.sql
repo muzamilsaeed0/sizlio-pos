@@ -409,7 +409,9 @@ CREATE TABLE public.restaurants (
     status character varying(20) DEFAULT 'Active'::character varying,
     expiry_date date,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    logo_url character varying(255)
+    logo_url character varying(255),
+    food_type character varying(100) DEFAULT 'Fast Food'::character varying,
+    business_type character varying(30) DEFAULT 'restaurant'::character varying
 );
 
 
@@ -443,6 +445,10 @@ CREATE TABLE public.users (
     is_active boolean DEFAULT true,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     restaurant_id integer,
+    current_session text,
+    last_login_at timestamp with time zone,
+    last_login_ip text,
+    last_login_device text,
 
     CONSTRAINT users_role_check
         CHECK (
