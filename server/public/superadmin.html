@@ -2071,22 +2071,9 @@
       document.getElementById('staff-list-title').innerText =
         roleDisplayNames[role] || role + ' Accounts';
 
-        const counterUrl = isWholesale
-  ? `/wholesale.html?restaurant=${r.id}`
-  : isCafeLite
-    ? `/counter-lite.html?restaurant=${r.id}`
-    : `/counter.html?restaurant=${r.id}`;
-
-const counterLabel = isWholesale
-  ? '📦 Wholesale'
-  : isCafeLite
-    ? '☕ Counter Lite'
-    : '🧾 Counter';
-
-      /* ✅ Login URL hint for counter/rider */
-     const plan = activeRestaurant?.plan || 'Basic';
+        const plan = activeRestaurant?.plan || 'Basic';
       const isCafeLite = plan === 'Cafe Lite';
-      const isWholesale = (activeRestaurant?.business_type === 'wholesale');
+      const isWholesale = activeRestaurant?.business_type === 'wholesale';
       const origin = window.location.origin;
       let loginUrlHint = '';
 
@@ -2137,14 +2124,8 @@ const counterLabel = isWholesale
               <b>${escapeHtml(s.full_name || '-')}</b>
               (${escapeHtml(s.username || '-')})
               <br>
-              ${s.password
-                ? `🔑 Password:
-                   <span class="staff-password" style="font-weight:700;color:var(--accent);">
-                     ${escapeHtml(s.password)}
-                   </span>`
-                : `🔑 Password: <span style="color:#9CA3AF;">not set</span>`
-              }
-              ${!s.is_active
+              🔑 Password: <span style="color:#9CA3AF;">hidden for security — use “Reset Password” to set a new one</span>
+${!s.is_active
                 ? `<br><span style="color:#E15A4C;">⚠️ Inactive</span>`
                 : ''
               }
