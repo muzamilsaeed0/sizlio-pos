@@ -355,8 +355,7 @@ const createStaffUser = async (
   );
 
   generatedStaff[role].push({
-    username,
-    password
+    username
   });
 
 };
@@ -1110,7 +1109,6 @@ const addStaffMember = async (
         full_name,
         username,
         password,
-        password,
         role,
         restaurant_id
       )
@@ -1137,20 +1135,13 @@ const addStaffMember = async (
         full_name || role,
         username.trim(),
         hashedPassword,
-        password,
         role,
         restaurantId
       ]
     );
 
 
-  return {
-
-    ...result.rows[0],
-
-    password
-
-  };
+  return result.rows[0];
 
 };
 
