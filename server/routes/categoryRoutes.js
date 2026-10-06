@@ -15,48 +15,11 @@ const {
   getCategoryPolicy
 } = require('../controllers/categoryController');
 
+router.get('/', authMiddleware, getCategories);
+router.get('/policy', authMiddleware, getCategoryPolicy);
 
-// Get restaurant categories
-router.get(
-  '/',
-  authMiddleware,
-  getCategories
-);
-
-
-// Get food-type category policy
-router.get(
-  '/policy',
-  authMiddleware,
-  getCategoryPolicy
-);
-
-
-// Add category
-router.post(
-  '/',
-  authMiddleware,
-  authorize('manager'),
-  addCategory
-);
-
-
-// Edit category
-router.put(
-  '/:id',
-  authMiddleware,
-  authorize('manager'),
-  updateCategory
-);
-
-
-// Remove category
-router.delete(
-  '/:id',
-  authMiddleware,
-  authorize('manager'),
-  removeCategory
-);
-
+router.post('/', authMiddleware, authorize('manager', 'counter'), addCategory);
+router.put('/:id', authMiddleware, authorize('manager', 'counter'), updateCategory);
+router.delete('/:id', authMiddleware, authorize('manager', 'counter'), removeCategory);
 
 module.exports = router;
