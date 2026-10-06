@@ -21,12 +21,12 @@ const authMiddleware = async (req, res, next) => {
       process.env.JWT_SECRET
     );
 
-    if (!decoded.id) {
-  return res.status(401).json({
-    success: false,
-    message: 'Invalid token'
-  });
-}
+    if (!decoded.id || !decoded.sessionId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid session token'
+      });
+    }
 
     const result = await pool.query(
       `
@@ -62,12 +62,12 @@ WHERE u.id = $1
         message: 'User account disabled'
       });
     }
-    if (decoded.sessionId && user.current_session !== decoded.sessionId) {
-  return res.status(401).json({
-    success: false,
-    message: 'You have been logged out because your account was used on another device.'
-  });
-}
+    if (!user.current_session || user.current_session !== decoded.sessionId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Session expired. Please login again.'
+      });
+    }
 
     if (user.role !== 'super_admin' && user.status !== 'Active') {
       return res.status(403).json({
@@ -92,6 +92,7 @@ WHERE u.id = $1
       role: user.role,
       restaurant_id: user.restaurant_id
     };
+    req.authSessionId = decoded.sessionId;
 
     next();
 
