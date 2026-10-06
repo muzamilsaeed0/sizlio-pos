@@ -68,7 +68,7 @@ const deductStockForOrder = async (client, orderId, restaurantId) => {
          FROM order_items oi
          JOIN menu_items mi ON mi.id = oi.menu_item_id
          JOIN menu_item_ingredients mii ON mii.menu_item_id = mi.id
-            AND (mii.variant_id IS NULL OR mii.variant_id = oi.variant_id)
+            AND (mii.variant_id IS NOT DISTINCT FROM oi.variant_id)
          WHERE oi.order_id = $1 AND mi.restaurant_id = $2`,
         [orderId, restaurantId]
     );
@@ -139,7 +139,7 @@ const checkOrderInventoryAvailability = async (
 
       INNER JOIN menu_item_ingredients mii
         ON mii.menu_item_id = mi.id
-        AND (mii.variant_id IS NULL OR mii.variant_id = oi.variant_id)
+        AND (mii.variant_id IS NOT DISTINCT FROM oi.variant_id)
 
       INNER JOIN inventory_items ii
         ON ii.id = mii.inventory_id
@@ -1947,7 +1947,7 @@ const markServed = async (
 
         INNER JOIN menu_item_ingredients mii
           ON mii.menu_item_id = mi.id
-          AND (mii.variant_id IS NULL OR mii.variant_id = oi.variant_id)
+          AND (mii.variant_id IS NOT DISTINCT FROM oi.variant_id)
 
         INNER JOIN inventory_items ii
           ON ii.id = mii.inventory_id
@@ -2330,7 +2330,7 @@ const markWalkInHandedOver = async (
         ON mi.id = oi.menu_item_id
       INNER JOIN menu_item_ingredients mii
         ON mii.menu_item_id = mi.id
-        AND (mii.variant_id IS NULL OR mii.variant_id = oi.variant_id)
+        AND (mii.variant_id IS NOT DISTINCT FROM oi.variant_id)
       INNER JOIN inventory_items ii
         ON ii.id = mii.inventory_id
       WHERE oi.order_id = $1
@@ -4277,6 +4277,12 @@ const removeOrderItem = async (
     const order =
       orderCheck.rows[0];
 
+    const beforeItemsResult = await client.query(
+      'SELECT menu_item_id, variant_id, quantity FROM order_items WHERE order_id = $1',
+      [order.id]
+    );
+    const beforeItems = beforeItemsResult.rows;
+
 
     // --------------------------------------------------
     // MANAGER / COUNTER
@@ -4608,7 +4614,7 @@ const reserveOrderInventory = async (
         ON mi.id = oi.menu_item_id
       INNER JOIN menu_item_ingredients mii
         ON mii.menu_item_id = mi.id
-        AND (mii.variant_id IS NULL OR mii.variant_id = oi.variant_id)
+        AND (mii.variant_id IS NOT DISTINCT FROM oi.variant_id)
       INNER JOIN inventory_items ii
         ON ii.id = mii.inventory_id
       INNER JOIN kitchen_inventory ki -- Added JOIN
@@ -5093,7 +5099,7 @@ const syncOrderInventoryReservation = async (
         ON mi.id = oi.menu_item_id
       INNER JOIN menu_item_ingredients mii
         ON mii.menu_item_id = mi.id
-        AND (mii.variant_id IS NULL OR mii.variant_id = oi.variant_id)
+        AND (mii.variant_id IS NOT DISTINCT FROM oi.variant_id)
       INNER JOIN inventory_items ii
         ON ii.id = mii.inventory_id
       INNER JOIN kitchen_inventory ki -- Added JOIN
