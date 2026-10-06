@@ -11,7 +11,7 @@ const inventoryController = require("../controllers/inventoryController");
 
 router.get("/", authMiddleware, inventoryController.getAllItems);
 
-router.post("/", authMiddleware, inventoryController.addItem);
+router.post("/", authMiddleware, authorize("manager"), inventoryController.addItem);
 
 router.get(
   "/recipe/:menuItemId",
