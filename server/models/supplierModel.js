@@ -420,8 +420,41 @@ async function getLedger(supplierId, restaurantId, filters = {}) {
     ORDER BY txn_date ASC, created_at ASC
   `, params);
 
-  // Calculate running balance
-  const openingBalance = Number(supplier.opening_balance || 0);
+  // When a date filter is used, the running balance must start from the
+  // supplier balance immediately before the requested period.
+  let openingBalance = Number(supplier.opening_balance || 0);
+
+  if (filters.from) {
+    const priorResult = await pool.query(`
+      SELECT
+        COALESCE(SUM(debit), 0) AS debit,
+        COALESCE(SUM(credit), 0) AS credit
+      FROM (
+        SELECT
+          total_amount AS debit,
+          paid_amount AS credit
+        FROM supplier_purchases
+        WHERE supplier_id = $1
+          AND restaurant_id = $2
+          AND purchase_date < $3
+
+        UNION ALL
+
+        SELECT
+          0 AS debit,
+          amount AS credit
+        FROM supplier_payments
+        WHERE supplier_id = $1
+          AND restaurant_id = $2
+          AND payment_date < $3
+      ) prior_txns
+    `, [supplierId, restaurantId, filters.from]);
+
+    openingBalance +=
+      Number(priorResult.rows[0]?.debit || 0) -
+      Number(priorResult.rows[0]?.credit || 0);
+  }
+
   let runningBalance = openingBalance;
 
   const entries = result.rows.map(row => {
