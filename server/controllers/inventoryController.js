@@ -192,9 +192,8 @@ exports.addItem = async (req, res) => {
         package_unit:
           packageUnit,
 
-        // Opening stock is recorded through addTransaction below.
-        // Keep the initial row at zero so opening stock is not counted twice.
-        stock_quantity: 0,
+        // createItem() records opening stock atomically with its transaction.
+        stock_quantity: stock,
 
         minimum_stock: minimum,
 
@@ -213,25 +212,8 @@ exports.addItem = async (req, res) => {
           restaurantId
       });
 
-    // --------------------------------------------------
-    // OPENING STOCK TRANSACTION
-    // --------------------------------------------------
-
-    if (stock > 0) {
-      await inventoryModel.addTransaction({
-        inventory_id: item.id,
-
-        restaurant_id: restaurantId,
-
-        type: "IN",
-
-        quantity: stock,
-
-        note: "Opening Stock"
-      });
-    }
-
-    // Get final item after transaction
+    // Opening stock is already recorded atomically by createItem().
+    // Get final item after creation.
     const finalItem =
       await inventoryModel.getItemById(
         item.id,
