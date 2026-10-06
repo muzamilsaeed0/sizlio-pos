@@ -219,16 +219,12 @@ exports.updateSettings = async (req, res) => {
       updates.push(`username = $${idx++}`);
       values.push(username.trim());
     }
-
-    // ✅ FIX: If new password provided, update both password (hashed) AND plain_password
     if (new_password) {
       if (new_password.length < 4) {
         return res.status(400).json({ success: false, message: 'New password must be at least 4 characters' });
       }
 
       const hashed = await bcrypt.hash(new_password, 10);
-
-      // Update hashed password
       updates.push(`password = $${idx++}`);
       values.push(hashed);
 
