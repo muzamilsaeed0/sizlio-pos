@@ -12,7 +12,8 @@ BEGIN
     ALTER TABLE public.order_items
       ADD CONSTRAINT order_items_variant_id_fkey
       FOREIGN KEY (variant_id) REFERENCES public.menu_item_variants(id)
-      ON DELETE SET NULL;
+      ON DELETE SET NULL
+      NOT VALID;
   END IF;
 END $;
 
