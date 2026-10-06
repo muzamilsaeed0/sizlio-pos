@@ -303,7 +303,7 @@ CREATE INDEX IF NOT EXISTS orders_rider_idx
 CREATE INDEX IF NOT EXISTS orders_inventory_deducted_idx
   ON public.orders(restaurant_id, inventory_deducted_at);
 
-DO $
+DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint WHERE conname = 'order_items_order_deal_id_fkey'
@@ -313,9 +313,9 @@ BEGIN
       FOREIGN KEY (order_deal_id) REFERENCES public.order_deals(id)
       ON DELETE CASCADE NOT VALID;
   END IF;
-END $;
+END $$;
 
-DO $
+DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint WHERE conname = 'menu_item_ingredients_variant_id_fkey'
@@ -325,7 +325,7 @@ BEGIN
       FOREIGN KEY (variant_id) REFERENCES public.menu_item_variants(id)
       ON DELETE CASCADE NOT VALID;
   END IF;
-END $;
+END $$;
 
 -- Existing payment ledger installations may predate the QR FK.
 DO $$
