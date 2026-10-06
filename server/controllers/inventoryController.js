@@ -192,7 +192,9 @@ exports.addItem = async (req, res) => {
         package_unit:
           packageUnit,
 
-        stock_quantity: stock,
+        // Opening stock is recorded through addTransaction below.
+        // Keep the initial row at zero so opening stock is not counted twice.
+        stock_quantity: 0,
 
         minimum_stock: minimum,
 
