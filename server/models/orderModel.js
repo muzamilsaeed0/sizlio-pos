@@ -1796,6 +1796,8 @@ const markOutForDelivery = async (
 
         AND status = 'ready_to_deliver'
 
+        AND delivery_rider_id IS NOT NULL
+
       RETURNING *
       `,
       [
@@ -1843,6 +1845,8 @@ const markDelivered = async (
 
         AND status = 'out_for_delivery'
 
+        AND delivery_rider_id IS NOT NULL
+
       RETURNING *
       `,
       [
@@ -1872,7 +1876,14 @@ const markCompleted = async (id, restaurantId) => {
     await client.query('BEGIN');
     
     const orderResult = await client.query(
-      `SELECT * FROM orders WHERE id = $1 AND restaurant_id = $2 FOR UPDATE`,
+      `SELECT *
+       FROM orders
+       WHERE id = $1
+         AND restaurant_id = $2
+         AND order_type = 'delivery'
+         AND status = 'delivered'
+         AND delivery_rider_id IS NOT NULL
+       FOR UPDATE`,
       [id, restaurantId]
     );
     const order = orderResult.rows[0];
@@ -5003,11 +5014,15 @@ const cancelOrder = async (
     // --------------------------------------------------
 
     if (
-      [
-        'served',
-        'paid',
-        'completed',
-        'cancelled'
+      ![
+        'pending',
+        'placed',
+        'accepted',
+        'preparing',
+        'confirmed',
+        'ready',
+        'ready_to_dispatch',
+        'ready_to_deliver'
       ].includes(order.status) ||
       order.payment_status === 'paid'
     ) {
