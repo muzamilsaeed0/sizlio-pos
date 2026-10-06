@@ -65,6 +65,17 @@ async function getSupplierById(id, restaurantId) {
 }
 
 async function createSupplier(restaurantId, data) {
+  const openingBalance = Number(data.opening_balance ?? 0);
+
+  if (!Number.isFinite(openingBalance) || openingBalance < 0) {
+    throw new Error('Opening balance must be a valid non-negative amount');
+  }
+
+  const name = String(data.name || '').trim();
+  if (!name) {
+    throw new Error('Supplier name is required');
+  }
+
   const result = await pool.query(`
     INSERT INTO suppliers
       (restaurant_id, name, phone, email, address, opening_balance)
@@ -72,11 +83,11 @@ async function createSupplier(restaurantId, data) {
     RETURNING *
   `, [
     restaurantId,
-    data.name,
+    name,
     data.phone || null,
     data.email || null,
     data.address || null,
-    Number(data.opening_balance || 0)
+    openingBalance
   ]);
   return result.rows[0];
 }
