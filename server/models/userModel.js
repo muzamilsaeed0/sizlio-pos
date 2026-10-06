@@ -249,7 +249,7 @@ const updateStaff = async (id, restaurantId, fullName, username, password) => {
     `UPDATE users SET ${updates.join(', ')}
      WHERE id = $${idx++} AND restaurant_id = $${idx}
        AND role IN ('waiter','kitchen','counter','delivery','display')
-     RETURNING id, username, full_name, role, is_active, plain_password AS password`,  // ✅ Return password as well
+     RETURNING id, username, full_name, role, is_active`
     values
   );
   return result.rows[0];
