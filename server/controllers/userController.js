@@ -27,15 +27,24 @@ exports.addStaff = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid staff role' });
     }
 
-    const staff = await createStaff(req.user.restaurant_id, full_name, username, password, role, req.user.role);
-    res.status(201).json({ success: true, message: 'Staff account created', data: staff });
+    const staff = await createStaff(
+      req.user.restaurant_id,
+      full_name,
+      username,
+      password,
+      role,
+      req.user.role
+    );
 
-    } catch (err) {
+    res.status(201).json({
+      success: true,
+      message: 'Staff account created',
+      data: staff
+    });
+
+  } catch (err) {
     if (err.code === '23505') {
-      return res.status(409).json({
-        success: false,
-        message: 'Username already taken'
-      });
+      return res.status(409).json({ success: false, message: 'Username already taken' });
     }
 
     if (err.code === 'STAFF_LIMIT_REACHED') {
@@ -53,22 +62,43 @@ exports.addStaff = async (req, res) => {
         message: 'Restaurant not found'
       });
     }
-  };
 
     console.error(err);
-
     return res.status(500).json({
       success: false,
       message: 'Server error'
     });
   }
+};
 
 exports.editStaff = async (req, res) => {
   try {
     const { id } = req.params;
     const { full_name, username, password } = req.body;
 
-    // ✅ Add validation
+    if (req.user.role === 'counter') {
+      /* Counter Lite may reset rider passwords from its single screen,
+         but must not edit names/usernames or non-rider accounts. */
+      if (!password || full_name !== undefined || username !== undefined) {
+        return res.status(403).json({
+          success: false,
+          message: 'Counter can only reset a rider password'
+        });
+      }
+
+      const rider = await getStaffByRestaurant(req.user.restaurant_id);
+      const target = rider.find(
+        u => Number(u.id) === Number(id) && u.role === 'delivery'
+      );
+
+      if (!target) {
+        return res.status(404).json({
+          success: false,
+          message: 'Rider not found'
+        });
+      }
+    }
+
     if (password && password.length < 4) {
       return res.status(400).json({
         success: false,
@@ -76,20 +106,40 @@ exports.editStaff = async (req, res) => {
       });
     }
 
-    const staff = await updateStaff(id, req.user.restaurant_id, full_name, username, password);
+    const staff = await updateStaff(
+      id,
+      req.user.restaurant_id,
+      full_name,
+      username,
+      password
+    );
 
     if (!staff) {
-      return res.status(404).json({ success: false, message: 'Staff not found or nothing to update' });
+      return res.status(404).json({
+        success: false,
+        message: 'Staff not found or nothing to update'
+      });
     }
 
-    res.json({ success: true, message: 'Staff account updated', data: staff });
+    res.json({
+      success: true,
+      message: 'Staff account updated',
+      data: staff
+    });
 
   } catch (err) {
     if (err.code === '23505') {
-      return res.status(409).json({ success: false, message: 'Username already taken' });
+      return res.status(409).json({
+        success: false,
+        message: 'Username already taken'
+      });
     }
+
     console.error(err);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
   }
 };
 
