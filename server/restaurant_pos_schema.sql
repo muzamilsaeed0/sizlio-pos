@@ -364,7 +364,8 @@ CREATE TABLE public.orders (
                 (
                     ARRAY[
                         'dine_in'::character varying,
-                        'delivery'::character varying
+                        'delivery'::character varying,
+                        'walk_in'::character varying
                     ]
                 )::text[]
             )
