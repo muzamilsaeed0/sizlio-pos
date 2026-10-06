@@ -336,11 +336,26 @@ async function listPayments(supplierId, restaurantId, filters = {}) {
 
 async function createPayment(supplierId, restaurantId, data, userId) {
   const supplierCheck = await pool.query(
-    `SELECT id FROM suppliers WHERE id = $1 AND restaurant_id = $2 AND is_active = true`,
+    `SELECT id FROM suppliers WHERE id = $1 AND restaurant_id = $2 AND is_active = true FOR UPDATE`,
     [supplierId, restaurantId]
   );
   if (!supplierCheck.rowCount) {
     throw new Error('Supplier not found or inactive');
+  }
+
+  const amount = Number(data.amount);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error('Payment amount must be greater than 0');
+  }
+
+  const paymentMethod = String(data.payment_method || 'Cash').trim();
+  if (!paymentMethod) {
+    throw new Error('Payment method is required');
+  }
+
+  const paymentDate = data.payment_date || new Date().toISOString().slice(0, 10);
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(paymentDate))) {
+    throw new Error('Invalid payment date');
   }
 
   const result = await pool.query(`
@@ -352,9 +367,9 @@ async function createPayment(supplierId, restaurantId, data, userId) {
   `, [
     restaurantId,
     supplierId,
-    data.payment_date || new Date().toISOString().slice(0, 10),
-    Number(data.amount),
-    data.payment_method || 'Cash',
+    paymentDate,
+    Number(amount.toFixed(2)),
+    paymentMethod,
     data.reference_no || null,
     data.note || null,
     userId || null
