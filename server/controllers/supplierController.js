@@ -148,6 +148,7 @@ exports.deletePurchase = async (req, res) => {
     res.json({ success: true, message: 'Purchase deleted' });
   } catch (err) {
     console.error('supplier.deletePurchase:', err);
+    if (err.message && err.message.includes('deletion is disabled')) { return res.status(409).json({ success: false, message: err.message }); }
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
@@ -204,6 +205,7 @@ exports.deletePayment = async (req, res) => {
     res.json({ success: true, message: 'Payment deleted' });
   } catch (err) {
     console.error('supplier.deletePayment:', err);
+    if (err.message && err.message.includes('deletion is disabled')) { return res.status(409).json({ success: false, message: err.message }); }
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
