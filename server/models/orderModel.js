@@ -776,12 +776,6 @@ const createOrder = async (
     const order =
       orderResult.rows[0];
 
-    const beforeItemsResult = await client.query(
-      `SELECT menu_item_id, variant_id, quantity FROM order_items WHERE order_id = $1`,
-      [orderId]
-    );
-    const beforeItems = beforeItemsResult.rows;
-
 
     // --------------------------------------------------
     // ADD ORDER ITEMS
@@ -3449,6 +3443,12 @@ const addItemsToOrder = async (
     const order =
       orderResult.rows[0];
 
+    const beforeItemsResult = await client.query(
+      `SELECT menu_item_id, variant_id, quantity FROM order_items WHERE order_id = $1`,
+      [orderId]
+    );
+    const beforeItems = beforeItemsResult.rows;
+
 
     // --------------------------------------------------
     // MANAGER / COUNTER
@@ -4019,6 +4019,12 @@ const updateOrderItemQuantity = async (
 
     const order =
       orderCheck.rows[0];
+
+    const beforeItemsResult = await client.query(
+      `SELECT menu_item_id, variant_id, quantity FROM order_items WHERE order_id = $1`,
+      [orderId]
+    );
+    const beforeItems = beforeItemsResult.rows;
 
 
     // ==================================================
@@ -4927,18 +4933,6 @@ const cancelOrder = async (
 
     const order =
       orderResult.rows[0];
-
-    const beforeItemsResult = await client.query(
-      `SELECT menu_item_id, variant_id, quantity FROM order_items WHERE order_id = $1`,
-      [orderId]
-    );
-    const beforeItems = beforeItemsResult.rows;
-
-    const beforeItemsResult = await client.query(
-      `SELECT menu_item_id, variant_id, quantity FROM order_items WHERE order_id = $1`,
-      [orderId]
-    );
-    const beforeItems = beforeItemsResult.rows;
 
 
     // --------------------------------------------------
