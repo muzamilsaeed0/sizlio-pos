@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require('../middleware/authMiddleware');
+const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 const {
   getVariants,
   addVariant,
@@ -10,10 +10,10 @@ const {
 
 // List / add options for a specific menu item
 router.get('/item/:itemId', authMiddleware, getVariants);
-router.post('/item/:itemId', authMiddleware, addVariant);
+router.post('/item/:itemId', authMiddleware, authorize('manager'), addVariant);
 
 // Edit / remove a specific option
-router.put('/:id', authMiddleware, editVariant);
-router.delete('/:id', authMiddleware, removeVariant);
+router.put('/:id', authMiddleware, authorize('manager'), editVariant);
+router.delete('/:id', authMiddleware, authorize('manager'), removeVariant);
 
 module.exports = router;
