@@ -229,15 +229,6 @@ if (!PLAN_LIMITS[selectedPlan]) {
           plan,
           expiry_date,
 
-          manager_username,
-          manager_password,
-
-          waiter_username,
-          waiter_password,
-
-          kitchen_username,
-          kitchen_password,
-
           food_type,
           business_type
         )
@@ -245,11 +236,8 @@ if (!PLAN_LIMITS[selectedPlan]) {
         VALUES
         (
           $1,$2,$3,$4,$5,$6,$7,$8,
-          $9,$10,
-          $11,$12,
-          $13,$14,
-          $15,
-          $16
+          $9,
+          $10
         )
 
         RETURNING *
@@ -264,15 +252,6 @@ if (!PLAN_LIMITS[selectedPlan]) {
 
           selectedPlan,
           expiry_date,
-
-          manager_username || null,
-          manager_password || null,
-
-          null,
-          null,
-
-          null,
-          null,
 
           selectedFoodType,
           selectedBusinessType
@@ -304,14 +283,13 @@ if (manager_username && manager_password) {
   const hashedPassword = await bcrypt.hash(manager_password, 10);
 
   const mgrResult = await client.query(
-    `INSERT INTO users (full_name, username, password, plain_password, role, restaurant_id, is_active)
-     VALUES ($1, $2, $3, $4, 'manager', $5, true)
+    `INSERT INTO users (full_name, username, password, role, restaurant_id, is_active)
+     VALUES ($1, $2, $3, 'manager', $4, true)
      RETURNING id, username, full_name, role`,
     [
       manager_fullname || manager_username,
       manager_username,
       hashedPassword,
-      manager_password,
       restaurant.id
     ]
   );
@@ -359,20 +337,18 @@ const createStaffUser = async (
       full_name,
       username,
       password,
-      plain_password,
       role,
       restaurant_id
     )
     VALUES
     (
-      $1, $2, $3, $4, $5, $6
+      $1, $2, $3, $4, $5
     )
     `,
     [
       fullName,
       username,
       hashed,
-      password,
       role,
       restaurant.id
     ]
@@ -621,7 +597,7 @@ async (
 
 // ======================================================
 // RESET MANAGER PASSWORD
-// (now just writes users.password + users.plain_password —
+// (now just writes users.password + users.password —
 //  no restaurants-table syncing needed, so the old "stale
 //  password after reset" bug can't happen anymore)
 // ======================================================
@@ -644,10 +620,9 @@ async (
       UPDATE users
 
       SET
-        password = $1,
-        plain_password = $2
+        password = $1
 
-      WHERE restaurant_id = $3
+      WHERE restaurant_id = $2
         AND role = 'manager'
 
       RETURNING
@@ -657,7 +632,6 @@ async (
       `,
       [
         hashed,
-        newPassword,
         restaurantId
       ]
     );
@@ -933,7 +907,7 @@ const updateRestaurantDetails = async (id, data) => {
 
 // ======================================================
 // GET RESTAURANT STAFF
-// Now reads plain_password straight from each user's own row —
+// Now reads password straight from each user's own row —
 // works correctly no matter how many staff share a role.
 // ======================================================
 
@@ -950,7 +924,7 @@ async (id) => {
         role,
         is_active,
         restaurant_id,
-        plain_password AS password
+        password AS password
 
       FROM users
 
@@ -991,11 +965,10 @@ async (
       UPDATE users
 
       SET
-        password = $1,
-        plain_password = $2
+        password = $1
 
-      WHERE id = $3
-        AND restaurant_id = $4
+      WHERE id = $2
+        AND restaurant_id = $3
 
       RETURNING
         id,
@@ -1004,7 +977,6 @@ async (
       `,
       [
         hashed,
-        newPassword,
         userId,
         restaurantId
       ]
@@ -1139,7 +1111,7 @@ const addStaffMember = async (
         full_name,
         username,
         password,
-        plain_password,
+        password,
         role,
         restaurant_id
       )
