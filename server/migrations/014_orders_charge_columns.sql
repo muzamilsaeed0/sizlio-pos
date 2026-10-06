@@ -1,3 +1,5 @@
+BEGIN;
+
 -- Counter Lite / full POS charges
 -- Fixes: column "delivery_charge" does not exist on Pay Now
 
