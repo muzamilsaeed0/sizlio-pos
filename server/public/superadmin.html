@@ -1220,16 +1220,7 @@
           <div class="title">🔗 Login URLs — Share with staff</div>
           <div class="urls">
 
-            ${isWholesale
-              ? `
-                <div>
-                  📦 <b>Wholesale:</b>
-                  <a href="/wholesale.html?restaurant=${r.id}" target="_blank">
-                    /wholesale.html?restaurant=${r.id}
-                  </a>
-                </div>
-              `
-              : isCafeLite
+            ${isCafeLite
               ? `
                 <div>
                   ☕ <b>Counter Lite:</b>
@@ -1238,7 +1229,16 @@
                   </a>
                 </div>
               `
-              : `
+              : isWholesale
+                ? `
+                <div>
+                  📦 <b>Wholesale:</b>
+                  <a href="/wholesale.html?restaurant=${r.id}" target="_blank">
+                    /wholesale.html?restaurant=${r.id}
+                  </a>
+                </div>
+              `
+                : `
                 <div>
                   🧾 <b>Counter:</b>
                   <a href="/counter.html?restaurant=${r.id}" target="_blank">
@@ -1246,9 +1246,7 @@
                   </a>
                 </div>
               `
-            }
-
-                        ${isCafeLite
+            }${isCafeLite
               ? `
                 <div>
                   🏍️ <b>Rider:</b>
