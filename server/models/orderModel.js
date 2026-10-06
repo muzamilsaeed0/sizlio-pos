@@ -3316,7 +3316,7 @@ const adjustServedOrderInventory = async (
         INNER JOIN menu_items mi
           ON mi.id = mii.menu_item_id
         WHERE mii.menu_item_id = $1
-          AND (mii.variant_id IS NULL OR mii.variant_id = $2)
+          AND mii.variant_id IS NOT DISTINCT FROM $2
           AND ii.restaurant_id = $3
           AND mi.restaurant_id = $3
         `,
@@ -3939,24 +3939,23 @@ WHERE id = $2
 // where the reservation has already been consumed.
 // --------------------------------------------------
 
-if (
-  role !== 'manager' &&
-  role !== 'counter'
-) {
-
-  await syncOrderInventoryReservation(
-    client,
-    orderId,
-    restaurantId
-  );
-
-} else if (order.status === 'served' && order.payment_status === 'unpaid') {
+if (order.status === 'served' && order.payment_status === 'unpaid') {
 
   await adjustServedOrderInventory(
     client,
     orderId,
     restaurantId,
     beforeItems
+  );
+
+} else {
+
+  // Active orders must keep their reservation in sync,
+  // including counter edits.
+  await syncOrderInventoryReservation(
+    client,
+    orderId,
+    restaurantId
   );
 
 }
@@ -4204,11 +4203,19 @@ const updateOrderItemQuantity = async (
 // new reservation is created.
 // --------------------------------------------------
 
-if (
-  role !== 'manager' &&
-  role !== 'counter'
-) {
+if (order.status === 'served' && order.payment_status === 'unpaid') {
 
+  await adjustServedOrderInventory(
+    client,
+    orderId,
+    restaurantId,
+    beforeItems
+  );
+
+} else {
+
+  // Active orders must keep their reservation in sync,
+  // including counter edits.
   await syncOrderInventoryReservation(
     client,
     orderId,
@@ -4504,11 +4511,19 @@ await client.query(
   // SYNC INVENTORY RESERVATION
   // --------------------------------------------------
 
-  if (
-    role !== 'manager' &&
-    role !== 'counter'
-  ) {
+  if (order.status === 'served' && order.payment_status === 'unpaid') {
 
+    await adjustServedOrderInventory(
+      client,
+      orderId,
+      restaurantId,
+      beforeItems
+    );
+
+  } else {
+
+    // Active orders must keep their reservation in sync,
+    // including counter edits.
     await syncOrderInventoryReservation(
       client,
       orderId,
