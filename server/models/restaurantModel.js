@@ -923,8 +923,7 @@ async (id) => {
         full_name,
         role,
         is_active,
-        restaurant_id,
-        password AS password
+        restaurant_id
 
       FROM users
 
