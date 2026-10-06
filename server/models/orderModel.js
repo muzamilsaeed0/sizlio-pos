@@ -3273,12 +3273,18 @@ const adjustServedOrderInventory = async (
     for (const item of items || []) {
       const recipeResult = await client.query(
         `
-        SELECT inventory_id, quantity
-        FROM menu_item_ingredients
-        WHERE menu_item_id = $1
-          AND (variant_id IS NULL OR variant_id = $2)
+        SELECT mii.inventory_id, mii.quantity
+        FROM menu_item_ingredients mii
+        INNER JOIN inventory_items ii
+          ON ii.id = mii.inventory_id
+        INNER JOIN menu_items mi
+          ON mi.id = mii.menu_item_id
+        WHERE mii.menu_item_id = $1
+          AND (mii.variant_id IS NULL OR mii.variant_id = $2)
+          AND ii.restaurant_id = $3
+          AND mi.restaurant_id = $3
         `,
-        [item.menu_item_id, item.variant_id ?? null]
+        [item.menu_item_id, item.variant_id ?? null, restaurantId]
       );
 
       for (const recipe of recipeResult.rows) {
@@ -3445,7 +3451,7 @@ const addItemsToOrder = async (
 
     const beforeItemsResult = await client.query(
       `SELECT menu_item_id, variant_id, quantity FROM order_items WHERE order_id = $1`,
-      [orderId]
+      [order.id]
     );
     const beforeItems = beforeItemsResult.rows;
 
