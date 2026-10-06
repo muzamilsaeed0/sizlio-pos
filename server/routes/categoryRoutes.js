@@ -3,7 +3,8 @@ const express = require('express');
 const router = express.Router();
 
 const {
-  authMiddleware
+  authMiddleware,
+  authorize
 } = require('../middleware/authMiddleware');
 
 const {
@@ -35,6 +36,7 @@ router.get(
 router.post(
   '/',
   authMiddleware,
+  authorize('manager'),
   addCategory
 );
 
@@ -43,6 +45,7 @@ router.post(
 router.put(
   '/:id',
   authMiddleware,
+  authorize('manager'),
   updateCategory
 );
 
@@ -51,6 +54,7 @@ router.put(
 router.delete(
   '/:id',
   authMiddleware,
+  authorize('manager'),
   removeCategory
 );
 
