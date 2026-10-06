@@ -6354,6 +6354,8 @@ module.exports = {
 
   autoAssignDeliveryRider,
 
-  getRiderSummary
+  getRiderSummary,
+
+  adjustServedOrderInventory
 
 };
