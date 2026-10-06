@@ -1108,7 +1108,7 @@ const createOrder = async (
               $2,
               $3,
               $4,
-              ($3::numeric * $4::numeric)
+              $5
             )
 
             RETURNING id
@@ -1117,7 +1117,8 @@ const createOrder = async (
               order.id,
               dealId,
               dealQuantity,
-              Number(dealCheck.rows[0].price)
+              Number(dealCheck.rows[0].price),
+              Number(dealQuantity) * Number(dealCheck.rows[0].price)
             ]
           );
 
@@ -1185,7 +1186,7 @@ const createOrder = async (
               $4,
               $5,
               $6,
-              ($4::numeric * $6::numeric)
+              $7
             )
             `,
             [
@@ -1194,7 +1195,8 @@ const createOrder = async (
               dealItem.variant_id,
               dealItem.quantity * dealQuantity,
               orderDealId,
-              dealItemUnitPrice
+              dealItemUnitPrice,
+              Number(dealItem.quantity * dealQuantity) * Number(dealItemUnitPrice)
             ]
           );
 
@@ -3808,9 +3810,9 @@ WHERE id = $2
             $2,
             $3,
             $4,
-            $4,
             $5,
-            ($4::numeric * $5::numeric)
+            $6,
+            $7
           )
           `,
           [
@@ -3818,7 +3820,9 @@ WHERE id = $2
             item.menu_item_id,
             variantId,
             item.quantity,
-            unitPrice
+            item.quantity,
+            unitPrice,
+            Number(item.quantity) * Number(unitPrice)
           ]
         );
 
@@ -3942,7 +3946,7 @@ WHERE id = $2
               $2,
               $3,
               $4,
-              ($3::numeric * $4::numeric)
+              $5
             )
 
             RETURNING id
@@ -3951,7 +3955,8 @@ WHERE id = $2
               orderId,
               dealId,
               dealQuantity,
-              Number(dealCheck.rows[0].price)
+              Number(dealCheck.rows[0].price),
+              Number(dealQuantity) * Number(dealCheck.rows[0].price)
             ]
           );
 
@@ -4018,10 +4023,10 @@ WHERE id = $2
                 $2,
                 $3,
                 $4,
-                $4,
                 $5,
                 $6,
-                ($4::numeric * $6::numeric)
+                $7,
+                $8
               )
               `,
               [
@@ -4029,8 +4034,10 @@ WHERE id = $2
                 dealItem.menu_item_id,
                 dealItem.variant_id,
                 qty,
+                qty,
                 orderDealId,
-                dealItemUnitPrice
+                dealItemUnitPrice,
+                Number(qty) * Number(dealItemUnitPrice)
               ]
             );
           }
