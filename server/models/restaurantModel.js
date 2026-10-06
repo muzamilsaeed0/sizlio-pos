@@ -354,8 +354,12 @@ const createStaffUser = async (
     ]
   );
 
+  // Keep generated password only in the server-side result so the
+  // credential email can use it. Never expose this object directly
+  // through an API response.
   generatedStaff[role].push({
-    username
+    username,
+    password
   });
 
 };
