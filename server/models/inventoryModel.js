@@ -257,6 +257,10 @@ async function addTransaction({
     let newStock;
     let transactionType;
 
+    if ((normalizedType === "waste" || normalizedType === "adjustment") && (!note || !String(note).trim())) {
+      throw new Error("A note/reason is required for wastage or stock adjustment");
+    }
+
     if (["in", "purchase", "add", "restock"].includes(normalizedType)) {
       newStock = currentStock + amount;
       transactionType = "IN";
