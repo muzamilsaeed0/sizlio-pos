@@ -83,30 +83,59 @@ async function createItem({
   supplier_id = null,
   restaurant_id
 }) {
-  const query = `
-    INSERT INTO inventory_items (
-      name, category, unit,
-      package_size, package_unit,
-      stock_quantity, minimum_stock,
-      purchase_price, supplier, supplier_id,
-      restaurant_id
-    )
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-    RETURNING *
-  `;
+  const client = await pool.connect();
 
-  const values = [
-    name, category, unit,
-    package_size, package_unit,
-    stock_quantity, minimum_stock,
-    purchase_price, supplier, supplier_id,
-    restaurant_id
-  ];
+  try {
+    await client.query("BEGIN");
 
-  const result = await pool.query(query, values);
-  return result.rows[0];
+    const openingStock = Number(stock_quantity);
+    if (!Number.isFinite(openingStock) || openingStock < 0) {
+      throw new Error("Opening stock must be 0 or greater");
+    }
+
+    const itemResult = await client.query(
+      `
+      INSERT INTO inventory_items (
+        name, category, unit,
+        package_size, package_unit,
+        stock_quantity, minimum_stock,
+        purchase_price, supplier, supplier_id,
+        restaurant_id
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+      RETURNING *
+      `,
+      [
+        name, category, unit,
+        package_size, package_unit,
+        openingStock, minimum_stock,
+        purchase_price, supplier, supplier_id,
+        restaurant_id
+      ]
+    );
+
+    const item = itemResult.rows[0];
+
+    if (openingStock > 0) {
+      await client.query(
+        `
+        INSERT INTO inventory_transactions
+          (inventory_id, type, quantity, note)
+        VALUES ($1, 'IN', $2, 'Opening Stock')
+        `,
+        [item.id, openingStock]
+      );
+    }
+
+    await client.query("COMMIT");
+    return item;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
-
 // ======================================================
 // UPDATE INVENTORY ITEM
 // ======================================================
