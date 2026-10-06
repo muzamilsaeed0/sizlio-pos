@@ -121,10 +121,10 @@ exports.getCategories = async (req, res) => {
 // ======================================================
 
 exports.addCategory = async (req, res) => {
-  if (req.user.role !== 'manager') {
+  if (!['manager', 'counter'].includes(req.user.role)) {
     return res.status(403).json({
       success: false,
-      message: 'Only manager can add categories'
+      message: 'Only manager or counter can add categories'
     });
   }
 
@@ -222,10 +222,10 @@ exports.addCategory = async (req, res) => {
 // ======================================================
 
 exports.updateCategory = async (req, res) => {
-  if (req.user.role !== 'manager') {
+  if (!['manager', 'counter'].includes(req.user.role)) {
     return res.status(403).json({
       success: false,
-      message: 'Only manager can edit categories'
+      message: 'Only manager or counter can edit categories'
     });
   }
 
@@ -322,10 +322,10 @@ exports.updateCategory = async (req, res) => {
 // ======================================================
 
 exports.removeCategory = async (req, res) => {
-  if (req.user.role !== 'manager') {
+  if (!['manager', 'counter'].includes(req.user.role)) {
     return res.status(403).json({
       success: false,
-      message: 'Only manager can remove categories'
+      message: 'Only manager or counter can remove categories'
     });
   }
 
