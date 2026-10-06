@@ -317,14 +317,18 @@ CREATE TABLE public.orders (
                 (
                     ARRAY[
                         'pending'::character varying,
+                        'placed'::character varying,
                         'accepted'::character varying,
+                        'preparing'::character varying,
                         'confirmed'::character varying,
                         'ready'::character varying,
                         'served'::character varying,
+                        'ready_to_dispatch'::character varying,
                         'ready_to_deliver'::character varying,
                         'out_for_delivery'::character varying,
                         'delivered'::character varying,
-                        'completed'::character varying
+                        'completed'::character varying,
+                        'cancelled'::character varying
                     ]
                 )::text[]
             )
