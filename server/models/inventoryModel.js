@@ -338,7 +338,7 @@ async function getRecipe(menuItemId, restaurantId, variantId = null) {
     INNER JOIN inventory_items i ON i.id = mii.inventory_id
     INNER JOIN menu_items m ON m.id = mii.menu_item_id
     LEFT JOIN menu_item_variants miv ON miv.id = mii.variant_id
-    WHERE mii.menu_item_id = $1 AND m.restaurant_id = $2
+    WHERE mii.menu_item_id = $1 AND m.restaurant_id = $2 AND i.restaurant_id = $2
   `;
 
   const params = [menuItemId, restaurantId];
