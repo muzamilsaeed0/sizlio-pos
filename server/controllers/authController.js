@@ -228,9 +228,6 @@ exports.updateSettings = async (req, res) => {
       updates.push(`password = $${idx++}`);
       values.push(hashed);
 
-      // ✅ Update plain_password (so Super Admin can see the actual password)
-      updates.push(`plain_password = $${idx++}`);
-      values.push(new_password);
     }
 
     if (!updates.length) {
