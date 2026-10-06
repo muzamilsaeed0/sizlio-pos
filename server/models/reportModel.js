@@ -100,172 +100,59 @@ const getSalesDetails = async (
 
       o.tax_amount,
 
-      o.delivery_charge,
+      COALESCE(o.delivery_charge, 0)::numeric(10,2) AS delivery_charge,
 
-      o.dine_charge,
+      COALESCE(o.dine_charge, 0)::numeric(10,2) AS dine_charge,
 
-      COALESCE(o.card_charge, 0)::numeric(10,2) AS card_charge,
+      0::numeric(10,2) AS card_charge,
 
-      COALESCE(o.bank_charge, 0)::numeric(10,2) AS bank_charge,
+      0::numeric(10,2) AS bank_charge,
 
       o.total_amount::numeric(10,2) AS total,
-
-     /* =========================
-   NORMAL ITEMS
-   ========================= */
-
-COALESCE(
-  (
-    SELECT json_agg(
-      json_build_object(
-
-        'type', 'item',
-
-        'menu_item_id', oi.menu_item_id,
-
-        'variant_id', oi.variant_id,
-
-        'variant_label', miv.label,
-
-        'name', m.name,
-
-        'qty', oi.quantity,
-
-        'price',
-        oi.unit_price::numeric(10,2),
-
-        'total',
-        oi.line_total::numeric(10,2)
-
-      )
-
-      ORDER BY m.name
-
-    )
-
-    FROM order_items oi
-
-    INNER JOIN menu_items m
-      ON m.id = oi.menu_item_id
-
-    LEFT JOIN menu_item_variants miv
-      ON miv.id = oi.variant_id
-
-    WHERE oi.order_id = o.id
-
-      AND oi.order_deal_id IS NULL
-  ),
-
-  '[]'::json
-
-) AS items,
-
-      /* =========================
-         DEALS
-         ========================= */
 
       COALESCE(
         (
           SELECT json_agg(
             json_build_object(
-
-              'type', 'deal',
-
-              'deal_id', x.deal_id,
-
-              'name', x.name,
-
-              'qty', x.quantity,
-
-              'price',
-              x.price::numeric(10,2),
-
-              'total',
-              (
-                x.quantity * x.price
-              )::numeric(10,2),
-
-              'items', x.items
-
+              'type', 'item',
+              'menu_item_id', oi.menu_item_id,
+              'variant_id', oi.variant_id,
+              'variant_label', miv.label,
+              'name', m.name,
+              'qty', oi.quantity,
+              'price', oi.unit_price::numeric(10,2),
+              'total', oi.line_total::numeric(10,2)
             )
-
-            ORDER BY x.name
-
+            ORDER BY m.name
           )
-
-          FROM (
-
-            SELECT DISTINCT ON (od.id)
-
-              od.id AS order_deal_row_id,
-
-              od.deal_id,
-
-              d.name,
-
-              od.quantity,
-
-              od.unit_price AS price,
-
-              COALESCE(
-                (
-                  SELECT json_agg(
-                    json_build_object(
-
-                      'name',
-                      m2.name,
-
-                      'quantity',
-                      oi2.quantity,
-
-                      'variant_label',
-                      miv2.label
-
-                    )
-
-                    ORDER BY
-                      m2.name,
-                      miv2.label
-
-                  )
-
-                  FROM order_items oi2
-
-                  INNER JOIN menu_items m2
-                    ON m2.id = oi2.menu_item_id
-
-                  LEFT JOIN menu_item_variants miv2
-                    ON miv2.id = oi2.variant_id
-
-                  WHERE
-                    oi2.order_deal_id = od.id
-
-                ),
-
-                '[]'::json
-
-              ) AS items
-
-            FROM order_deals od
-
-            INNER JOIN deals d
-              ON d.id = od.deal_id
-
-            WHERE
-              od.order_id = o.id
-
-              AND d.restaurant_id = $1
-
-            ORDER BY od.id
-
-          ) x
-
+          FROM order_items oi
+          INNER JOIN menu_items m ON m.id = oi.menu_item_id
+          LEFT JOIN menu_item_variants miv ON miv.id = oi.variant_id
+          WHERE oi.order_id = o.id
+            AND (oi.order_deal_id IS NULL)
         ),
-
         '[]'::json
+      ) AS items,
 
+      COALESCE(
+        (
+          SELECT json_agg(
+            json_build_object(
+              'type', 'deal',
+              'deal_id', od.deal_id,
+              'name', d.name,
+              'qty', od.quantity,
+              'price', od.unit_price::numeric(10,2),
+              'total', (od.quantity * od.unit_price)::numeric(10,2)
+            )
+            ORDER BY d.name
+          )
+          FROM order_deals od
+          INNER JOIN deals d ON d.id = od.deal_id
+          WHERE od.order_id = o.id
+        ),
+        '[]'::json
       ) AS deals
-
 
     FROM orders o
 
@@ -279,7 +166,6 @@ COALESCE(
       AND o.paid_at IS NOT NULL
 
       ${condition}
-
 
     ORDER BY
       o.paid_at DESC
