@@ -27,6 +27,8 @@ const {
   unassignDeliveryRider,
   autoAssignDeliveryRider,
   updateDealQuantity,
+  adjustServedOrderInventory,
+  syncOrderInventoryReservation,
   getOrderById,              
   getOrderItemsByOrderId 
 } = require('../models/orderModel');
@@ -4433,21 +4435,13 @@ exports.updateDealQuantity = async (req, res) => {
   const { quantity } = req.body;
   const userRole = req.user?.role;
 
-  // ✅ Role check
   if (!['waiter', 'manager', 'counter'].includes(userRole)) {
-    return res.status(403).json({
-      success: false,
-      message: 'Access denied'
-    });
+    return res.status(403).json({ success: false, message: 'Access denied' });
   }
 
-  // ✅ Validate quantity
   const newQuantity = Number(quantity);
   if (!Number.isInteger(newQuantity) || newQuantity < 0) {
-    return res.status(400).json({
-      success: false,
-      message: 'Invalid quantity'
-    });
+    return res.status(400).json({ success: false, message: 'Invalid quantity' });
   }
 
   const restaurantId = getRestaurantId(req);
@@ -4458,84 +4452,118 @@ exports.updateDealQuantity = async (req, res) => {
     });
   }
 
+  const client = await pool.connect();
+
   try {
-    // 1. Get deal + order info
-    const dealResult = await pool.query(
-      `SELECT 
-         od.*, 
-         o.id as order_id, 
-         o.status, 
+    await client.query('BEGIN');
+
+    // Lock the order/deal for the complete edit + inventory update.
+    const dealResult = await client.query(
+      `SELECT
+         od.*,
+         o.id AS order_id,
+         o.status,
          o.payment_status,
          o.restaurant_id
        FROM order_deals od
        JOIN orders o ON o.id = od.order_id
        WHERE od.id = $1
-         AND o.restaurant_id = $2`,
+         AND o.restaurant_id = $2
+       FOR UPDATE`,
       [dealId, restaurantId]
     );
 
-    if (dealResult.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Deal not found'
-      });
+    if (!dealResult.rowCount) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, message: 'Deal not found' });
     }
 
     const deal = dealResult.rows[0];
     const orderId = deal.order_id;
 
-    // 2. Authorization: only served+unpaid (counter/manager) or active (waiter)
     if (['counter', 'manager'].includes(userRole)) {
       if (deal.status !== 'served' || deal.payment_status !== 'unpaid') {
+        await client.query('ROLLBACK');
         return res.status(403).json({
           success: false,
           message: 'Only served unpaid bills can be edited'
         });
       }
-    } else if (userRole === 'waiter') {
-      if (['served', 'completed', 'cancelled'].includes(deal.status)) {
-        return res.status(403).json({
-          success: false,
-          message: 'Cannot edit completed or served orders'
-        });
-      }
+    } else if (['served', 'completed', 'cancelled'].includes(deal.status)) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({
+        success: false,
+        message: 'Cannot edit completed or served orders'
+      });
     }
 
-    // 3. Update or delete deal
+    const beforeItemsResult = await client.query(
+      `SELECT menu_item_id, variant_id, quantity
+       FROM order_items
+       WHERE order_id = $1`,
+      [orderId]
+    );
+    const beforeItems = beforeItemsResult.rows;
+
     if (newQuantity <= 0) {
-      // Delete deal and its items
-      await pool.query(
+      await client.query(
         `DELETE FROM order_items
          WHERE order_deal_id = $1
-           AND EXISTS (
-             SELECT 1
-             FROM orders o
-             WHERE o.id = order_items.order_id
-               AND o.restaurant_id = $2
-           )`,
-        [dealId, restaurantId]
+           AND order_id = $2`,
+        [dealId, orderId]
       );
-      await pool.query(
-        'DELETE FROM order_deals WHERE id = $1 AND order_id = $2',
+      await client.query(
+        `DELETE FROM order_deals
+         WHERE id = $1
+           AND order_id = $2`,
         [dealId, orderId]
       );
     } else {
-      // Update deal quantity
-      await pool.query(
-        'UPDATE order_deals SET quantity = $1 WHERE id = $2 AND order_id = $3',
+      await client.query(
+        `UPDATE order_deals
+         SET quantity = $1,
+             line_total = unit_price * $1
+         WHERE id = $2
+           AND order_id = $3`,
         [newQuantity, dealId, orderId]
       );
 
-      // Refresh deal items (delete old, reinsert with new quantity)
-      await refreshDealItems(dealId, newQuantity, orderId, restaurantId);
+      await refreshDealItems(
+        client,
+        dealId,
+        newQuantity,
+        orderId,
+        restaurantId
+      );
     }
 
-    // 4. Recalculate order pricing
+    // Keep inventory and order contents atomic.
+    if (deal.status === 'served' && deal.payment_status === 'unpaid') {
+      await adjustServedOrderInventory(
+        client,
+        orderId,
+        restaurantId,
+        beforeItems
+      );
+    } else {
+      await syncOrderInventoryReservation(
+        client,
+        orderId,
+        restaurantId
+      );
+    }
+
+    await client.query('COMMIT');
+
+    // Pricing uses its own transaction after the content/inventory transaction
+    // has committed.
     await recalculateOrderPricing(orderId, restaurantId);
 
-    // 5. Return updated order
     const updatedOrderResult = await pool.query(
-      `SELECT * FROM orders WHERE id = $1 AND restaurant_id = $2`,
+      `SELECT *
+       FROM orders
+       WHERE id = $1
+         AND restaurant_id = $2`,
       [orderId, restaurantId]
     );
 
@@ -4551,9 +4579,14 @@ exports.updateDealQuantity = async (req, res) => {
     });
 
   } catch (err) {
+    try { await client.query('ROLLBACK'); } catch (_) {}
+
     console.error('updateDealQuantity:', err);
 
-    if (err.error === 'INSUFFICIENT_KITCHEN_STOCK' || err.error === 'KITCHEN_STOCK_NOT_FOUND') {
+    if (
+      err.error === 'INSUFFICIENT_KITCHEN_STOCK' ||
+      err.error === 'KITCHEN_STOCK_NOT_FOUND'
+    ) {
       return res.status(409).json({
         success: false,
         error: err.error,
@@ -4569,6 +4602,8 @@ exports.updateDealQuantity = async (req, res) => {
       success: false,
       message: err.message || 'Internal Server Error'
     });
+  } finally {
+    client.release();
   }
 };
 
@@ -4576,11 +4611,19 @@ exports.updateDealQuantity = async (req, res) => {
 // HELPER: REFRESH DEAL ITEMS
 // ======================================================
 
-async function refreshDealItems(orderDealId, newDealQuantity, orderId, restaurantId) {
-  // 1. Get deal_items from deal definition
-  const dealItemsResult = await pool.query(
-    `SELECT di.menu_item_id, di.variant_id, di.quantity,
-            COALESCE(miv.price, mi.price) AS unit_price
+async function refreshDealItems(
+  client,
+  orderDealId,
+  newDealQuantity,
+  orderId,
+  restaurantId
+) {
+  const dealItemsResult = await client.query(
+    `SELECT
+       di.menu_item_id,
+       di.variant_id,
+       di.quantity,
+       COALESCE(miv.price, mi.price) AS unit_price
      FROM order_deals od
      JOIN deals d ON d.id = od.deal_id
      JOIN deal_items di ON di.deal_id = d.id
@@ -4591,30 +4634,39 @@ async function refreshDealItems(orderDealId, newDealQuantity, orderId, restauran
      WHERE od.id = $1
        AND od.order_id = $2
        AND EXISTS (
-         SELECT 1 FROM orders o
-         WHERE o.id = od.order_id AND o.restaurant_id = $3
+         SELECT 1
+         FROM orders o
+         WHERE o.id = od.order_id
+           AND o.restaurant_id = $3
        )`,
     [orderDealId, orderId, restaurantId]
   );
 
-  if (dealItemsResult.rows.length === 0) return;
+  if (!dealItemsResult.rowCount) return;
 
-  // 2. Delete existing order_items for this deal
-  await pool.query(
+  await client.query(
     `DELETE FROM order_items
      WHERE order_deal_id = $1
        AND order_id = $2`,
     [orderDealId, orderId]
   );
 
-  // 3. Re-insert with new quantity
   for (const item of dealItemsResult.rows) {
     const newQty = Number(item.quantity) * newDealQuantity;
-    await pool.query(
+
+    await client.query(
       `INSERT INTO order_items
-       (order_id, menu_item_id, variant_id, quantity, order_deal_id, unit_price, line_total)
-       VALUES ($1, $2, $3, $4, $5, $6, $4 * $6)`,
-      [orderId, item.menu_item_id, item.variant_id, newQty, orderDealId, Number(item.unit_price)]
+       (order_id, menu_item_id, variant_id, quantity, new_quantity,
+        order_deal_id, unit_price, line_total)
+       VALUES ($1, $2, $3, $4, $4, $5, $6, $4 * $6)`,
+      [
+        orderId,
+        item.menu_item_id,
+        item.variant_id,
+        newQty,
+        orderDealId,
+        Number(item.unit_price)
+      ]
     );
   }
 }
