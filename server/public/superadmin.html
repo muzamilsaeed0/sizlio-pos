@@ -1394,7 +1394,10 @@
         <button class="primary" onclick="openEditRestaurantModal()">✏️ Edit Details</button>
         <button class="primary" onclick="openSubModal()">Edit Subscription</button>
         <button class="secondary" onclick="openFoodTypeModal()">Edit Food Type</button>
-        <button class="secondary" onclick="openResetModal()">Reset Manager Password</button>
+        ${!isCafeLite
+          ? `<button class="secondary" onclick="openResetModal()">Reset Manager Password</button>`
+          : ''
+        }
 
         ${r.status === 'Active'
           ? `<button class="secondary" style="color:#E15A4C;border-color:#E15A4C;" onclick="setStatus('Suspended')">Suspend Restaurant</button>`
@@ -1916,6 +1919,8 @@
     const plan = activeRestaurant && activeRestaurant.plan ? activeRestaurant.plan : 'Basic';
     const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.Basic;
     const role = document.getElementById('member-role').value;
+
+    const isCafeLite = activeRestaurant && activeRestaurant.plan === 'Cafe Lite';
 
     const roleNames = {
       waiter: 'Waiter',
