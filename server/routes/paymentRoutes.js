@@ -23,7 +23,7 @@ router.post('/qr/create', authMiddleware, authorize('manager', 'counter'), async
 });
 
 /* Poll status */
-router.get('/qr/status/:qrId', authMiddleware, async (req, res) => {
+router.get('/qr/status/:qrId', authMiddleware, authorize('manager', 'counter'), async (req, res) => {
     try {
         const result = await paymentService.getQrStatus(req.params.qrId, req.user.restaurant_id);
         res.json({ success: true, data: result });
