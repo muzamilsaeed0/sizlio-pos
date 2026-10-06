@@ -197,8 +197,9 @@ const getShiftSummary = async (shiftId, restaurantId) => {
     SELECT username, full_name
     FROM users
     WHERE id = $1
+      AND restaurant_id = $2
     `,
-    [shift.user_id]
+    [shift.user_id, restaurantId]
   );
 
   return {
