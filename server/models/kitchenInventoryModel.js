@@ -25,6 +25,7 @@ async function getKitchenStock(restaurantId) {
       ON i.id = k.inventory_id
 
     WHERE k.restaurant_id = $1
+      AND i.restaurant_id = $1
 
     ORDER BY i.name ASC
   `;
@@ -124,6 +125,7 @@ async function getRequests(restaurantId, status = "all") {
       ON au.id = r.approved_by
 
     WHERE r.restaurant_id = $1
+      AND i.restaurant_id = $1
   `;
 
   const values = [restaurantId];
@@ -234,9 +236,9 @@ async function approveRequest(requestId, restaurantId, approvedBy) {
        SET status = 'approved',
            approved_by = $1,
            updated_at = NOW()
-       WHERE id = $2
+       WHERE id = $2 AND restaurant_id = $3
        RETURNING *`,
-      [approvedBy, requestId]
+      [approvedBy, requestId, restaurantId]
     );
 
     await client.query("COMMIT");
