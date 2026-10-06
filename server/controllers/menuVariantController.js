@@ -7,10 +7,10 @@ const {
 } = require('../models/menuVariantModel');
 
 function managerOnly(req, res) {
-  if (req.user.role !== 'manager') {
+  if (!['manager', 'counter'].includes(req.user.role)) {
     res.status(403).json({
       success: false,
-      message: 'Only manager can manage sizes/pieces'
+      message: 'Only manager or counter can manage sizes/pieces'
     });
     return false;
   }
