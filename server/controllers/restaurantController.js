@@ -1054,20 +1054,27 @@ exports.addStaffMember = async (req, res) => {
     // ALLOWED ROLES
     // --------------------------------------------------
 
+    const roleAliases = {
+      rider: 'delivery',
+      delivery_rider: 'delivery'
+    };
+
+    const normalizedRole = roleAliases[role] || role;
+
     const allowedRoles = [
       'waiter',
       'counter',
       'display',
       'kitchen',
-      'rider'
+      'delivery'
     ];
 
-    if (!allowedRoles.includes(role)) {
+    if (!allowedRoles.includes(normalizedRole)) {
 
       return res.status(400).json({
         success: false,
         message:
-          'Invalid role. Allowed: waiter, counter, display, kitchen, rider'
+          'Invalid role. Allowed: waiter, counter, display, kitchen, delivery'
       });
 
     }
@@ -1096,10 +1103,10 @@ exports.addStaffMember = async (req, res) => {
     const staff = await addStaffMember(
       id,
       {
-        full_name: full_name || role,
+        full_name: full_name || normalizedRole,
         username: username.trim(),
         password,
-        role
+        role: normalizedRole
       }
     );
 
@@ -1108,7 +1115,7 @@ exports.addStaffMember = async (req, res) => {
 
       success: true,
 
-      message: `${role} account created successfully`,
+      message: `${normalizedRole} account created successfully`,
 
       data: staff
 
