@@ -19,7 +19,7 @@ function managerOnly(req, res, next) {
    - GET  : both counter + manager (counter needs to read)
    - PUT  : manager only
 ===================================================== */
-router.get('/pos', settingsController.getPosSettings);
+router.get('/pos', managerOrCounter, settingsController.getPosSettings);
 function managerOrCounter(req, res, next) {
   if (!req.user || !['manager', 'counter'].includes(req.user.role)) {
     return res.status(403).json({ success: false, message: 'Manager or counter only' });
@@ -34,7 +34,7 @@ router.put('/pos', managerOrCounter, settingsController.savePosSettings);
    - GET  : both counter + manager
    - PUT  : manager only
 ===================================================== */
-router.get('/raast-qr', settingsController.getRaastQr);
+router.get('/raast-qr', managerOrCounter, settingsController.getRaastQr);
 router.put('/raast-qr', managerOnly, settingsController.saveRaastQr);
 
 module.exports = router;
