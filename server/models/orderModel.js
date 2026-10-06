@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-SEE_FILE
-=======
 const pool = require('../config/db');
 
 
@@ -6465,4 +6462,3 @@ module.exports = {
   adjustServedOrderInventory
 
 };
->>>>>>> 3f2f468 (Restore orderModel + Cafe Lite pay/complete)
