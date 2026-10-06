@@ -256,3 +256,26 @@ exports.updateSettings = async (req, res) => {
   }
 
 };
+
+exports.logout = async (req, res) => {
+  try {
+    await pool.query(
+      `UPDATE users
+       SET current_session = NULL
+       WHERE id = $1
+         AND current_session = $2`,
+      [req.user.id, req.authSessionId]
+    );
+
+    return res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  } catch (err) {
+    console.error('Logout error:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
