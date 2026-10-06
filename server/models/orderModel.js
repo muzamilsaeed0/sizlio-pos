@@ -1,6 +1,4 @@
-<<<<<<< HEAD
-PLACEHOLDER_WILL_FAIL
-=======
+
 const pool = require('../config/db');
 
 
@@ -6465,4 +6463,3 @@ module.exports = {
   adjustServedOrderInventory
 
 };
->>>>>>> 2e23c16 (Restore orderModel + fix deal SQL numeric multiply)
