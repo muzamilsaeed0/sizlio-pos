@@ -67,7 +67,6 @@ exports.addRestaurant = async (req, res) => {
       plan,
       expiry_date,
       manager_username,
-      manager_password,
       manager_fullname,
       food_type,
       business_type
