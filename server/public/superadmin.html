@@ -2200,10 +2200,7 @@ ${!s.is_active
       }
 
       msg.style.color = '#2FA37D';
-      const newPass = data.new_password || new_password;
-      msg.innerText = `✅ Password updated successfully! New password: ${newPass}`;
-
-      updateStaffPasswordInUI(staffResetUserId, newPass);
+      msg.innerText = '✅ Password updated successfully. The new password is not displayed.';
 
       setTimeout(async () => {
         await refreshStaffList();
@@ -2216,39 +2213,6 @@ ${!s.is_active
       msg.style.color = '#E15A4C';
       msg.innerText = 'Server connection failed';
     }
-  }
-
-  /* =========================================================
-     UPDATE STAFF PASSWORD IN UI
-  ========================================================= */
-
-  function updateStaffPasswordInUI(userId, newPassword) {
-    const staffCards = document.querySelectorAll('#staff-list-content .cred-box');
-
-    staffCards.forEach(card => {
-      const cardUserId = card.dataset.userId;
-
-      if (cardUserId && Number(cardUserId) === Number(userId)) {
-        let passwordSpan = card.querySelector('.staff-password');
-        const container = card.querySelector('div:first-child');
-
-        if (!container) return;
-
-        if (passwordSpan) {
-          passwordSpan.textContent = newPassword;
-        } else {
-          const html = container.innerHTML;
-
-          if (html.includes('🔑 Password:')) {
-            const updatedHtml = html.replace(
-              /🔑 Password:.*?(<br|$)/,
-              `🔑 Password: <span class="staff-password" style="font-weight:700;color:var(--accent);">${escapeHtml(newPassword)}</span>$1`
-            );
-            container.innerHTML = updatedHtml;
-          }
-        }
-      }
-    });
   }
 
   /* =========================================================
@@ -2305,13 +2269,7 @@ ${!s.is_active
               <b>${escapeHtml(s.full_name || '-')}</b>
               (${escapeHtml(s.username || '-')})
               <br>
-              ${s.password
-                ? `🔑 Password:
-                   <span class="staff-password" style="font-weight:700;color:var(--accent);">
-                     ${escapeHtml(s.password)}
-                   </span>`
-                : `🔑 Password: <span style="color:#9CA3AF;">not set</span>`
-              }
+              🔑 Password: <span style="color:#9CA3AF;">hidden for security — use “Reset Password” to set a new one</span>
               ${!s.is_active
                 ? `<br><span style="color:#E15A4C;">⚠️ Inactive</span>`
                 : ''
