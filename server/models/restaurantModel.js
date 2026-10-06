@@ -623,7 +623,8 @@ async (
       UPDATE users
 
       SET
-        password = $1
+        password = $1,
+        current_session = NULL
 
       WHERE restaurant_id = $2
         AND role = 'manager'
@@ -967,7 +968,8 @@ async (
       UPDATE users
 
       SET
-        password = $1
+        password = $1,
+        current_session = NULL
 
       WHERE id = $2
         AND restaurant_id = $3
