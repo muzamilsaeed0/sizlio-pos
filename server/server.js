@@ -119,38 +119,9 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Super Admin ko login rate-limit se exclude karo
-app.use("/api/auth/login", (req, res, next) => {
-  const username = String(req.body?.username || "").trim();
-
-  if (username) {
-    pool
-      .query(
-        `SELECT role
-         FROM users
-         WHERE username = $1
-         LIMIT 1`,
-        [username]
-      )
-      .then((result) => {
-        const role = result.rows[0]?.role;
-
-        if (role === "super_admin") {
-          return next();
-        }
-
-        return loginLimiter(req, res, next);
-      })
-      .catch((err) => {
-        console.error("Login rate-limit role check:", err);
-        return loginLimiter(req, res, next);
-      });
-
-    return;
-  }
-
-  return loginLimiter(req, res, next);
-});
+// Apply the same brute-force protection to every account, including Super Admin.
+// Authentication must not reveal account role before password verification.
+app.use("/api/auth/login", loginLimiter);
 
 /* =====================================================
    DATABASE CONNECT CHECK — fail fast
