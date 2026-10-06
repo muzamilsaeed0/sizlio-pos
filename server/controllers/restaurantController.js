@@ -155,13 +155,33 @@ if (!isCafeLite) {
 
 
     // --------------------------------------------------
+    // SECURITY: Never return generated plaintext passwords to the
+    // Super Admin browser/API response. The private server-side
+    // result is still used below for the credential email.
+    // --------------------------------------------------
+
+    const safeStaff = Object.fromEntries(
+      Object.entries(result.staff || {}).map(([role, accounts]) => [
+        role,
+        Array.isArray(accounts)
+          ? accounts.map(({ username }) => ({ username }))
+          : []
+      ])
+    );
+
+    const safeResult = {
+      ...result,
+      staff: safeStaff
+    };
+
+    // --------------------------------------------------
     // ✅ INSTANT RESPONSE — Button will unlock immediately
     // --------------------------------------------------
 
     res.status(201).json({
       success: true,
       message: 'Restaurant created',
-      data: result
+      data: safeResult
     });
 
 
