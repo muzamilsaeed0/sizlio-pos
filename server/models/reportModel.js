@@ -104,9 +104,9 @@ const getSalesDetails = async (
 
       COALESCE(o.dine_charge, 0)::numeric(10,2) AS dine_charge,
 
-      0::numeric(10,2) AS card_charge,
+      COALESCE(o.card_charge, 0)::numeric(10,2) AS card_charge,
 
-      0::numeric(10,2) AS bank_charge,
+      COALESCE(o.bank_charge, 0)::numeric(10,2) AS bank_charge,
 
       o.total_amount::numeric(10,2) AS total,
 
@@ -129,7 +129,7 @@ const getSalesDetails = async (
           INNER JOIN menu_items m ON m.id = oi.menu_item_id
           LEFT JOIN menu_item_variants miv ON miv.id = oi.variant_id
           WHERE oi.order_id = o.id
-            AND (oi.order_deal_id IS NULL)
+            AND oi.order_deal_id IS NULL
         ),
         '[]'::json
       ) AS items,
@@ -143,7 +143,7 @@ const getSalesDetails = async (
               'name', d.name,
               'qty', od.quantity,
               'price', od.unit_price::numeric(10,2),
-              'total', (od.quantity * od.unit_price)::numeric(10,2)
+              'total', od.line_total::numeric(10,2)
             )
             ORDER BY d.name
           )
@@ -156,27 +156,23 @@ const getSalesDetails = async (
 
     FROM orders o
 
-    WHERE
-      o.restaurant_id = $1
+    WHERE o.restaurant_id = $1
 
       AND o.payment_status = 'paid'
 
       AND o.status = 'completed'
 
-      AND o.paid_at IS NOT NULL
-
       ${condition}
 
-    ORDER BY
-      o.paid_at DESC
-
+    ORDER BY o.paid_at DESC NULLS LAST, o.id DESC
     `,
     values
   );
 
   return result.rows;
-
 };
+
+
 
 const getTopItems = async (
   restaurantId,
