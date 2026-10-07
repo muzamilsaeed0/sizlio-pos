@@ -1203,7 +1203,7 @@ exports.ready = async (
 ) => {
 
   if (
-    !['kitchen', 'manager']
+    !['kitchen', 'manager', 'counter']
       .includes(req.user?.role)
   ) {
 
@@ -2042,7 +2042,7 @@ exports.serve = async (
 ) => {
 
   if (
-    !['waiter', 'manager']
+    !['waiter', 'manager', 'counter']
       .includes(req.user?.role)
   ) {
 
