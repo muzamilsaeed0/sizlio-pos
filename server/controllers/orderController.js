@@ -860,7 +860,7 @@ exports.accept = async (
 ) => {
 
   if (
-    !['waiter', 'manager']
+    !['waiter', 'manager', 'counter']
       .includes(req.user?.role)
   ) {
 
@@ -869,7 +869,7 @@ exports.accept = async (
       success: false,
 
       message:
-        'Only waiter or manager can accept menu orders'
+        'Only waiter, manager or counter can accept menu orders'
 
     });
 
@@ -1022,7 +1022,7 @@ exports.confirm = async (
 ) => {
 
   if (
-    !['kitchen', 'manager']
+    !['kitchen', 'manager', 'counter']
       .includes(req.user?.role)
   ) {
 
@@ -1031,7 +1031,7 @@ exports.confirm = async (
       success: false,
 
       message:
-        'Only kitchen or manager can confirm orders'
+        'Only kitchen, manager or counter can confirm orders'
 
     });
 
@@ -1212,7 +1212,7 @@ exports.ready = async (
       success: false,
 
       message:
-        'Only kitchen or manager can mark orders ready'
+        'Only kitchen, manager or counter can mark orders ready'
 
     });
 
@@ -2051,7 +2051,7 @@ exports.serve = async (
       success: false,
 
       message:
-        'Only waiter or manager can serve orders'
+        'Only waiter, manager or counter can serve orders'
 
     });
 
