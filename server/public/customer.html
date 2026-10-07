@@ -816,11 +816,28 @@ function showLocationBlockedScreen(message) {
     if (cart.length === 0 && dealCart.length === 0) { showToast('Cart is empty', true); return; }
     const btn = document.getElementById('order-btn');
     btn.disabled = true;
-    btn.innerText = 'Sending...';
+    btn.innerText = 'Checking location...';
 
     const customer_name = document.getElementById('customer-name')?.value.trim() || 'Walk-in';
 
     try {
+      // Re-check GPS immediately before every order. This prevents a customer
+      // from leaving the restaurant with the QR page open and later ordering
+      // from home using stale coordinates from the initial page load.
+      const currentLocation = await verifyCustomerLocation();
+
+      if (!currentLocation.allowed) {
+        showLocationBlockedScreen(
+          currentLocation.message || 'Please come to the restaurant to place an order.'
+        );
+        btn.disabled = false;
+        btn.innerText = 'Place Order';
+        return;
+      }
+
+      document.getElementById('gps-overlay').style.display = 'none';
+      btn.innerText = 'Sending...';
+
       const res = await fetch(`/api/public/${restaurantId}/order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
