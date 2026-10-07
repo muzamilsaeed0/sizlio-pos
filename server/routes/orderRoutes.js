@@ -227,7 +227,8 @@ router.put(
   authMiddleware,
   authorize(
     'waiter',
-    'manager'
+    'manager',
+    'counter'
   ),
   accept
 );
@@ -248,7 +249,8 @@ router.put(
   authMiddleware,
   authorize(
     'kitchen',
-    'manager'
+    'manager',
+    'counter'
   ),
   confirm
 );
@@ -269,7 +271,8 @@ router.put(
   authMiddleware,
   authorize(
     'kitchen',
-    'manager'
+    'manager',
+    'counter'
   ),
   ready
 );
@@ -389,7 +392,8 @@ router.put(
   authMiddleware,
   authorize(
     'waiter',
-    'manager'
+    'manager',
+    'counter'
   ),
   serve
 );
