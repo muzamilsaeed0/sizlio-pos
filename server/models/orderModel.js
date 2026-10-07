@@ -1,4 +1,3 @@
-
 const pool = require('../config/db');
 
 
@@ -1449,6 +1448,8 @@ const createOrder = async (
       total_amount = $5,
       card_charge = $6,
       bank_charge = $7,
+      delivery_charge = $14,
+      dine_charge = $15,
       payment_status = $8::varchar,
       paid_amount = $9,
       change_amount = $13,
@@ -1473,7 +1474,9 @@ const createOrder = async (
       (initialPaymentStatus === 'paid'
         ? (paymentMethod || 'Cash')
         : null),
-      initialChangeAmount.toFixed(2)
+      initialChangeAmount.toFixed(2),
+      finalDeliveryCharge.toFixed(2),
+      finalDineCharge.toFixed(2)
     ]
   );
    
