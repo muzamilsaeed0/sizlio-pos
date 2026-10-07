@@ -806,15 +806,46 @@ function showLocationBlockedScreen(message) {
     return pendingOrderIdempotencyKey;
   }
 
-  async function placeOrder() {
+    async function placeOrder() {
     if (cart.length === 0 && dealCart.length === 0) { showToast('Cart is empty', true); return; }
     const btn = document.getElementById('order-btn');
     btn.disabled = true;
-    btn.innerText = 'Sending...';
+    btn.innerText = 'Getting location...';
 
     const customer_name = document.getElementById('customer-name')?.value.trim() || 'Walk-in';
 
     try {
+      // GPS coordinates — server requires these
+      let latitude = null;
+      let longitude = null;
+
+      if (navigator.geolocation) {
+        try {
+          const pos = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 15000,
+              maximumAge: 60000
+            });
+          });
+          latitude = pos.coords.latitude;
+          longitude = pos.coords.longitude;
+        } catch (gpsErr) {
+          console.warn('GPS error:', gpsErr);
+          showToast('Please allow location access to place order', true);
+          btn.disabled = false;
+          btn.innerText = 'Place Order';
+          return;
+        }
+      } else {
+        showToast('Location not supported on this device', true);
+        btn.disabled = false;
+        btn.innerText = 'Place Order';
+        return;
+      }
+
+      btn.innerText = 'Sending...';
+
       const res = await fetch(`/api/public/${restaurantId}/order`, {
         method: 'POST',
         headers: {
@@ -825,6 +856,8 @@ function showLocationBlockedScreen(message) {
           table_no: Number(tableNo),
           table_token: tableToken,
           customer_name,
+          latitude,
+          longitude,
           items: cart.map(i => ({
             menu_item_id: i.menu_item_id,
             variant_id: i.variant_id || null,
@@ -840,7 +873,6 @@ function showLocationBlockedScreen(message) {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        
         if (data.error === 'INSUFFICIENT_KITCHEN_STOCK') {
           showToast(`Sorry, ${data.ingredient} is out of stock!`, true);
         } else {
