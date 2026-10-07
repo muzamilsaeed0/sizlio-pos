@@ -108,8 +108,10 @@ const getSalesDetails = async (
 
       COALESCE(o.bank_charge, 0)::numeric(10,2) AS bank_charge,
 
-      o.total_amount::numeric(10,2) AS total,
+     o.total_amount::numeric(10,2) AS total_amount,
 
+    o.total_amount::numeric(10,2) AS total,
+    
       COALESCE(
         (
           SELECT json_agg(
