@@ -282,6 +282,73 @@ exports.callWaiter = async (req, res) => {
     if (!Number.isInteger(tableNo) || tableNo < 1 || tableNo > 100) return res.status(400).json({ success: false, message: 'Valid table_no is required' });
     if (!isValidTableQrToken(restaurantId, tableNo, table_token)) return res.status(403).json({ success: false, message: 'Invalid or expired table QR code' });
 
+
+    req.app
+      .get('io')
+      .to(`restaurant_${restaurantId}`)
+      .emit('waiter_call', {
+        table_no: tableNo,
+        time: new Date().toISOString()
+      });
+
+    return res.json({
+      success: true,
+      message: 'Waiter has been called'
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+
+  }
+
+};
+
+
+
+exports.placePublicOrder = async (req, res) => {
+
+  try {
+
+    const restaurantId = Number(req.params.restaurantId);
+
+    const validation =
+      await validateRestaurant(restaurantId);
+
+    if (!validation.success) {
+      return res.status(validation.status).json({
+        success: false,
+        message: validation.message
+      });
+    }
+
+    const {
+      table_no,
+      table_token,
+      items = [],
+      customer_name,
+      deals = []
+    } = req.body;
+
+    const idempotencyKey = String(
+      req.get('Idempotency-Key') || req.body?.idempotency_key || ''
+    ).trim();
+
+    if (!idempotencyKey || idempotencyKey.length < 16 || idempotencyKey.length > 128) {
+      return res.status(400).json({
+        success: false,
+        message: 'A valid Idempotency-Key is required'
+      });
+    }
+
+    const tableNo = Number(table_no);
+    if (!Number.isInteger(tableNo) || tableNo < 1 || tableNo > 100) return res.status(400).json({ success: false, message: 'Valid table_no is required' });
+    if (!isValidTableQrToken(restaurantId, tableNo, table_token)) return res.status(403).json({ success: false, message: 'Invalid or expired table QR code' });
     // GPS is a physical-presence control for public table QR orders.
     // The actual order mutation validates coordinates server-side so callers
     // cannot bypass the frontend verification endpoint.
@@ -350,72 +417,6 @@ exports.callWaiter = async (req, res) => {
       });
     }
 
-    req.app
-      .get('io')
-      .to(`restaurant_${restaurantId}`)
-      .emit('waiter_call', {
-        table_no: tableNo,
-        time: new Date().toISOString()
-      });
-
-    return res.json({
-      success: true,
-      message: 'Waiter has been called'
-    });
-
-  } catch (err) {
-
-    console.error(err);
-
-    return res.status(500).json({
-      success: false,
-      message: 'Server error'
-    });
-
-  }
-
-};
-
-
-
-exports.placePublicOrder = async (req, res) => {
-
-  try {
-
-    const restaurantId = Number(req.params.restaurantId);
-
-    const validation =
-      await validateRestaurant(restaurantId);
-
-    if (!validation.success) {
-      return res.status(validation.status).json({
-        success: false,
-        message: validation.message
-      });
-    }
-
-    const {
-      table_no,
-      table_token,
-      items = [],
-      customer_name,
-      deals = []
-    } = req.body;
-
-    const idempotencyKey = String(
-      req.get('Idempotency-Key') || req.body?.idempotency_key || ''
-    ).trim();
-
-    if (!idempotencyKey || idempotencyKey.length < 16 || idempotencyKey.length > 128) {
-      return res.status(400).json({
-        success: false,
-        message: 'A valid Idempotency-Key is required'
-      });
-    }
-
-    const tableNo = Number(table_no);
-    if (!Number.isInteger(tableNo) || tableNo < 1 || tableNo > 100) return res.status(400).json({ success: false, message: 'Valid table_no is required' });
-    if (!isValidTableQrToken(restaurantId, tableNo, table_token)) return res.status(403).json({ success: false, message: 'Invalid or expired table QR code' });
 
     if (
       (!items || !items.length) &&
