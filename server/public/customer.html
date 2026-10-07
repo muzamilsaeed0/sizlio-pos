@@ -237,16 +237,18 @@ async function verifyCustomerLocation() {
                             location.hostname === '127.0.0.1';
 
     if (!isSecureContext) {
-      console.warn('⚠️ HTTP pe GPS kaam nahi karta. Skipping location check.');
-      resolve({ 
-        allowed: true, 
-        message: 'Location check skipped (HTTP)' 
+      resolve({
+        allowed: false,
+        message: 'Location verification requires a secure HTTPS connection.'
       });
       return;
     }
 
     if (!navigator.geolocation) {
-      resolve({ allowed: true, message: 'GPS not supported' });
+      resolve({
+        allowed: false,
+        message: 'Your device does not support location verification. Please use a device with GPS enabled.'
+      });
       return;
     }
 
@@ -268,6 +270,12 @@ async function verifyCustomerLocation() {
           });
 
           const data = await res.json();
+
+          if (data.allowed) {
+            window.customerLatitude = position.coords.latitude;
+            window.customerLongitude = position.coords.longitude;
+          }
+
           resolve(data);
         } catch (err) {
           console.error('Location verify error:', err);
@@ -276,10 +284,9 @@ async function verifyCustomerLocation() {
       },
       (error) => {
         console.warn('GPS error:', error.message);
-        // ✅ Fallback: GPS fail ho toh allow karo
         resolve({
-          allowed: true,
-          message: 'GPS unavailable, proceeding'
+          allowed: false,
+          message: 'Location access is required to place an order. Please enable location permission and try again.'
         });
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
@@ -821,6 +828,8 @@ function showLocationBlockedScreen(message) {
           table_no: Number(tableNo),
           table_token: tableToken,
           customer_name,
+          latitude: window.customerLatitude,
+          longitude: window.customerLongitude,
           items: cart.map(i => ({
             menu_item_id: i.menu_item_id,
             variant_id: i.variant_id || null,
