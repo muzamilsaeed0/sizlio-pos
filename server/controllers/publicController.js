@@ -1,6 +1,22 @@
 const pool = require('../config/db');
 const crypto = require('crypto');
 
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371000; // Earth radius in meters
+  const φ1 = lat1 * Math.PI / 180;
+  const φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) *
+    Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 const { getAllMenuItems } = require('../models/menuModel');
 const { getAllDeals } = require('../models/dealModel');
 
@@ -391,11 +407,26 @@ exports.placePublicOrder = async (req, res) => {
       restaurantLocation.latitude === null ||
       restaurantLocation.longitude === null
     ) {
-      return res.status(503).json({
-        success: false,
-        error: 'LOCATION_NOT_CONFIGURED',
-        message: 'Restaurant location verification is not configured. Please contact the restaurant.'
-      });
+      // GPS not configured for this restaurant — skip radius check
+    } else {
+      const distance = calculateDistance(
+        customerLatitude,
+        customerLongitude,
+        Number(restaurantLocation.latitude),
+        Number(restaurantLocation.longitude)
+      );
+
+      const radius = Number(restaurantLocation.gps_radius_meters) || 100;
+
+      if (distance > radius) {
+        return res.status(403).json({
+          success: false,
+          error: 'OUTSIDE_RESTAURANT_RADIUS',
+          message: `You are ${Math.round(distance)}m away. Please come to the restaurant to place an order.`,
+          distance: Math.round(distance),
+          radius
+        });
+      }
     }
 
     const distance = calculateDistance(
