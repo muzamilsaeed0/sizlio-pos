@@ -1183,7 +1183,7 @@
         if (payMethod === 'Card') cardCharge = bill.total * (Number(posSettings.card_charge || 0) / 100);
         else if (payMethod === 'Bank') bankCharge = bill.total * (Number(posSettings.bank_charge || 0) / 100);
       }
-      const finalTotal = bill.total + cardCharge + bankCharge;
+      const finalTotal = Number((bill.total + cardCharge + bankCharge).toFixed(2));
       const items = cart.map(c => ({ menu_item_id: Number(c.id), quantity: Number(c.qty) }));
 
       const body = {
@@ -1450,13 +1450,13 @@
       try {
         const method = document.getElementById('payMethod')?.value || 'Cash';
         let cardCharge = 0, bankCharge = 0;
-        if (method === 'Card') cardCharge = Number(amount) * (Number(posSettings.card_charge || 0) / 100);
-        else if (method === 'Bank') bankCharge = Number(amount) * (Number(posSettings.bank_charge || 0) / 100);
+        if (method === 'Card') cardCharge = Number((Number(amount) * (Number(posSettings.card_charge || 0) / 100)).toFixed(2));
+        else if (method === 'Bank') bankCharge = Number((Number(amount) * (Number(posSettings.bank_charge || 0) / 100)).toFixed(2));
         await api(`/orders/${id}/pay`, {
           method: 'PUT',
           body: JSON.stringify({
             payment_method: method,
-            paid_amount: Number(amount) + cardCharge + bankCharge,
+            paid_amount: Number((Number(amount) + cardCharge + bankCharge).toFixed(2)),
             card_charge: cardCharge,
             bank_charge: bankCharge
           })

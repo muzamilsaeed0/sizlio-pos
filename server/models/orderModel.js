@@ -3244,16 +3244,19 @@ if (!allowedStatuses.includes(order.status)) {
       ? Number(Math.max(finalPaidAmount - newTotalAmount, 0).toFixed(2))
       : 0;
 
+    const paidRounded = Number(Number(finalPaidAmount).toFixed(2));
+    const dueRounded = Number(Number(newTotalAmount).toFixed(2));
+
     if (
       paymentMethod !== 'Cash' &&
-      finalPaidAmount !== newTotalAmount
+      Math.abs(paidRounded - dueRounded) > 0.05
     ) {
       throw new Error(
         'Card, Bank and Other payments must match the exact total amount.'
       );
     }
 
-    if (paymentMethod === 'Cash' && finalPaidAmount < newTotalAmount) {
+    if (paymentMethod === 'Cash' && paidRounded < dueRounded - 0.05) {
       throw new Error(
         'Paid amount cannot be less than total amount.'
       );
