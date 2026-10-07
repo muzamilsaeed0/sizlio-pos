@@ -8,7 +8,7 @@ const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 // ======================================================
 // GET KITCHEN STOCK
 // ======================================================
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, authorize('manager', 'counter', 'kitchen'), async (req, res) => {
   const restaurantId = req.user.restaurant_id;
   try {
     const result = await pool.query(
@@ -34,7 +34,7 @@ router.get('/', authMiddleware, async (req, res) => {
 // ======================================================
 // GET KITCHEN STOCK HISTORY (for a specific item)
 // ======================================================
-router.get('/:inventoryId/transactions', authMiddleware, async (req, res) => {
+router.get('/:inventoryId/transactions', authMiddleware, authorize('manager', 'counter', 'kitchen'), async (req, res) => {
   const { inventoryId } = req.params;
   const restaurantId = req.user.restaurant_id;
 
