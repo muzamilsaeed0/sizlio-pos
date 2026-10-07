@@ -1329,10 +1329,30 @@ const createOrder = async (
     // Never trust client-supplied charge values.
     const chargeResult = await client.query(
       `SELECT
-         COALESCE(NULLIF(pos_settings->>'delivery_charge','')::numeric, delivery_charge, 0) AS delivery_charge,
-         COALESCE(NULLIF(pos_settings->>'dine_charge','')::numeric, dine_charge, 0) AS dine_charge,
-         COALESCE(NULLIF(pos_settings->>'card_charge','')::numeric, card_charge, 0) AS card_charge,
-         COALESCE(NULLIF(pos_settings->>'bank_charge','')::numeric, bank_charge, 0) AS bank_charge
+         COALESCE(
+           NULLIF(pos_settings->>'delivery_charge','')::numeric,
+           NULLIF(pos_settings->>'deliveryCharge','')::numeric,
+           delivery_charge,
+           0
+         ) AS delivery_charge,
+         COALESCE(
+           NULLIF(pos_settings->>'dine_charge','')::numeric,
+           NULLIF(pos_settings->>'dineCharge','')::numeric,
+           dine_charge,
+           0
+         ) AS dine_charge,
+         COALESCE(
+           NULLIF(pos_settings->>'card_charge','')::numeric,
+           NULLIF(pos_settings->>'cardCharge','')::numeric,
+           card_charge,
+           0
+         ) AS card_charge,
+         COALESCE(
+           NULLIF(pos_settings->>'bank_charge','')::numeric,
+           NULLIF(pos_settings->>'bankCharge','')::numeric,
+           bank_charge,
+           0
+         ) AS bank_charge
        FROM restaurants
        WHERE id = $1
        FOR SHARE`,
