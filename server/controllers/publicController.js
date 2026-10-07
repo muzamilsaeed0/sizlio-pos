@@ -282,6 +282,74 @@ exports.callWaiter = async (req, res) => {
     if (!Number.isInteger(tableNo) || tableNo < 1 || tableNo > 100) return res.status(400).json({ success: false, message: 'Valid table_no is required' });
     if (!isValidTableQrToken(restaurantId, tableNo, table_token)) return res.status(403).json({ success: false, message: 'Invalid or expired table QR code' });
 
+    // GPS is a physical-presence control for public table QR orders.
+    // The actual order mutation validates coordinates server-side so callers
+    // cannot bypass the frontend verification endpoint.
+    const customerLatitude = Number(req.body?.latitude);
+    const customerLongitude = Number(req.body?.longitude);
+
+    if (
+      !Number.isFinite(customerLatitude) ||
+      !Number.isFinite(customerLongitude) ||
+      customerLatitude < -90 ||
+      customerLatitude > 90 ||
+      customerLongitude < -180 ||
+      customerLongitude > 180
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: 'LOCATION_REQUIRED',
+        message: 'Please allow location access and place the order while you are at the restaurant.'
+      });
+    }
+
+    const locationResult = await pool.query(
+      `SELECT latitude, longitude, gps_radius_meters
+       FROM restaurants
+       WHERE id = $1
+       LIMIT 1`,
+      [restaurantId]
+    );
+
+    if (!locationResult.rowCount) {
+      return res.status(404).json({
+        success: false,
+        message: 'Restaurant not found'
+      });
+    }
+
+    const restaurantLocation = locationResult.rows[0];
+
+    if (
+      restaurantLocation.latitude === null ||
+      restaurantLocation.longitude === null
+    ) {
+      return res.status(503).json({
+        success: false,
+        error: 'LOCATION_NOT_CONFIGURED',
+        message: 'Restaurant location verification is not configured. Please contact the restaurant.'
+      });
+    }
+
+    const distance = calculateDistance(
+      customerLatitude,
+      customerLongitude,
+      Number(restaurantLocation.latitude),
+      Number(restaurantLocation.longitude)
+    );
+
+    const radius = Number(restaurantLocation.gps_radius_meters) || 100;
+
+    if (distance > radius) {
+      return res.status(403).json({
+        success: false,
+        error: 'OUTSIDE_RESTAURANT_RADIUS',
+        message: `You are ${Math.round(distance)}m away. Please come to the restaurant to place an order.`,
+        distance: Math.round(distance),
+        radius
+      });
+    }
+
     req.app
       .get('io')
       .to(`restaurant_${restaurantId}`)
