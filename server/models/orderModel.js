@@ -4453,10 +4453,36 @@ const removeOrderItem = async (
     // MANAGER / COUNTER
     // --------------------------------------------------
 
-    if (
-      role === 'manager' ||
-      role === 'counter'
-    ) {
+    if (role === 'counter') {
+
+      // Counter Lite is a full operational POS.
+      // It may remove items from active orders, and from
+      // served unpaid bills just like quantity updates.
+      const allowedActiveStatuses = [
+        'pending',
+        'placed',
+        'accepted',
+        'preparing'
+      ];
+
+      const isActiveOrder =
+        allowedActiveStatuses.includes(order.status);
+
+      const isServedUnpaid =
+        order.status === 'served' &&
+        order.payment_status === 'unpaid';
+
+      if (!isActiveOrder && !isServedUnpaid) {
+
+        await client.query('ROLLBACK');
+
+        throw new Error(
+          'Counter can only remove items from active orders or served unpaid bills.'
+        );
+
+      }
+
+    } else if (role === 'manager') {
 
       if (
         order.status !== 'served' ||
@@ -4466,7 +4492,7 @@ const removeOrderItem = async (
         await client.query('ROLLBACK');
 
         throw new Error(
-          'Only served unpaid orders can be edited by manager or counter.'
+          'Only served unpaid orders can be edited by manager.'
         );
 
       }
