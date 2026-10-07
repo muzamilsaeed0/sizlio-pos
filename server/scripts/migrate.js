@@ -1,0 +1,227 @@
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
+const pool = require("../config/db");
+
+const MIGRATIONS_DIR = path.join(__dirname, "..", "migrations");
+const MIGRATION_FILE_RE = /^(\d+)_([a-zA-Z0-9][a-zA-Z0-9_-]*)\.sql$/;
+const ADVISORY_LOCK_KEY = "sizlio_pos_schema_migrations_v1";
+
+function getMigrations() {
+  return fs
+    .readdirSync(MIGRATIONS_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && MIGRATION_FILE_RE.test(entry.name))
+    .map((entry) => {
+      const match = entry.name.match(MIGRATION_FILE_RE);
+      const version = Number(match[1]);
+      const filePath = path.join(MIGRATIONS_DIR, entry.name);
+      const sql = fs.readFileSync(filePath, "utf8");
+      return {
+        version,
+        name: entry.name,
+        path: filePath,
+        sql,
+        checksum: crypto.createHash("sha256").update(sql, "utf8").digest("hex"),
+      };
+    })
+    .sort((a, b) => a.version - b.version);
+}
+
+function assertUniqueVersions(migrations) {
+  const seen = new Set();
+  for (const migration of migrations) {
+    if (seen.has(migration.version)) {
+      throw new Error(`Duplicate migration version: ${migration.version}`);
+    }
+    seen.add(migration.version);
+  }
+}
+
+function assertTransactional(migration) {
+  const normalized = migration.sql.replace(/^\s+|\s+$/g, "").toUpperCase();
+  if (!/^BEGIN;[\s\S]*COMMIT;$/.test(normalized)) {
+    throw new Error(
+      `Migration ${migration.name} must be a single BEGIN ... COMMIT transaction.`
+    );
+  }
+}
+
+async function ensureHistoryTable(client) {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS public.schema_migrations (
+      version INTEGER PRIMARY KEY,
+      name VARCHAR(255) NOT NULL UNIQUE,
+      checksum CHAR(64) NOT NULL,
+      applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      baseline BOOLEAN NOT NULL DEFAULT FALSE
+    )
+  `);
+}
+
+async function readApplied(client) {
+  const result = await client.query(
+    `SELECT version, name, checksum, applied_at, baseline
+     FROM public.schema_migrations
+     ORDER BY version`
+  );
+  return result.rows;
+}
+
+function assertAppliedFilesUnchanged(applied, migrationsByVersion) {
+  for (const row of applied) {
+    const migration = migrationsByVersion.get(row.version);
+    if (!migration) {
+      throw new Error(
+        `Migration ${row.version} (${row.name}) is recorded in the database but its file is missing from the repository.`
+      );
+    }
+
+    if (migration.name !== row.name || migration.checksum !== row.checksum) {
+      throw new Error(
+        `Migration ${row.version} has changed after being applied. ${row.name} is recorded with checksum ${row.checksum}, but the repository contains ${migration.name} with checksum ${migration.checksum}. Restore the applied file or create a new migration.`
+      );
+    }
+  }
+}
+
+async function acquireLock(client) {
+  await client.query("SELECT pg_advisory_lock(hashtext($1))", [ADVISORY_LOCK_KEY]);
+}
+
+async function releaseLock(client) {
+  await client.query("SELECT pg_advisory_unlock(hashtext($1))", [ADVISORY_LOCK_KEY]);
+}
+
+async function status(client, migrations) {
+  await ensureHistoryTable(client);
+  const applied = await readApplied(client);
+  const appliedByVersion = new Map(applied.map((row) => [row.version, row]));
+  const migrationsByVersion = new Map(migrations.map((migration) => [migration.version, migration]));
+  assertAppliedFilesUnchanged(applied, migrationsByVersion);
+
+  console.log("Sizlio POS migration status");
+  console.log("--------------------------------");
+  for (const migration of migrations) {
+    const row = appliedByVersion.get(migration.version);
+    if (!row) {
+      console.log(`PENDING   ${migration.name}`);
+    } else {
+      console.log(`${row.baseline ? "BASELINE " : "APPLIED   "}${migration.name}  ${row.applied_at.toISOString()}`);
+    }
+  }
+}
+
+async function apply(client, migrations) {
+  await ensureHistoryTable(client);
+  const applied = await readApplied(client);
+  const migrationsByVersion = new Map(migrations.map((migration) => [migration.version, migration]));
+  assertAppliedFilesUnchanged(applied, migrationsByVersion);
+
+  const appliedVersions = new Set(applied.map((row) => row.version));
+  const pending = migrations.filter((migration) => !appliedVersions.has(migration.version));
+
+  if (!pending.length) {
+    console.log("✅ Database is already up to date.");
+    return;
+  }
+
+  for (const migration of pending) {
+    assertTransactional(migration);
+    console.log(`⏳ Applying ${migration.name}...`);
+
+    await client.query(migration.sql);
+
+    await client.query(
+      `INSERT INTO public.schema_migrations
+         (version, name, checksum, baseline)
+       VALUES ($1, $2, $3, FALSE)`,
+      [migration.version, migration.name, migration.checksum]
+    );
+
+    console.log(`✅ Applied ${migration.name}`);
+  }
+}
+
+async function baseline(client, migrations, versionArg) {
+  const targetVersion = Number(versionArg);
+
+  if (!Number.isInteger(targetVersion) || targetVersion < 0) {
+    throw new Error("Baseline version must be a non-negative integer, e.g. --baseline 016.");
+  }
+
+  const selected = migrations.filter((migration) => migration.version <= targetVersion);
+
+  if (!selected.length) {
+    throw new Error(`No migration exists at or below baseline version ${targetVersion}.`);
+  }
+
+  await ensureHistoryTable(client);
+  const applied = await readApplied(client);
+  const migrationsByVersion = new Map(migrations.map((migration) => [migration.version, migration]));
+  assertAppliedFilesUnchanged(applied, migrationsByVersion);
+
+  const appliedVersions = new Set(applied.map((row) => row.version));
+  const missing = selected.filter((migration) => !appliedVersions.has(migration.version));
+
+  if (!missing.length) {
+    console.log(`✅ Database is already baselined through ${targetVersion}.`);
+    return;
+  }
+
+  console.warn("");
+  console.warn("⚠️  BASELINE MODE DOES NOT RUN SQL.");
+  console.warn("It records migrations as already applied because the database");
+  console.warn("must already contain the schema represented by those migrations.");
+  console.warn("");
+
+  for (const migration of missing) {
+    await client.query(
+      `INSERT INTO public.schema_migrations
+         (version, name, checksum, baseline)
+       VALUES ($1, $2, $3, TRUE)`,
+      [migration.version, migration.name, migration.checksum]
+    );
+    console.log(`📝 Baselined ${migration.name}`);
+  }
+
+  console.log(`✅ Baseline recorded through migration ${targetVersion}.`);
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  const command = args[0] || "up";
+  const migrations = getMigrations();
+
+  assertUniqueVersions(migrations);
+
+  const client = await pool.connect();
+
+  try {
+    await acquireLock(client);
+
+    if (command === "status") {
+      await status(client, migrations);
+    } else if (command === "up") {
+      await apply(client, migrations);
+    } else if (command === "baseline") {
+      await baseline(client, migrations, args[1]);
+    } else {
+      throw new Error(
+        `Unknown command "${command}". Use: up | status | baseline <version>`
+      );
+    }
+  } finally {
+    try {
+      await releaseLock(client);
+    } catch (err) {
+      console.error("Could not release migration advisory lock:", err.message);
+    }
+    client.release();
+    await pool.end();
+  }
+}
+
+main().catch((err) => {
+  console.error("❌ Migration command failed:", err.message);
+  process.exitCode = 1;
+});
