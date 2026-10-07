@@ -4549,7 +4549,8 @@ const removeOrderItem = async (
       AND status = 'reserved'
     `,
     [
-      orderId
+      orderId,
+      restaurantId
     ]
   );
 
@@ -5233,6 +5234,8 @@ const syncOrderInventoryReservation = async (
       released_at = NOW()
 
     WHERE order_id = $1
+
+      AND restaurant_id = $2
 
       AND status = 'reserved'
     `,
