@@ -16,9 +16,14 @@ exports.login = async (req, res) => {
   try {
     let query, params;
 
-    // ==========================================
-    // SUPER ADMIN – special handling
-    // ==========================================
+    // Authentication must not reveal account role before the password
+    // has been verified. The requested role is therefore validated only
+    // after a successful password check.
+    //
+    // Super Admin login is identified by the absence of a restaurant
+    // context (or an explicit super_admin role request). The user is
+    // looked up by username only so a wrong requested role cannot reveal
+    // whether that username belongs to a particular role.
     if (role === 'super_admin' || (!role && !restaurant_id)) {
       query = `
         SELECT
@@ -29,14 +34,12 @@ exports.login = async (req, res) => {
         FROM users u
         LEFT JOIN restaurants r ON u.restaurant_id = r.id
         WHERE u.username = $1
-          AND u.role = 'super_admin'
       `;
       params = [username];
     }
 
-    // ==========================================
-    // RESTAURANT STAFF – pehle sirf username + restaurant_id
-    // ==========================================
+    // Restaurant staff lookup remains tenant-scoped, but the requested
+    // role is deliberately excluded from the SQL predicate.
     else {
       if (!restaurant_id || !role) {
         return res.status(400).json({
@@ -70,13 +73,23 @@ exports.login = async (req, res) => {
 
     const user = result.rows[0];
 
-    // ==========================================
-    // ✅ ROLE CHECK – AB YAHAN KAREIN
-    // ==========================================
-    if (role && user.role !== role) {
-      return res.status(403).json({
+    // Verify the password before checking role, account state, or
+    // subscription state. This prevents role/account enumeration.
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
         success: false,
-        message: `This login is for ${role}s only.`   // 👈 Yeh frontend pe show hoga
+        message: 'Invalid username or password'
+      });
+    }
+
+    // Requested role is checked only after successful authentication.
+    // Keep the response generic so a valid username/password cannot be
+    // used to probe which role is assigned to the account.
+    if (role && user.role !== role) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid username or password'
       });
     }
 
@@ -111,42 +124,31 @@ exports.login = async (req, res) => {
     }
 
     // ==========================================
-    // PASSWORD CHECK
+    // SESSION & JWT + LOGIN TRACKING
     // ==========================================
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid username or password'
-      });
-    }
+    const sessionId = crypto.randomBytes(16).toString('hex');
 
-    // ==========================================
-// SESSION & JWT + LOGIN TRACKING
-// ==========================================
-const sessionId = crypto.randomBytes(16).toString('hex');
+    // Client IP (proxy-aware)
+    const clientIp =
+      (req.headers['x-forwarded-for']?.split(',')[0].trim()) ||
+      req.headers['x-real-ip'] ||
+      req.connection?.remoteAddress ||
+      req.ip ||
+      'Unknown';
 
-// ✅ Client IP nikalein (proxy-aware)
-const clientIp =
-  (req.headers['x-forwarded-for']?.split(',')[0].trim()) ||
-  req.headers['x-real-ip'] ||
-  req.connection?.remoteAddress ||
-  req.ip ||
-  'Unknown';
+    // Device info (browser/OS)
+    const userAgent = req.headers['user-agent'] || 'Unknown';
 
-// ✅ Device info (browser/OS)
-const userAgent = req.headers['user-agent'] || 'Unknown';
-
-// ✅ Session + Login tracking ek hi query mein
-await pool.query(
-  `UPDATE users 
-   SET current_session = $1,
-       last_login_at = NOW(),
-       last_login_ip = $2,
-       last_login_device = $3
-   WHERE id = $4`,
-  [sessionId, clientIp, userAgent, user.id]
-);
+    // Session + login tracking in one query.
+    await pool.query(
+      `UPDATE users
+       SET current_session = $1,
+           last_login_at = NOW(),
+           last_login_ip = $2,
+           last_login_device = $3
+       WHERE id = $4`,
+      [sessionId, clientIp, userAgent, user.id]
+    );
 
     const token = jwt.sign(
       {
@@ -182,7 +184,6 @@ await pool.query(
     });
   }
 };
-
 exports.updateSettings = async (req, res) => {
 
   try {
