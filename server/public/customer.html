@@ -279,7 +279,7 @@ async function verifyCustomerLocation() {
           resolve(data);
         } catch (err) {
           console.error('Location verify error:', err);
-          resolve({ allowed: true, message: 'Server error' });
+          resolve({ allowed: false, message: 'Unable to verify your location. Please try again.' });
         }
       },
       (error) => {
@@ -785,7 +785,12 @@ function showLocationBlockedScreen(message) {
           'Content-Type': 'application/json',
           'Idempotency-Key': getOrderIdempotencyKey()
         },
-        body: JSON.stringify({ table_no: Number(tableNo), table_token: tableToken })
+        body: JSON.stringify({
+          table_no: Number(tableNo),
+          table_token: tableToken,
+          latitude: window.customerLatitude,
+          longitude: window.customerLongitude
+        })
       });
       if (!res.ok) {
         showToast('Unable to call waiter', true);
