@@ -296,15 +296,12 @@ exports.setStatus = async (req, res) => {
     }
 
 
+    const safeRestaurant = await getRestaurantDetail(id);
+
     res.json({
-
       success: true,
-
-      message:
-        `Restaurant ${status}`,
-
-      data: restaurant
-
+      message: `Restaurant ${status}`,
+      data: safeRestaurant
     });
 
 
@@ -365,15 +362,12 @@ async (req, res) => {
     }
 
 
+    const safeRestaurant = await getRestaurantDetail(id);
+
     res.json({
-
       success: true,
-
-      message:
-        'Subscription updated',
-
-      data: restaurant
-
+      message: 'Subscription updated',
+      data: safeRestaurant
     });
 
 
@@ -428,10 +422,12 @@ exports.editRestaurant = async (req, res) => {
       });
     }
 
+    const safeRestaurant = await getRestaurantDetail(id);
+
     res.json({
       success: true,
       message: 'Restaurant details updated successfully',
-      data: restaurant
+      data: safeRestaurant
     });
 
   } catch (err) {
@@ -516,15 +512,12 @@ async (req, res) => {
     }
 
 
+    const safeRestaurant = await getRestaurantDetail(id);
+
     res.json({
-
       success: true,
-
-      message:
-        'Restaurant food type updated',
-
-      data: restaurant
-
+      message: 'Restaurant food type updated',
+      data: safeRestaurant
     });
 
 
