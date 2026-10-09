@@ -714,13 +714,94 @@ const deleteRestaurant = async (id) => {
     await client.query(
       `
       DELETE FROM order_items
-
-      WHERE order_id IN
-      (
-        SELECT id
-        FROM orders
-        WHERE restaurant_id = $1
+      WHERE order_id IN (
+        SELECT id FROM orders WHERE restaurant_id = $1
       )
+      `,
+      [id]
+    );
+
+    // --------------------------------------------------
+    // 1b. ORDER DEALS
+    // --------------------------------------------------
+
+    await client.query(
+      `
+      DELETE FROM order_deals
+      WHERE order_id IN (
+        SELECT id FROM orders WHERE restaurant_id = $1
+      )
+      `,
+      [id]
+    );
+
+    // --------------------------------------------------
+    // 1c. KITCHEN INVENTORY TRANSACTIONS (order-linked)
+    // --------------------------------------------------
+
+    await client.query(
+      `
+      DELETE FROM kitchen_inventory_transactions
+      WHERE order_id IN (
+        SELECT id FROM orders WHERE restaurant_id = $1
+      )
+      `,
+      [id]
+    );
+
+    // --------------------------------------------------
+    // 1d. PAYMENT TRANSACTIONS
+    // --------------------------------------------------
+
+    await client.query(
+      `
+      DELETE FROM payment_transactions
+      WHERE restaurant_id = $1
+         OR order_id IN (
+           SELECT id FROM orders WHERE restaurant_id = $1
+         )
+      `,
+      [id]
+    );
+
+    // --------------------------------------------------
+    // 1e. QR PAYMENTS
+    // --------------------------------------------------
+
+    await client.query(
+      `
+      DELETE FROM qr_payments
+      WHERE restaurant_id = $1
+         OR order_id IN (
+           SELECT id FROM orders WHERE restaurant_id = $1
+         )
+      `,
+      [id]
+    );
+
+    // --------------------------------------------------
+    // 1f. INVENTORY RESERVATIONS
+    // --------------------------------------------------
+
+    await client.query(
+      `
+      DELETE FROM inventory_reservations
+      WHERE restaurant_id = $1
+         OR order_id IN (
+           SELECT id FROM orders WHERE restaurant_id = $1
+         )
+      `,
+      [id]
+    );
+
+    // --------------------------------------------------
+    // 1g. PUBLIC ORDER REQUESTS (idempotency)
+    // --------------------------------------------------
+
+    await client.query(
+      `
+      DELETE FROM public_order_requests
+      WHERE restaurant_id = $1
       `,
       [id]
     );
@@ -732,9 +813,52 @@ const deleteRestaurant = async (id) => {
     await client.query(
       `
       DELETE FROM orders
-
       WHERE restaurant_id = $1
       `,
+      [id]
+    );
+
+    // --------------------------------------------------
+    // 2b. KITCHEN + DEALS + VARIANTS + COUNTERS
+    // --------------------------------------------------
+
+    await client.query(
+      `DELETE FROM kitchen_inventory_transactions
+       WHERE kitchen_inventory_id IN (
+         SELECT id FROM kitchen_inventory WHERE restaurant_id = $1
+       )`,
+      [id]
+    );
+
+    await client.query(
+      `DELETE FROM kitchen_inventory_requests WHERE restaurant_id = $1`,
+      [id]
+    );
+
+    await client.query(
+      `DELETE FROM kitchen_inventory WHERE restaurant_id = $1`,
+      [id]
+    );
+
+    await client.query(
+      `DELETE FROM deal_items
+       WHERE deal_id IN (SELECT id FROM deals WHERE restaurant_id = $1)`,
+      [id]
+    );
+
+    await client.query(
+      `DELETE FROM deals WHERE restaurant_id = $1`,
+      [id]
+    );
+
+    await client.query(
+      `DELETE FROM menu_item_variants
+       WHERE menu_item_id IN (SELECT id FROM menu_items WHERE restaurant_id = $1)`,
+      [id]
+    );
+
+    await client.query(
+      `DELETE FROM restaurant_order_counters WHERE restaurant_id = $1`,
       [id]
     );
 
