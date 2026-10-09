@@ -128,8 +128,12 @@ const getSalesDetails = async (
             ORDER BY m.name
           )
           FROM order_items oi
-          INNER JOIN menu_items m ON m.id = oi.menu_item_id
-          LEFT JOIN menu_item_variants miv ON miv.id = oi.variant_id
+          INNER JOIN menu_items m
+            ON m.id = oi.menu_item_id
+            AND m.restaurant_id = o.restaurant_id
+          LEFT JOIN menu_item_variants miv
+            ON miv.id = oi.variant_id
+            AND miv.menu_item_id = oi.menu_item_id
           WHERE oi.order_id = o.id
             AND oi.order_deal_id IS NULL
         ),
@@ -150,7 +154,9 @@ const getSalesDetails = async (
             ORDER BY d.name
           )
           FROM order_deals od
-          INNER JOIN deals d ON d.id = od.deal_id
+          INNER JOIN deals d
+            ON d.id = od.deal_id
+            AND d.restaurant_id = o.restaurant_id
           WHERE od.order_id = o.id
         ),
         '[]'::json
@@ -212,6 +218,7 @@ const getTopItems = async (
 
     JOIN menu_items m
       ON m.id = oi.menu_item_id
+      AND m.restaurant_id = o.restaurant_id
 
     LEFT JOIN menu_item_variants miv
       ON miv.id = oi.variant_id
