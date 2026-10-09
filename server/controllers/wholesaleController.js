@@ -4,6 +4,26 @@ function rid(req) {
   return Number(req.user?.restaurant_id);
 }
 
+function safeWholesaleValidationMessage(error) {
+  const message = String(error?.message || '');
+  const allowed = [
+    /^Product name is required$/,
+    /^Price and stock values must be valid numbers$/,
+    /^Price and stock values cannot be negative$/,
+    /^(purchase_price|sale_price|stock|min_stock) must be a valid non-negative number$/,
+    /^Add at least one product$/,
+    /^Invalid item$/,
+    /^Product \d+ not found$/,
+    /^Insufficient stock for .{1,100}$/,
+    /^Invalid sale price for .{1,100}$/,
+    /^Invalid line total$/,
+    /^Discount must be between 0 and subtotal$/,
+    /^Tax must be a valid non-negative amount$/,
+    /^Invalid sale total$/
+  ];
+  return allowed.some(pattern => pattern.test(message)) ? message : null;
+}
+
 exports.getProducts = async (req, res) => {
   try {
     const data = await model.listProducts(rid(req));
@@ -23,7 +43,11 @@ exports.addProduct = async (req, res) => {
     res.status(201).json({ success: true, data });
   } catch (e) {
     console.error(e);
-    res.status(500).json({ success: false, message: e.message || 'Server error' });
+    const safeMessage = safeWholesaleValidationMessage(e);
+    res.status(safeMessage ? 400 : 500).json({
+      success: false,
+      message: safeMessage || 'Server error'
+    });
   }
 };
 
@@ -35,7 +59,11 @@ exports.editProduct = async (req, res) => {
     res.json({ success: true, data });
   } catch (e) {
     console.error(e);
-    res.status(500).json({ success: false, message: 'Server error' });
+    const safeMessage = safeWholesaleValidationMessage(e);
+    res.status(safeMessage ? 400 : 500).json({
+      success: false,
+      message: safeMessage || 'Server error'
+    });
   }
 };
 
@@ -55,7 +83,11 @@ exports.createSale = async (req, res) => {
     res.status(201).json({ success: true, ...result });
   } catch (e) {
     console.error(e);
-    res.status(400).json({ success: false, message: e.message || 'Sale failed' });
+    const safeMessage = safeWholesaleValidationMessage(e);
+    res.status(safeMessage ? 400 : 500).json({
+      success: false,
+      message: safeMessage || 'Sale failed'
+    });
   }
 };
 
