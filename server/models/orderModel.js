@@ -5010,12 +5010,10 @@ const reserveOrderInventory = async (
     const requiredQuantity = recipeQuantity * orderQuantity;
 
     if (
-      !Number.isFinite(recipeQuantity) ||
-      recipeQuantity <= 0 ||
-      !Number.isFinite(orderQuantity) ||
-      orderQuantity <= 0 ||
-      !Number.isFinite(requiredQuantity) ||
-      requiredQuantity <= 0
+      !Number.isInteger(inventoryId) || inventoryId <= 0 ||
+      !Number.isFinite(recipeQuantity) || recipeQuantity <= 0 ||
+      !Number.isFinite(orderQuantity) || orderQuantity <= 0 ||
+      !Number.isFinite(requiredQuantity) || requiredQuantity <= 0
     ) {
       throw new Error(
         `Invalid recipe quantity for "${row.ingredient_name}".`
@@ -5044,9 +5042,11 @@ const reserveOrderInventory = async (
     }
 
 
-    requiredStock[inventoryId]
-      .required_quantity +=
-      requiredQuantity;
+    const aggregate = requiredStock[inventoryId].required_quantity + requiredQuantity;
+    if (!Number.isFinite(aggregate) || aggregate <= 0) {
+      throw new Error(`Invalid aggregated inventory requirement for "${row.ingredient_name}".`);
+    }
+    requiredStock[inventoryId].required_quantity = aggregate;
 
   }
 
@@ -5538,12 +5538,10 @@ const syncOrderInventoryReservation = async (
       orderQuantity;
 
     if (
-      !Number.isFinite(recipeQuantity) ||
-      recipeQuantity <= 0 ||
-      !Number.isFinite(orderQuantity) ||
-      orderQuantity <= 0 ||
-      !Number.isFinite(requiredQuantity) ||
-      requiredQuantity <= 0
+      !Number.isInteger(inventoryId) || inventoryId <= 0 ||
+      !Number.isFinite(recipeQuantity) || recipeQuantity <= 0 ||
+      !Number.isFinite(orderQuantity) || orderQuantity <= 0 ||
+      !Number.isFinite(requiredQuantity) || requiredQuantity <= 0
     ) {
 
       throw new Error(
@@ -5576,9 +5574,11 @@ const syncOrderInventoryReservation = async (
     }
 
 
-    requiredStock[inventoryId]
-      .required_quantity +=
-      requiredQuantity;
+    const aggregate = requiredStock[inventoryId].required_quantity + requiredQuantity;
+    if (!Number.isFinite(aggregate) || aggregate <= 0) {
+      throw new Error(`Invalid aggregated inventory requirement for "${row.ingredient_name}".`);
+    }
+    requiredStock[inventoryId].required_quantity = aggregate;
 
   }
 
