@@ -29,6 +29,7 @@ exports.login = async (req, res) => {
         SELECT
           u.id, u.username, u.password, u.role, u.restaurant_id,
           u.full_name, u.is_active AS user_active,
+          COALESCE(u.must_change_password, FALSE) AS must_change_password,
           r.name AS restaurant_name, r.status AS restaurant_status,
           r.plan AS restaurant_plan, r.expiry_date
         FROM users u
@@ -52,6 +53,7 @@ exports.login = async (req, res) => {
         SELECT
           u.id, u.username, u.password, u.role, u.restaurant_id,
           u.full_name, u.is_active AS user_active,
+          COALESCE(u.must_change_password, FALSE) AS must_change_password,
           r.name AS restaurant_name, r.status AS restaurant_status,
           r.plan AS restaurant_plan, r.expiry_date
         FROM users u
@@ -182,7 +184,8 @@ exports.login = async (req, res) => {
         restaurant_id: user.restaurant_id,
         restaurant_name: user.restaurant_name,
         plan: user.restaurant_plan,
-        expiry_date: user.expiry_date
+        expiry_date: user.expiry_date,
+        must_change_password: Boolean(user.must_change_password)
       }
     });
 
@@ -297,5 +300,52 @@ exports.logout = async (req, res) => {
       success: false,
       message: 'Server error'
     });
+  }
+};
+
+
+// Mandatory first-login password change for accounts whose initial
+// credentials were delivered by email.
+exports.changeInitialPassword = async (req, res) => {
+  try {
+    const newPassword = typeof req.body?.new_password === 'string' ? req.body.new_password : '';
+    const confirmPassword = typeof req.body?.confirm_password === 'string' ? req.body.confirm_password : '';
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, message: 'New password must be at least 8 characters' });
+    }
+    if (newPassword.length > 128) {
+      return res.status(400).json({ success: false, message: 'Password is too long' });
+    }
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ success: false, message: 'Passwords do not match' });
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 12);
+    const result = await pool.query(
+      `UPDATE users
+          SET password = $1, must_change_password = FALSE, current_session = NULL
+        WHERE id = $2 AND current_session = $3 AND must_change_password = TRUE
+        RETURNING id`,
+      [hashed, req.user.id, req.authSessionId]
+    );
+
+    if (!result.rowCount) {
+      return res.status(409).json({
+        success: false,
+        message: 'Password change is no longer required or this session has expired. Please log in again.'
+      });
+    }
+
+    res.clearCookie('sizlio_session', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/'
+    });
+    return res.json({ success: true, message: 'Password changed successfully. Please log in again.' });
+  } catch (err) {
+    console.error('changeInitialPassword:', err);
+    return res.status(500).json({ success: false, message: 'Unable to change password' });
   }
 };
