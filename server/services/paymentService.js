@@ -536,12 +536,34 @@ async function handleWebhook({ headers, body, rawBody = null }) {
     }
 
     if (status === 'SUCCESS' || status === 'PAID') {
+        // A signed success callback must include the actual settled amount and
+        // the provider's unique transaction ID. Never infer a bank transfer's
+        // amount from our own QR record: a malformed callback could otherwise
+        // mark an unpaid order as paid without proving the amount received.
+        if (
+            amount === null ||
+            amount === undefined ||
+            (typeof amount === 'string' && amount.trim() === '') ||
+            !Number.isFinite(Number(amount)) ||
+            Number(amount) <= 0
+        ) {
+            throw new Error('Missing or invalid amount in successful payment webhook');
+        }
+
+        if (
+            transaction_id === null ||
+            transaction_id === undefined ||
+            String(transaction_id).trim() === ''
+        ) {
+            throw new Error('Missing transaction_id in successful payment webhook');
+        }
+
         const result = await settleQrPayment({
             qrId: reference,
             receivedAmount: amount,
             paymentMethod: payment_method || 'raast',
             paidAt: paid_at || new Date(),
-            providerRef: transaction_id || null,
+            providerRef: String(transaction_id).trim(),
             rawResponse: body,
         });
 
