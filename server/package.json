@@ -8,6 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "migrate": "node scripts/migrate.js up",
     "migrate:status": "node scripts/migrate.js status",
+    "migrate:one": "node scripts/migrate.js one",
     "migrate:baseline": "node scripts/migrate.js baseline"
   },
   "keywords": [],
