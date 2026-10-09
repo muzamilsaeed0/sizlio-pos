@@ -38,10 +38,53 @@ function assertUniqueVersions(migrations) {
 }
 
 function assertTransactional(migration) {
-  const normalized = migration.sql.replace(/^\s+|\s+$/g, "").toUpperCase();
-  if (!/^BEGIN;[\s\S]*COMMIT;$/.test(normalized)) {
+  // SQL migrations may begin/end with explanatory comments. Strip comments only
+  // at the boundaries before validating the transaction wrapper.
+  const stripLeadingComments = (sql) => {
+    let value = sql.trimStart();
+    while (true) {
+      if (value.startsWith("--")) {
+        const newline = value.indexOf("\n");
+        value = newline === -1 ? "" : value.slice(newline + 1).trimStart();
+        continue;
+      }
+      if (value.startsWith("/*")) {
+        const commentEnd = value.indexOf("*/", 2);
+        if (commentEnd === -1) return value;
+        value = value.slice(commentEnd + 2).trimStart();
+        continue;
+      }
+      return value;
+    }
+  };
+
+  const stripTrailingComments = (sql) => {
+    let value = sql.trimEnd();
+    while (true) {
+      const lineStart = value.lastIndexOf("\n") + 1;
+      const lastLine = value.slice(lineStart).trim();
+      if (lastLine.startsWith("--")) {
+        value = value.slice(0, lineStart).trimEnd();
+        continue;
+      }
+      if (value.endsWith("*/")) {
+        const commentStart = value.lastIndexOf("/*");
+        if (commentStart !== -1) {
+          value = value.slice(0, commentStart).trimEnd();
+          continue;
+        }
+      }
+      return value;
+    }
+  };
+
+  const normalized = stripTrailingComments(stripLeadingComments(migration.sql))
+    .trim()
+    .toUpperCase();
+
+  if (!/^BEGIN\\s*;[\\s\\S]*\\bCOMMIT\\s*;?$/.test(normalized)) {
     throw new Error(
-      `Migration ${migration.name} must be a single BEGIN ... COMMIT transaction.`
+      "Migration " + migration.name + " must be a single BEGIN ... COMMIT transaction."
     );
   }
 }
