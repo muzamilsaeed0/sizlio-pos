@@ -32,11 +32,6 @@ const createStaff = async (
   role,
   creatorRole
 ) => {
-
-  // ======================================================
-  // ROLE -> RESTAURANT LIMIT COLUMN
-  // ======================================================
-
   const limitColumns = {
     waiter: "waiter_limit",
     kitchen: "kitchen_limit",
@@ -44,188 +39,81 @@ const createStaff = async (
     display: "display_limit",
     delivery: "rider_limit",
   };
-
   const limitColumn = limitColumns[role];
-
   if (!limitColumn) {
-
-    const error =
-      new Error("Invalid staff role");
-
+    const error = new Error("Invalid staff role");
     error.code = "INVALID_ROLE";
-
     throw error;
   }
 
+  if (typeof password !== 'string' || password.length < 4 || password.length > 8) {
+    const error = new Error('Password must be between 4 and 8 characters');
+    error.code = 'INVALID_PASSWORD';
+    throw error;
+  }
 
-  // ======================================================
-  // CHECK RESTAURANT
-  // ======================================================
+  const hashed = await bcrypt.hash(password, 12);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
 
-  const restaurantResult =
-    await pool.query(
-      `
-      SELECT
-        id,
-        plan,
-        ${limitColumn} AS staff_limit
-      FROM restaurants
-      WHERE id = $1
-      `,
+    // Serialize staff creation for this restaurant so concurrent requests
+    // cannot both pass the same plan-limit count.
+    const restaurantResult = await client.query(
+      `SELECT id, plan, ${limitColumn} AS staff_limit
+       FROM restaurants
+       WHERE id = $1
+       FOR UPDATE`,
       [restaurantId]
     );
 
+    if (!restaurantResult.rowCount) {
+      const error = new Error('Restaurant not found');
+      error.code = 'RESTAURANT_NOT_FOUND';
+      throw error;
+    }
 
-  if (!restaurantResult.rows.length) {
-
-    const error =
-      new Error("Restaurant not found");
-
-    error.code =
-      "RESTAURANT_NOT_FOUND";
-
-    throw error;
-  }
-
-
-  const restaurant =
-    restaurantResult.rows[0];
-
-  const staffLimit =
-    restaurant.staff_limit;
-
-
-  // ======================================================
-  // COUNT CURRENT ACTIVE STAFF
-  // ======================================================
-
-  const countResult =
-    await pool.query(
-      `
-      SELECT COUNT(*)::int AS staff_count
-      FROM users
-      WHERE restaurant_id = $1
-        AND role = $2
-        AND is_active = true
-      `,
-      [
-        restaurantId,
-        role
-      ]
+    const restaurant = restaurantResult.rows[0];
+    const countResult = await client.query(
+      `SELECT COUNT(*)::int AS staff_count
+       FROM users
+       WHERE restaurant_id = $1 AND role = $2 AND is_active = true`,
+      [restaurantId, role]
     );
-
-
-  const currentCount =
-    countResult.rows[0].staff_count;
-
-
-  // ======================================================
-  // PLAN LIMIT
-  //
-  // SUPER ADMIN:
-  // NO LIMIT AT ALL
-  //
-  // MANAGER:
-  // RESTAURANT PLAN LIMIT APPLIES
-  // ======================================================
-
-  if (creatorRole !== "super_admin") {
+    const currentCount = Number(countResult.rows[0].staff_count);
+    const staffLimit = restaurant.staff_limit;
 
     if (
+      creatorRole !== 'super_admin' &&
       staffLimit !== null &&
       staffLimit !== undefined &&
       currentCount >= Number(staffLimit)
     ) {
-
-      const error =
-        new Error(
-          `${role} limit reached. Your ${restaurant.plan || "current"} plan allows ${staffLimit} ${role}(s).`
-        );
-
-      error.code =
-        "STAFF_LIMIT_REACHED";
-
-      error.staffLimit =
-        Number(staffLimit);
-
-      error.currentCount =
-        currentCount;
-
+      const error = new Error(
+        `${role} limit reached. Your ${restaurant.plan || 'current'} plan allows ${staffLimit} ${role}(s).`
+      );
+      error.code = 'STAFF_LIMIT_REACHED';
+      error.staffLimit = Number(staffLimit);
+      error.currentCount = currentCount;
       throw error;
     }
-  }
 
-
-  // ======================================================
-  // HASH PASSWORD
-  // ======================================================
-
-  if (typeof password !== 'string' || password.length < 4) {
-    const error = new Error('Password must be at least 4 characters');
-    error.code = 'INVALID_PASSWORD';
-    throw error;
-  }
-  if (password.length > 8) {
-    const error = new Error('Password is too long (maximum 8 characters)');
-    error.code = 'INVALID_PASSWORD';
-    throw error;
-  }
-
-  const hashed =
-    await bcrypt.hash(
-      password,
-      12
+    const result = await client.query(
+      `INSERT INTO users
+        (restaurant_id, full_name, username, password, role, is_active, must_change_password)
+       VALUES ($1, $2, $3, $4, $5, true, true)
+       RETURNING id, username, full_name, role, restaurant_id, is_active`,
+      [restaurantId, fullName, username, hashed, role]
     );
 
-
-  // ======================================================
-  // CREATE STAFF
-  // ======================================================
-
-  const result =
-    await pool.query(
-      `
-      INSERT INTO users
-      (
-        restaurant_id,
-        full_name,
-        username,
-        password,
-        role,
-        is_active,
-        must_change_password
-      )
-
-      VALUES
-      (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        true,
-        true
-      )
-
-      RETURNING
-        id,
-        username,
-        full_name,
-        role,
-        restaurant_id,
-        is_active
-      `,
-      [
-        restaurantId,
-        fullName,
-        username,
-        hashed,
-        role
-      ]
-    );
-
-
-  return result.rows[0];
+    await client.query('COMMIT');
+    return result.rows[0];
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
 const updateStaff = async (id, restaurantId, fullName, username, password) => {
