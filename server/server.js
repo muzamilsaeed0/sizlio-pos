@@ -299,7 +299,13 @@ const getSocketUser = async (decoded) => {
 /* ---------- Socket auth ---------- */
 io.use(async (socket, next) => {
   try {
-    const token = socket.handshake.auth?.token;
+    const cookieHeader = socket.handshake.headers.cookie || '';
+    const cookieToken = cookieHeader
+      .split(';')
+      .map(part => part.trim())
+      .filter(part => part.startsWith('sizlio_session='))
+      .map(part => decodeURIComponent(part.slice('sizlio_session='.length)))[0] || null;
+    const token = cookieToken || socket.handshake.auth?.token;
 
     if (!token) {
       return next(new Error("Authentication required"));
@@ -326,7 +332,13 @@ io.use(async (socket, next) => {
 io.use((socket, next) => {
   socket.use(async (packet, packetNext) => {
     try {
-      const token = socket.handshake.auth?.token;
+      const cookieHeader = socket.handshake.headers.cookie || '';
+      const cookieToken = cookieHeader
+        .split(';')
+        .map(part => part.trim())
+        .filter(part => part.startsWith('sizlio_session='))
+        .map(part => decodeURIComponent(part.slice('sizlio_session='.length)))[0] || null;
+      const token = cookieToken || socket.handshake.auth?.token;
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const user = await getSocketUser(decoded);
 
