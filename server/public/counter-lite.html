@@ -2258,7 +2258,7 @@
     async function doResetRiderPassword(id) {
       const inp = document.getElementById('reset-pw-' + id);
       const pw = (inp?.value || '').trim();
-      if (pw.length < 4) { alert('Password must be at least 4 characters'); return; }
+      if (pw.length < 4) { alert('Password must be 4 to 8 characters'); return; }
       try {
         await api('/users/' + id, {
           method: 'PUT',
@@ -2278,7 +2278,7 @@
 
       if (!currentPw) { alert('Current password required'); return; }
       if (newPw && newPw !== confirmPw) { alert('New passwords do not match'); return; }
-      if (newPw && newPw.length < 4) { alert('New password must be at least 4 characters'); return; }
+      if (newPw && newPw.length < 4) { alert('New password must be 4 to 8 characters'); return; }
 
       const body = { current_password: currentPw };
       if (username) body.username = username;
