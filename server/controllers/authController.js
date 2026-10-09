@@ -337,8 +337,11 @@ exports.changeInitialPassword = async (req, res) => {
     if (newPassword.length < 8) {
       return res.status(400).json({ success: false, message: 'New password must be at least 8 characters' });
     }
-    if (newPassword.length > 128) {
-      return res.status(400).json({ success: false, message: 'Password is too long' });
+    if (newPassword.length > 128 || Buffer.byteLength(newPassword, 'utf8') > 72) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password is too long (maximum 72 UTF-8 bytes)'
+      });
     }
     if (newPassword !== confirmPassword) {
       return res.status(400).json({ success: false, message: 'Passwords do not match' });
