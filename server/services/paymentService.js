@@ -292,6 +292,21 @@ async function settleQrPayment({
 
         const order = orderResult.rows[0];
 
+        if (order.status === 'cancelled') {
+            // The QR may have been scanned before cancellation. Never settle
+            // it after the order has been cancelled.
+            await client.query(
+                `UPDATE qr_payments
+                 SET status = 'cancelled',
+                     updated_at = NOW()
+                 WHERE id = $1
+                   AND status = 'pending'`,
+                [payment.id]
+            );
+            await client.query('COMMIT');
+            throw new Error('Cannot accept payment for a cancelled order');
+        }
+
         if (order.payment_status === 'paid') {
             throw new Error('Order is already paid');
         }
