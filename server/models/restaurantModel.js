@@ -625,7 +625,8 @@ async (
 
       SET
         password = $1,
-        current_session = NULL
+        current_session = NULL,
+        must_change_password = TRUE
 
       WHERE restaurant_id = $2
         AND role = 'manager'
@@ -970,7 +971,8 @@ async (
 
       SET
         password = $1,
-        current_session = NULL
+        current_session = NULL,
+        must_change_password = TRUE
 
       WHERE id = $2
         AND restaurant_id = $3
@@ -1117,7 +1119,8 @@ const addStaffMember = async (
         username,
         password,
         role,
-        restaurant_id
+        restaurant_id,
+        must_change_password
       )
 
       VALUES
@@ -1127,7 +1130,7 @@ const addStaffMember = async (
         $3,
         $4,
         $5,
-        $6
+        TRUE
       )
 
       RETURNING
@@ -1136,7 +1139,8 @@ const addStaffMember = async (
         full_name,
         role,
         restaurant_id,
-        is_active
+        is_active,
+        must_change_password
       `,
       [
         full_name || role,
