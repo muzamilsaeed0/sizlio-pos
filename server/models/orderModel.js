@@ -4132,6 +4132,29 @@ WHERE id = $2
     }
 
 
+    // If a waiter adds items after the kitchen has marked the order
+    // ready, move it back into the kitchen workflow so the new items
+    // cannot be mistaken for an already-completed preparation.
+    if (
+      role === 'waiter' &&
+      ['ready', 'ready_to_dispatch', 'ready_to_deliver'].includes(order.status)
+    ) {
+      const nextStatus =
+        String(order.order_source || '').toUpperCase() === 'MENU'
+          ? 'pending'
+          : 'placed';
+
+      await client.query(
+        `UPDATE orders
+         SET status = $1,
+             confirmed_at = NULL,
+             prep_minutes = NULL,
+             ready_at = NULL
+         WHERE id = $2 AND restaurant_id = $3`,
+        [nextStatus, orderId, restaurantId]
+      );
+    }
+
     await recalculateOrderPricing(
   client,
   orderId,
