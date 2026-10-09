@@ -67,19 +67,41 @@ async function createQrPayment({ restaurantId, orderId, amount, description }) {
 
         if (existingQr.rows.length) {
             const existing = existingQr.rows[0];
+            const existingAmount = Number(existing.amount);
 
-            await client.query('COMMIT');
+            // Reuse a QR only while its amount still matches the current
+            // server-calculated outstanding balance. Orders can be edited
+            // after a QR was issued; returning a stale QR would confuse the
+            // customer and guarantee settlement rejection.
+            if (
+                Number.isFinite(existingAmount) &&
+                existingAmount > 0 &&
+                existingAmount === outstandingAmount
+            ) {
+                await client.query('COMMIT');
 
-            return {
-                qr_id: existing.qr_id,
-                order_id: orderId,
-                amount: Number(existing.amount),
-                qr_string: existing.qr_string,
-                qr_image_url: existing.qr_image_url,
-                expires_at: existing.expires_at,
-                status: existing.status,
-                reused: true,
-            };
+                return {
+                    qr_id: existing.qr_id,
+                    order_id: orderId,
+                    amount: existingAmount,
+                    qr_string: existing.qr_string,
+                    qr_image_url: existing.qr_image_url,
+                    expires_at: existing.expires_at,
+                    status: existing.status,
+                    reused: true,
+                };
+            }
+
+            // Retire stale pending QRs before issuing one for the new balance.
+            await client.query(
+                `UPDATE qr_payments
+                 SET status = 'cancelled',
+                     updated_at = NOW()
+                 WHERE id = $1
+                   AND restaurant_id = $2
+                   AND status = 'pending'`,
+                [existing.id, restaurantId]
+            );
         }
 
         const qrId = `QR-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
