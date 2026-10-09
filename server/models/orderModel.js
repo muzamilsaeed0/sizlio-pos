@@ -4543,6 +4543,20 @@ const removeOrderItem = async (
     }
 
 
+    // A served unpaid order has already consumed physical stock. Do not
+    // delete its final item and then delete the order record: that would
+    // bypass adjustServedOrderInventory and leave stock permanently reduced.
+    if (
+      order.status === 'served' &&
+      order.payment_status === 'unpaid' &&
+      beforeItems.length === 1
+    ) {
+      await client.query('ROLLBACK');
+      throw new Error(
+        'Cannot remove the last item from a served unpaid order. Adjust its quantity or use the approved void/refund workflow.'
+      );
+    }
+
     const result =
       await client.query(
         `
