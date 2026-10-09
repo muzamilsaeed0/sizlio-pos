@@ -320,9 +320,19 @@ const checkOrderInventoryAvailability = async (
       recipeQuantity *
       orderQuantity;
 
-
-    
-
+    if (
+      !Number.isFinite(recipeQuantity) ||
+      recipeQuantity <= 0 ||
+      !Number.isFinite(orderQuantity) ||
+      orderQuantity <= 0 ||
+      !Number.isFinite(requiredQuantity) ||
+      requiredQuantity <= 0
+    ) {
+      const err = new Error('Invalid recipe or order quantity.');
+      err.error = 'INVALID_INVENTORY_REQUIREMENT';
+      err.ingredient = row.ingredient_name;
+      throw err;
+    }
 
     if (!requiredStock[inventoryId]) {
 
@@ -4888,14 +4898,17 @@ const reserveOrderInventory = async (
     const inventoryId =
       Number(row.inventory_id);
 
-    const requiredQuantity =
-      Number(row.recipe_quantity || 0) *
-      Number(row.order_quantity || 0);
-
+    const recipeQuantity = Number(row.recipe_quantity);
+    const orderQuantity = Number(row.order_quantity);
+    const requiredQuantity = recipeQuantity * orderQuantity;
 
     if (
+      !Number.isFinite(recipeQuantity) ||
+      recipeQuantity <= 0 ||
+      !Number.isFinite(orderQuantity) ||
+      orderQuantity <= 0 ||
       !Number.isFinite(requiredQuantity) ||
-      requiredQuantity < 0
+      requiredQuantity <= 0
     ) {
       throw new Error(
         `Invalid recipe quantity for "${row.ingredient_name}".`
@@ -5415,10 +5428,13 @@ const syncOrderInventoryReservation = async (
       recipeQuantity *
       orderQuantity;
 
-
     if (
+      !Number.isFinite(recipeQuantity) ||
+      recipeQuantity <= 0 ||
+      !Number.isFinite(orderQuantity) ||
+      orderQuantity <= 0 ||
       !Number.isFinite(requiredQuantity) ||
-      requiredQuantity < 0
+      requiredQuantity <= 0
     ) {
 
       throw new Error(
