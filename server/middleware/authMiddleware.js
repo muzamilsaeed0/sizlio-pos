@@ -6,15 +6,38 @@ const authMiddleware = async (req, res, next) => {
   try {
 
     const authHeader = req.headers.authorization;
+    const bearerToken =
+      authHeader && authHeader.startsWith('Bearer ')
+        ? authHeader.slice(7).trim()
+        : null;
+    const cookieToken = req.cookies?.['__Host-sizlio_session'] || null;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Cookie-authenticated state-changing requests must originate from our
+    // own web origin. Bearer clients remain supported during migration.
+    const token = cookieToken || bearerToken;
+    if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'No token provided'
+        message: 'Authentication required'
       });
     }
 
-    const token = authHeader.split(' ')[1];
+    if (cookieToken && !['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+      const allowedOrigins = new Set([
+        'https://sizlio.com',
+        'https://www.sizlio.com',
+        ...(process.env.NODE_ENV === 'development'
+          ? ['http://localhost:3000', 'http://localhost:5500']
+          : [])
+      ]);
+      const origin = req.get('origin');
+      if (!origin || !allowedOrigins.has(origin)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Request origin rejected'
+        });
+      }
+    }
 
     const decoded = jwt.verify(
       token,
