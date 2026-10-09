@@ -197,11 +197,38 @@ async function getQrStatus(qrId, restaurantId) {
         [qrId, restaurantId]
     );
     if (!r.rows.length) return { status: 'not_found' };
-    const p = r.rows[0];
+    let p = r.rows[0];
 
-    if (p.status === 'pending' && new Date(p.expires_at) < new Date()) {
-        await pool.query(`UPDATE qr_payments SET status = 'expired' WHERE qr_id = $1 AND restaurant_id = $2`, [qrId, restaurantId]);
-        p.status = 'expired';
+    if (p.status === 'pending') {
+        // Expire only if the row is still pending at update time. A webhook
+        // may settle it after the initial SELECT; an unconditional UPDATE
+        // could overwrite a successful 'paid' status with 'expired'.
+        const expired = await pool.query(
+            `UPDATE qr_payments
+             SET status = 'expired',
+                 updated_at = NOW()
+             WHERE qr_id = $1
+               AND restaurant_id = $2
+               AND status = 'pending'
+               AND expires_at <= NOW()
+             RETURNING status, paid_at, paid_amount, payment_method, provider_ref, expires_at`,
+            [qrId, restaurantId]
+        );
+
+        if (expired.rows.length) {
+            p = expired.rows[0];
+        } else {
+            // The QR was not expired (or its status changed concurrently).
+            // Return the latest committed state rather than the stale read.
+            const latest = await pool.query(
+                `SELECT status, paid_at, paid_amount, payment_method, provider_ref, expires_at
+                 FROM qr_payments
+                 WHERE qr_id = $1 AND restaurant_id = $2`,
+                [qrId, restaurantId]
+            );
+            if (!latest.rows.length) return { status: 'not_found' };
+            p = latest.rows[0];
+        }
     }
 
     return {
