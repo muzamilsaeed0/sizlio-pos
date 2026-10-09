@@ -31,11 +31,11 @@ exports.addStaff = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid staff role' });
     }
 
-    if (typeof password !== 'string' || password.length < 8) {
-      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
+    if (typeof password !== 'string' || password.length < 4) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 4 characters' });
     }
-    if (password.length > 128 || Buffer.byteLength(password, 'utf8') > 72) {
-      return res.status(400).json({ success: false, message: 'Password is too long (maximum 72 UTF-8 bytes)' });
+    if (password.length > 8) {
+      return res.status(400).json({ success: false, message: 'Password is too long (maximum 8 characters)' });
     }
 
     const staff = await createStaff(
@@ -111,16 +111,16 @@ exports.editStaff = async (req, res) => {
     }
 
     if (password !== undefined && password !== null && password !== '') {
-      if (typeof password !== 'string' || password.length < 8) {
+      if (typeof password !== 'string' || password.length < 4) {
         return res.status(400).json({
           success: false,
-          message: 'Password must be at least 8 characters'
+          message: 'Password must be at least 4 characters'
         });
       }
-      if (password.length > 128 || Buffer.byteLength(password, 'utf8') > 72) {
+      if (password.length > 8) {
         return res.status(400).json({
           success: false,
-          message: 'Password is too long (maximum 72 UTF-8 bytes)'
+          message: 'Password is too long (maximum 8 characters)'
         });
       }
     }
