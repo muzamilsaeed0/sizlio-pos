@@ -157,7 +157,7 @@ const sendRestaurantCredentials = async ({
         <table cellpadding="10" cellspacing="0" style="border-collapse:collapse;width:100%;border:1px solid #e5e7eb;">
           <tr style="background:#f9fafb;">
             <th align="left" style="border-bottom:1px solid #e5e7eb;">Username</th>
-            <th align="left" style="border-bottom:1px solid #e5e7eb;">Password</th>
+            <th align="left" style="border-bottom:1px solid #e5e7eb;">Initial Password</th>
           </tr>
           ${accounts.map(account => `
             <tr>
@@ -196,7 +196,7 @@ const sendRestaurantCredentials = async ({
             <td><strong>${escapeHtml(manager.username)}</strong></td>
           </tr>
           <tr>
-            <td>Password</td>
+            <td>Initial Password</td>
             <td><strong>${escapeHtml(manager.password || "-")}</strong></td>
           </tr>
         </table>
@@ -259,7 +259,7 @@ const sendRestaurantCredentials = async ({
           <div style="margin-top:30px;padding:18px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;">
             <strong>Security Notice</strong>
             <p style="margin-bottom:0;line-height:1.5;">
-              Please keep these login credentials secure and do not share them with unauthorized persons.
+              These are your initial login credentials. On your first login, Sizlio POS will require you to create a new password before you can use the system. Please keep these credentials secure and do not share them with unauthorized persons.
             </p>
           </div>
 
