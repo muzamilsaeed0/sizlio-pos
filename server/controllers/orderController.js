@@ -879,7 +879,7 @@ if ((order_type === 'dine_in' || order_type === 'walk_in') && tableNo > 0) {
     
     return res.status(500).json({
       success: false,
-      message: err.message || 'Internal Server Error'
+      message: 'Unable to process order. Please review the order details and try again.'
     });
   }
 
@@ -2295,9 +2295,7 @@ exports.serve = async (
 
       success: false,
 
-      message:
-        err.message ||
-        'Internal Server Error'
+      message: 'Unable to serve order. Please try again or contact support.'
 
     });
 
@@ -2418,9 +2416,7 @@ exports.cancel = async (
 
       success: false,
 
-      message:
-        err.message ||
-        'Unable to cancel order'
+      message: 'Unable to cancel order. It may no longer be in a cancellable state.'
 
     });
 
