@@ -185,6 +185,50 @@ async function apply(client, migrations) {
   }
 }
 
+async function applyOne(client, migrations, versionArg) {
+  const targetVersion = Number(String(versionArg || "").replace(/^0+/, "") || "0");
+
+  if (!Number.isInteger(targetVersion) || targetVersion < 1) {
+    throw new Error("Specify one migration version, e.g. npm run migrate:one -- 001.");
+  }
+
+  const migration = migrations.find((item) => item.version === targetVersion);
+  if (!migration) {
+    throw new Error(`Migration version ${versionArg} was not found.`);
+  }
+
+  await ensureHistoryTable(client);
+  const applied = await readApplied(client);
+  const migrationsByVersion = new Map(migrations.map((item) => [item.version, item]));
+  assertAppliedFilesUnchanged(applied, migrationsByVersion);
+
+  const appliedByVersion = new Map(applied.map((row) => [row.version, row]));
+  if (appliedByVersion.has(targetVersion)) {
+    console.log(`✅ ${migration.name} is already recorded as applied.`);
+    return;
+  }
+
+  const earlierPending = migrations.filter(
+    (item) => item.version < targetVersion && !appliedByVersion.has(item.version)
+  );
+  if (earlierPending.length) {
+    throw new Error(
+      `Cannot apply ${migration.name} while earlier migrations are pending: ${earlierPending.map((item) => item.name).join(", ")}. Apply or explicitly baseline earlier migrations only after verifying the live schema.`
+    );
+  }
+
+  assertTransactional(migration);
+  console.log(`⏳ Applying only ${migration.name}...`);
+  await client.query(migration.sql);
+  await client.query(
+    `INSERT INTO public.schema_migrations
+       (version, name, checksum, baseline)
+     VALUES ($1, $2, $3, FALSE)`,
+    [migration.version, migration.name, migration.checksum]
+  );
+  console.log(`✅ Applied ${migration.name}`);
+}
+
 async function baseline(client, migrations, versionArg) {
   const targetVersion = Number(versionArg);
 
@@ -246,11 +290,13 @@ async function main() {
       await status(client, migrations);
     } else if (command === "up") {
       await apply(client, migrations);
+    } else if (command === "one") {
+      await applyOne(client, migrations, args[1]);
     } else if (command === "baseline") {
       await baseline(client, migrations, args[1]);
     } else {
       throw new Error(
-        `Unknown command "${command}". Use: up | status | baseline <version>`
+        `Unknown command "${command}". Use: up | status | one <version> | baseline <version>`
       );
     }
   } finally {
