@@ -212,34 +212,68 @@ async function settleQrPayment({
     try {
         await client.query('BEGIN');
 
-        // Lock QR payment first so duplicate webhook/manual-confirm
-        // requests cannot settle it concurrently.
-        const paymentResult = await client.query(
-            `SELECT
-                qp.*,
-                o.id AS order_id,
-                o.restaurant_id AS order_restaurant_id,
-                o.total_amount AS order_total_amount,
-                o.paid_amount AS order_paid_amount,
-                o.payment_status AS order_payment_status
+        // Read the QR without locking first to discover its order. All
+        // payment creation/settlement paths then lock rows in the same order:
+        // order first, QR second. This avoids order↔QR deadlocks.
+        const paymentLookup = await client.query(
+            `SELECT qp.*, o.restaurant_id AS order_restaurant_id
              FROM qr_payments qp
              INNER JOIN orders o ON o.id = qp.order_id
              WHERE qp.qr_id = $1
-               AND ($2::integer IS NULL OR qp.restaurant_id = $2)
-             FOR UPDATE OF qp`,
+               AND ($2::integer IS NULL OR qp.restaurant_id = $2)`,
             [qrId, restaurantId]
         );
 
-        if (!paymentResult.rows.length) {
+        if (!paymentLookup.rows.length) {
             throw new Error('Payment reference not found');
         }
 
-        const payment = paymentResult.rows[0];
+        let payment = paymentLookup.rows[0];
         const tenantId = Number(payment.order_restaurant_id);
 
         if (restaurantId !== null && tenantId !== Number(restaurantId)) {
             throw new Error('Payment does not belong to this restaurant');
         }
+
+        // Lock the order before the QR row, matching createQrPayment().
+        const orderResult = await client.query(
+            `SELECT
+                id,
+                restaurant_id,
+                total_amount,
+                paid_amount,
+                payment_status,
+                status
+             FROM orders
+             WHERE id = $1
+               AND restaurant_id = $2
+             FOR UPDATE`,
+            [payment.order_id, tenantId]
+        );
+
+        if (!orderResult.rows.length) {
+            throw new Error('Order not found for this payment');
+        }
+
+        const order = orderResult.rows[0];
+
+        // Re-read and lock the QR only after the order lock is held. Another
+        // callback may have settled it between the initial lookup and lock.
+        const lockedPaymentResult = await client.query(
+            `SELECT *
+             FROM qr_payments
+             WHERE id = $1
+               AND order_id = $2
+               AND restaurant_id = $3
+             FOR UPDATE`,
+            [payment.id, order.id, tenantId]
+        );
+
+        if (!lockedPaymentResult.rows.length) {
+            throw new Error('Payment reference not found for this order');
+        }
+
+        payment = lockedPaymentResult.rows[0];
 
         // A replayed webhook/manual-confirm is harmless.
         if (payment.status !== 'pending') {
@@ -269,32 +303,9 @@ async function settleQrPayment({
                  WHERE id = $2 AND status = 'pending'`,
                 [rawResponse, payment.id]
             );
+            await client.query('COMMIT');
             throw new Error('Payment QR has expired');
         }
-
-        // Lock the order and re-check its live outstanding amount.
-        // This prevents a stale QR from overpaying an order that was
-        // paid/partially paid through another channel meanwhile.
-        const orderResult = await client.query(
-            `SELECT
-                id,
-                restaurant_id,
-                total_amount,
-                paid_amount,
-                payment_status,
-                status
-             FROM orders
-             WHERE id = $1
-               AND restaurant_id = $2
-             FOR UPDATE`,
-            [payment.order_id, tenantId]
-        );
-
-        if (!orderResult.rows.length) {
-            throw new Error('Order not found for this payment');
-        }
-
-        const order = orderResult.rows[0];
 
         if (order.status === 'cancelled') {
             // The QR may have been scanned before cancellation. Never settle
