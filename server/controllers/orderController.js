@@ -1676,7 +1676,8 @@ exports.outForDelivery = async (
     const order =
       await markOutForDelivery(
         orderId,
-        restaurantId
+        restaurantId,
+        req.user?.role === 'delivery' ? req.user.id : null
       );
 
 
@@ -1875,7 +1876,8 @@ exports.delivered = async (
     const order =
       await markDelivered(
         orderId,
-        restaurantId
+        restaurantId,
+        req.user?.role === 'delivery' ? req.user.id : null
       );
 
 
@@ -2074,7 +2076,8 @@ exports.completed = async (
     const order =
       await markCompleted(
         orderId,
-        restaurantId
+        restaurantId,
+        req.user?.role === 'delivery' ? req.user.id : null
       );
 
 
