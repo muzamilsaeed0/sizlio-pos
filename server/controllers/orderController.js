@@ -326,6 +326,27 @@ exports.placeOrder = async (
 
 
   // ----------------------------------------------------
+  // PAYMENT AUTHORIZATION
+  //
+  // Waiters may create orders, but must not mark an order
+  // as already paid during creation. Payment recording is
+  // restricted to manager/counter, matching the /:id/pay
+  // route. This prevents a waiter from bypassing that
+  // endpoint's role restriction via the create-order body.
+  // ----------------------------------------------------
+
+  if (
+    paymentTiming === 'PAID_AT_ORDER' &&
+    !['manager', 'counter'].includes(String(req.user?.role || '').toLowerCase())
+  ) {
+    return res.status(403).json({
+      success: false,
+      message: 'Only a manager or counter user can record payment at order creation'
+    });
+  }
+
+
+  // ----------------------------------------------------
   // ORDER TYPE
   // ----------------------------------------------------
 
