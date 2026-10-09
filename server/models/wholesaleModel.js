@@ -89,7 +89,7 @@ async function createCashSale(restaurantId, userId, payload) {
     for (const it of items) {
       const productId = Number(it.product_id);
       const qty = Number(it.qty);
-      if (!productId || !(qty > 0)) throw new Error('Invalid item');
+      if (!Number.isSafeInteger(productId) || productId <= 0 || !Number.isFinite(qty) || qty <= 0) throw new Error('Invalid item');
 
       const pr = await client.query(
         `SELECT id, name, sale_price, stock FROM wholesale_products
@@ -102,8 +102,11 @@ async function createCashSale(restaurantId, userId, payload) {
         throw new Error(`Insufficient stock for ${p.name}`);
       }
 
-      const unitPrice = Number(it.unit_price != null ? it.unit_price : p.sale_price);
+      // Never trust client-supplied prices; the database product price is authoritative.
+      const unitPrice = Number(p.sale_price);
+      if (!Number.isFinite(unitPrice) || unitPrice < 0) throw new Error(`Invalid sale price for ${p.name}`);
       const lineTotal = unitPrice * qty;
+      if (!Number.isFinite(lineTotal)) throw new Error('Invalid line total');
       subtotal += lineTotal;
       lines.push({ productId, name: p.name, qty, unitPrice, lineTotal });
 
@@ -114,11 +117,20 @@ async function createCashSale(restaurantId, userId, payload) {
       );
     }
 
-    const discount = Number(payload.discount || 0);
-    const tax = Number(payload.tax || 0);
-    const total = Math.max(0, subtotal - discount + tax);
+    const discount = Number(payload.discount ?? 0);
+    const tax = Number(payload.tax ?? 0);
+    if (!Number.isFinite(discount) || discount < 0 || discount > subtotal) {
+      throw new Error('Discount must be between 0 and subtotal');
+    }
+    if (!Number.isFinite(tax) || tax < 0) {
+      throw new Error('Tax must be a valid non-negative amount');
+    }
+    const total = subtotal - discount + tax;
+    if (!Number.isFinite(total) || total < 0) throw new Error('Invalid sale total');
     const paid = total; // Phase A: cash only
 
+    // Serialize invoice-number allocation per restaurant to prevent duplicate numbers.
+    await client.query('SELECT pg_advisory_xact_lock($1::bigint)', [Number(restaurantId)]);
     const ln = await client.query(
       `SELECT COALESCE(MAX(local_number), 0) + 1 AS n
        FROM wholesale_invoices WHERE restaurant_id = $1`,
