@@ -2179,10 +2179,21 @@ const markServed = async (
         row.inventory_id;
 
 
-      const requiredQuantity =
-        Number(row.recipe_quantity) *
-        Number(row.order_quantity);
+      const recipeQuantity = Number(row.recipe_quantity);
+      const orderQuantity = Number(row.order_quantity);
+      const requiredQuantity = recipeQuantity * orderQuantity;
 
+      if (
+        !Number.isFinite(recipeQuantity) ||
+        recipeQuantity <= 0 ||
+        !Number.isFinite(orderQuantity) ||
+        orderQuantity <= 0 ||
+        !Number.isFinite(requiredQuantity) ||
+        requiredQuantity <= 0
+      ) {
+        await client.query('ROLLBACK');
+        throw new Error('Invalid recipe or order quantity; inventory was not deducted.');
+      }
 
       if (!requiredStock[inventoryId]) {
 
@@ -2560,8 +2571,21 @@ const markWalkInHandedOver = async (
 
     for (const row of ingredientsResult.rows) {
       const inventoryId = row.inventory_id;
-      const requiredQuantity =
-        Number(row.recipe_quantity) * Number(row.order_quantity);
+      const recipeQuantity = Number(row.recipe_quantity);
+      const orderQuantity = Number(row.order_quantity);
+      const requiredQuantity = recipeQuantity * orderQuantity;
+
+      if (
+        !Number.isFinite(recipeQuantity) ||
+        recipeQuantity <= 0 ||
+        !Number.isFinite(orderQuantity) ||
+        orderQuantity <= 0 ||
+        !Number.isFinite(requiredQuantity) ||
+        requiredQuantity <= 0
+      ) {
+        await client.query('ROLLBACK');
+        throw new Error('Invalid recipe or order quantity; inventory was not deducted.');
+      }
 
       if (!requiredStock[inventoryId]) {
         requiredStock[inventoryId] = {
