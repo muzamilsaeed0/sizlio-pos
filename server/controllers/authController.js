@@ -249,7 +249,7 @@ exports.updateSettings = async (req, res) => {
       }
 
       const hashed = await bcrypt.hash(new_password, 12);
-      updates.push(`password = ${idx++}`);
+      updates.push(`password = $${idx++}`);
       values.push(hashed);
       // Password changes invalidate the current session immediately.
       updates.push('current_session = NULL');
@@ -262,7 +262,7 @@ exports.updateSettings = async (req, res) => {
     values.push(userId);
 
     await pool.query(
-      `UPDATE users SET ${updates.join(', ')} WHERE id = ${idx}`,
+      `UPDATE users SET ${updates.join(', ')} WHERE id = $${idx}`,
       values
     );
 
