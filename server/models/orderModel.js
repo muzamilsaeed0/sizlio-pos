@@ -4574,6 +4574,18 @@ const removeOrderItem = async (
 
       }
 
+    } else if (role === 'waiter') {
+
+      if (['served', 'completed', 'cancelled'].includes(order.status)) {
+        await client.query('ROLLBACK');
+        throw new Error('Cannot remove items from completed or served orders.');
+      }
+
+    } else {
+
+      await client.query('ROLLBACK');
+      throw new Error('Unauthorized');
+
     }
 
 
