@@ -287,6 +287,12 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { err.textContent = data.message || 'Login failed'; return; }
       if (!data.token) { err.textContent = 'No token'; return; }
+      if (data.user.must_change_password) {
+          sessionStorage.setItem('sizlio_first_login_token', data.token);
+          sessionStorage.setItem('sizlio_first_login_user', JSON.stringify(data.user));
+          location.href = '/change-password.html';
+          return;
+        }
       token = data.token;
       localStorage.setItem('ws_token', token);
       if (data.user?.restaurant_id) {
