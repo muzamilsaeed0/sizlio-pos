@@ -64,7 +64,7 @@ const authMiddleware = async (req, res, next) => {
   u.restaurant_id,
   u.is_active,
   u.current_session,
-  COALESCE(u.must_change_password, FALSE) AS must_change_password,
+  COALESCE((to_jsonb(u)->>'must_change_password')::boolean, FALSE) AS must_change_password,
   r.name AS restaurant_name,
   r.status,
   r.expiry_date
