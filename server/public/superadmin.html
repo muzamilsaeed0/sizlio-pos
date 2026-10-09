@@ -1631,9 +1631,9 @@
     const new_password = document.getElementById('reset-new-password').value;
     const msg = document.getElementById('reset-msg');
 
-    if (!new_password || new_password.length < 4) {
+    if (!new_password || new_password.length < 4 || new_password.length > 8) {
       msg.style.color = '#E15A4C';
-      msg.innerText = 'Password must be at least 4 characters';
+      msg.innerText = 'Password must be 4 to 8 characters';
       return;
     }
 
@@ -1988,9 +1988,9 @@
       return;
     }
 
-    if (!password || password.length < 4) {
+    if (!password || password.length < 4 || password.length > 8) {
       msg.style.color = '#E15A4C';
-      msg.innerText = 'Password must be at least 4 characters';
+      msg.innerText = 'Password must be 4 to 8 characters';
       return;
     }
 
@@ -2203,9 +2203,9 @@ ${!s.is_active
     const new_password = document.getElementById('staff-reset-password').value;
     const msg = document.getElementById('staff-reset-msg');
 
-    if (!new_password || new_password.length < 4) {
+    if (!new_password || new_password.length < 4 || new_password.length > 8) {
       msg.style.color = '#E15A4C';
-      msg.innerText = 'Password must be at least 4 characters';
+      msg.innerText = 'Password must be 4 to 8 characters';
       return;
     }
 
