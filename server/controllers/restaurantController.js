@@ -170,8 +170,21 @@ if (!isCafeLite) {
       ])
     );
 
+    // Never spread the raw model result into the API response:
+    // result.restaurant comes from INSERT ... RETURNING * and may contain
+    // legacy plaintext credential columns or integration secrets.
+    const safeRestaurant = await getRestaurantDetail(result.restaurant.id);
+    const safeManager = result.manager
+      ? {
+          username: result.manager.username,
+          full_name: result.manager.full_name,
+          role: result.manager.role
+        }
+      : null;
+
     const safeResult = {
-      ...result,
+      restaurant: safeRestaurant,
+      manager: safeManager,
       staff: safeStaff
     };
 
