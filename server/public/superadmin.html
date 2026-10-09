@@ -1357,7 +1357,7 @@
           : `
         <div class="row" style="cursor:pointer;" onclick="openStaffList(${r.id}, 'manager')">
           <span>👤 Manager</span>
-          <b>${r.manager_username ? 1 : 0}</b>
+          <b>${r.manager_count || 0}</b>
         </div>
 
         <div class="row" style="cursor:pointer;" onclick="openStaffList(${r.id}, 'waiter')">
