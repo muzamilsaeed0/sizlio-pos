@@ -87,7 +87,11 @@ const deductStockForOrder = async (client, orderId, restaurantId) => {
          JOIN menu_items mi ON mi.id = oi.menu_item_id
          JOIN menu_item_ingredients mii ON mii.menu_item_id = mi.id
             AND (mii.variant_id IS NOT DISTINCT FROM oi.variant_id)
-         WHERE oi.order_id = $1 AND mi.restaurant_id = $2`,
+         JOIN inventory_items ii
+            ON ii.id = mii.inventory_id
+           AND ii.restaurant_id = $2
+         WHERE oi.order_id = $1
+           AND mi.restaurant_id = $2`,
         [orderId, restaurantId]
     );
     if (!ingredientsResult.rows.length) {
@@ -114,12 +118,31 @@ const deductStockForOrder = async (client, orderId, restaurantId) => {
 
     const requiredStock = {};
     for (const row of ingredientsResult.rows) {
-        const reqQty = Number(row.recipe_quantity) * Number(row.order_quantity);
-        if (!Number.isFinite(reqQty) || reqQty <= 0) {
-            throw new Error('Invalid recipe quantity.');
+        const inventoryId = Number(row.inventory_id);
+        const recipeQuantity = Number(row.recipe_quantity);
+        const orderQuantity = Number(row.order_quantity);
+        const reqQty = recipeQuantity * orderQuantity;
+
+        if (!Number.isInteger(inventoryId) || inventoryId <= 0) {
+            throw new Error('Invalid inventory item in recipe.');
         }
-        if (!requiredStock[row.inventory_id]) requiredStock[row.inventory_id] = 0;
-        requiredStock[row.inventory_id] += reqQty;
+
+        if (
+            !Number.isFinite(recipeQuantity) ||
+            recipeQuantity <= 0 ||
+            !Number.isFinite(orderQuantity) ||
+            orderQuantity <= 0 ||
+            !Number.isFinite(reqQty) ||
+            reqQty <= 0
+        ) {
+            throw new Error('Invalid recipe or order quantity.');
+        }
+
+        const nextTotal = (requiredStock[inventoryId] || 0) + reqQty;
+        if (!Number.isFinite(nextTotal) || nextTotal <= 0) {
+            throw new Error('Invalid aggregated inventory requirement.');
+        }
+        requiredStock[inventoryId] = nextTotal;
     }
 
     // Lock each kitchen stock row before checking/deducting it. This prevents
@@ -137,14 +160,14 @@ const deductStockForOrder = async (client, orderId, restaurantId) => {
         );
 
         if (!stockResult.rowCount) {
-            throw new Error(`Kitchen inventory item \${inventoryId} not found.`);
+            throw new Error(`Kitchen inventory item ${inventoryId} not found.`);
         }
 
         const currentStock = Number(stockResult.rows[0].quantity || 0);
 
         if (!Number.isFinite(currentStock) || currentStock < qty) {
             throw new Error(
-                `Insufficient kitchen stock for inventory item \${inventoryId} (available: \${currentStock}, required: \${qty})`
+                `Insufficient kitchen stock for inventory item ${inventoryId} (available: ${currentStock}, required: ${qty})`
             );
         }
 
@@ -160,7 +183,7 @@ const deductStockForOrder = async (client, orderId, restaurantId) => {
         );
 
         if (!updated.rowCount) {
-            throw new Error(`Insufficient kitchen stock for inventory item \${inventoryId}.`);
+            throw new Error(`Insufficient kitchen stock for inventory item ${inventoryId}.`);
         }
         
         await client.query(
