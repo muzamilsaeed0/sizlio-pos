@@ -6,6 +6,7 @@ const { authMiddleware } = require('../middleware/authMiddleware');
 router.post('/login', login);
 
 router.post('/logout', authMiddleware, require('../controllers/authController').logout);
+router.post('/first-password', authMiddleware, require('../controllers/authController').changeInitialPassword);
 
 router.put('/settings', authMiddleware, 
   require('../controllers/authController').updateSettings);
