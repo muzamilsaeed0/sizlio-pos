@@ -303,6 +303,10 @@ async function settleQrPayment({
                  WHERE id = $2 AND status = 'pending'`,
                 [rawResponse, payment.id]
             );
+
+            // Persist the expiry before returning an error. Throwing before
+            // COMMIT would enter catch() and roll this update back, leaving
+            // the QR pending forever.
             await client.query('COMMIT');
             throw new Error('Payment QR has expired');
         }
