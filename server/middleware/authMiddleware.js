@@ -64,6 +64,7 @@ const authMiddleware = async (req, res, next) => {
   u.restaurant_id,
   u.is_active,
   u.current_session,
+  COALESCE(u.must_change_password, FALSE) AS must_change_password,
   r.name AS restaurant_name,
   r.status,
   r.expiry_date
@@ -118,9 +119,24 @@ WHERE u.id = $1
     req.user = {
       id: user.id,
       role: user.role,
-      restaurant_id: user.restaurant_id
+      restaurant_id: user.restaurant_id,
+      must_change_password: Boolean(user.must_change_password)
     };
     req.authSessionId = decoded.sessionId;
+
+    if (user.must_change_password) {
+      const requestPath = String(req.originalUrl || '').split('?')[0];
+      const allowedDuringPasswordChange =
+        (req.method === 'POST' && requestPath === '/api/auth/first-password') ||
+        (req.method === 'POST' && requestPath === '/api/auth/logout');
+      if (!allowedDuringPasswordChange) {
+        return res.status(403).json({
+          success: false,
+          code: 'PASSWORD_CHANGE_REQUIRED',
+          message: 'Please change your initial password before using Sizlio POS.'
+        });
+      }
+    }
 
     next();
 
