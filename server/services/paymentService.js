@@ -93,18 +93,16 @@ async function createQrPayment({ restaurantId, orderId, amount, description }) {
         );
         const payment = result.rows[0];
 
-        let providerData;
-        try {
-            providerData = await createQrWithProvider({
-                qrId,
-                amount: outstandingAmount,
-                description: description || `Order #${orderId}`,
-                restaurantId,
-            });
-        } catch (err) {
-            console.warn('Provider failed, using manual fallback:', err.message);
-            providerData = await buildManualQr(qrId, outstandingAmount, restaurantId);
-        }
+        // Fail closed if the configured payment provider fails. Do not
+        // silently replace a bank/provider QR with a manual/static QR:
+        // that can show customers a payment method different from the one
+        // the merchant configured and leave the order permanently pending.
+        const providerData = await createQrWithProvider({
+            qrId,
+            amount: outstandingAmount,
+            description: description || `Order #${orderId}`,
+            restaurantId,
+        });
 
         await client.query(
             `UPDATE qr_payments
