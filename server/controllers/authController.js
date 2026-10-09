@@ -29,7 +29,7 @@ exports.login = async (req, res) => {
         SELECT
           u.id, u.username, u.password, u.role, u.restaurant_id,
           u.full_name, u.is_active AS user_active,
-          COALESCE(u.must_change_password, FALSE) AS must_change_password,
+          COALESCE((to_jsonb(u)->>'must_change_password')::boolean, FALSE) AS must_change_password,
           r.name AS restaurant_name, r.status AS restaurant_status,
           r.plan AS restaurant_plan, r.business_type AS restaurant_business_type, r.expiry_date
         FROM users u
@@ -53,7 +53,7 @@ exports.login = async (req, res) => {
         SELECT
           u.id, u.username, u.password, u.role, u.restaurant_id,
           u.full_name, u.is_active AS user_active,
-          COALESCE(u.must_change_password, FALSE) AS must_change_password,
+          COALESCE((to_jsonb(u)->>'must_change_password')::boolean, FALSE) AS must_change_password,
           r.name AS restaurant_name, r.status AS restaurant_status,
           r.plan AS restaurant_plan, r.business_type AS restaurant_business_type, r.expiry_date
         FROM users u
