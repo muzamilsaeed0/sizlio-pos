@@ -1422,6 +1422,12 @@
                 if (data.user.role !== 'counter') {
                     throw new Error('Access denied. This account is not a Counter account.');
                 }
+                if (data.user.must_change_password) {
+          sessionStorage.setItem('sizlio_first_login_token', data.token);
+          sessionStorage.setItem('sizlio_first_login_user', JSON.stringify(data.user));
+          location.href = '/change-password.html';
+          return;
+        }
                 token = data.token;
                 currentUser = data.user;
                 localStorage.setItem('counter_token', token);
