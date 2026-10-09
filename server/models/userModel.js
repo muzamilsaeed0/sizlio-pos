@@ -2,7 +2,8 @@ const pool = require("../config/db");
 
 const findUserByUsername = async (username) => {
   const result = await pool.query(
-    "SELECT * FROM users WHERE username = $1",
+    `SELECT id, username, full_name, role, restaurant_id, is_active
+     FROM users WHERE username = $1`,
     [username]
   );
 
