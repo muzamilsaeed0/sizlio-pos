@@ -1882,7 +1882,8 @@ const markReady = async (
 
 const markOutForDelivery = async (
   id,
-  restaurantId
+  restaurantId,
+  riderId = null
 ) => {
 
   const result =
@@ -1903,12 +1904,14 @@ const markOutForDelivery = async (
         AND status = 'ready_to_deliver'
 
         AND delivery_rider_id IS NOT NULL
+        AND ($3 IS NULL OR delivery_rider_id = $3)
 
       RETURNING *
       `,
       [
         id,
-        restaurantId
+        restaurantId,
+        riderId
       ]
     );
 
@@ -1929,7 +1932,8 @@ const markOutForDelivery = async (
 
 const markDelivered = async (
   id,
-  restaurantId
+  restaurantId,
+  riderId = null
 ) => {
 
   const result =
@@ -1952,12 +1956,14 @@ const markDelivered = async (
         AND status = 'out_for_delivery'
 
         AND delivery_rider_id IS NOT NULL
+        AND ($3 IS NULL OR delivery_rider_id = $3)
 
       RETURNING *
       `,
       [
         id,
-        restaurantId
+        restaurantId,
+        riderId
       ]
     );
 
@@ -1976,7 +1982,7 @@ const markDelivered = async (
 // Delivery orders only.
 // ======================================================
 
-const markCompleted = async (id, restaurantId) => {
+const markCompleted = async (id, restaurantId, riderId = null) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -1996,8 +2002,9 @@ const markCompleted = async (id, restaurantId) => {
          WHERE id = $1
            AND restaurant_id = $2
            AND status NOT IN ('completed', 'cancelled')
+           AND ($3 IS NULL OR delivery_rider_id = $3)
          FOR UPDATE`,
-        [id, restaurantId]
+        [id, restaurantId, riderId]
       );
     } else {
       orderResult = await client.query(
@@ -2008,6 +2015,7 @@ const markCompleted = async (id, restaurantId) => {
            AND order_type = 'delivery'
            AND status = 'delivered'
            AND delivery_rider_id IS NOT NULL
+           AND ($3 IS NULL OR delivery_rider_id = $3)
          FOR UPDATE`,
         [id, restaurantId]
       );
