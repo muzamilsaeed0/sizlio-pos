@@ -8,7 +8,11 @@ const {
 exports.getStaff = async (req, res) => {
   try {
     const staff = await getStaffByRestaurant(req.user.restaurant_id);
-    res.json({ success: true, data: staff });
+    // Counter accounts only need rider records for the permitted rider reset flow.
+    const visibleStaff = req.user.role === 'counter'
+      ? staff.filter(user => user.role === 'delivery')
+      : staff;
+    res.json({ success: true, data: visibleStaff });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: 'Server error' });
