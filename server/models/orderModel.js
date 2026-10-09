@@ -2402,11 +2402,12 @@ const markServed = async (
         status = 'consumed'
 
       WHERE order_id = $1
-
+        AND restaurant_id = $2
         AND status = 'reserved'
       `,
       [
-        order.id
+        order.id,
+        restaurantId
       ]
     );
 
@@ -2629,18 +2630,26 @@ const markWalkInHandedOver = async (
       );
     }
 
-    // --------------------------------------------------
-    // CONSUME RESERVATIONS
-    // --------------------------------------------------
+    // Record physical consumption in this transaction. Without this marker,
+    // Cafe Lite completion can deduct an unpaid walk-in order a second time.
+    await client.query(
+      `UPDATE orders
+       SET inventory_deducted_at = COALESCE(inventory_deducted_at, NOW())
+       WHERE id = $1 AND restaurant_id = $2`,
+      [order.id, restaurantId]
+    );
 
+    // Consume only this restaurant's reservations.
     await client.query(
       `
       UPDATE inventory_reservations
-      SET status = 'consumed'
+      SET status = 'consumed',
+          released_at = NULL
       WHERE order_id = $1
+        AND restaurant_id = $2
         AND status = 'reserved'
       `,
-      [order.id]
+      [order.id, restaurantId]
     );
 
     // --------------------------------------------------
