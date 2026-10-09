@@ -607,6 +607,11 @@ CREATE INDEX payment_transactions_qr_idx
   ON public.payment_transactions(qr_payment_id)
   WHERE qr_payment_id IS NOT NULL;
 
+-- Each QR payment can be recorded in the immutable ledger only once.
+CREATE UNIQUE INDEX payment_transactions_qr_payment_uidx
+  ON public.payment_transactions(qr_payment_id)
+  WHERE qr_payment_id IS NOT NULL;
+
 -- Payment ledger is append-only.
 CREATE OR REPLACE FUNCTION public.prevent_payment_transaction_mutation()
 RETURNS TRIGGER
