@@ -1486,10 +1486,22 @@ async function loadSales(){
 
         render();
 
-        await Promise.all([
+        // Auxiliary panels must not make the main sales list look broken.
+        // Each loader can fail independently (for example, due to a report query
+        // or an older database schema); keep successfully loaded sales visible.
+        const auxiliaryResults = await Promise.allSettled([
             loadTopItems(),
             loadPaymentSummary()
         ]);
+
+        if (auxiliaryResults.some(result => result.status === 'rejected')) {
+            console.error(
+                'Sales auxiliary panel error:',
+                auxiliaryResults
+                    .filter(result => result.status === 'rejected')
+                    .map(result => result.reason)
+            );
+        }
 
     }
     catch(err){
