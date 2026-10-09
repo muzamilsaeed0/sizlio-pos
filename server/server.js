@@ -476,9 +476,37 @@ try {
    GLOBAL ERROR HANDLER
 ===================================================== */
 app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err);
   if (res.headersSent) return next(err);
-  res.status(500).json({ success: false, message: "Server error" });
+
+  // Normalize upload/parser errors so clients receive safe JSON instead
+  // of a generic 500 when a logo is too large or has an unsupported type.
+  if (err?.code === "LIMIT_FILE_SIZE") {
+    return res.status(413).json({
+      success: false,
+      code: "UPLOAD_FILE_TOO_LARGE",
+      message: "Logo file must be 2 MB or smaller"
+    });
+  }
+
+  if (
+    err?.code === "LIMIT_FILE_COUNT" ||
+    err?.code === "LIMIT_UNEXPECTED_FILE" ||
+    err?.code === "INVALID_LOGO_TYPE"
+  ) {
+    return res.status(400).json({
+      success: false,
+      code: "INVALID_UPLOAD",
+      message: err.code === "INVALID_LOGO_TYPE"
+        ? "Only JPG, PNG, and WebP images are allowed"
+        : "Invalid upload. Please upload one logo image."
+    });
+  }
+
+  console.error("Unhandled error:", err);
+  return res.status(500).json({
+    success: false,
+    message: "Server error"
+  });
 });
 
 /* =====================================================
