@@ -1,5 +1,64 @@
 const { submitInvoiceForOrder } = require('../services/fbrService');
 const pool = require('../config/db');
+const crypto = require('crypto');
+
+// Offline counter syncs may be retried after a network timeout. Keep a
+// request fingerprint in the existing idempotency table so retries cannot
+// append the same items to an already-open table order a second time.
+const hashOfflineOrderRequest = (payload) => crypto
+  .createHash('sha256')
+  .update(JSON.stringify(payload))
+  .digest('hex');
+
+const reserveOfflineOrderRequest = async (restaurantId, key, requestHash) => {
+  const inserted = await pool.query(
+    `INSERT INTO public.public_order_requests
+       (restaurant_id, idempotency_key, request_hash, status)
+     VALUES ($1, $2, $3, 'processing')
+     ON CONFLICT (restaurant_id, idempotency_key) DO NOTHING
+     RETURNING id`,
+    [restaurantId, key, requestHash]
+  );
+  if (inserted.rowCount) return { state: 'new' };
+
+  const existing = await pool.query(
+    `SELECT id, order_id, request_hash, status, updated_at
+       FROM public.public_order_requests
+      WHERE restaurant_id = $1 AND idempotency_key = $2
+      LIMIT 1`,
+    [restaurantId, key]
+  );
+  if (!existing.rowCount) return { state: 'processing' };
+  const row = existing.rows[0];
+  if (row.request_hash !== requestHash) return { state: 'conflict' };
+  if (row.order_id) return { state: 'duplicate', orderId: Number(row.order_id) };
+
+  // Recover abandoned reservations only after a delay; this mirrors the
+  // public QR-order idempotency policy.
+  if (row.status === 'processing' && row.updated_at &&
+      new Date(row.updated_at).getTime() < Date.now() - 5 * 60 * 1000) {
+    const takeover = await pool.query(
+      `UPDATE public.public_order_requests
+          SET updated_at = NOW()
+        WHERE id = $1 AND order_id IS NULL AND status = 'processing'
+          AND updated_at < NOW() - INTERVAL '5 minutes'
+        RETURNING id`,
+      [row.id]
+    );
+    if (takeover.rowCount) return { state: 'new' };
+  }
+  return { state: 'processing' };
+};
+
+const completeOfflineOrderRequest = async (restaurantId, key, orderId) => {
+  await pool.query(
+    `UPDATE public.public_order_requests
+        SET order_id = $3, status = 'completed', updated_at = NOW()
+      WHERE restaurant_id = $1 AND idempotency_key = $2
+        AND status = 'processing' AND order_id IS NULL`,
+    [restaurantId, key, orderId]
+  );
+};
 
 const {
   createOrder,
@@ -583,6 +642,48 @@ exports.placeOrder = async (
 
 
   try {
+    const rawIdempotencyKey = String(req.get('Idempotency-Key') || '').trim();
+    let offlineIdempotencyKey = null;
+
+    if (rawIdempotencyKey.startsWith('offline-')) {
+      if (rawIdempotencyKey.length < 24 || rawIdempotencyKey.length > 128) {
+        return res.status(400).json({ success: false, message: 'Invalid Idempotency-Key' });
+      }
+      offlineIdempotencyKey = rawIdempotencyKey;
+      const requestHash = hashOfflineOrderRequest({
+        table_no: tableNo,
+        items: normalizedItems,
+        deals: normalizedDeals,
+        customer_name: customer_name ? String(customer_name).trim() : null,
+        order_type,
+        order_source: orderSource,
+        payment_timing: paymentTiming,
+        paid_amount: initialPaidAmount,
+        delivery_phone: order_type === 'delivery' ? String(delivery_phone).trim() : null,
+        delivery_address: order_type === 'delivery' ? String(delivery_address).trim() : null,
+        pricing,
+        delivery_charge: Number(delivery_charge || 0),
+        dine_charge: Number(dine_charge || 0),
+        payment_method: payment_method || null
+      });
+      const requestState = await reserveOfflineOrderRequest(
+        restaurantId, offlineIdempotencyKey, requestHash
+      );
+      if (requestState.state === 'conflict') {
+        return res.status(409).json({ success: false, message: 'Idempotency-Key already used for a different order payload' });
+      }
+      if (requestState.state === 'processing') {
+        return res.status(409).json({ success: false, message: 'Order sync is already processing; retry shortly with the same key' });
+      }
+      if (requestState.state === 'duplicate') {
+        const orders = await getAllOrders(restaurantId);
+        const previousOrder = orders.find(order => Number(order.id) === requestState.orderId);
+        if (!previousOrder) {
+          return res.status(409).json({ success: false, message: 'Previous synced order could not be retrieved; contact support before retrying with a new key' });
+        }
+        return res.status(200).json({ success: true, duplicate: true, message: 'Order was already synced', order: previousOrder });
+      }
+    }
 
     // --------------------------------------------------
     // ACTIVE DINE-IN ORDER
@@ -667,6 +768,10 @@ if ((order_type === 'dine_in' || order_type === 'walk_in') && tableNo > 0) {
       }
 
 
+      if (offlineIdempotencyKey) {
+        await completeOfflineOrderRequest(restaurantId, offlineIdempotencyKey, updatedOrder.id);
+      }
+
       return res.status(200).json({
 
         success: true,
@@ -734,6 +839,10 @@ if ((order_type === 'dine_in' || order_type === 'walk_in') && tableNo > 0) {
       newOrder
     );
 
+
+    if (offlineIdempotencyKey) {
+      await completeOfflineOrderRequest(restaurantId, offlineIdempotencyKey, newOrder.id);
+    }
 
     return res.status(201).json({
 
