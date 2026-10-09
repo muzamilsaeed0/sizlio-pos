@@ -5350,26 +5350,6 @@ const cancelOrder = async (
 
 
     // --------------------------------------------------
-    // CANCEL ANY OUTSTANDING QR PAYMENTS
-    // A late provider callback must not settle a cancelled order.
-    // This runs in the same transaction as the order cancellation.
-    // --------------------------------------------------
-
-    await client.query(
-      `
-      UPDATE qr_payments
-      SET
-        status = 'cancelled',
-        updated_at = NOW()
-      WHERE order_id = $1
-        AND restaurant_id = $2
-        AND status = 'pending'
-      `,
-      [orderId, restaurantId]
-    );
-
-
-    // --------------------------------------------------
     // RELEASE ACTIVE RESERVATIONS
     // --------------------------------------------------
 
