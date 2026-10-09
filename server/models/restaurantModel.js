@@ -619,7 +619,7 @@ async (
   const hashed =
     await bcrypt.hash(
       newPassword,
-      10
+      12
     );
 
   const result =
@@ -1117,7 +1117,7 @@ async (
   const hashed =
     await bcrypt.hash(
       newPassword,
-      10
+      12
     );
 
   const result =
