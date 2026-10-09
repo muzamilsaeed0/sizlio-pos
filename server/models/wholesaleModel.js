@@ -16,6 +16,18 @@ async function createProduct(restaurantId, data) {
     purchase_price = 0, sale_price = 0,
     stock = 0, min_stock = 0, category = null
   } = data;
+  const normalizedName = String(name || '').trim();
+  const purchasePrice = Number(purchase_price);
+  const salePrice = Number(sale_price);
+  const initialStock = Number(stock);
+  const minimumStock = Number(min_stock);
+  if (!normalizedName) throw new Error('Product name is required');
+  if (![purchasePrice, salePrice, initialStock, minimumStock].every(Number.isFinite)) {
+    throw new Error('Price and stock values must be valid numbers');
+  }
+  if (purchasePrice < 0 || salePrice < 0 || initialStock < 0 || minimumStock < 0) {
+    throw new Error('Price and stock values cannot be negative');
+  }
   const r = await pool.query(
     `INSERT INTO wholesale_products
       (restaurant_id, name, sku, unit, purchase_price, sale_price, stock, min_stock, category)
@@ -23,13 +35,13 @@ async function createProduct(restaurantId, data) {
      RETURNING *`,
     [
       restaurantId,
-      String(name).trim(),
+      normalizedName,
       sku || null,
       unit || 'pcs',
-      Number(purchase_price) || 0,
-      Number(sale_price) || 0,
-      Number(stock) || 0,
-      Number(min_stock) || 0,
+      purchasePrice,
+      salePrice,
+      initialStock,
+      minimumStock,
       category || null
     ]
   );
@@ -37,6 +49,18 @@ async function createProduct(restaurantId, data) {
 }
 
 async function updateProduct(restaurantId, id, data) {
+  for (const field of ['purchase_price', 'sale_price', 'stock', 'min_stock']) {
+    if (data[field] != null) {
+      const value = Number(data[field]);
+      if (!Number.isFinite(value) || value < 0) {
+        throw new Error(`${field} must be a valid non-negative number`);
+      }
+      data[field] = value;
+    }
+  }
+  if (data.name != null && !String(data.name).trim()) {
+    throw new Error('Product name is required');
+  }
   const r = await pool.query(
     `UPDATE wholesale_products SET
        name = COALESCE($3, name),
