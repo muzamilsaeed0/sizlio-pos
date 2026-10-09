@@ -159,10 +159,21 @@ const createStaff = async (
   // HASH PASSWORD
   // ======================================================
 
+  if (typeof password !== 'string' || password.length < 8) {
+    const error = new Error('Password must be at least 8 characters');
+    error.code = 'INVALID_PASSWORD';
+    throw error;
+  }
+  if (password.length > 128 || Buffer.byteLength(password, 'utf8') > 72) {
+    const error = new Error('Password is too long (maximum 72 UTF-8 bytes)');
+    error.code = 'INVALID_PASSWORD';
+    throw error;
+  }
+
   const hashed =
     await bcrypt.hash(
       password,
-      10
+      12
     );
 
 
@@ -230,11 +241,17 @@ const updateStaff = async (id, restaurantId, fullName, username, password) => {
     values.push(username);
   }
   if (password) {
-    // ✅ Validate password length
-    if (password.length < 4) {
-      throw new Error('Password must be at least 4 characters');
+    if (typeof password !== 'string' || password.length < 8) {
+      const error = new Error('Password must be at least 8 characters');
+      error.code = 'INVALID_PASSWORD';
+      throw error;
     }
-    const hashed = await bcrypt.hash(password, 10);
+    if (password.length > 128 || Buffer.byteLength(password, 'utf8') > 72) {
+      const error = new Error('Password is too long (maximum 72 UTF-8 bytes)');
+      error.code = 'INVALID_PASSWORD';
+      throw error;
+    }
+    const hashed = await bcrypt.hash(password, 12);
     updates.push(`password = ${idx++}`);
     values.push(hashed);
     // Require the staff member to choose their own password after a reset.
