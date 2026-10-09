@@ -403,47 +403,51 @@ exports.placePublicOrder = async (req, res) => {
 
     const restaurantLocation = locationResult.rows[0];
 
+    const restaurantLatitude = Number(restaurantLocation.latitude);
+    const restaurantLongitude = Number(restaurantLocation.longitude);
+
+    // Fail closed: public QR ordering must not silently bypass the GPS
+    // restriction when a restaurant has not configured its location.
     if (
       restaurantLocation.latitude === null ||
-      restaurantLocation.longitude === null
+      restaurantLocation.latitude === undefined ||
+      restaurantLocation.longitude === null ||
+      restaurantLocation.longitude === undefined ||
+      !Number.isFinite(restaurantLatitude) ||
+      !Number.isFinite(restaurantLongitude) ||
+      restaurantLatitude < -90 ||
+      restaurantLatitude > 90 ||
+      restaurantLongitude < -180 ||
+      restaurantLongitude > 180
     ) {
-      // GPS not configured for this restaurant — skip radius check
-    } else {
-      const distance = calculateDistance(
-        customerLatitude,
-        customerLongitude,
-        Number(restaurantLocation.latitude),
-        Number(restaurantLocation.longitude)
-      );
-
-      const radius = Number(restaurantLocation.gps_radius_meters) || 100;
-
-      if (distance > radius) {
-        return res.status(403).json({
-          success: false,
-          error: 'OUTSIDE_RESTAURANT_RADIUS',
-          message: `You are ${Math.round(distance)}m away. Please come to the restaurant to place an order.`,
-          distance: Math.round(distance),
-          radius
-        });
-      }
+      return res.status(403).json({
+        success: false,
+        error: 'RESTAURANT_LOCATION_NOT_CONFIGURED',
+        message: 'This restaurant has not configured its location for QR ordering. Please contact the restaurant.'
+      });
     }
+
+    const configuredRadius = Number(restaurantLocation.gps_radius_meters);
+    const radius =
+      Number.isFinite(configuredRadius) && configuredRadius >= 25 && configuredRadius <= 5000
+        ? configuredRadius
+        : 100;
 
     const distance = calculateDistance(
       customerLatitude,
       customerLongitude,
-      Number(restaurantLocation.latitude),
-      Number(restaurantLocation.longitude)
+      restaurantLatitude,
+      restaurantLongitude
     );
 
-    const radius = Number(restaurantLocation.gps_radius_meters) || 100;
-
-    if (distance > radius) {
+    if (!Number.isFinite(distance) || distance > radius) {
       return res.status(403).json({
         success: false,
         error: 'OUTSIDE_RESTAURANT_RADIUS',
-        message: `You are ${Math.round(distance)}m away. Please come to the restaurant to place an order.`,
-        distance: Math.round(distance),
+        message: Number.isFinite(distance)
+          ? `You are ${Math.round(distance)}m away. Please come to the restaurant to place an order.`
+          : 'Unable to verify your location. Please try again at the restaurant.',
+        ...(Number.isFinite(distance) ? { distance: Math.round(distance) } : {}),
         radius
       });
     }
