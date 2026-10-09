@@ -2038,15 +2038,14 @@ async function riderLogin(){
     if(!data.user){
       throw new Error('Invalid login response.');
     }
-    if (data.user.must_change_password) {
-          sessionStorage.setItem('sizlio_first_login_token', data.token);
-          sessionStorage.setItem('sizlio_first_login_user', JSON.stringify(data.user));
-          location.href = '/change-password.html';
-          return;
-        }
-
     if(data.user.role !== 'delivery'){
       throw new Error('Access denied. This account is not a Rider account.');
+    }
+    if (data.user.must_change_password) {
+      sessionStorage.setItem('sizlio_first_login_token', data.token);
+      sessionStorage.setItem('sizlio_first_login_user', JSON.stringify(data.user));
+      location.href = '/change-password.html';
+      return;
     }
 
     token = data.token;
