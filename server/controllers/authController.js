@@ -164,7 +164,7 @@ exports.login = async (req, res) => {
 
     // HttpOnly cookie is the preferred browser session transport.
     // Keep the JSON token temporarily for existing clients during the staged migration.
-    res.cookie('__Host-sizlio_session', token, {
+    res.cookie('sizlio_session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -280,7 +280,7 @@ exports.logout = async (req, res) => {
       [req.user.id, req.authSessionId]
     );
 
-    res.clearCookie('__Host-sizlio_session', {
+    res.clearCookie('sizlio_session', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
