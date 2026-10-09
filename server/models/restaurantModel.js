@@ -660,6 +660,10 @@ async (id) => {
         r.*,
 
         COUNT(*) FILTER (
+          WHERE u.role = 'manager'
+        ) AS manager_count,
+
+        COUNT(*) FILTER (
           WHERE u.role = 'waiter'
         ) AS waiter_count,
 
@@ -691,7 +695,24 @@ async (id) => {
       [id]
     );
 
-  return result.rows[0];
+  const restaurant = result.rows[0];
+
+  if (!restaurant) return null;
+
+  // Remove legacy credential columns before returning restaurant data.
+  for (const field of [
+    'plain_password',
+    'manager_username',
+    'manager_password',
+    'waiter_username',
+    'waiter_password',
+    'kitchen_username',
+    'kitchen_password'
+  ]) {
+    delete restaurant[field];
+  }
+
+  return restaurant;
 
 };
 
