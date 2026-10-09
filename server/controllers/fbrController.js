@@ -217,19 +217,22 @@ exports.getInvoiceStatus = async (req, res) => {
 exports.retryNow = async (req, res) => {
   try {
     const restaurantId = getRestaurantIdFromUser(req);
+    const isSuperAdmin = req.user?.role === 'super_admin';
 
-    // Super Admin can intentionally retry the global FBR queue.
-    // Tenant users remain strictly restaurant-scoped.
-    const results = await fbrService.retryPendingInvoices(
-      req.user?.role === 'super_admin' ? null : restaurantId
-    );
-
-    if (req.user?.role !== 'super_admin' && !restaurantId) {
+    // Validate tenant context BEFORE calling the service. A null restaurant ID
+    // means "global queue" to the service and must never be passed by a tenant.
+    if (!isSuperAdmin && !restaurantId) {
       return res.status(401).json({
         success: false,
         message: 'Restaurant information is missing',
       });
     }
+
+    // Only super_admin may intentionally retry the global FBR queue.
+    const results = await fbrService.retryPendingInvoices(
+      isSuperAdmin ? null : restaurantId
+    );
+
     res.json({ success: true, results });
   } catch (err) {
     console.error('retryNow:', err);
