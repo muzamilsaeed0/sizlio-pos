@@ -4246,6 +4246,15 @@ const updateOrderItemQuantity = async (
   quantity = Number(quantity);
 
 
+  // Reject malformed quantities before the legacy <= 0 removal path.
+  // This prevents NaN, Infinity, and fractional quantities reaching SQL.
+  if (!Number.isFinite(quantity) || !Number.isInteger(quantity)) {
+
+    throw new Error('Quantity must be a finite whole number.');
+
+  }
+
+
   if (quantity <= 0) {
 
     return await removeOrderItem(
