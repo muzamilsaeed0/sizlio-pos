@@ -5140,6 +5140,8 @@ const releaseOrderInventory = async (
 
         AND o.restaurant_id = $2
 
+        AND ir.restaurant_id = $2
+
         AND ir.status = 'reserved'
 
       RETURNING ir.*
