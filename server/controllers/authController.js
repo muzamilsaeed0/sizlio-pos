@@ -235,16 +235,24 @@ exports.updateSettings = async (req, res) => {
       values.push(username.trim());
     }
     if (new_password) {
-      if (new_password.length < 4) {
-        return res.status(400).json({ success: false, message: 'New password must be at least 4 characters' });
+      if (typeof new_password !== 'string' || new_password.length < 8) {
+        return res.status(400).json({
+          success: false,
+          message: 'New password must be at least 8 characters'
+        });
+      }
+      if (new_password.length > 128 || Buffer.byteLength(new_password, 'utf8') > 72) {
+        return res.status(400).json({
+          success: false,
+          message: 'New password is too long (maximum 72 UTF-8 bytes)'
+        });
       }
 
-      const hashed = await bcrypt.hash(new_password, 10);
-      updates.push(`password = $${idx++}`);
+      const hashed = await bcrypt.hash(new_password, 12);
+      updates.push(`password = ${idx++}`);
       values.push(hashed);
-      // Password changes invalidate the current JWT immediately.
+      // Password changes invalidate the current session immediately.
       updates.push('current_session = NULL');
-
     }
 
     if (!updates.length) {
@@ -254,9 +262,23 @@ exports.updateSettings = async (req, res) => {
     values.push(userId);
 
     await pool.query(
-      `UPDATE users SET ${updates.join(', ')} WHERE id = $${idx}`,
+      `UPDATE users SET ${updates.join(', ')} WHERE id = ${idx}`,
       values
     );
+
+    if (new_password) {
+      res.clearCookie('sizlio_session', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/'
+      });
+      return res.json({
+        success: true,
+        reauthentication_required: true,
+        message: 'Password updated. Please log in again.'
+      });
+    }
 
     return res.json({ success: true, message: 'Settings updated successfully' });
 
