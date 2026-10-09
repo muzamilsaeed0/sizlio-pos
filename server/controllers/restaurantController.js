@@ -120,6 +120,24 @@ if (!isCafeLite) {
 
 
     // --------------------------------------------------
+    // MANAGER PASSWORD POLICY
+    // --------------------------------------------------
+
+    if (manager_username && manager_password) {
+      if (typeof manager_password !== 'string' || manager_password.length < 8) {
+        return res.status(400).json({
+          success: false,
+          message: 'Manager password must be at least 8 characters'
+        });
+      }
+      if (manager_password.length > 128 || Buffer.byteLength(manager_password, 'utf8') > 72) {
+        return res.status(400).json({
+          success: false,
+          message: 'Manager password is too long (maximum 72 UTF-8 bytes)'
+        });
+      }
+    }
+
     // FOOD TYPE
     // --------------------------------------------------
 

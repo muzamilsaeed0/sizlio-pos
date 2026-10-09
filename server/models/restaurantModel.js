@@ -177,6 +177,16 @@ const createRestaurant = async (data) => {
       business_type
     } = data;
 
+    // Defense in depth: prevent weak or bcrypt-truncated manager passwords.
+    if (manager_username && manager_password) {
+      if (typeof manager_password !== "string" || manager_password.length < 8) {
+        throw new Error("Manager password must be at least 8 characters.");
+      }
+      if (manager_password.length > 128 || Buffer.byteLength(manager_password, "utf8") > 72) {
+        throw new Error("Manager password is too long (maximum 72 UTF-8 bytes).");
+      }
+    }
+
     const selectedBusinessType =
   business_type || 'restaurant';
 
@@ -284,7 +294,7 @@ let managerCreated = null;
 
 if (manager_username && manager_password) {
 
-  const hashedPassword = await bcrypt.hash(manager_password, 10);
+  const hashedPassword = await bcrypt.hash(manager_password, 12);
 
   const mgrResult = await client.query(
     `INSERT INTO users (full_name, username, password, role, restaurant_id, is_active, must_change_password)
@@ -332,7 +342,7 @@ const createStaffUser = async (
 ) => {
 
   const hashed =
-    await bcrypt.hash(password, 10);
+    await bcrypt.hash(password, 12);
 
   await client.query(
     `
@@ -377,7 +387,7 @@ if (selectedBusinessType === 'wholesale') {
 
   // Wholesale: ONLY 1 counter — no waiter/kitchen/display/rider
   const username = `${slug}_counter1`;
-  const password = '0000';
+  const password = generatePassword();
 
   await createStaffUser(
     'counter',
