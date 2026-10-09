@@ -68,12 +68,20 @@ router.post('/qr/cancel/:qrId', authMiddleware, authorize('manager', 'counter'),
 /* Webhook — no auth, bank calls this */
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     try {
+        // Signature verification must use the exact bytes received from the
+        // provider. JSON.parse/stringify can change whitespace or serialization.
+        const rawBody = Buffer.isBuffer(req.body) ? Buffer.from(req.body) : null;
         let body;
-        try { body = JSON.parse(req.body.toString()); } catch { body = req.body; }
+        try {
+            body = rawBody ? JSON.parse(rawBody.toString('utf8')) : req.body;
+        } catch {
+            return res.status(400).json({ ok: false, message: 'Invalid JSON webhook payload' });
+        }
+
         const result = await paymentService.handleWebhook({
             headers: req.headers,
             body,
-            rawBody: req.rawBody || null
+            rawBody
         });
         res.json(result);
     } catch (err) {
