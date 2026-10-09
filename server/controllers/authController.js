@@ -235,16 +235,16 @@ exports.updateSettings = async (req, res) => {
       values.push(username.trim());
     }
     if (new_password) {
-      if (typeof new_password !== 'string' || new_password.length < 8) {
+      if (typeof new_password !== 'string' || new_password.length < 4) {
         return res.status(400).json({
           success: false,
-          message: 'New password must be at least 8 characters'
+          message: 'New password must be at least 4 characters'
         });
       }
-      if (new_password.length > 128 || Buffer.byteLength(new_password, 'utf8') > 72) {
+      if (new_password.length > 8) {
         return res.status(400).json({
           success: false,
-          message: 'New password is too long (maximum 72 UTF-8 bytes)'
+          message: 'New password is too long (maximum 8 characters)'
         });
       }
 
@@ -334,13 +334,13 @@ exports.changeInitialPassword = async (req, res) => {
     const newPassword = typeof req.body?.new_password === 'string' ? req.body.new_password : '';
     const confirmPassword = typeof req.body?.confirm_password === 'string' ? req.body.confirm_password : '';
 
-    if (newPassword.length < 8) {
-      return res.status(400).json({ success: false, message: 'New password must be at least 8 characters' });
+    if (newPassword.length < 4) {
+      return res.status(400).json({ success: false, message: 'New password must be at least 4 characters' });
     }
-    if (newPassword.length > 128 || Buffer.byteLength(newPassword, 'utf8') > 72) {
+    if (newPassword.length > 8) {
       return res.status(400).json({
         success: false,
-        message: 'Password is too long (maximum 72 UTF-8 bytes)'
+        message: 'Password is too long (maximum 8 characters)'
       });
     }
     if (newPassword !== confirmPassword) {
