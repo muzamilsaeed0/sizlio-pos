@@ -546,6 +546,13 @@ async function login() {
       return;
     }
 
+    if (data.user.must_change_password) {
+          sessionStorage.setItem('sizlio_first_login_token', data.token);
+          sessionStorage.setItem('sizlio_first_login_user', JSON.stringify(data.user));
+          location.href = '/change-password.html';
+          return;
+        }
+
     token = data.token;
     localStorage.setItem('waiter_token', token);
     localStorage.setItem('restaurant_id', String(restaurantId));
