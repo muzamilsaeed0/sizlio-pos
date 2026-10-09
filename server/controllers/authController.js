@@ -31,7 +31,7 @@ exports.login = async (req, res) => {
           u.full_name, u.is_active AS user_active,
           COALESCE(u.must_change_password, FALSE) AS must_change_password,
           r.name AS restaurant_name, r.status AS restaurant_status,
-          r.plan AS restaurant_plan, r.expiry_date
+          r.plan AS restaurant_plan, r.business_type AS restaurant_business_type, r.expiry_date
         FROM users u
         LEFT JOIN restaurants r ON u.restaurant_id = r.id
         WHERE u.username = $1
@@ -55,7 +55,7 @@ exports.login = async (req, res) => {
           u.full_name, u.is_active AS user_active,
           COALESCE(u.must_change_password, FALSE) AS must_change_password,
           r.name AS restaurant_name, r.status AS restaurant_status,
-          r.plan AS restaurant_plan, r.expiry_date
+          r.plan AS restaurant_plan, r.business_type AS restaurant_business_type, r.expiry_date
         FROM users u
         LEFT JOIN restaurants r ON u.restaurant_id = r.id
         WHERE u.username = $1
@@ -184,6 +184,7 @@ exports.login = async (req, res) => {
         restaurant_id: user.restaurant_id,
         restaurant_name: user.restaurant_name,
         plan: user.restaurant_plan,
+        business_type: user.restaurant_business_type,
         expiry_date: user.expiry_date,
         must_change_password: Boolean(user.must_change_password)
       }
