@@ -180,7 +180,8 @@ const createStaff = async (
         username,
         password,
         role,
-        is_active
+        is_active,
+        must_change_password
       )
 
       VALUES
@@ -190,6 +191,7 @@ const createStaff = async (
         $3,
         $4,
         $5,
+        true,
         true
       )
 
