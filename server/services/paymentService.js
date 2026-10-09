@@ -515,26 +515,81 @@ async function handleWebhook({ headers, body, rawBody = null }) {
     }
 
     if (status === 'FAILED') {
-        const result = await pool.query(
-            `UPDATE qr_payments qp
-             SET status = 'cancelled',
-                 raw_response = $1,
-                 updated_at = NOW()
-             FROM orders o
-             WHERE qp.qr_id = $2
-               AND qp.order_id = o.id
-               AND qp.status = 'pending'
-             RETURNING qp.restaurant_id, qp.order_id`,
-            [body, reference]
-        );
+        const client = await pool.connect();
+        let failedPayment = null;
 
-        if (global.io && result.rows.length) {
+        try {
+            await client.query('BEGIN');
+
+            // Use the same lock order as QR creation and successful settlement:
+            // order first, then QR payment. This avoids lock-order inversion.
+            const lookup = await client.query(
+                `SELECT qp.id, qp.order_id, qp.restaurant_id
+                 FROM qr_payments qp
+                 INNER JOIN orders o
+                   ON o.id = qp.order_id
+                  AND o.restaurant_id = qp.restaurant_id
+                 WHERE qp.qr_id = $1
+                 LIMIT 1`,
+                [reference]
+            );
+
+            if (lookup.rows.length) {
+                const candidate = lookup.rows[0];
+
+                await client.query(
+                    `SELECT id
+                     FROM orders
+                     WHERE id = $1 AND restaurant_id = $2
+                     FOR UPDATE`,
+                    [candidate.order_id, candidate.restaurant_id]
+                );
+
+                const lockedPayment = await client.query(
+                    `SELECT id, order_id, restaurant_id, status
+                     FROM qr_payments
+                     WHERE id = $1
+                       AND order_id = $2
+                       AND restaurant_id = $3
+                     FOR UPDATE`,
+                    [candidate.id, candidate.order_id, candidate.restaurant_id]
+                );
+
+                if (lockedPayment.rows.length &&
+                    lockedPayment.rows[0].status === 'pending') {
+                    const updated = await client.query(
+                        `UPDATE qr_payments
+                         SET status = 'cancelled',
+                             raw_response = $1,
+                             updated_at = NOW()
+                         WHERE id = $2
+                           AND restaurant_id = $3
+                           AND status = 'pending'
+                         RETURNING restaurant_id, order_id`,
+                        [body, candidate.id, candidate.restaurant_id]
+                    );
+
+                    if (updated.rows.length) {
+                        failedPayment = updated.rows[0];
+                    }
+                }
+            }
+
+            await client.query('COMMIT');
+        } catch (err) {
+            try { await client.query('ROLLBACK'); } catch {}
+            throw err;
+        } finally {
+            client.release();
+        }
+
+        if (global.io && failedPayment) {
             global.io
-                .to(`restaurant_${result.rows[0].restaurant_id}`)
+                .to(`restaurant_${failedPayment.restaurant_id}`)
                 .emit('qr_payment_update', {
                     qr_id: reference,
                     status: 'FAILED',
-                    order_id: result.rows[0].order_id,
+                    order_id: failedPayment.order_id,
                 });
         }
     }
