@@ -283,8 +283,8 @@ if (manager_username && manager_password) {
   const hashedPassword = await bcrypt.hash(manager_password, 10);
 
   const mgrResult = await client.query(
-    `INSERT INTO users (full_name, username, password, role, restaurant_id, is_active)
-     VALUES ($1, $2, $3, 'manager', $4, true)
+    `INSERT INTO users (full_name, username, password, role, restaurant_id, is_active, must_change_password)
+     VALUES ($1, $2, $3, 'manager', $4, true, true)
      RETURNING id, username, full_name, role`,
     [
       manager_fullname || manager_username,
@@ -338,11 +338,12 @@ const createStaffUser = async (
       username,
       password,
       role,
-      restaurant_id
+      restaurant_id,
+      must_change_password
     )
     VALUES
     (
-      $1, $2, $3, $4, $5
+      $1, $2, $3, $4, $5, true
     )
     `,
     [
