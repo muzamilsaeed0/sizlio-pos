@@ -86,6 +86,10 @@ const getAllRestaurants = async () => {
       r.food_type,
 
       COUNT(*) FILTER (
+        WHERE u.role = 'manager'
+      ) AS manager_count,
+
+      COUNT(*) FILTER (
         WHERE u.role = 'waiter'
       ) AS waiter_count,
 
