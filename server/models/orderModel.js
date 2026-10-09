@@ -5135,13 +5135,17 @@ const reserveOrderInventory = async (
 
 
     const alreadyReserved =
-      Number(
-        reservedResult.rows[0].reserved_quantity || 0
-      );
+      Number(reservedResult.rows[0].reserved_quantity);
 
+    if (!Number.isFinite(alreadyReserved) || alreadyReserved < 0) {
+      throw new Error(`Invalid reserved stock quantity for "${item.ingredient_name}".`);
+    }
 
-    const available =
-      stock - alreadyReserved;
+    const available = stock - alreadyReserved;
+
+    if (!Number.isFinite(available) || available < 0) {
+      throw new Error(`Invalid available stock for "${item.ingredient_name}".`);
+    }
 
 
     if (
@@ -5684,15 +5688,17 @@ const syncOrderInventoryReservation = async (
 
 
     const alreadyReserved =
-      Number(
-        reservedResult.rows[0]
-          .reserved_quantity || 0
-      );
+      Number(reservedResult.rows[0].reserved_quantity);
 
+    if (!Number.isFinite(alreadyReserved) || alreadyReserved < 0) {
+      throw new Error(`Invalid reserved stock quantity for "${item.ingredient_name}".`);
+    }
 
-    const available =
-      stock -
-      alreadyReserved;
+    const available = stock - alreadyReserved;
+
+    if (!Number.isFinite(available) || available < 0) {
+      throw new Error(`Invalid available stock for "${item.ingredient_name}".`);
+    }
 
 
     if (
