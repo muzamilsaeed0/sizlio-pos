@@ -612,6 +612,13 @@ CREATE UNIQUE INDEX payment_transactions_qr_payment_uidx
   ON public.payment_transactions(qr_payment_id)
   WHERE qr_payment_id IS NOT NULL;
 
+-- One external provider transaction cannot settle multiple QR payments.
+CREATE UNIQUE INDEX payment_transactions_qr_provider_ref_uidx
+  ON public.payment_transactions(provider_ref)
+  WHERE qr_payment_id IS NOT NULL
+    AND provider_ref IS NOT NULL
+    AND btrim(provider_ref) <> '';
+
 -- Payment ledger is append-only.
 CREATE OR REPLACE FUNCTION public.prevent_payment_transaction_mutation()
 RETURNS TRIGGER
