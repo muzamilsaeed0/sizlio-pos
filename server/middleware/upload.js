@@ -16,4 +16,25 @@ const storage = new CloudinaryStorage({
   },
 });
 
-module.exports = multer({ storage });
+const allowedMimeTypes = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp'
+]);
+
+module.exports = multer({
+  storage,
+  limits: {
+    fileSize: 2 * 1024 * 1024, // 2 MB maximum logo upload
+    files: 1
+  },
+  fileFilter: (req, file, callback) => {
+    if (!allowedMimeTypes.has(file.mimetype)) {
+      const error = new Error('Only JPG, PNG, and WebP images are allowed');
+      error.code = 'INVALID_LOGO_TYPE';
+      return callback(error);
+    }
+
+    callback(null, true);
+  }
+});
