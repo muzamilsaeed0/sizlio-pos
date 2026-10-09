@@ -848,6 +848,12 @@
         if (!data.token || data.user?.role !== 'counter') {
           err.textContent = 'Counter login required for Cafe Lite'; return;
         }
+        if (data.user.must_change_password) {
+          sessionStorage.setItem('sizlio_first_login_token', data.token);
+          sessionStorage.setItem('sizlio_first_login_user', JSON.stringify(data.user));
+          location.href = '/change-password.html';
+          return;
+        }
         token = data.token;
         user = data.user;
         restaurantId = data.user.restaurant_id || restaurantId;
