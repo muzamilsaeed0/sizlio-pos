@@ -10,7 +10,12 @@ const authMiddleware = async (req, res, next) => {
       authHeader && authHeader.startsWith('Bearer ')
         ? authHeader.slice(7).trim()
         : null;
-    const cookieToken = req.cookies?.['__Host-sizlio_session'] || null;
+    const cookieHeader = req.headers.cookie || '';
+    const cookieToken = cookieHeader
+      .split(';')
+      .map(part => part.trim())
+      .filter(part => part.startsWith('sizlio_session='))
+      .map(part => decodeURIComponent(part.slice('sizlio_session='.length)))[0] || null;
 
     // Cookie-authenticated state-changing requests must originate from our
     // own web origin. Bearer clients remain supported during migration.
