@@ -1347,6 +1347,13 @@ async function login(){
 
         }
 
+        if (data.user.must_change_password) {
+          sessionStorage.setItem('sizlio_first_login_token', data.token);
+          sessionStorage.setItem('sizlio_first_login_user', JSON.stringify(data.user));
+          location.href = '/change-password.html';
+          return;
+        }
+
 
         /*
           Extra security:
