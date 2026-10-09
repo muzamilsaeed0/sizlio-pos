@@ -82,7 +82,7 @@ function assertTransactional(migration) {
     .trim()
     .toUpperCase();
 
-  if (!/^BEGIN\\s*;[\\s\\S]*\\bCOMMIT\\s*;?$/.test(normalized)) {
+  if (!/^BEGIN\s*;[\s\S]*\bCOMMIT\s*;?$/.test(normalized)) {
     throw new Error(
       "Migration " + migration.name + " must be a single BEGIN ... COMMIT transaction."
     );
