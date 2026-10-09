@@ -22,7 +22,7 @@ async function createQrPayment({ restaurantId, orderId, amount, description }) {
 
         // Tenant boundary + server-side amount calculation.
         const orderCheck = await client.query(
-            `SELECT id, total_amount, paid_amount, payment_status
+            `SELECT id, total_amount, paid_amount, payment_status, status
              FROM orders
              WHERE id = $1 AND restaurant_id = $2
              FOR UPDATE`,
@@ -34,6 +34,10 @@ async function createQrPayment({ restaurantId, orderId, amount, description }) {
         }
 
         const order = orderCheck.rows[0];
+
+        if (order.status === 'cancelled') {
+            throw new Error('Cannot create a payment QR for a cancelled order');
+        }
 
         if (order.payment_status === 'paid') {
             throw new Error('Order is already paid');
