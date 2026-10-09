@@ -703,7 +703,7 @@
       </div>
       <label>New password</label>
       <div class="pw-wrap" style="margin-bottom:0;">
-        <input id="accNewPw" type="password" placeholder="Leave blank to keep same" />
+        <input id="accNewPw" type="password" minlength="4" maxlength="8" placeholder="Leave blank to keep same" />
         <span class="pw-eye"
               onmousedown="peek('accNewPw','text')"
               onmouseup="peek('accNewPw','password')"
@@ -713,7 +713,7 @@
       </div>
       <label>Confirm new password</label>
       <div class="pw-wrap" style="margin-bottom:0;">
-        <input id="accConfirmPw" type="password" placeholder="Confirm new password" />
+        <input id="accConfirmPw" type="password" minlength="4" maxlength="8" placeholder="Confirm new password" />
       </div>
       <button type="button" class="btn btn-ok" style="width:100%;margin-top:12px;" onclick="updateMyAccount()">
         Update account
@@ -2240,7 +2240,7 @@
           </div>
           <button class="btn btn-ghost" onclick="toggleResetBox(${r.id})">Reset password</button>
           <div class="reset-pw-box hidden" id="reset-box-${r.id}">
-            <input type="password" id="reset-pw-${r.id}" placeholder="New password" />
+            <input type="password" id="reset-pw-${r.id}" minlength="4" maxlength="8" placeholder="New password" />
             <button class="btn btn-ok" onclick="doResetRiderPassword(${r.id})">Save</button>
           </div>
         </div>
@@ -2258,7 +2258,7 @@
     async function doResetRiderPassword(id) {
       const inp = document.getElementById('reset-pw-' + id);
       const pw = (inp?.value || '').trim();
-      if (pw.length < 4) { alert('Password must be 4 to 8 characters'); return; }
+      if (pw.length < 4 || pw.length > 8) { alert('Password must be 4 to 8 characters'); return; }
       try {
         await api('/users/' + id, {
           method: 'PUT',
@@ -2278,7 +2278,7 @@
 
       if (!currentPw) { alert('Current password required'); return; }
       if (newPw && newPw !== confirmPw) { alert('New passwords do not match'); return; }
-      if (newPw && newPw.length < 4) { alert('New password must be 4 to 8 characters'); return; }
+      if (newPw && (newPw.length < 4 || newPw.length > 8)) { alert('New password must be 4 to 8 characters'); return; }
 
       const body = { current_password: currentPw };
       if (username) body.username = username;
