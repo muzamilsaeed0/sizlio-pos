@@ -24,6 +24,13 @@ async saveOrderOffline(orderData) {
   // ✅ 1. Order save karo
   const order = {
     ...orderData,
+    // Persist the same key with the offline record so every retry uses
+    // the same server-side idempotency identity.
+    idempotency_key: orderData.idempotency_key || (
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `offline-${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`
+    ),
     status: 'offline_pending',
     synced: 0,
     created_at: new Date().toISOString()
@@ -154,7 +161,8 @@ async saveOrderOffline(orderData) {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
+              'Authorization': `Bearer ${token}`,
+              'Idempotency-Key': `offline-${order.idempotency_key}`
             },
             body: JSON.stringify(payload)
           });
