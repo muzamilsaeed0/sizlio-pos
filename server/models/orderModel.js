@@ -3527,15 +3527,31 @@ const adjustServedOrderInventory = async (
       );
 
       for (const recipe of recipeResult.rows) {
-        const required =
-          Number(recipe.quantity || 0) * Number(item.quantity || 0);
+        const recipeQuantity = Number(recipe.quantity);
+        const orderQuantity = Number(item.quantity);
+        const required = recipeQuantity * orderQuantity;
 
-        if (!Number.isFinite(required) || required < 0) {
-          throw new Error('Invalid recipe quantity.');
+        if (
+          !Number.isFinite(recipeQuantity) ||
+          recipeQuantity <= 0 ||
+          !Number.isFinite(orderQuantity) ||
+          orderQuantity <= 0 ||
+          !Number.isFinite(required) ||
+          required <= 0
+        ) {
+          throw new Error('Invalid recipe or order quantity; served-order inventory was not adjusted.');
         }
 
         const inventoryId = Number(recipe.inventory_id);
-        totals[inventoryId] = (totals[inventoryId] || 0) + required;
+        if (!Number.isInteger(inventoryId) || inventoryId <= 0) {
+          throw new Error('Invalid inventory item in recipe.');
+        }
+
+        const nextTotal = (totals[inventoryId] || 0) + required;
+        if (!Number.isFinite(nextTotal) || nextTotal <= 0) {
+          throw new Error('Invalid total recipe requirement.');
+        }
+        totals[inventoryId] = nextTotal;
       }
     }
 
