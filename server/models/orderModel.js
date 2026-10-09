@@ -2017,7 +2017,7 @@ const markCompleted = async (id, restaurantId, riderId = null) => {
            AND delivery_rider_id IS NOT NULL
            AND ($3 IS NULL OR delivery_rider_id = $3)
          FOR UPDATE`,
-        [id, restaurantId]
+        [id, restaurantId, riderId]
       );
     }
 
