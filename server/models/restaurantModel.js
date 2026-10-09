@@ -703,7 +703,10 @@ async (id) => {
 
   if (!restaurant) return null;
 
-  // Remove legacy credential columns before returning restaurant data.
+  // Never return stored credentials or integration secrets to the browser.
+  // The FBR settings endpoint exposes only a masked token and fbr_has_token.
+  restaurant.fbr_has_token = Boolean(restaurant.fbr_api_token);
+
   for (const field of [
     'plain_password',
     'manager_username',
@@ -711,7 +714,11 @@ async (id) => {
     'waiter_username',
     'waiter_password',
     'kitchen_username',
-    'kitchen_password'
+    'kitchen_password',
+    'counter_password',
+    'display_password',
+    'rider_password',
+    'fbr_api_token'
   ]) {
     delete restaurant[field];
   }
