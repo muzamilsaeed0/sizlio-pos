@@ -715,6 +715,11 @@ if ((order_type === 'dine_in' || order_type === 'walk_in') && tableNo > 0) {
         normalizedDeals
       );
 
+      // Record completion immediately after the order mutation, before any
+      // optional response lookup or socket notification can fail.
+      if (offlineIdempotencyKey) {
+        await completeOfflineOrderRequest(restaurantId, offlineIdempotencyKey, existingOrder.id);
+      }
 
       const updatedOrders =
         await getAllOrders(
@@ -767,10 +772,6 @@ if ((order_type === 'dine_in' || order_type === 'walk_in') && tableNo > 0) {
 
       }
 
-
-      if (offlineIdempotencyKey) {
-        await completeOfflineOrderRequest(restaurantId, offlineIdempotencyKey, updatedOrder.id);
-      }
 
       return res.status(200).json({
 
