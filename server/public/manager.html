@@ -1019,6 +1019,12 @@ function isWholesale() {
         const data = await res.json().catch(() => ({}));
         if (!res.ok) { error.innerText = data.message || "Login failed"; return; }
         if (!data.user || data.user.role !== "manager") { error.innerText = "Manager account required"; return; }
+        if (data.user.must_change_password) {
+          sessionStorage.setItem('sizlio_first_login_token', data.token);
+          sessionStorage.setItem('sizlio_first_login_user', JSON.stringify(data.user));
+          location.href = '/change-password.html';
+          return;
+        }
         token = data.token; restaurantId = data.user.restaurant_id;
         localStorage.setItem("token", token); 
         localStorage.setItem("restaurant_id", restaurantId);
