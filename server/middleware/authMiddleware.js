@@ -51,7 +51,7 @@ const authMiddleware = async (req, res, next) => {
 
     const validUserId =
       (typeof decoded.id === 'number' && Number.isSafeInteger(decoded.id) && decoded.id > 0) ||
-      (typeof decoded.id === 'string' && /^[1-9]\\d*$/.test(decoded.id));
+      (typeof decoded.id === 'string' && /^[1-9][0-9]*$/.test(decoded.id));
 
     if (!validUserId || typeof decoded.sessionId !== 'string' || !decoded.sessionId) {
       return res.status(401).json({
