@@ -65,10 +65,17 @@ router.post('/:restaurantId/verify-location', async (req, res) => {
   const { latitude, longitude } = req.body;
   const restaurantId = Number(req.params.restaurantId);
   
-  if (!Number.isFinite(Number(latitude)) || !Number.isFinite(Number(longitude))) {
+  const lat = Number(latitude);
+  const lng = Number(longitude);
+
+  if (
+    !Number.isInteger(restaurantId) || restaurantId <= 0 ||
+    !Number.isFinite(lat) || lat < -90 || lat > 90 ||
+    !Number.isFinite(lng) || lng < -180 || lng > 180
+  ) {
     return res.status(400).json({
       success: false,
-      message: 'Location required'
+      message: 'Valid restaurant and location coordinates are required'
     });
   }
   
@@ -90,20 +97,27 @@ router.post('/:restaurantId/verify-location', async (req, res) => {
     
     const restaurant = result.rows[0];
     
-    // Agar restaurant ne location set nahi ki toh allow karo
-    if (!restaurant.latitude || !restaurant.longitude) {
-      return res.json({
-        success: true,
-        allowed: true,
-        distance: null,
-        message: 'Location not enforced'
+    // Fail closed: the order endpoint also requires configured coordinates.
+    if (
+      restaurant.latitude === null || restaurant.latitude === undefined ||
+      restaurant.longitude === null || restaurant.longitude === undefined ||
+      !Number.isFinite(Number(restaurant.latitude)) ||
+      !Number.isFinite(Number(restaurant.longitude)) ||
+      Number(restaurant.latitude) < -90 || Number(restaurant.latitude) > 90 ||
+      Number(restaurant.longitude) < -180 || Number(restaurant.longitude) > 180
+    ) {
+      return res.status(403).json({
+        success: false,
+        allowed: false,
+        error: 'RESTAURANT_LOCATION_NOT_CONFIGURED',
+        message: 'This restaurant has not configured its location for QR ordering.'
       });
     }
     
     // Distance calculate karo (Haversine formula)
     const distance = calculateDistance(
-      Number(latitude),
-      Number(longitude),
+      lat,
+      lng,
       Number(restaurant.latitude),
       Number(restaurant.longitude)
     );
