@@ -1174,11 +1174,14 @@
           <span>
             ${escapeHtml(r.city || '-')}
             · ${escapeHtml(r.plan)}
-            · Waiters: ${r.waiter_count || 0}
-            · Kitchen: ${r.kitchen_count || 0}
-            · Counter: ${r.counter_count || 0}
-            · Display: ${r.display_count || 0}
-            · Riders: ${r.delivery_rider_count || 0}
+            ${r.plan === 'Cafe Lite'
+              ? `· Counter Lite: ${r.counter_count || 0} · Riders: ${r.delivery_rider_count || 0}`
+              : `· Waiters: ${r.waiter_count || 0}
+                 · Kitchen: ${r.kitchen_count || 0}
+                 · Counter: ${r.counter_count || 0}
+                 · Display: ${r.display_count || 0}
+                 · Riders: ${r.delivery_rider_count || 0}`
+            }
           </span>
         </div>
       </div>
@@ -1712,7 +1715,7 @@
     document.getElementById('create-plan-limits').innerHTML = `
       <strong>${plan} Plan Limits</strong><br>
       Waiter: ${limits.waiter}
-      · Counter: ${limits.counter}
+      · ${plan === 'Cafe Lite' ? 'Counter Lite' : 'Counter'}: ${limits.counter}
       · Display: ${limits.display}
       · Manager: ${limits.manager}
       · Kitchen: ${limits.kitchen}
