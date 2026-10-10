@@ -414,6 +414,8 @@ const routeCases = [
   ['password reset invalidates existing session', 'models/userModel.js', /current_session = NULL/],
   ['staff query does not expose password hashes', 'models/userModel.js', /SELECT id, username, full_name, role, restaurant_id, is_active/],
   ['report joins menu items to the same tenant', 'models/reportModel.js', /m\.restaurant_id = o\.restaurant_id/],
+  ['supplier counter cannot change opening balance or supplier status', 'controllers/supplierController.js', /req\.user\?\.role === 'counter'[\s\S]*?hasOwnProperty\.call\(req\.body, 'opening_balance'\)[\s\S]*?hasOwnProperty\.call\(req\.body, 'is_active'\)[\s\S]*?status\(403\)/],
+  ['supplier update preserves opening balance when omitted', 'models/supplierModel.js', /opening_balance = COALESCE\(\$7, opening_balance\)/],
 ];
 for (const [label, file, pattern] of routeCases) {
   test('policy contract: ' + label, () => {
