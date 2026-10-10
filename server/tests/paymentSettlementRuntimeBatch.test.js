@@ -163,3 +163,113 @@ for (let i = 1; i <= 500; i++) {
     assert.equal(client.released, true);
   });
 }
+
+
+// 500 runtime cases: expired pending QRs must never settle successfully.
+for (let i = 1; i <= 500; i++) {
+  test('settlement expires stale QR instead of accepting payment case ' + i, async () => {
+    const payment = {
+      ...pendingPayment(2000 + i),
+      expires_at: new Date('2000-01-01T00:00:00.000Z'),
+    };
+    const client = makeClient({
+      lookupRows: [payment],
+      orderRows: [unpaidOrder(payment)],
+      lockedPaymentRows: [payment],
+    });
+
+    await withClient(client, async () => {
+      await assert.rejects(
+        paymentService.manualConfirmPayment(payment.qr_id, 1, payment.restaurant_id),
+        /Payment QR has expired/
+      );
+    });
+
+    assert.equal(client.statements.filter(s => s.sql.startsWith('UPDATE qr_payments')).length, 1);
+    assert.equal(client.statements.some(s => s.sql.startsWith('UPDATE orders')), false);
+    assert.equal(client.statements.some(s => s.sql === 'COMMIT'), true);
+    assert.equal(client.released, true);
+  });
+}
+
+// 500 runtime cases: cancelled orders cannot be paid using an existing QR.
+for (let i = 1; i <= 500; i++) {
+  test('settlement rejects payment for cancelled order case ' + i, async () => {
+    const payment = pendingPayment(3000 + i);
+    const order = { ...unpaidOrder(payment), status: 'cancelled' };
+    const client = makeClient({
+      lookupRows: [payment],
+      orderRows: [order],
+      lockedPaymentRows: [payment],
+    });
+
+    await withClient(client, async () => {
+      await assert.rejects(
+        paymentService.manualConfirmPayment(payment.qr_id, 1, payment.restaurant_id),
+        /Cannot accept payment for a cancelled order/
+      );
+    });
+
+    assert.equal(client.statements.filter(s => s.sql.startsWith('UPDATE qr_payments')).length, 1);
+    assert.equal(client.statements.some(s => s.sql.startsWith('UPDATE orders')), false);
+    assert.equal(client.released, true);
+  });
+}
+
+// 500 runtime cases: an already-paid order must not be settled a second time.
+for (let i = 1; i <= 500; i++) {
+  test('settlement rejects payment when order is already paid case ' + i, async () => {
+    const payment = pendingPayment(4000 + i);
+    const order = {
+      ...unpaidOrder(payment),
+      payment_status: 'paid',
+      paid_amount: payment.amount,
+    };
+    const client = makeClient({
+      lookupRows: [payment],
+      orderRows: [order],
+      lockedPaymentRows: [payment],
+    });
+
+    await withClient(client, async () => {
+      await assert.rejects(
+        paymentService.manualConfirmPayment(payment.qr_id, 1, payment.restaurant_id),
+        /Order is already paid/
+      );
+    });
+
+    assert.equal(client.statements.filter(s => s.sql.startsWith('UPDATE')).length, 0);
+    assert.equal(client.statements.filter(s => s.sql.includes('INSERT INTO payment_transactions')).length, 0);
+    assert.equal(client.statements.at(-1).sql, 'ROLLBACK');
+    assert.equal(client.released, true);
+  });
+}
+
+// 500 runtime cases: a QR for an old balance cannot settle after the order total changes.
+for (let i = 1; i <= 500; i++) {
+  test('settlement rejects QR whose amount no longer matches outstanding balance case ' + i, async () => {
+    const payment = pendingPayment(5000 + i);
+    const order = {
+      ...unpaidOrder(payment),
+      total_amount: (Number(payment.amount) + 1).toFixed(2),
+      paid_amount: '0.00',
+    };
+    const client = makeClient({
+      lookupRows: [payment],
+      orderRows: [order],
+      lockedPaymentRows: [payment],
+    });
+
+    await withClient(client, async () => {
+      await assert.rejects(
+        paymentService.manualConfirmPayment(payment.qr_id, 1, payment.restaurant_id),
+        /QR amount no longer matches the order outstanding amount/
+      );
+    });
+
+    assert.equal(client.statements.filter(s => s.sql.startsWith('UPDATE')).length, 0);
+    assert.equal(client.statements.filter(s => s.sql.includes('INSERT INTO payment_transactions')).length, 0);
+    assert.equal(client.statements.at(-1).sql, 'ROLLBACK');
+    assert.equal(client.released, true);
+  });
+}
