@@ -93,13 +93,19 @@ async function createSupplier(restaurantId, data) {
 }
 
 async function updateSupplier(id, restaurantId, data) {
+  const hasOpeningBalance = data.opening_balance !== undefined && data.opening_balance !== null && data.opening_balance !== '';
+  const openingBalance = hasOpeningBalance ? Number(data.opening_balance) : null;
+  if (hasOpeningBalance && !Number.isFinite(openingBalance)) {
+    throw new Error('Invalid supplier opening balance');
+  }
+
   const result = await pool.query(`
     UPDATE suppliers SET
       name = $3,
       phone = $4,
       email = $5,
       address = $6,
-      opening_balance = $7,
+      opening_balance = COALESCE($7, opening_balance),
       is_active = COALESCE($8, is_active),
       updated_at = NOW()
     WHERE id = $1 AND restaurant_id = $2
@@ -111,7 +117,7 @@ async function updateSupplier(id, restaurantId, data) {
     data.phone || null,
     data.email || null,
     data.address || null,
-    Number(data.opening_balance || 0),
+    openingBalance,
     data.is_active
   ]);
   return result.rows[0] || null;
