@@ -39,6 +39,7 @@ const users = require('../models/userModel');
 const suppliers = require('../models/supplierModel');
 const reports = require('../models/reportModel');
 const orders = require('../models/orderModel');
+const deals = require('../models/dealModel');
 
 function reset(handler = async () => ({ rows: [] })) {
   calls.length = 0;
@@ -325,6 +326,38 @@ test('order items lookup tenant-filters through parent order', async () => {
   assert.match(q.sql, /INNER JOIN orders o ON o\.id = oi\.order_id/);
   assert.match(q.sql, /o\.restaurant_id = \$2/);
   assert.deepEqual(q.params, [4, 12]);
+});
+
+// DEAL MODEL: deal components must belong to the same restaurant.
+test('deal creation rejects a menu item from another restaurant before inserting the deal', async () => {
+  reset(() => rows([]));
+  await assert.rejects(
+    deals.createDeal('Test deal', 100, 'deal', null, null, 12, [
+      { menu_item_id: 999, variant_id: null, quantity: 1 }
+    ]),
+    error => error.code === 'INVALID_DEAL_ITEM'
+  );
+  assert.equal(sqlCalls(/INSERT INTO deals/).length, 0);
+  assert.equal(sqlCalls(/INSERT INTO deal_items/).length, 0);
+  assert.ok(sqlCalls(/^ROLLBACK$/).length);
+});
+
+test('deal creation rejects invalid component IDs and quantities before database writes', async () => {
+  reset();
+  await assert.rejects(
+    deals.createDeal('Test deal', 100, 'deal', null, null, 12, [
+      { menu_item_id: 999, variant_id: -2, quantity: 0 }
+    ]),
+    error => error.code === 'INVALID_DEAL_ITEM'
+  );
+  assert.equal(sqlCalls(/INSERT INTO deals|INSERT INTO deal_items/).length, 0);
+});
+
+test('deal read joins prevent cross-restaurant menu and variant data from being attached', () => {
+  const source = readSource('models/dealModel.js');
+  assert.match(source, /mi\\.restaurant_id = d\\.restaurant_id/);
+  assert.match(source, /miv\\.menu_item_id = mi\\.id/);
+  assert.match(source, /await validateDealItems\\(client, items, restaurantId\\)/);
 });
 
 // ROUTE POLICY CONTRACTS: protect role/plan policies against accidental route changes.
