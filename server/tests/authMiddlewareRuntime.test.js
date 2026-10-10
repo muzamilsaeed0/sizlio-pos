@@ -562,3 +562,86 @@ for (const jwtId of jwtIdValues) {
     });
   }
 }
+
+
+// BATCH 3: 200 runtime credential-precedence and cookie-parser cases.
+// Each combination invokes the real auth middleware with a valid DB user.
+const credentialMatrixToken = tokenFor();
+const credentialHeaders = [
+  undefined,
+  '',
+  'Bearer ' + credentialMatrixToken,
+  'Bearer  ' + credentialMatrixToken,
+  'Bearer ' + credentialMatrixToken + ' ',
+  'bearer ' + credentialMatrixToken,
+  'BEARER ' + credentialMatrixToken,
+  'Basic ' + credentialMatrixToken,
+  'Token ' + credentialMatrixToken,
+  credentialMatrixToken,
+  'Bearer',
+  'Bearer ',
+  'Bearer invalid',
+  'Bearer invalid.token.value',
+  'Bearer ' + credentialMatrixToken + '.tampered',
+  'Bearer\t' + credentialMatrixToken,
+  ' Bearer ' + credentialMatrixToken,
+  'Bearer ' + credentialMatrixToken + ' extra',
+  'Basic abc',
+  'Digest abc',
+  'Bearer null',
+  'Bearer undefined',
+  'Bearer 0',
+  'Bearer %' + credentialMatrixToken,
+  'Bearer ' + credentialMatrixToken.toUpperCase()
+];
+const credentialCookies = [
+  null,
+  'sizlio_session=' + credentialMatrixToken,
+  'sizlio_session=' + encodeURIComponent(credentialMatrixToken),
+  'other_cookie=abc',
+  'sizlio_session=bad',
+  'sizlio_session=',
+  'sizlio_session=%E0%A4%A',
+  'sizlio_session=bad; sizlio_session=' + credentialMatrixToken
+];
+
+for (const authHeader of credentialHeaders) {
+  for (const cookieHeader of credentialCookies) {
+    test('runtime credential precedence matrix: auth=' + String(authHeader).slice(0, 26) + ' cookie=' + String(cookieHeader).slice(0, 24), async () => {
+      dbError = null;
+      dbRows = [makeUser()];
+      queryCount = 0;
+      const headers = {};
+      if (authHeader !== undefined) headers.authorization = authHeader;
+      if (cookieHeader !== null) headers.cookie = cookieHeader;
+      let malformedCookie = false;
+      let cookieToken = null;
+      try {
+        cookieToken = (cookieHeader || '')
+          .split(';')
+          .map(part => part.trim())
+          .filter(part => part.startsWith('sizlio_session='))
+          .map(part => decodeURIComponent(part.slice('sizlio_session='.length)))[0] || null;
+      } catch {
+        malformedCookie = true;
+      }
+      const bearerToken = authHeader && authHeader.startsWith('Bearer ')
+        ? authHeader.slice(7).trim()
+        : null;
+      const selectedToken = cookieToken || bearerToken;
+      const expectedAllowed = !malformedCookie && selectedToken === credentialMatrixToken;
+      const req = {
+        headers,
+        method: 'GET',
+        originalUrl: '/api/orders',
+        get() { return undefined; }
+      };
+      const res = makeResponse();
+      let nextCalled = false;
+      await authMiddleware(req, res, () => { nextCalled = true; });
+      assert.equal(nextCalled, expectedAllowed);
+      assert.equal(res.statusCode, expectedAllowed ? 200 : 401);
+      assert.equal(queryCount, expectedAllowed ? 1 : 0);
+    });
+  }
+}
