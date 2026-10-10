@@ -27,14 +27,19 @@ function loadService(t, scenario) {
             if (['BEGIN', 'COMMIT', 'ROLLBACK'].includes(q)) return { rows: [] };
 
             if (q.includes('FROM orders') && q.includes('FOR UPDATE')) {
-                return { rows: scenario === 'missing-order' ? [] : [{ ...order }] };
+                if (scenario === 'missing-order') return { rows: [] };
+                const scenarioOrder = { ...order };
+                if (scenario === 'cancelled-order') scenarioOrder.status = 'cancelled';
+                if (scenario === 'paid-order') scenarioOrder.payment_status = 'paid';
+                if (scenario === 'no-balance') scenarioOrder.paid_amount = '900.00';
+                return { rows: [scenarioOrder] };
             }
             if (q.includes('FROM qr_payments') && q.includes("status = 'pending'")) {
-                if (scenario === 'reusable-qr') {
+                if (scenario === 'reusable-qr' || scenario === 'stale-qr') {
                     return { rows: [{
                         id: 55,
                         qr_id: 'QR-existing',
-                        amount: '700.00',
+                        amount: scenario === 'reusable-qr' ? '700.00' : '500.00',
                         qr_string: 'RAAST://existing',
                         qr_image_url: 'https://example.test/qr.png',
                         expires_at: new Date(Date.now() + 300000),
@@ -126,5 +131,54 @@ test('QR creation reuses a valid pending QR only when it matches outstanding bal
     assert.equal(result.amount, 700);
     assert.equal(result.reused, true);
     assert.equal(calls.some((c) => c.sql.startsWith('INSERT INTO qr_payments')), false);
+    assert.ok(calls.some((c) => c.sql === 'COMMIT'));
+});
+
+
+test('QR creation rejects cancelled orders before inserting a QR', async (t) => {
+    const { service, calls } = loadService(t, 'cancelled-order');
+    await assert.rejects(
+        service.createQrPayment({ restaurantId: 3, orderId: 43 }),
+        /cancelled order/
+    );
+    assert.equal(calls.some((c) => c.sql.startsWith('INSERT INTO qr_payments')), false);
+    assert.ok(calls.some((c) => c.sql === 'ROLLBACK'));
+});
+
+test('QR creation rejects orders already marked paid', async (t) => {
+    const { service, calls } = loadService(t, 'paid-order');
+    await assert.rejects(
+        service.createQrPayment({ restaurantId: 3, orderId: 43 }),
+        /Order is already paid/
+    );
+    assert.equal(calls.some((c) => c.sql.startsWith('INSERT INTO qr_payments')), false);
+});
+
+test('QR creation rejects an order with no outstanding balance', async (t) => {
+    const { service, calls } = loadService(t, 'no-balance');
+    await assert.rejects(
+        service.createQrPayment({ restaurantId: 3, orderId: 43 }),
+        /No outstanding amount remains/
+    );
+    assert.equal(calls.some((c) => c.sql.startsWith('INSERT INTO qr_payments')), false);
+});
+
+test('QR creation cancels a stale pending QR before creating one for the current balance', async (t) => {
+    const { service, calls } = loadService(t, 'stale-qr');
+    const result = await service.createQrPayment({
+        restaurantId: 3,
+        orderId: 43,
+        amount: 500,
+    });
+    const staleCancellation = calls.find((c) =>
+        c.sql.startsWith('UPDATE qr_payments') &&
+        c.sql.includes("SET status = 'cancelled'")
+    );
+    const insert = calls.find((c) => c.sql.startsWith('INSERT INTO qr_payments'));
+    assert.ok(staleCancellation, 'stale QR should be cancelled');
+    assert.ok(insert, 'new QR should be inserted');
+    assert.equal(result.amount, 700);
+    assert.equal(Number(insert.params[4]), 700);
+    assert.equal(result.reused, false);
     assert.ok(calls.some((c) => c.sql === 'COMMIT'));
 });
