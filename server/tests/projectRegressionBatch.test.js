@@ -328,6 +328,28 @@ test('order items lookup tenant-filters through parent order', async () => {
   assert.deepEqual(q.params, [4, 12]);
 });
 
+// FBR: super-admin order access is explicit, while tenant lookups stay fail-closed.
+test('super-admin FBR lookup uses an explicit validated global order lookup', async () => {
+  reset(() => rows([{ id: 4, restaurant_id: 88 }]));
+  const result = await orders.getOrderByIdForSuperAdmin(4);
+  assert.equal(result.restaurant_id, 88);
+  const q = sqlCalls(/SELECT \\* FROM orders WHERE id = \\$1/)[0];
+  assert.ok(q);
+  assert.deepEqual(q.params, [4]);
+});
+test('super-admin global order lookup rejects invalid IDs without querying', async () => {
+  reset();
+  assert.equal(await orders.getOrderByIdForSuperAdmin('bad'), null);
+  assert.equal(await orders.getOrderByIdForSuperAdmin(0), null);
+  assert.equal(calls.length, 0);
+});
+test('FBR submit and status route through explicit super-admin lookup', () => {
+  const source = readSource('controllers/fbrController.js');
+  assert.match(source, /getOrderByIdForSuperAdmin/);
+  assert.equal((source.match(/await getOrderByIdForSuperAdmin\\(orderId\\)/g) || []).length, 2);
+  assert.doesNotMatch(source, /getOrderById\\(\\s*orderId,\\s*req\\.user\\?\.role === 'super_admin' \\? null/);
+});
+
 // DEAL MODEL: deal components must belong to the same restaurant.
 test('deal creation rejects a menu item from another restaurant before inserting the deal', async () => {
   reset(() => rows([]));
