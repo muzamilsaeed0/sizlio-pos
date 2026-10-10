@@ -3,6 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('crypto');
+process.env.PAYMENT_PROVIDER = 'manual';
 const pool = require('../config/db');
 const paymentService = require('../services/paymentService');
 
