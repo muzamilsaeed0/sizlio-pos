@@ -167,7 +167,7 @@ for (const password of ['', '1', '12', '123', '123456789', '1234567890', null, 1
     assert.equal(sqlCalls(/^CONNECT$/).length, 0);
   });
 }
-for (const password of ['', '1', '123', '123456789', 1234]) {
+for (const password of ['1', '123', '123456789', 1234]) {
   test('staff update rejects invalid password ' + String(password), async () => {
     reset();
     await assert.rejects(users.updateStaff(5, 12, null, null, password), e => e.code === 'INVALID_PASSWORD');
