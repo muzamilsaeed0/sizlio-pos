@@ -120,10 +120,15 @@ test('inventory update ignores client attempts to change stock and tenant column
   const q = sqlCalls(/UPDATE inventory_items/)[0];
   assert.ok(q);
   assert.match(q.sql, /SET name = \$1/);
-  assert.doesNotMatch(q.sql, /stock_quantity\s*=/);
-  assert.doesNotMatch(q.sql.split(/WHERE/i)[0], /restaurant_id\s*=/);
+  const clauses = q.sql.split(/\bWHERE\b/i);
+  const setClause = clauses[0];
+  const whereClause = clauses.slice(1).join(' WHERE ');
+
+  assert.doesNotMatch(setClause, /\bstock_quantity\s*=/i);
+  assert.doesNotMatch(setClause, /(?:^|,)\s*restaurant_id\s*=/i);
+  assert.doesNotMatch(setClause, /(?:^|,)\s*id\s*=/i);
+  assert.match(whereClause, /\bid\s*=\s*\$2\s+AND\s+restaurant_id\s*=\s*\$3/i);
   assert.deepEqual(q.params, ['Renamed', 8, 12]);
-  assert.match(q.sql, /WHERE id = \$2 AND restaurant_id = \$3/);
 });
 test('inventory update validates supplier ID before querying', async () => {
   reset();
@@ -341,7 +346,7 @@ const routeCases = [
   ['deal create requires manager/counter', 'routes/dealRoutes.js', /router\.post\([\s\S]*?authorize\('manager', 'counter'\)[\s\S]*?createDeal/],
   ['wholesale sale requires staff role policy', 'routes/wholesaleRoutes.js', /const staff = authorize\('counter', 'manager'\)/],
   ['delivery list is rider-only', 'routes/orderRoutes.js', /router\.get\([\s\S]*?\/my-deliveries[\s\S]*?authorize\([\s\S]*?'delivery'[\s\S]*?\)[\s\S]*?getMyDeliveryOrders/],
-  ['rider self-summary is rider-only', 'routes/orderRoutes.js', /router\.get\([\s\S]*?['\"]\/rider\/my-summary['\"][\s\S]*?authMiddleware[\s\S]*?authorize\('delivery'\)/],
+  ['rider self-summary is rider-only', 'routes/orderRoutes.js', /router\.get\(\s*['\"]\/rider\/my-summary['\"][\s\S]*?authMiddleware[\s\S]*?authorize\(\s*['\"]delivery['\"]\s*\)[\s\S]*?getMyRiderSummary\s*\)/],
   ['QR payment endpoints use auth middleware', 'routes/paymentRoutes.js', /authMiddleware/],
   ['POS charge settings permit manager and Counter Lite', 'routes/settingsRoutes.js', /router\.put\('\/pos', managerOrCounter, settingsController\.savePosSettings\)/],
   ['Raast QR mutation remains manager-only', 'routes/settingsRoutes.js', /router\.put\('\/raast-qr', managerOnly, settingsController\.saveRaastQr\)/],
