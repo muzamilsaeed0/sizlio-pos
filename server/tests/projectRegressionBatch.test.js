@@ -121,7 +121,7 @@ test('inventory update ignores client attempts to change stock and tenant column
   assert.ok(q);
   assert.match(q.sql, /SET name = \$1/);
   assert.doesNotMatch(q.sql, /stock_quantity\s*=/);
-  assert.doesNotMatch(q.sql, /SET[\s\S]*?restaurant_id\s*=/);
+  assert.doesNotMatch(q.sql.split(/WHERE/i)[0], /restaurant_id\s*=/);
   assert.deepEqual(q.params, ['Renamed', 8, 12]);
   assert.match(q.sql, /WHERE id = \$2 AND restaurant_id = \$3/);
 });
