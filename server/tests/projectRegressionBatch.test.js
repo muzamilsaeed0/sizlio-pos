@@ -355,9 +355,9 @@ test('deal creation rejects invalid component IDs and quantities before database
 
 test('deal read joins prevent cross-restaurant menu and variant data from being attached', () => {
   const source = readSource('models/dealModel.js');
-  assert.match(source, /mi\\.restaurant_id = d\\.restaurant_id/);
-  assert.match(source, /miv\\.menu_item_id = mi\\.id/);
-  assert.match(source, /await validateDealItems\\(client, items, restaurantId\\)/);
+  assert.match(source, /mi\.restaurant_id = d\.restaurant_id/);
+  assert.match(source, /miv\.menu_item_id = mi\.id/);
+  assert.match(source, /await validateDealItems\(client, items, restaurantId\)/);
 });
 
 // ROUTE POLICY CONTRACTS: protect role/plan policies against accidental route changes.
