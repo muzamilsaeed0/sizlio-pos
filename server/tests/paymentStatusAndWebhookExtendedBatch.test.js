@@ -54,9 +54,9 @@ for (let i = 1; i <= 2500; i++) {
         return { rows: [row] };
       }
       if (calls === 2) {
-        assert.match(sql, /^UPDATE\\s+qr_payments/i);
-        assert.match(sql, /status\\s*=\\s*'pending'/i);
-        assert.match(sql, /expires_at\\s*<=\\s*NOW\\(\\)/i);
+        assert.match(sql, /^UPDATE\s+qr_payments/i);
+        assert.match(sql, /status\s*=\s*'pending'/i);
+        assert.match(sql, /expires_at\s*<=\s*NOW\(\)/i);
         assert.deepEqual(params, [qrId, restaurantId]);
         return { rows: [] };
       }
