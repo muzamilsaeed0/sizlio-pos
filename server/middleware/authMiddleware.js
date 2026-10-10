@@ -157,7 +157,9 @@ const authorize = (...roles) => {
 
   return (req, res, next) => {
 
-    if (!roles.includes(req.user.role)) {
+    // Defense in depth: authorization must fail closed even if a route
+    // accidentally omits authMiddleware or req.user is malformed.
+    if (!req.user || typeof req.user.role !== 'string' || !roles.includes(req.user.role)) {
 
       return res.status(403).json({
         success: false,
