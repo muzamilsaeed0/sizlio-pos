@@ -38,6 +38,13 @@ function makeClient({ lookupRows, orderRows, lockedPaymentRows }) {
         return { rows: lockedPaymentRows };
       }
 
+      // The expiry and cancellation branches intentionally persist a terminal
+      // QR status before returning their business-rule error. The mock must
+      // accept those UPDATE statements rather than treating them as unknown SQL.
+      if (/^(UPDATE|INSERT INTO)\\b/i.test(normalized)) {
+        return { rows: [] };
+      }
+
       throw new Error('Unexpected SQL in payment settlement test: ' + normalized);
     },
     release() { released = true; },
