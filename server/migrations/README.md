@@ -10,7 +10,7 @@ Run migrations as an explicit deployment step:
 npm run migrate
 ```
 
-The runner stores applied migrations in `public.schema_migrations`, records a SHA-256 checksum for every applied file, and uses a PostgreSQL advisory lock so two deploys cannot migrate the same database concurrently.
+The runner stores applied migrations in `public.schema_migrations`, records a SHA-256 checksum for every applied file, and uses a PostgreSQL advisory lock so two deploys cannot migrate the same database concurrently. Each migration's schema SQL and its history row are committed in the **same database transaction**, so a crash cannot leave schema changes committed but the migration unrecorded.
 
 ## Commands
 
