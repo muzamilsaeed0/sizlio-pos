@@ -406,7 +406,7 @@ const routeCases = [
   ['POS charge settings permit manager and Counter Lite', 'routes/settingsRoutes.js', /router\.put\('\/pos', managerOrCounter, settingsController\.savePosSettings\)/],
   ['POS settings reject malformed numeric values instead of zeroing charges', 'controllers/settingsController.js', /new Error\('Invalid ' \+ field\)[\s\S]*?Number\.isFinite\(n\)[\s\S]*?statusCode: 400/],
   ['POS percentage charges are capped at 100 percent', 'controllers/settingsController.js', /gst_percent:\s*num\('gst_percent', 100\)[\s\S]*?card_charge:\s*num\('card_charge', 100\)[\s\S]*?bank_charge:\s*num\('bank_charge', 100\)/],
-  ['POS settings reject unknown discount types', 'controllers/settingsController.js', /Invalid discount type[\s\S]*?\['none', 'percent', 'fixed'\]/],
+  ['POS settings reject unknown discount types', 'controllers/settingsController.js', /\['none', 'percent', 'fixed'\]\.includes\(body\.discount_type\)[\s\S]*?Invalid discount type/],
   ['Raast QR mutation remains manager-only', 'routes/settingsRoutes.js', /router\.put\('\/raast-qr', managerOnly, settingsController\.saveRaastQr\)/],
   ['table QR token endpoint checks tenant access', 'controllers/publicController.js', /req\.user\.role !== 'super_admin' && Number\(req\.user\.restaurant_id\) !== restaurantId/],
   ['table QR tokens use timing-safe comparison', 'controllers/publicController.js', /crypto\.timingSafeEqual/],
