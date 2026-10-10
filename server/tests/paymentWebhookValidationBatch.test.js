@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const { validateSuccessfulWebhook } = require('../services/paymentWebhookValidation');
 
 // Exercise the actual payment webhook validator with distinct runtime inputs.
-for (let i = 1; i <= 400; i++) {
+for (let i = 1; i <= 430; i++) {
   const amount = (i + 0.25).toFixed(2);
   const transactionId = `provider-txn-${String(i).padStart(5, '0')}`;
 
