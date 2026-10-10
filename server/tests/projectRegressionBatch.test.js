@@ -444,3 +444,12 @@ test('supplier payment ledger insert holds tenant-scoped supplier lock inside a 
   assert.match(fn, /await client\.query\('ROLLBACK'\)/);
   assert.match(fn, /client\.release\(\)/);
 });
+
+
+test('Cafe Lite staff creation is server-restricted to Counter Lite and Rider roles', () => {
+  const model = readSource('models/userModel.js');
+  const controller = readSource('controllers/userController.js');
+  assert.match(model, /restaurant\.plan === 'Cafe Lite'[\s\S]*?!\['counter', 'delivery'\]\.includes\(role\)/);
+  assert.match(model, /PLAN_ROLE_NOT_ALLOWED/);
+  assert.match(controller, /err\.code === 'PLAN_ROLE_NOT_ALLOWED'[\s\S]*?res\.status\(403\)/);
+});
