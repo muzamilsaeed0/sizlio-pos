@@ -335,14 +335,6 @@ async function listPayments(supplierId, restaurantId, filters = {}) {
 }
 
 async function createPayment(supplierId, restaurantId, data, userId) {
-  const supplierCheck = await pool.query(
-    `SELECT id FROM suppliers WHERE id = $1 AND restaurant_id = $2 AND is_active = true FOR UPDATE`,
-    [supplierId, restaurantId]
-  );
-  if (!supplierCheck.rowCount) {
-    throw new Error('Supplier not found or inactive');
-  }
-
   const amount = Number(data.amount);
   if (!Number.isFinite(amount) || amount <= 0) {
     throw new Error('Payment amount must be greater than 0');
@@ -358,23 +350,46 @@ async function createPayment(supplierId, restaurantId, data, userId) {
     throw new Error('Invalid payment date');
   }
 
-  const result = await pool.query(`
-    INSERT INTO supplier_payments
-      (restaurant_id, supplier_id, payment_date, amount,
-       payment_method, reference_no, note, created_by_user_id)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    RETURNING *
-  `, [
-    restaurantId,
-    supplierId,
-    paymentDate,
-    Number(amount.toFixed(2)),
-    paymentMethod,
-    data.reference_no || null,
-    data.note || null,
-    userId || null
-  ]);
-  return result.rows[0];
+  // Hold the tenant-scoped supplier lock until the payment ledger row commits.
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const supplierCheck = await client.query(
+      `SELECT id FROM suppliers
+       WHERE id = $1 AND restaurant_id = $2 AND is_active = true
+       FOR UPDATE`,
+      [supplierId, restaurantId]
+    );
+    if (!supplierCheck.rowCount) {
+      throw new Error('Supplier not found or inactive');
+    }
+
+    const result = await client.query(`
+      INSERT INTO supplier_payments
+        (restaurant_id, supplier_id, payment_date, amount,
+         payment_method, reference_no, note, created_by_user_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+    `, [
+      restaurantId,
+      supplierId,
+      paymentDate,
+      Number(amount.toFixed(2)),
+      paymentMethod,
+      data.reference_no || null,
+      data.note || null,
+      userId || null
+    ]);
+
+    await client.query('COMMIT');
+    return result.rows[0];
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch {}
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 async function deletePayment(id, restaurantId) {
