@@ -387,3 +387,83 @@ test('runtime authorization: missing or non-string role is denied without throwi
     assert.equal(res.body.message, 'Access denied');
   }
 });
+
+
+// Extended runtime matrix: cookie-origin protection across HTTP methods and
+// origin edge cases. These invoke authMiddleware with a real signed JWT and DB mock.
+const originMatrixMethods = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE', 'TRACE'];
+const originMatrixOrigins = [
+  undefined,
+  '',
+  'https://sizlio.com',
+  'https://www.sizlio.com',
+  'https://evil.example',
+  'http://sizlio.com',
+  'https://sizlio.com.evil.example',
+  'https://sizlio.com/',
+  'null',
+  'https://SIZLIO.com'
+];
+
+for (const method of originMatrixMethods) {
+  for (const origin of originMatrixOrigins) {
+    test('runtime auth origin matrix: method=' + method + ' origin=' + String(origin), async () => {
+      dbError = null;
+      dbRows = [makeUser()];
+      queryCount = 0;
+      const result = await invoke({
+        cookie: 'sizlio_session=' + encodeURIComponent(tokenFor()),
+        method,
+        path: '/api/orders',
+        origin
+      });
+      const safeMethod = ['GET', 'HEAD', 'OPTIONS'].includes(method);
+      const trustedOrigin = origin === 'https://sizlio.com' || origin === 'https://www.sizlio.com';
+      const expectedAllowed = safeMethod || trustedOrigin;
+      assert.equal(result.nextCalled, expectedAllowed);
+      if (expectedAllowed) {
+        assert.equal(result.res.statusCode, 200);
+        assert.equal(queryCount, 1);
+      } else {
+        assert.equal(result.res.statusCode, 403);
+        assert.equal(result.res.body.message, 'Request origin rejected');
+        assert.equal(queryCount, 0, 'reject origin before database access');
+      }
+    });
+  }
+}
+
+// Extended runtime matrix: first-password gate must permit only the exact
+// approved POST endpoints while rejecting all other method/path combinations.
+const passwordGateMethods = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE', 'TRACE'];
+const passwordGatePaths = [
+  '/api/orders',
+  '/api/auth/first-password',
+  '/api/auth/first-password/',
+  '/api/auth/first-password?next=/api/orders',
+  '/api/auth/logout',
+  '/api/auth/logout/',
+  '/api/auth/login',
+  '/api/auth/first-password/reset'
+];
+
+for (const method of passwordGateMethods) {
+  for (const path of passwordGatePaths) {
+    test('runtime auth password gate matrix: method=' + method + ' path=' + path, async () => {
+      dbError = null;
+      dbRows = [makeUser({ must_change_password: true })];
+      const result = await invoke({ token: tokenFor(), method, path });
+      const normalizedPath = path.split('?')[0];
+      const allowed =
+        method === 'POST' &&
+        (normalizedPath === '/api/auth/first-password' || normalizedPath === '/api/auth/logout');
+      assert.equal(result.nextCalled, allowed);
+      if (allowed) {
+        assert.equal(result.res.statusCode, 200);
+      } else {
+        assert.equal(result.res.statusCode, 403);
+        assert.equal(result.res.body.code, 'PASSWORD_CHANGE_REQUIRED');
+      }
+    });
+  }
+}
