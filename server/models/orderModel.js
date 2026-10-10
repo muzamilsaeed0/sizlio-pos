@@ -6592,16 +6592,20 @@ END AS shift_active,
 // GET ORDER BY ID (for FBR submission)
 // ======================================================
 
-const getOrderById = async (orderId, restaurantId = null) => {
-  let query = `SELECT * FROM orders WHERE id = $1`;
-  const params = [orderId];
+const getOrderById = async (orderId, restaurantId) => {
+  const tenantId = Number(restaurantId);
+  const id = Number(orderId);
 
-  if (restaurantId) {
-    query += ` AND restaurant_id = $2`;
-    params.push(restaurantId);
+  // Fail closed: an order lookup must never run without tenant scope.
+  if (!Number.isInteger(tenantId) || tenantId <= 0 ||
+      !Number.isInteger(id) || id <= 0) {
+    return null;
   }
 
-  const result = await pool.query(query, params);
+  const result = await pool.query(
+    `SELECT * FROM orders WHERE id = $1 AND restaurant_id = $2`,
+    [id, tenantId]
+  );
   return result.rows[0] || null;
 };
 
@@ -6609,7 +6613,16 @@ const getOrderById = async (orderId, restaurantId = null) => {
 // GET ORDER ITEMS BY ORDER ID (for FBR submission)
 // ======================================================
 
-const getOrderItemsByOrderId = async (orderId, restaurantId = null) => {
+const getOrderItemsByOrderId = async (orderId, restaurantId) => {
+  const tenantId = Number(restaurantId);
+  const id = Number(orderId);
+
+  // Do not permit unscoped item reads, even if a future caller omits the tenant.
+  if (!Number.isInteger(tenantId) || tenantId <= 0 ||
+      !Number.isInteger(id) || id <= 0) {
+    return [];
+  }
+
   const result = await pool.query(
     `SELECT
        oi.id,
@@ -6625,9 +6638,10 @@ const getOrderItemsByOrderId = async (orderId, restaurantId = null) => {
      INNER JOIN menu_items m ON m.id = oi.menu_item_id
      LEFT JOIN menu_item_variants miv ON miv.id = oi.variant_id
      WHERE oi.order_id = $1
-       AND ($2::integer IS NULL OR o.restaurant_id = $2)
+       AND o.restaurant_id = $2
+       AND m.restaurant_id = $2
      ORDER BY oi.id`,
-    [orderId, restaurantId]
+    [id, tenantId]
   );
   return result.rows;
 };
