@@ -89,6 +89,76 @@ function assertTransactional(migration) {
   }
 }
 
+function getTransactionalBody(migration) {
+  assertTransactional(migration);
+
+  // Strip only boundary comments and the outer transaction statements so the
+  // runner can atomically commit the schema changes and migration history row.
+  let sql = migration.sql.trim();
+  while (true) {
+    const trimmed = sql.trimStart();
+    if (trimmed.startsWith("--")) {
+      const newline = trimmed.indexOf("\n");
+      sql = newline === -1 ? "" : trimmed.slice(newline + 1);
+      continue;
+    }
+    if (trimmed.startsWith("/*")) {
+      const end = trimmed.indexOf("*/", 2);
+      if (end === -1) throw new Error("Unterminated leading comment in " + migration.name);
+      sql = trimmed.slice(end + 2);
+      continue;
+    }
+    sql = trimmed;
+    break;
+  }
+
+  sql = sql.replace(/^BEGIN\s*;/i, "");
+  // Remove trailing comments before removing the final COMMIT statement.
+  while (true) {
+    const trimmed = sql.trimEnd();
+    const lineStart = trimmed.lastIndexOf("\n") + 1;
+    if (trimmed.slice(lineStart).trim().startsWith("--")) {
+      sql = trimmed.slice(0, lineStart);
+      continue;
+    }
+    if (trimmed.endsWith("*/")) {
+      const commentStart = trimmed.lastIndexOf("/*");
+      if (commentStart !== -1) {
+        sql = trimmed.slice(0, commentStart);
+        continue;
+      }
+    }
+    sql = trimmed;
+    break;
+  }
+  sql = sql.replace(/COMMIT\s*;?\s*$/i, "").trim();
+
+  if (!sql) throw new Error("Migration " + migration.name + " has an empty transaction body.");
+  return sql;
+}
+
+async function runMigrationAndRecord(client, migration, baseline = false) {
+  const body = getTransactionalBody(migration);
+  await client.query("BEGIN");
+  try {
+    await client.query(body);
+    await client.query(
+      `INSERT INTO public.schema_migrations
+         (version, name, checksum, baseline)
+       VALUES ($1, $2, $3, $4)`,
+      [migration.version, migration.name, migration.checksum, baseline]
+    );
+    await client.query("COMMIT");
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackError) {
+      console.error("Could not roll back migration transaction:", rollbackError.message);
+    }
+    throw err;
+  }
+}
+
 async function ensureHistoryTable(client) {
   await client.query(`
     CREATE TABLE IF NOT EXISTS public.schema_migrations (
@@ -169,18 +239,8 @@ async function apply(client, migrations) {
   }
 
   for (const migration of pending) {
-    assertTransactional(migration);
     console.log(`⏳ Applying ${migration.name}...`);
-
-    await client.query(migration.sql);
-
-    await client.query(
-      `INSERT INTO public.schema_migrations
-         (version, name, checksum, baseline)
-       VALUES ($1, $2, $3, FALSE)`,
-      [migration.version, migration.name, migration.checksum]
-    );
-
+    await runMigrationAndRecord(client, migration, false);
     console.log(`✅ Applied ${migration.name}`);
   }
 }
@@ -217,15 +277,8 @@ async function applyOne(client, migrations, versionArg) {
     );
   }
 
-  assertTransactional(migration);
   console.log(`⏳ Applying only ${migration.name}...`);
-  await client.query(migration.sql);
-  await client.query(
-    `INSERT INTO public.schema_migrations
-       (version, name, checksum, baseline)
-     VALUES ($1, $2, $3, FALSE)`,
-    [migration.version, migration.name, migration.checksum]
-  );
+  await runMigrationAndRecord(client, migration, false);
   console.log(`✅ Applied ${migration.name}`);
 }
 
