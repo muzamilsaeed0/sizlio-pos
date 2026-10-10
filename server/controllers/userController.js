@@ -58,6 +58,14 @@ exports.addStaff = async (req, res) => {
       return res.status(409).json({ success: false, message: 'Username already taken' });
     }
 
+    if (err.code === 'PLAN_ROLE_NOT_ALLOWED') {
+      return res.status(403).json({
+        success: false,
+        code: err.code,
+        message: err.message
+      });
+    }
+
     if (err.code === 'STAFF_LIMIT_REACHED') {
       return res.status(403).json({
         success: false,
