@@ -402,6 +402,7 @@ const routeCases = [
   ['delivery list is rider-only', 'routes/orderRoutes.js', /router\.get\([\s\S]*?\/my-deliveries[\s\S]*?authorize\([\s\S]*?'delivery'[\s\S]*?\)[\s\S]*?getMyDeliveryOrders/],
   ['rider self-summary is rider-only', 'routes/orderRoutes.js', /router\.get\(\s*['\"]\/rider\/my-summary['\"][\s\S]*?authMiddleware[\s\S]*?authorize\(\s*['\"]delivery['\"]\s*\)[\s\S]*?getMyRiderSummary\s*\)/],
   ['QR payment endpoints use auth middleware', 'routes/paymentRoutes.js', /authMiddleware/],
+  ['manual QR payment confirmation is manager-only', 'routes/paymentRoutes.js', /router\.post\('\/qr\/manual-confirm\/\:qrId', authMiddleware, authorize\('manager'\)/],
   ['POS charge settings permit manager and Counter Lite', 'routes/settingsRoutes.js', /router\.put\('\/pos', managerOrCounter, settingsController\.savePosSettings\)/],
   ['Raast QR mutation remains manager-only', 'routes/settingsRoutes.js', /router\.put\('\/raast-qr', managerOnly, settingsController\.saveRaastQr\)/],
   ['table QR token endpoint checks tenant access', 'controllers/publicController.js', /req\.user\.role !== 'super_admin' && Number\(req\.user\.restaurant_id\) !== restaurantId/],
