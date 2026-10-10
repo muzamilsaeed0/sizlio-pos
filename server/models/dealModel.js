@@ -117,8 +117,10 @@ const getDealById = async (id, restaurantId) => {
       ON di.deal_id = d.id
     LEFT JOIN menu_items mi
       ON mi.id = di.menu_item_id
+     AND mi.restaurant_id = d.restaurant_id
     LEFT JOIN menu_item_variants miv
       ON miv.id = di.variant_id
+     AND miv.menu_item_id = mi.id
     WHERE d.id = $1
       AND d.restaurant_id = $2
       AND d.active = true
