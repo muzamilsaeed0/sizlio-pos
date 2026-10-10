@@ -460,3 +460,12 @@ test('Superadmin Cafe Lite summaries show only Counter Lite and Rider roles', ()
   assert.match(page, /r\.plan === 'Cafe Lite'[\s\S]*?Counter Lite:[\s\S]*?delivery_rider_count/);
   assert.match(page, /plan === 'Cafe Lite' \? 'Counter Lite' : 'Counter'/);
 });
+
+
+test('Superadmin Cafe Lite member form offers only Counter Lite and Rider roles', () => {
+  const page = readSource('public/superadmin.html');
+  assert.match(page, /<option value="counter">Counter<\/option>/);
+  assert.match(page, /<option value="delivery">Delivery Rider<\/option>/);
+  assert.match(page, /plan === 'Cafe Lite'[\s\S]*?\['counter', 'delivery'\]\.includes\(role\)/);
+  assert.match(page, /role === 'delivery' \? 'rider' : role/);
+});
