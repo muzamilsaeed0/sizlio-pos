@@ -30,7 +30,7 @@ function loadService(t, scenario) {
 
     const poolMock = {
         async query(sql, params) {
-            const q = String(sql).replace(/\\s+/g, ' ').trim();
+            const q = String(sql).replace(/\s+/g, ' ').trim();
             calls.push({ sql: q, params });
 
             if (q.startsWith('SELECT status, paid_at')) {
