@@ -543,6 +543,16 @@ async function handleWebhook({ headers, body, rawBody = null }) {
         throw new Error('Missing reference in webhook');
     }
 
+    if (!['SUCCESS', 'PAID', 'FAILED', 'PENDING', 'PROCESSING'].includes(normalizedStatus)) {
+        throw new Error('Unsupported webhook status');
+    }
+
+    // A provider may send non-final updates. Acknowledge them explicitly
+    // without changing payment or order state.
+    if (normalizedStatus === 'PENDING' || normalizedStatus === 'PROCESSING') {
+        return { ok: true, ignored: true };
+    }
+
     if (normalizedStatus === 'SUCCESS' || normalizedStatus === 'PAID') {
         // A signed success callback must include the actual settled amount and
         // the provider's unique transaction ID. Never infer a bank transfer's
