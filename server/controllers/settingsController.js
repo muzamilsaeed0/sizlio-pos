@@ -54,29 +54,34 @@ exports.savePosSettings = async (req, res) => {
 
     const body = req.body || {};
 
-    // Validate + normalize
-    const num = (v, def = 0) => {
-      const n = Number(v);
-      return Number.isFinite(n) && n >= 0 ? n : def;
+    // Reject malformed values instead of silently replacing them with zero.
+    // Silent fallback can unexpectedly erase a restaurant's existing charges.
+    const num = (field, max = null) => {
+      if (body[field] === undefined) return 0;
+      const raw = body[field];
+      if (raw === null || (typeof raw === 'string' && raw.trim() === '')) {
+        throw Object.assign(new Error('Invalid ' + field), { statusCode: 400 });
+      }
+      const n = Number(raw);
+      if (!Number.isFinite(n) || n < 0 || (max !== null && n > max)) {
+        throw Object.assign(new Error('Invalid ' + field), { statusCode: 400 });
+      }
+      return n;
     };
 
-    const discountType = ['none', 'percent', 'fixed'].includes(body.discount_type)
-      ? body.discount_type
-      : 'none';
-
-    const discountValue = num(body.discount_value, 0);
-
-    if (discountType === 'percent' && discountValue > 100) {
-      return res.status(400).json({ success: false, message: 'Discount % cannot exceed 100' });
+    if (body.discount_type !== undefined && !['none', 'percent', 'fixed'].includes(body.discount_type)) {
+      return res.status(400).json({ success: false, message: 'Invalid discount type' });
     }
+    const discountType = body.discount_type === undefined ? 'none' : body.discount_type;
+    const discountValue = num('discount_value', discountType === 'percent' ? 100 : null);
 
     const settings = {
-      gst_percent:       num(body.gst_percent, 0),
-      tax_percent:       num(body.tax_percent, 0),
-      delivery_charge:   num(body.delivery_charge, 0),
-      dine_charge:       num(body.dine_charge, 0),
-      card_charge:       num(body.card_charge, 0),
-      bank_charge:       num(body.bank_charge, 0),
+      gst_percent:       num('gst_percent', 100),
+      tax_percent:       num('tax_percent', 100),
+      delivery_charge:   num('delivery_charge'),
+      dine_charge:       num('dine_charge'),
+      card_charge:       num('card_charge', 100),
+      bank_charge:       num('bank_charge', 100),
       discount_enabled:  !!body.discount_enabled,
       discount_type:     discountType,
       discount_value:    discountValue,
@@ -103,6 +108,9 @@ exports.savePosSettings = async (req, res) => {
 
     return res.json({ success: true, message: 'POS settings saved', data: settings });
   } catch (err) {
+    if (err?.statusCode === 400) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
     console.error('savePosSettings:', err);
     return res.status(500).json({ success: false, message: 'Server error' });
   }
