@@ -864,7 +864,7 @@
       <option value="waiter">Waiter</option>
       <option value="kitchen">Kitchen</option>
       <option value="display">Display</option>
-      <option value="rider">Delivery Rider</option>
+      <option value="delivery">Delivery Rider</option>
     </select>
 
     <div id="member-plan-info" class="plan-limit-box"></div>
@@ -1902,16 +1902,24 @@
     const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.Basic;
 
     const roleSelect = document.getElementById('member-role');
-    const allRoles = ['counter', 'waiter', 'kitchen', 'display', 'rider'];
+    const allRoles = ['counter', 'waiter', 'kitchen', 'display', 'delivery'];
 
     Array.from(roleSelect.options).forEach(opt => {
       const role = opt.value;
-      const isAllowed = (limits[role] || 0) > 0;
+      const limitRole = role === 'delivery' ? 'rider' : role;
+      const isAllowed = plan === 'Cafe Lite'
+        ? ['counter', 'delivery'].includes(role)
+        : (limits[limitRole] || 0) > 0;
       opt.disabled = !isAllowed;
       opt.style.display = isAllowed ? '' : 'none';
     });
 
-    const firstAllowed = allRoles.find(r => (limits[r] || 0) > 0);
+    const firstAllowed = allRoles.find(role => {
+      const limitRole = role === 'delivery' ? 'rider' : role;
+      return plan === 'Cafe Lite'
+        ? ['counter', 'delivery'].includes(role)
+        : (limits[limitRole] || 0) > 0;
+    });
     if (firstAllowed) roleSelect.value = firstAllowed;
   }
 
