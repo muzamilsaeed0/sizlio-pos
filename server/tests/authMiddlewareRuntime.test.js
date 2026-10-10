@@ -550,11 +550,15 @@ for (const jwtId of jwtIdValues) {
       queryCount = 0;
       dbRows = [makeUser()];
       const result = await invoke({ token: tokenFor({ id: jwtId, sessionId: jwtSession }) });
-      const validIdClaim = Boolean(jwtId);
-      assert.equal(result.nextCalled, validIdClaim);
-      assert.equal(result.res.statusCode, validIdClaim ? 200 : 401);
+      const validIdClaim =
+        (typeof jwtId === 'number' && Number.isSafeInteger(jwtId) && jwtId > 0) ||
+        (typeof jwtId === 'string' && /^[1-9][0-9]*$/.test(jwtId));
+      const validSession = jwtSession === 'session-abc';
+      assert.equal(result.nextCalled, validIdClaim && validSession);
+      assert.equal(result.res.statusCode, validIdClaim && validSession ? 200 : 401);
       assert.equal(queryCount, validIdClaim ? 1 : 0);
       if (!validIdClaim) assert.equal(result.res.body.message, 'Invalid session token');
+      else if (!validSession) assert.match(result.res.body.message, /Session expired/);
     });
   }
 }
