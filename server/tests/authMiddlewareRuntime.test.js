@@ -364,3 +364,26 @@ test('runtime authorization: empty allowlist denies every tested role', () => {
     assert.equal(res.statusCode, 403);
   }
 });
+
+
+test('runtime authorization: null user is denied without throwing', () => {
+  const req = { user: null };
+  const res = makeResponse();
+  let nextCalled = false;
+  assert.doesNotThrow(() => authorize('manager')(req, res, () => { nextCalled = true; }));
+  assert.equal(nextCalled, false);
+  assert.equal(res.statusCode, 403);
+  assert.equal(res.body.message, 'Access denied');
+});
+
+test('runtime authorization: missing or non-string role is denied without throwing', () => {
+  for (const user of [{}, { role: null }, { role: 123 }]) {
+    const req = { user };
+    const res = makeResponse();
+    let nextCalled = false;
+    assert.doesNotThrow(() => authorize('manager')(req, res, () => { nextCalled = true; }));
+    assert.equal(nextCalled, false);
+    assert.equal(res.statusCode, 403);
+    assert.equal(res.body.message, 'Access denied');
+  }
+});
