@@ -469,3 +469,80 @@ test('Superadmin Cafe Lite member form offers only Counter Lite and Rider roles'
   assert.match(page, /plan === 'Cafe Lite'[\s\S]*?\['counter', 'delivery'\]\.includes\(role\)/);
   assert.match(page, /role === 'delivery' \? 'rider' : role/);
 });
+
+
+// CONSOLIDATED API SECURITY MATRIX.
+// These are source-level regression contracts. They supplement (not replace)
+// integration tests against a running HTTP server and real PostgreSQL database.
+const apiSecurityMatrix = [
+  ['order create', 'routes/orderRoutes.js', /router\.post\(\s*'\/'[\s\S]*?placeOrder\s*\);/, /authMiddleware[\s\S]*?authorize\([\s\S]*?'waiter'[\s\S]*?'manager'[\s\S]*?'counter'[\s\S]*?\)[\s\S]*?placeOrder/],
+  ['order list', 'routes/orderRoutes.js', /router\.get\(\s*'\/'[\s\S]*?getOrders\s*\);/, /authMiddleware[\s\S]*?authorize\([\s\S]*?'manager'[\s\S]*?'counter'[\s\S]*?'delivery'[\s\S]*?'display'[\s\S]*?\)[\s\S]*?getOrders/],
+  ['order detail', 'routes/orderRoutes.js', /router\.get\(\s*'\/:id'[\s\S]*?getOrder\s*\);/, /authMiddleware[\s\S]*?authorize\('manager', 'counter', 'waiter', 'kitchen', 'delivery'\)/],
+  ['order accept', 'routes/orderRoutes.js', /router\.put\(\s*'\/:id\/accept'[\s\S]*?accept\s*\);/, /authMiddleware[\s\S]*?authorize\([\s\S]*?'waiter'[\s\S]*?'manager'[\s\S]*?'counter'[\s\S]*?\)[\s\S]*?accept/],
+  ['order confirm', 'routes/orderRoutes.js', /router\.put\(\s*'\/:id\/confirm'[\s\S]*?confirm\s*\);/, /authMiddleware[\s\S]*?authorize\([\s\S]*?'kitchen'[\s\S]*?'manager'[\s\S]*?'counter'[\s\S]*?\)[\s\S]*?confirm/],
+  ['order ready', 'routes/orderRoutes.js', /router\.put\(\s*'\/:id\/ready'[\s\S]*?ready\s*\);/, /authMiddleware[\s\S]*?authorize\([\s\S]*?'kitchen'[\s\S]*?'manager'[\s\S]*?'counter'[\s\S]*?\)[\s\S]*?ready/],
+  ['order out for delivery', 'routes/orderRoutes.js', /router\.put\(\s*'\/:id\/out-for-delivery'[\s\S]*?outForDelivery\s*\);/, /authMiddleware[\s\S]*?authorize\([\s\S]*?'delivery'[\s\S]*?'manager'[\s\S]*?'counter'[\s\S]*?\)[\s\S]*?outForDelivery/],
+  ['order delivered', 'routes/orderRoutes.js', /router\.put\(\s*'\/:id\/delivered'[\s\S]*?delivered\s*\);/, /authMiddleware[\s\S]*?authorize\([\s\S]*?'delivery'[\s\S]*?'manager'[\s\S]*?'counter'[\s\S]*?\)[\s\S]*?delivered/],
+  ['order completed', 'routes/orderRoutes.js', /router\.put\(\s*'\/:id\/completed'[\s\S]*?completed\s*\);/, /authMiddleware[\s\S]*?authorize\([\s\S]*?'delivery'[\s\S]*?'manager'[\s\S]*?'counter'[\s\S]*?\)[\s\S]*?completed/],
+  ['order cancel', 'routes/orderRoutes.js', /router\.put\(\s*'\/:id\/cancel'[\s\S]*?cancel\s*\);/, /authMiddleware[\s\S]*?authorize\([\s\S]*?'waiter'[\s\S]*?'manager'[\s\S]*?'counter'[\s\S]*?\)[\s\S]*?cancel/],
+  ['order serve', 'routes/orderRoutes.js', /router\.put\(\s*'\/:id\/serve'[\s\S]*?serve\s*\);/, /authMiddleware[\s\S]*?authorize\([\s\S]*?'waiter'[\s\S]*?'manager'[\s\S]*?'counter'[\s\S]*?\)[\s\S]*?serve/],
+  ['order handover', 'routes/orderRoutes.js', /router\.put\(\s*'\/:id\/handover'[\s\S]*?handoverWalkIn\s*\);/, /authMiddleware,\s*authorize\('counter', 'manager'\)/],
+  ['order add items', 'routes/orderRoutes.js', /router\.post\(\s*'\/:id\/items'[\s\S]*?addItems\s*\);/, /authMiddleware[\s\S]*?authorize\([\s\S]*?'manager'[\s\S]*?'counter'[\s\S]*?\)[\s\S]*?addItems/],
+  ['order pricing', 'routes/orderRoutes.js', /router\.put\(\s*'\/:id\/pricing'[\s\S]*?updatePricing\s*\);/, /authMiddleware[\s\S]*?authorize\([\s\S]*?'manager'[\s\S]*?'counter'[\s\S]*?\)[\s\S]*?updatePricing/],
+  ['order pay', 'routes/orderRoutes.js', /router\.put\(\s*'\/:id\/pay'[\s\S]*?pay\s*\);/, /authMiddleware[\s\S]*?authorize\([\s\S]*?'manager'[\s\S]*?'counter'[\s\S]*?\)[\s\S]*?pay/],
+  ['rider assigned deliveries', 'routes/orderRoutes.js', /router\.get\(\s*'\/my-deliveries'[\s\S]*?getMyDeliveryOrders\s*\);/, /authMiddleware[\s\S]*?authorize\([\s\S]*?'delivery'[\s\S]*?\)[\s\S]*?getMyDeliveryOrders/],
+  ['rider self summary', 'routes/orderRoutes.js', /router\.get\(\s*'\/rider\/my-summary'[\s\S]*?getMyRiderSummary\s*\);/, /authMiddleware[\s\S]*?authorize\('delivery'\)[\s\S]*?getMyRiderSummary/],
+  ['assign rider', 'routes/orderRoutes.js', /router\.put\(\s*'\/:id\/assign-rider'[\s\S]*?assignDeliveryRider\s*\);/, /authMiddleware[\s\S]*?authorize\([\s\S]*?'manager'[\s\S]*?'counter'[\s\S]*?\)[\s\S]*?assignDeliveryRider/],
+  ['auto assign rider', 'routes/orderRoutes.js', /router\.put\(\s*'\/:id\/auto-assign-rider'[\s\S]*?autoAssignDeliveryRider\s*\);/, /authMiddleware[\s\S]*?authorize\([\s\S]*?'manager'[\s\S]*?'counter'[\s\S]*?\)[\s\S]*?autoAssignDeliveryRider/],
+  ['unassign rider', 'routes/orderRoutes.js', /router\.put\(\s*'\/:id\/unassign-rider'[\s\S]*?unassignDeliveryRider\s*\);/, /authMiddleware[\s\S]*?authorize\([\s\S]*?'manager'[\s\S]*?'counter'[\s\S]*?\)[\s\S]*?unassignDeliveryRider/],
+  ['FBR config read', 'routes/fbrRoutes.js', /router\.get\([\s\S]*?'\/config\/:restaurantId'[\s\S]*?getConfig\s*\);/, /authMiddleware[\s\S]*?authorize\('manager', 'super_admin'\)/],
+  ['FBR config write', 'routes/fbrRoutes.js', /router\.post\([\s\S]*?'\/config\/:restaurantId'[\s\S]*?saveConfig\s*\);/, /authMiddleware[\s\S]*?authorize\('manager', 'super_admin'\)/],
+  ['FBR pending invoices', 'routes/fbrRoutes.js', /router\.get\([\s\S]*?'\/pending'[\s\S]*?getPendingInvoices\s*\);/, /authMiddleware[\s\S]*?authorize\('manager', 'super_admin'\)/],
+  ['FBR retry', 'routes/fbrRoutes.js', /router\.post\([\s\S]*?'\/retry'[\s\S]*?retryNow\s*\);/, /authMiddleware[\s\S]*?authorize\('manager', 'super_admin'\)/],
+  ['FBR submit invoice', 'routes/fbrRoutes.js', /router\.post\([\s\S]*?'\/submit\/:orderId'[\s\S]*?submitOrderInvoice\s*\);/, /authMiddleware[\s\S]*?authorize\('manager', 'counter', 'super_admin'\)/],
+  ['FBR invoice status', 'routes/fbrRoutes.js', /router\.get\([\s\S]*?'\/status\/:orderId'[\s\S]*?getInvoiceStatus\s*\);/, /authMiddleware[\s\S]*?authorize\('manager', 'counter', 'super_admin'\)/],
+  ['menu variant read', 'routes/menuVariantRoutes.js', /router\.get\('\/item\/:itemId'[\s\S]*?getVariants\);/, /authMiddleware[\s\S]*?getVariants/],
+  ['menu variant create', 'routes/menuVariantRoutes.js', /router\.post\('\/item\/:itemId'[\s\S]*?addVariant\);/, /authMiddleware,\s*authorize\('manager', 'counter'\)/],
+  ['menu variant update', 'routes/menuVariantRoutes.js', /router\.put\('\/:id'[\s\S]*?editVariant\);/, /authMiddleware,\s*authorize\('manager', 'counter'\)/],
+  ['menu variant delete', 'routes/menuVariantRoutes.js', /router\.delete\('\/:id'[\s\S]*?removeVariant\);/, /authMiddleware,\s*authorize\('manager', 'counter'\)/],
+  ['auth logout', 'routes/authRoutes.js', /router\.post\('\/logout'[\s\S]*?\.logout\);/, /authMiddleware/],
+  ['initial password change', 'routes/authRoutes.js', /router\.post\('\/first-password'[\s\S]*?changeInitialPassword\);/, /authMiddleware/],
+  ['auth settings update', 'routes/authRoutes.js', /router\.put\('\/settings'[\s\S]*?updateSettings\);/, /authMiddleware/],
+  ['auth current profile', 'routes/authRoutes.js', /router\.get\('\/me'[\s\S]*?req\.user/, /authMiddleware/],
+  ['auth profile endpoint', 'routes/authRoutes.js', /router\.get\('\/profile'[\s\S]*?req\.user/, /authMiddleware/],
+  ['restaurant own profile', 'routes/restaurantRoutes.js', /router\.get\([\s\S]*?'\/me'[\s\S]*?getMyRestaurant\s*\);/, /authMiddleware[\s\S]*?getMyRestaurant/],
+  ['restaurant status mutation', 'routes/restaurantRoutes.js', /router\.patch\([\s\S]*?'\/:id\/status'[\s\S]*?setStatus\s*\);/, /authMiddleware[\s\S]*?authorize\('super_admin'\)/],
+  ['restaurant subscription mutation', 'routes/restaurantRoutes.js', /router\.patch\([\s\S]*?'\/:id\/subscription'[\s\S]*?editSubscription\s*\);/, /authMiddleware[\s\S]*?authorize\('super_admin'\)/],
+  ['restaurant food type mutation', 'routes/restaurantRoutes.js', /router\.patch\([\s\S]*?'\/:id\/food-type'[\s\S]*?editFoodType\s*\);/, /authMiddleware[\s\S]*?authorize\('super_admin'\)/],
+  ['restaurant delete', 'routes/restaurantRoutes.js', /router\.delete\([\s\S]*?'\/:id'[\s\S]*?removeRestaurant\s*\);/, /authMiddleware[\s\S]*?authorize\('super_admin'\)/],
+  ['restaurant details update', 'routes/restaurantRoutes.js', /router\.put\([\s\S]*?'\/:id'[\s\S]*?editRestaurant\s*\);/, /authMiddleware[\s\S]*?authorize\('super_admin'\)/],
+  ['restaurant staff list', 'routes/restaurantRoutes.js', /router\.get\([\s\S]*?'\/:id\/staff'[\s\S]*?getStaffList\s*\);/, /authMiddleware[\s\S]*?authorize\('super_admin'\)/],
+  ['restaurant staff add', 'routes/restaurantRoutes.js', /router\.post\([\s\S]*?'\/:id\/staff'[\s\S]*?addStaffMember\s*\);/, /authMiddleware[\s\S]*?authorize\('super_admin'\)/],
+  ['restaurant staff password reset', 'routes/restaurantRoutes.js', /router\.patch\([\s\S]*?'\/:id\/staff\/:userId\/reset-password'[\s\S]*?resetStaffPass\s*\);/, /authMiddleware[\s\S]*?authorize\('super_admin'\)/],
+  ['restaurant staff removal', 'routes/restaurantRoutes.js', /router\.delete\([\s\S]*?'\/:id\/staff\/:userId'[\s\S]*?removeStaffMember\s*\);/, /authMiddleware[\s\S]*?authorize\('super_admin'\)/],
+  ['shift all list', 'routes/shiftRoutes.js', /router\.get\('\/all'[\s\S]*?getAllShiftsForManager\);/, /authMiddleware,\s*authorize\('manager'\)/],
+  ['shift current', 'routes/shiftRoutes.js', /router\.get\('\/current'[\s\S]*?getCurrent\);/, /authMiddleware/],
+  ['shift start', 'routes/shiftRoutes.js', /router\.post\('\/start'[\s\S]*?start\);/, /authMiddleware/],
+  ['shift end', 'routes/shiftRoutes.js', /router\.put\('\/:id\/end'[\s\S]*?end\);/, /authMiddleware/],
+  ['shift summary', 'routes/shiftRoutes.js', /router\.get\('\/:id\/summary'[\s\S]*?summary\);/, /authMiddleware/],
+  ['push subscription save', 'routes/pushRoutes.js', /router\.post\([\s\S]*?'\/subscribe'[\s\S]*?sendNotification|router\.post\([\s\S]*?'\/subscribe'[\s\S]*?async \(req, res\)/, /authMiddleware[\s\S]*?authorize\('delivery', 'manager', 'counter', 'kitchen', 'waiter'\)/],
+  ['POS settings read', 'routes/settingsRoutes.js', /router\.get\('\/pos'[\s\S]*?getPosSettings\);/, /managerOrCounter/],
+  ['POS settings write', 'routes/settingsRoutes.js', /router\.put\('\/pos'[\s\S]*?savePosSettings\);/, /managerOrCounter/],
+  ['Raast QR read', 'routes/settingsRoutes.js', /router\.get\('\/raast-qr'[\s\S]*?getRaastQr\);/, /managerOrCounter/],
+  ['Raast QR write', 'routes/settingsRoutes.js', /router\.put\('\/raast-qr'[\s\S]*?saveRaastQr\);/, /managerOnly/],
+  ['wholesale products read', 'routes/wholesaleRoutes.js', /router\.get\('\/products'[\s\S]*?c\.getProducts\);/, /authMiddleware,\s*staff/],
+  ['wholesale products create', 'routes/wholesaleRoutes.js', /router\.post\('\/products'[\s\S]*?c\.addProduct\);/, /authMiddleware,\s*staff/],
+  ['wholesale products update', 'routes/wholesaleRoutes.js', /router\.put\('\/products\/:id'[\s\S]*?c\.editProduct\);/, /authMiddleware,\s*staff/],
+  ['wholesale products delete', 'routes/wholesaleRoutes.js', /router\.delete\('\/products\/:id'[\s\S]*?c\.removeProduct\);/, /authMiddleware,\s*staff/],
+  ['wholesale sale create', 'routes/wholesaleRoutes.js', /router\.post\('\/sales'[\s\S]*?c\.createSale\);/, /authMiddleware,\s*staff/],
+  ['wholesale invoices read', 'routes/wholesaleRoutes.js', /router\.get\('\/invoices'[\s\S]*?c\.getInvoices\);/, /authMiddleware,\s*staff/],
+];
+
+for (const [label, file, routePattern, policyPattern] of apiSecurityMatrix) {
+  test('API security matrix: route exists — ' + label, () => {
+    assert.match(readSource(file), routePattern);
+  });
+  test('API security matrix: auth/role policy — ' + label, () => {
+    assert.match(readSource(file), policyPattern);
+  });
+}
