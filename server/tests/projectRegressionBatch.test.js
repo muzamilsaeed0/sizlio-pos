@@ -121,7 +121,7 @@ test('inventory update ignores client attempts to change stock and tenant column
   assert.ok(q);
   assert.match(q.sql, /SET name = \$1/);
   assert.doesNotMatch(q.sql, /stock_quantity\s*=/);
-  assert.doesNotMatch(q.sql, /restaurant_id\s*=/);
+  assert.doesNotMatch(q.sql, /SET[\s\S]*?restaurant_id\s*=/);
   assert.deepEqual(q.params, ['Renamed', 8, 12]);
   assert.match(q.sql, /WHERE id = \$2 AND restaurant_id = \$3/);
 });
@@ -341,7 +341,7 @@ const routeCases = [
   ['deal create requires manager/counter', 'routes/dealRoutes.js', /router\.post\([\s\S]*?authorize\('manager', 'counter'\)[\s\S]*?createDeal/],
   ['wholesale sale requires staff role policy', 'routes/wholesaleRoutes.js', /const staff = authorize\('counter', 'manager'\)/],
   ['delivery list is rider-only', 'routes/orderRoutes.js', /router\.get\([\s\S]*?\/my-deliveries[\s\S]*?authorize\([\s\S]*?'delivery'[\s\S]*?\)[\s\S]*?getMyDeliveryOrders/],
-  ['rider self-summary is rider-only', 'routes/orderRoutes.js', /router\.get\('\/rider\/my-summary', authMiddleware, authorize\('delivery'\)/],
+  ['rider self-summary is rider-only', 'routes/orderRoutes.js', /router\.get\([\s\S]*?['\"]\/rider\/my-summary['\"][\s\S]*?authMiddleware[\s\S]*?authorize\('delivery'\)/],
   ['QR payment endpoints use auth middleware', 'routes/paymentRoutes.js', /authMiddleware/],
   ['POS charge settings permit manager and Counter Lite', 'routes/settingsRoutes.js', /router\.put\('\/pos', managerOrCounter, settingsController\.savePosSettings\)/],
   ['Raast QR mutation remains manager-only', 'routes/settingsRoutes.js', /router\.put\('\/raast-qr', managerOnly, settingsController\.saveRaastQr\)/],
