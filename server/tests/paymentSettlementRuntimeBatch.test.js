@@ -2,6 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const crypto = require('crypto');
 const pool = require('../config/db');
 const paymentService = require('../services/paymentService');
 
@@ -113,26 +114,24 @@ for (let i = 1; i <= 500; i++) {
     });
     const receivedAmount = Number((Number(payment.amount) + 0.01).toFixed(2));
 
+    const body = {
+      reference: payment.qr_id,
+      transaction_id: 'provider-txn-' + i,
+      amount: receivedAmount,
+      status: 'SUCCESS',
+    };
+    const rawBody = Buffer.from(JSON.stringify(body));
+    const secret = 'runtime-test-secret';
+    process.env.PAYMENT_WEBHOOK_SECRET = secret;
+    const signature = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+
     await withClient(client, async () => {
       await assert.rejects(
         paymentService.handleWebhook({
-          headers: {},
-          body: {
-            reference: payment.qr_id,
-            transaction_id: 'provider-txn-' + i,
-            amount: receivedAmount,
-            status: 'SUCCESS',
-          },
+          headers: { 'x-webhook-signature': signature },
+          body,
+          rawBody,
         }),
-        /Invalid signature/
-      );
-    });
-
-    // Webhooks are signature-verified before settlement. Directly exercise the
-    // settlement API here to verify amount validation and database side effects.
-    await withClient(client, async () => {
-      await assert.rejects(
-        paymentService.manualConfirmPayment(payment.qr_id, 1, payment.restaurant_id),
         /Payment amount mismatch/
       );
     });
