@@ -17,6 +17,7 @@ function validateSuccessfulWebhook({ amount, transactionId }) {
         transactionId === null ||
         transactionId === undefined ||
         !['string', 'number'].includes(typeof transactionId) ||
+        (typeof transactionId === 'number' && !Number.isFinite(transactionId)) ||
         String(transactionId).trim() === ''
     ) {
         throw new Error('Missing transaction_id in successful payment webhook');
