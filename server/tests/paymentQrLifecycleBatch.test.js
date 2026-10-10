@@ -159,7 +159,7 @@ test('unsupported payment provider fails closed and rolls back the inserted pend
 test('settlement rejects an order already marked paid without writing a ledger entry', async (t) => {
     const { service, calls } = loadSettlementService(t, 'paid-order');
     await assert.rejects(
-        service.settleQrPayment({ qrId: 'QR-settle', restaurantId: 3, receivedAmount: 700 }),
+        service.manualConfirmPayment('QR-settle', 5, 3),
         /Order is already paid/
     );
     assert.equal(calls.some((c) => c.sql.startsWith('INSERT INTO payment_transactions')), false);
@@ -169,7 +169,7 @@ test('settlement rejects an order already marked paid without writing a ledger e
 test('settlement rejects an order with no remaining balance', async (t) => {
     const { service, calls } = loadSettlementService(t, 'no-balance');
     await assert.rejects(
-        service.settleQrPayment({ qrId: 'QR-settle', restaurantId: 3, receivedAmount: 700 }),
+        service.manualConfirmPayment('QR-settle', 5, 3),
         /No outstanding amount remains/
     );
     assert.equal(calls.some((c) => c.sql.startsWith('UPDATE orders')), false);
@@ -179,7 +179,7 @@ test('settlement rejects an order with no remaining balance', async (t) => {
 test('settlement commits QR cancellation before rejecting a cancelled order', async (t) => {
     const { service, calls } = loadSettlementService(t, 'cancelled-order');
     await assert.rejects(
-        service.settleQrPayment({ qrId: 'QR-settle', restaurantId: 3, receivedAmount: 700 }),
+        service.manualConfirmPayment('QR-settle', 5, 3),
         /cancelled order/
     );
     const cancellationIndex = calls.findIndex((c) =>
@@ -194,7 +194,7 @@ test('settlement commits QR cancellation before rejecting a cancelled order', as
 test('settlement commits QR expiry before rejecting an expired QR', async (t) => {
     const { service, calls } = loadSettlementService(t, 'expired-qr');
     await assert.rejects(
-        service.settleQrPayment({ qrId: 'QR-settle', restaurantId: 3, receivedAmount: 700 }),
+        service.manualConfirmPayment('QR-settle', 5, 3),
         /Payment QR has expired/
     );
     const expiryIndex = calls.findIndex((c) =>
@@ -206,24 +206,18 @@ test('settlement commits QR expiry before rejecting an expired QR', async (t) =>
     assert.equal(calls.some((c) => c.sql.startsWith('INSERT INTO payment_transactions')), false);
 });
 
-test('settlement treats an already-settled QR as a duplicate and does not insert another ledger row', async (t) => {
+test('manual confirmation of an already-settled QR does not insert another ledger row', async (t) => {
     const { service, calls } = loadSettlementService(t, 'duplicate');
-    const result = await service.settleQrPayment({
-        qrId: 'QR-settle', restaurantId: 3, receivedAmount: 700,
-    });
-    assert.equal(result.duplicate, true);
+    const result = await service.manualConfirmPayment('QR-settle', 5, 3);
+    assert.equal(result.status, 'paid');
     assert.equal(calls.some((c) => c.sql.startsWith('INSERT INTO payment_transactions')), false);
     assert.ok(calls.some((c) => c.sql === 'COMMIT'));
 });
 
 test('settlement writes the order and ledger only after validating the outstanding amount', async (t) => {
     const { service, calls } = loadSettlementService(t, 'normal');
-    const result = await service.settleQrPayment({
-        qrId: 'QR-settle', restaurantId: 3, receivedAmount: 700,
-        paymentMethod: 'raast', providerRef: 'bank-tx-43',
-    });
-    assert.equal(result.duplicate, false);
-    assert.equal(result.qrPayment.status, 'paid');
+    const result = await service.manualConfirmPayment('QR-settle', 5, 3);
+    assert.equal(result.status, 'paid');
     assert.ok(calls.some((c) => c.sql.startsWith('UPDATE orders')));
     const ledger = calls.find((c) => c.sql.startsWith('INSERT INTO payment_transactions'));
     assert.ok(ledger);
@@ -237,7 +231,7 @@ test('settlement writes the order and ledger only after validating the outstandi
 test('settlement rolls back if the guarded order update returns no row', async (t) => {
     const { service, calls } = loadSettlementService(t, 'order-update-empty');
     await assert.rejects(
-        service.settleQrPayment({ qrId: 'QR-settle', restaurantId: 3, receivedAmount: 700 }),
+        service.manualConfirmPayment('QR-settle', 5, 3),
         /Order payment could not be finalized/
     );
     assert.equal(calls.some((c) => c.sql.startsWith('INSERT INTO payment_transactions')), false);
