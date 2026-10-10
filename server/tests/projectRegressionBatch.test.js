@@ -415,7 +415,7 @@ const routeCases = [
   ['table QR tokens use timing-safe comparison', 'controllers/publicController.js', /crypto\.timingSafeEqual/],
   ['table QR token generation is keyed by restaurant and table', 'controllers/publicController.js', /sizlio-table-qr:v1:\$\{restaurantId\}:\$\{tableNo\}/],
   ['auth session checks current session ID', 'middleware/authMiddleware.js', /user\.current_session !== decoded\.sessionId/],
-  ['auth middleware requires session ID in token', 'middleware/authMiddleware.js', /!decoded\.id \|\| !decoded\.sessionId/],
+  ['auth middleware validates positive user ID and requires session ID in token', 'middleware/authMiddleware.js', /validUserId[\s\S]*?typeof decoded\.sessionId !== 'string' \|\| !decoded\.sessionId/],
   ['auth cookie writes enforce origin check', 'middleware/authMiddleware.js', /if \(cookieToken && !\['GET', 'HEAD', 'OPTIONS'\]\.includes\(req\.method\)\)/],
   ['password reset forces initial password change', 'models/userModel.js', /must_change_password = TRUE/],
   ['password reset invalidates existing session', 'models/userModel.js', /current_session = NULL/],
