@@ -6592,6 +6592,19 @@ END AS shift_active,
 // GET ORDER BY ID (for FBR submission)
 // ======================================================
 
+// Explicit global lookup for super-admin workflows only. Tenant-facing callers
+// must continue using getOrderById(orderId, restaurantId).
+const getOrderByIdForSuperAdmin = async (orderId) => {
+  const id = Number(orderId);
+  if (!Number.isInteger(id) || id <= 0) return null;
+
+  const result = await pool.query(
+    'SELECT * FROM orders WHERE id = $1',
+    [id]
+  );
+  return result.rows[0] || null;
+};
+
 const getOrderById = async (orderId, restaurantId) => {
   const tenantId = Number(restaurantId);
   const id = Number(orderId);
@@ -6672,7 +6685,9 @@ module.exports = {
 
   markServed,
 
-  getOrderById,          
+  getOrderById,
+
+  getOrderByIdForSuperAdmin,
        
   getOrderItemsByOrderId,
 
