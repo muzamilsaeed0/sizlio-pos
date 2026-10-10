@@ -41,7 +41,7 @@ function makeClient({ lookupRows, orderRows, lockedPaymentRows }) {
       // The expiry and cancellation branches intentionally persist a terminal
       // QR status before returning their business-rule error. The mock must
       // accept those UPDATE statements rather than treating them as unknown SQL.
-      if (/^(UPDATE|INSERT INTO)\\b/i.test(normalized)) {
+      if (/^(UPDATE|INSERT INTO)\b/i.test(normalized)) {
         return { rows: [] };
       }
 
