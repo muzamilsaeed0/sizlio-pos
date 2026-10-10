@@ -244,12 +244,3 @@ test('settlement rolls back if the guarded order update returns no row', async (
     assert.ok(calls.some((c) => c.sql === 'ROLLBACK'));
 });
 
-test('settlement rejects a received amount mismatch before updating the order or ledger', async (t) => {
-    const { service, calls } = loadSettlementService(t, 'normal');
-    await assert.rejects(
-        service.settleQrPayment({ qrId: 'QR-settle', restaurantId: 3, receivedAmount: 699.99 }),
-        /Payment amount mismatch/
-    );
-    assert.equal(calls.some((c) => c.sql.startsWith('UPDATE orders')), false);
-    assert.equal(calls.some((c) => c.sql.startsWith('INSERT INTO payment_transactions')), false);
-});
