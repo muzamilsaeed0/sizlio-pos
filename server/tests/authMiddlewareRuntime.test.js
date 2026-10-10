@@ -467,3 +467,94 @@ for (const method of passwordGateMethods) {
     });
   }
 }
+
+
+// BATCH 2: deeper runtime authentication state matrices. These tests execute
+// authMiddleware and assert status/next behavior against controlled DB rows.
+const accountActiveValues = [true, false, 0, 1, null];
+for (const role of testedRoles) {
+  for (const isActive of accountActiveValues) {
+    test('runtime account-state matrix: role=' + role + ' is_active=' + String(isActive), async () => {
+      dbError = null;
+      dbRows = [makeUser({ role, is_active: isActive, status: 'Active', expiry_date: null })];
+      const result = await invoke({ token: tokenFor() });
+      const expectedAllowed = Boolean(isActive);
+      assert.equal(result.nextCalled, expectedAllowed);
+      assert.equal(result.res.statusCode, expectedAllowed ? 200 : 403);
+      if (!expectedAllowed) assert.equal(result.res.body.message, 'User account disabled');
+    });
+  }
+}
+
+const restaurantStatuses = [undefined, null, '', 'Active', 'active', 'Suspended', 0, true];
+for (const role of testedRoles) {
+  for (const status of restaurantStatuses) {
+    test('runtime restaurant-status matrix: role=' + role + ' status=' + String(status), async () => {
+      dbError = null;
+      dbRows = [makeUser({ role, is_active: true, status, expiry_date: null })];
+      const result = await invoke({ token: tokenFor() });
+      const expectedAllowed = role === 'super_admin' || status === 'Active';
+      assert.equal(result.nextCalled, expectedAllowed);
+      assert.equal(result.res.statusCode, expectedAllowed ? 200 : 403);
+      if (!expectedAllowed) assert.equal(result.res.body.message, 'Restaurant suspended');
+    });
+  }
+}
+
+const expiryValues = [
+  null,
+  undefined,
+  '',
+  '2000-01-01T00:00:00.000Z',
+  '2999-01-01T00:00:00.000Z',
+  'not-a-valid-date',
+  0,
+  false
+];
+for (const role of testedRoles) {
+  for (const expiryDate of expiryValues) {
+    test('runtime subscription-expiry matrix: role=' + role + ' expiry=' + String(expiryDate), async () => {
+      dbError = null;
+      dbRows = [makeUser({ role, is_active: true, status: 'Active', expiry_date: expiryDate })];
+      const result = await invoke({ token: tokenFor() });
+      const isExpired = Boolean(expiryDate) && new Date(expiryDate) < new Date();
+      const expectedAllowed = role === 'super_admin' || !isExpired;
+      assert.equal(result.nextCalled, expectedAllowed);
+      assert.equal(result.res.statusCode, expectedAllowed ? 200 : 403);
+      if (!expectedAllowed) assert.equal(result.res.body.message, 'Restaurant subscription expired');
+    });
+  }
+}
+
+const dbSessionValues = [undefined, null, '', 'session-abc', 'other-session', 0, 123, ' '];
+const jwtSessionValues = ['session-abc', 'other-session', '0', ' '];
+for (const currentSession of dbSessionValues) {
+  for (const jwtSession of jwtSessionValues) {
+    test('runtime session matrix: DB session=' + String(currentSession) + ' JWT session=' + jwtSession, async () => {
+      dbError = null;
+      dbRows = [makeUser({ current_session: currentSession })];
+      const result = await invoke({ token: tokenFor({ sessionId: jwtSession }) });
+      const expectedAllowed = Boolean(currentSession) && currentSession === jwtSession;
+      assert.equal(result.nextCalled, expectedAllowed);
+      assert.equal(result.res.statusCode, expectedAllowed ? 200 : 401);
+      if (!expectedAllowed) assert.match(result.res.body.message, /Session expired/);
+    });
+  }
+}
+
+const jwtIdValues = [7, 0, null, '', '7', -1, {}, []];
+for (const jwtId of jwtIdValues) {
+  for (const jwtSession of jwtSessionValues) {
+    test('runtime JWT identity-claim matrix: id=' + String(jwtId) + ' session=' + jwtSession, async () => {
+      dbError = null;
+      queryCount = 0;
+      dbRows = [makeUser()];
+      const result = await invoke({ token: tokenFor({ id: jwtId, sessionId: jwtSession }) });
+      const validIdClaim = Boolean(jwtId);
+      assert.equal(result.nextCalled, validIdClaim);
+      assert.equal(result.res.statusCode, validIdClaim ? 200 : 401);
+      assert.equal(queryCount, validIdClaim ? 1 : 0);
+      if (!validIdClaim) assert.equal(result.res.body.message, 'Invalid session token');
+    });
+  }
+}
