@@ -36,10 +36,11 @@ function assertScoped(sql, params, qrId, restaurantId) {
   assert.deepEqual(params, [qrId, restaurantId]);
 }
 
-// 2,500 real service calls: non-expired pending QR remains pending and must
-// not issue an UPDATE. Distinct IDs/tenants exercise query parameter binding.
+// 2,500 real service calls: the service attempts a guarded expiry UPDATE,
+// but the database condition must leave a future-expiring QR pending. When the
+// UPDATE returns no rows, the service re-reads the tenant-scoped current state.
 for (let i = 1; i <= 2500; i++) {
-  test('getQrStatus preserves non-expired pending QR without mutation case ' + i, async () => {
+  test('getQrStatus preserves non-expired pending QR after guarded expiry check case ' + i, async () => {
     const qrId = 'pending-future-' + i;
     const restaurantId = 1 + (i % 997);
     const row = statusRow(i, 'pending', FUTURE);
@@ -47,8 +48,21 @@ for (let i = 1; i <= 2500; i++) {
 
     await withPoolQuery(async (sql, params) => {
       calls++;
+      if (calls === 1) {
+        assertScoped(sql, params, qrId, restaurantId);
+        assert.match(sql, /^SELECT/i);
+        return { rows: [row] };
+      }
+      if (calls === 2) {
+        assert.match(sql, /^UPDATE\\s+qr_payments/i);
+        assert.match(sql, /status\\s*=\\s*'pending'/i);
+        assert.match(sql, /expires_at\\s*<=\\s*NOW\\(\\)/i);
+        assert.deepEqual(params, [qrId, restaurantId]);
+        return { rows: [] };
+      }
+      assert.equal(calls, 3);
       assertScoped(sql, params, qrId, restaurantId);
-      assert.doesNotMatch(sql, /^UPDATE/i);
+      assert.match(sql, /^SELECT/i);
       return { rows: [row] };
     }, async () => {
       assert.deepEqual(await paymentService.getQrStatus(qrId, restaurantId), {
@@ -61,7 +75,7 @@ for (let i = 1; i <= 2500; i++) {
       });
     });
 
-    assert.equal(calls, 1);
+    assert.equal(calls, 3);
   });
 }
 
