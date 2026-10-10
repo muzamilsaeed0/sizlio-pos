@@ -238,16 +238,16 @@ async function verifyCustomerLocation() {
                             location.hostname === '127.0.0.1';
 
     if (!isSecureContext) {
-      console.warn('⚠️ HTTP pe GPS kaam nahi karta. Skipping location check.');
-      resolve({ 
-        allowed: true, 
-        message: 'Location check skipped (HTTP)' 
+      console.warn('GPS requires a secure HTTPS connection.');
+      resolve({
+        allowed: false,
+        message: 'Secure connection required. Please open this QR link over HTTPS.'
       });
       return;
     }
 
     if (!navigator.geolocation) {
-      resolve({ allowed: true, message: 'GPS not supported' });
+      resolve({ allowed: false, message: 'Location is not supported by this device or browser.' });
       return;
     }
 
@@ -272,15 +272,15 @@ async function verifyCustomerLocation() {
           resolve(data);
         } catch (err) {
           console.error('Location verify error:', err);
-          resolve({ allowed: true, message: 'Server error' });
+          resolve({ allowed: false, message: 'Unable to verify your location. Please try again.' });
         }
       },
       (error) => {
         console.warn('GPS error:', error.message);
-        // ✅ Fallback: GPS fail ho toh allow karo
+        // Fail closed: location failure must not silently bypass QR restrictions.
         resolve({
-          allowed: true,
-          message: 'GPS unavailable, proceeding'
+          allowed: false,
+          message: 'Location permission is required. Enable GPS and try again.'
         });
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
