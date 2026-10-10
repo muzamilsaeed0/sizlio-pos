@@ -421,3 +421,17 @@ for (const [label, file, pattern] of routeCases) {
     assert.match(source, pattern);
   });
 }
+
+test('supplier payment ledger insert holds tenant-scoped supplier lock inside a transaction', () => {
+  const source = readSource('models/supplierModel.js');
+  const start = source.indexOf('async function createPayment(');
+  const end = source.indexOf('async function deletePayment(', start);
+  assert.ok(start >= 0 && end > start, 'createPayment function should exist');
+  const fn = source.slice(start, end);
+  assert.match(fn, /await client\.query\('BEGIN'\)/);
+  assert.match(fn, /FROM suppliers[\s\S]*?id = \$1 AND restaurant_id = \$2 AND is_active = true[\s\S]*?FOR UPDATE/);
+  assert.match(fn, /INSERT INTO supplier_payments/);
+  assert.match(fn, /await client\.query\('COMMIT'\)/);
+  assert.match(fn, /await client\.query\('ROLLBACK'\)/);
+  assert.match(fn, /client\.release\(\)/);
+});
