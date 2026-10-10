@@ -70,8 +70,8 @@ for (let i = 0; i < 250; i++) {
     queryCalls.length = 0;
     await orderModel.getOrderItemsByOrderId(orderId, tenantId);
     assert.equal(queryCalls.length, 1);
-    assert.match(queryCalls[0].sql, /o\\.restaurant_id = \$2/);
-    assert.match(queryCalls[0].sql, /m\\.restaurant_id = \$2/);
+    assert.match(queryCalls[0].sql, /o\.restaurant_id = \$2/);
+    assert.match(queryCalls[0].sql, /m\.restaurant_id = \$2/);
     assert.deepEqual(queryCalls[0].params, [orderId, tenantId]);
   });
 }
