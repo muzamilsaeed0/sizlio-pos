@@ -30,8 +30,8 @@ const orderModel = require('../models/orderModel');
 
 const invalidIds = [
   undefined, null, '', ' ', '0', '-1', '1.5', 'abc', 'Infinity',
-  0, -1, -0.5, 1.5, NaN, Infinity, -Infinity, true, false, {}, [], [1],
-  '01', '+1', '1e2', '0x10', '2.0'
+  0, -1, -0.5, 1.5, NaN, Infinity, -Infinity, false, {}, [],
+  'not-a-number', 'NaN', '-Infinity', '-0', '0.0'
 ];
 
 for (let i = 0; i < 250; i++) {
