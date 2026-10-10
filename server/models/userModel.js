@@ -74,6 +74,21 @@ const createStaff = async (
     }
 
     const restaurant = restaurantResult.rows[0];
+
+    // Cafe Lite is a Counter Lite + Rider plan. Enforce this on the server,
+    // including Super Admin-created staff, so a direct API call cannot add
+    // waiter, kitchen, display, or manager-style staff accounts.
+    if (
+      restaurant.plan === 'Cafe Lite' &&
+      !['counter', 'delivery'].includes(role)
+    ) {
+      const error = new Error(
+        'Cafe Lite only supports Counter Lite and Rider staff accounts.'
+      );
+      error.code = 'PLAN_ROLE_NOT_ALLOWED';
+      throw error;
+    }
+
     const countResult = await client.query(
       `SELECT COUNT(*)::int AS staff_count
        FROM users
