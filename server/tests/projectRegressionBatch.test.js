@@ -404,7 +404,7 @@ const routeCases = [
   ['QR payment endpoints use auth middleware', 'routes/paymentRoutes.js', /authMiddleware/],
   ['manual QR payment confirmation is manager-only', 'routes/paymentRoutes.js', /router\.post\('\/qr\/manual-confirm\/\:qrId', authMiddleware, authorize\('manager'\)/],
   ['POS charge settings permit manager and Counter Lite', 'routes/settingsRoutes.js', /router\.put\('\/pos', managerOrCounter, settingsController\.savePosSettings\)/],
-  ['POS settings reject malformed numeric values instead of zeroing charges', 'controllers/settingsController.js', /Invalid \\x27 \+ field[\\s\\S]*?Number\.isFinite\(n\)[\\s\\S]*?statusCode: 400/],
+  ['POS settings reject malformed numeric values instead of zeroing charges', 'controllers/settingsController.js', /Invalid ' \\+ field[\\s\\S]*?Number\.isFinite\(n\)[\\s\\S]*?statusCode: 400/],
   ['POS percentage charges are capped at 100 percent', 'controllers/settingsController.js', /gst_percent:\\s*num\('gst_percent', 100\)[\\s\\S]*?card_charge:\\s*num\('card_charge', 100\)[\\s\\S]*?bank_charge:\\s*num\('bank_charge', 100\)/],
   ['POS settings reject unknown discount types', 'controllers/settingsController.js', /Invalid discount type[\\s\\S]*?\['none', 'percent', 'fixed'\]/],
   ['Raast QR mutation remains manager-only', 'routes/settingsRoutes.js', /router\.put\('\/raast-qr', managerOnly, settingsController\.saveRaastQr\)/],
