@@ -1,6 +1,6 @@
 const fbrModel = require('../models/fbrModel');
 const fbrService = require('../services/fbrService');
-const { getOrderById, getOrderItemsByOrderId } = require('../models/orderModel');
+const { getOrderById, getOrderByIdForSuperAdmin, getOrderItemsByOrderId } = require('../models/orderModel');
 
 /* =====================================================
    HELPERS
@@ -150,10 +150,9 @@ exports.submitOrderInvoice = async (req, res) => {
     const restaurantId = getRestaurantIdFromUser(req);
 
     // Order scope check
-    const order = await getOrderById(
-      orderId,
-      req.user?.role === 'super_admin' ? null : restaurantId
-    );
+    const order = req.user?.role === 'super_admin'
+      ? await getOrderByIdForSuperAdmin(orderId)
+      : await getOrderById(orderId, restaurantId);
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
@@ -181,10 +180,9 @@ exports.getInvoiceStatus = async (req, res) => {
     const restaurantId = getRestaurantIdFromUser(req);
 
     // ✅ Order scope check
-    const order = await getOrderById(
-      orderId,
-      req.user?.role === 'super_admin' ? null : restaurantId
-    );
+    const order = req.user?.role === 'super_admin'
+      ? await getOrderByIdForSuperAdmin(orderId)
+      : await getOrderById(orderId, restaurantId);
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
