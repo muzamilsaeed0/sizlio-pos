@@ -453,3 +453,10 @@ test('Cafe Lite staff creation is server-restricted to Counter Lite and Rider ro
   assert.match(model, /PLAN_ROLE_NOT_ALLOWED/);
   assert.match(controller, /err\.code === 'PLAN_ROLE_NOT_ALLOWED'[\s\S]*?res\.status\(403\)/);
 });
+
+
+test('Superadmin Cafe Lite summaries show only Counter Lite and Rider roles', () => {
+  const page = readSource('public/superadmin.html');
+  assert.match(page, /r\.plan === 'Cafe Lite'[\s\S]*?Counter Lite:[\s\S]*?delivery_rider_count/);
+  assert.match(page, /plan === 'Cafe Lite' \? 'Counter Lite' : 'Counter'/);
+});
