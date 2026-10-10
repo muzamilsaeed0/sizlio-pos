@@ -9,7 +9,7 @@ const modelPath = require.resolve('../models/orderModel');
 const queryCalls = [];
 const poolMock = {
   async query(sql, params) {
-    queryCalls.push({ sql: String(sql).replace(/\\s+/g, ' ').trim(), params });
+    queryCalls.push({ sql: String(sql).replace(/\s+/g, ' ').trim(), params });
     return { rows: [{ id: params[0], restaurant_id: params[1] }], rowCount: 1 };
   },
   async connect() {
@@ -61,7 +61,7 @@ for (let i = 0; i < 250; i++) {
     queryCalls.length = 0;
     const result = await orderModel.getOrderById(orderId, tenantId);
     assert.equal(queryCalls.length, 1);
-    assert.match(queryCalls[0].sql, /WHERE id = \\$1 AND restaurant_id = \\$2/);
+    assert.match(queryCalls[0].sql, /WHERE id = \$1 AND restaurant_id = \$2/);
     assert.deepEqual(queryCalls[0].params, [orderId, tenantId]);
     assert.equal(result.restaurant_id, tenantId);
   });
@@ -70,8 +70,8 @@ for (let i = 0; i < 250; i++) {
     queryCalls.length = 0;
     await orderModel.getOrderItemsByOrderId(orderId, tenantId);
     assert.equal(queryCalls.length, 1);
-    assert.match(queryCalls[0].sql, /o\\.restaurant_id = \\$2/);
-    assert.match(queryCalls[0].sql, /m\\.restaurant_id = \\$2/);
+    assert.match(queryCalls[0].sql, /o\\.restaurant_id = \$2/);
+    assert.match(queryCalls[0].sql, /m\\.restaurant_id = \$2/);
     assert.deepEqual(queryCalls[0].params, [orderId, tenantId]);
   });
 }
