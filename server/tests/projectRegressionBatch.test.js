@@ -303,12 +303,11 @@ test('top items excludes deal line items and tenant-mismatched menu items', asyn
 });
 
 // ORDER MODEL: tenant-scoped reads and safe date filters.
-test('order lookup without optional tenant retains legacy ID lookup', async () => {
+test('order lookup without tenant fails closed and never runs an unscoped query', async () => {
   reset(() => rows([{ id: 4 }]));
-  await orders.getOrderById(4);
-  const q = sqlCalls(/SELECT \* FROM orders/)[0];
-  assert.ok(q);
-  assert.deepEqual(q.params, [4]);
+  const result = await orders.getOrderById(4);
+  assert.equal(result, null);
+  assert.equal(sqlCalls(/SELECT \\* FROM orders/).length, 0);
 });
 test('order lookup with tenant scopes order ID and restaurant', async () => {
   reset(() => rows([{ id: 4, restaurant_id: 12 }]));
