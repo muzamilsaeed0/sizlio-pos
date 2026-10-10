@@ -1,0 +1,270 @@
+'use strict';
+
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const jwt = require('jsonwebtoken');
+
+const SECRET = 'auth-middleware-runtime-test-secret';
+process.env.JWT_SECRET = SECRET;
+process.env.NODE_ENV = 'test';
+
+let dbRows = [];
+let dbError = null;
+let queryCount = 0;
+
+const poolMock = {
+  async query(sql, params) {
+    queryCount += 1;
+    if (dbError) throw dbError;
+    return { rows: dbRows, rowCount: dbRows.length };
+  }
+};
+
+const dbPath = require.resolve('../config/db');
+require.cache[dbPath] = {
+  id: dbPath,
+  filename: dbPath,
+  loaded: true,
+  exports: poolMock
+};
+
+const { authMiddleware } = require('../middleware/authMiddleware');
+
+function makeUser(overrides = {}) {
+  return {
+    id: 7,
+    role: 'manager',
+    restaurant_id: 12,
+    is_active: true,
+    current_session: 'session-abc',
+    must_change_password: false,
+    restaurant_name: 'Test Cafe',
+    status: 'Active',
+    expiry_date: null,
+    ...overrides
+  };
+}
+
+function makeRequest({ token, method = 'GET', path = '/api/orders', origin, cookie } = {}) {
+  const headers = {};
+  if (token) headers.authorization = 'Bearer ' + token;
+  if (cookie) headers.cookie = cookie;
+  return {
+    headers,
+    method,
+    originalUrl: path,
+    get(name) {
+      if (name.toLowerCase() === 'origin') return origin;
+      return undefined;
+    }
+  };
+}
+
+function makeResponse() {
+  return {
+    statusCode: 200,
+    body: null,
+    status(code) {
+      this.statusCode = code;
+      return this;
+    },
+    json(body) {
+      this.body = body;
+      return this;
+    }
+  };
+}
+
+function tokenFor(payload = {}) {
+  return jwt.sign({
+    id: 7,
+    sessionId: 'session-abc',
+    ...payload
+  }, SECRET, { expiresIn: '5m' });
+}
+
+async function invoke(options = {}) {
+  const req = makeRequest(options);
+  const res = makeResponse();
+  let nextCalled = false;
+  await authMiddleware(req, res, () => { nextCalled = true; });
+  return { req, res, nextCalled };
+}
+
+test('runtime auth: missing token returns 401 without querying database', async () => {
+  queryCount = 0;
+  const result = await invoke();
+  assert.equal(result.res.statusCode, 401);
+  assert.equal(result.nextCalled, false);
+  assert.equal(queryCount, 0);
+});
+
+test('runtime auth: malformed token returns 401', async () => {
+  const result = await invoke({ token: 'not-a-valid-jwt' });
+  assert.equal(result.res.statusCode, 401);
+  assert.equal(result.nextCalled, false);
+});
+
+test('runtime auth: JWT without user ID or session ID is rejected before database lookup', async () => {
+  queryCount = 0;
+  const result = await invoke({ token: jwt.sign({ id: 7 }, SECRET) });
+  assert.equal(result.res.statusCode, 401);
+  assert.equal(result.res.body.message, 'Invalid session token');
+  assert.equal(queryCount, 0);
+});
+
+test('runtime auth: token for deleted user returns 401', async () => {
+  dbRows = [];
+  const result = await invoke({ token: tokenFor() });
+  assert.equal(result.res.statusCode, 401);
+  assert.equal(result.res.body.message, 'User not found');
+  assert.equal(result.nextCalled, false);
+});
+
+test('runtime auth: inactive user returns 403', async () => {
+  dbRows = [makeUser({ is_active: false })];
+  const result = await invoke({ token: tokenFor() });
+  assert.equal(result.res.statusCode, 403);
+  assert.equal(result.res.body.message, 'User account disabled');
+  assert.equal(result.nextCalled, false);
+});
+
+test('runtime auth: stale session ID returns 401', async () => {
+  dbRows = [makeUser({ current_session: 'newer-session' })];
+  const result = await invoke({ token: tokenFor() });
+  assert.equal(result.res.statusCode, 401);
+  assert.match(result.res.body.message, /Session expired/);
+  assert.equal(result.nextCalled, false);
+});
+
+test('runtime auth: suspended restaurant blocks non-super-admin', async () => {
+  dbRows = [makeUser({ status: 'Suspended' })];
+  const result = await invoke({ token: tokenFor() });
+  assert.equal(result.res.statusCode, 403);
+  assert.equal(result.res.body.message, 'Restaurant suspended');
+});
+
+test('runtime auth: expired restaurant subscription blocks non-super-admin', async () => {
+  dbRows = [makeUser({ expiry_date: '2000-01-01T00:00:00.000Z' })];
+  const result = await invoke({ token: tokenFor() });
+  assert.equal(result.res.statusCode, 403);
+  assert.equal(result.res.body.message, 'Restaurant subscription expired');
+});
+
+test('runtime auth: valid user receives only safe identity fields and reaches next', async () => {
+  dbRows = [makeUser({ password: 'should-not-be-copied', password_hash: 'hash-secret' })];
+  const result = await invoke({ token: tokenFor() });
+  assert.equal(result.res.statusCode, 200);
+  assert.equal(result.nextCalled, true);
+  assert.deepEqual(result.req.user, {
+    id: 7,
+    role: 'manager',
+    restaurant_id: 12,
+    must_change_password: false
+  });
+  assert.equal('password' in result.req.user, false);
+  assert.equal('password_hash' in result.req.user, false);
+  assert.equal(result.req.authSessionId, 'session-abc');
+});
+
+test('runtime auth: first-password endpoint is allowed while password change is required', async () => {
+  dbRows = [makeUser({ must_change_password: true })];
+  const result = await invoke({
+    token: tokenFor(),
+    method: 'POST',
+    path: '/api/auth/first-password'
+  });
+  assert.equal(result.nextCalled, true);
+  assert.equal(result.res.statusCode, 200);
+});
+
+test('runtime auth: ordinary API request is blocked until initial password changes', async () => {
+  dbRows = [makeUser({ must_change_password: true })];
+  const result = await invoke({
+    token: tokenFor(),
+    method: 'GET',
+    path: '/api/orders'
+  });
+  assert.equal(result.res.statusCode, 403);
+  assert.equal(result.res.body.code, 'PASSWORD_CHANGE_REQUIRED');
+  assert.equal(result.nextCalled, false);
+});
+
+test('runtime auth: logout remains allowed while password change is required', async () => {
+  dbRows = [makeUser({ must_change_password: true })];
+  const result = await invoke({
+    token: tokenFor(),
+    method: 'POST',
+    path: '/api/auth/logout'
+  });
+  assert.equal(result.nextCalled, true);
+});
+
+test('runtime auth: cookie-authenticated write without origin is rejected', async () => {
+  queryCount = 0;
+  const result = await invoke({
+    cookie: 'sizlio_session=' + encodeURIComponent(tokenFor()),
+    method: 'POST',
+    path: '/api/orders'
+  });
+  assert.equal(result.res.statusCode, 403);
+  assert.equal(result.res.body.message, 'Request origin rejected');
+  assert.equal(queryCount, 0);
+});
+
+test('runtime auth: cookie-authenticated write from an untrusted origin is rejected', async () => {
+  queryCount = 0;
+  const result = await invoke({
+    cookie: 'sizlio_session=' + encodeURIComponent(tokenFor()),
+    method: 'POST',
+    path: '/api/orders',
+    origin: 'https://evil.example'
+  });
+  assert.equal(result.res.statusCode, 403);
+  assert.equal(queryCount, 0);
+});
+
+test('runtime auth: cookie-authenticated write from Sizlio origin reaches session validation', async () => {
+  dbRows = [makeUser()];
+  const result = await invoke({
+    cookie: 'sizlio_session=' + encodeURIComponent(tokenFor()),
+    method: 'POST',
+    path: '/api/orders',
+    origin: 'https://sizlio.com'
+  });
+  assert.equal(result.nextCalled, true);
+  assert.equal(result.res.statusCode, 200);
+});
+
+test('runtime auth: cookie-authenticated GET does not require an Origin header', async () => {
+  dbRows = [makeUser()];
+  const result = await invoke({
+    cookie: 'sizlio_session=' + encodeURIComponent(tokenFor()),
+    method: 'GET',
+    path: '/api/orders'
+  });
+  assert.equal(result.nextCalled, true);
+});
+
+test('runtime auth: super-admin is not blocked by restaurant suspension or expiry', async () => {
+  dbRows = [makeUser({
+    role: 'super_admin',
+    restaurant_id: null,
+    status: 'Suspended',
+    expiry_date: '2000-01-01T00:00:00.000Z'
+  })];
+  const result = await invoke({ token: tokenFor() });
+  assert.equal(result.nextCalled, true);
+  assert.equal(result.res.statusCode, 200);
+});
+
+test('runtime auth: database errors fail closed with 401', async () => {
+  dbError = new Error('database unavailable');
+  try {
+    const result = await invoke({ token: tokenFor() });
+    assert.equal(result.res.statusCode, 401);
+    assert.equal(result.nextCalled, false);
+  } finally {
+    dbError = null;
+  }
+});
