@@ -523,6 +523,10 @@ async function handleWebhook({ headers, body, rawBody = null }) {
         throw new Error('Invalid signature');
     }
 
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+        throw new Error('Invalid webhook payload');
+    }
+
     const {
         reference,
         transaction_id,
@@ -531,12 +535,15 @@ async function handleWebhook({ headers, body, rawBody = null }) {
         payment_method,
         paid_at
     } = body;
+    const normalizedStatus = typeof status === 'string'
+        ? status.trim().toUpperCase()
+        : '';
 
-    if (!reference) {
+    if (!reference || typeof reference !== 'string' || !reference.trim()) {
         throw new Error('Missing reference in webhook');
     }
 
-    if (status === 'SUCCESS' || status === 'PAID') {
+    if (normalizedStatus === 'SUCCESS' || normalizedStatus === 'PAID') {
         // A signed success callback must include the actual settled amount and
         // the provider's unique transaction ID. Never infer a bank transfer's
         // amount from our own QR record: a malformed callback could otherwise
@@ -571,7 +578,7 @@ async function handleWebhook({ headers, body, rawBody = null }) {
         };
     }
 
-    if (status === 'FAILED') {
+    if (normalizedStatus === 'FAILED') {
         const client = await pool.connect();
         let failedPayment = null;
 
