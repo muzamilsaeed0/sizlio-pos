@@ -28,7 +28,7 @@ require.cache[dbPath] = {
   exports: poolMock
 };
 
-const { authMiddleware } = require('../middleware/authMiddleware');
+const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 
 function makeUser(overrides = {}) {
   return {
@@ -266,5 +266,101 @@ test('runtime auth: database errors fail closed with 401', async () => {
     assert.equal(result.nextCalled, false);
   } finally {
     dbError = null;
+  }
+});
+
+
+// BATCH ROLE AUTHORIZATION MATRIX.
+// Exercises the actual exported authorize middleware, not source-code regexes.
+// Each case invokes middleware and verifies the HTTP authorization decision.
+const testedRoles = [
+  'super_admin',
+  'manager',
+  'counter',
+  'waiter',
+  'kitchen',
+  'delivery',
+  'display',
+  'unknown_role'
+];
+
+const endpointPolicies = [
+  { name: 'manager only', roles: ['manager'] },
+  { name: 'super admin only', roles: ['super_admin'] },
+  { name: 'manager and counter', roles: ['manager', 'counter'] },
+  { name: 'manager waiter counter', roles: ['manager', 'waiter', 'counter'] },
+  { name: 'manager kitchen counter', roles: ['manager', 'kitchen', 'counter'] },
+  { name: 'delivery manager counter', roles: ['delivery', 'manager', 'counter'] },
+  { name: 'delivery only', roles: ['delivery'] },
+  { name: 'waiter and manager', roles: ['waiter', 'manager'] },
+  { name: 'waiter kitchen manager', roles: ['waiter', 'kitchen', 'manager'] },
+  { name: 'manager counter waiter kitchen', roles: ['manager', 'counter', 'waiter', 'kitchen'] },
+  { name: 'manager counter display', roles: ['manager', 'counter', 'display'] },
+  { name: 'manager super admin', roles: ['manager', 'super_admin'] },
+  { name: 'manager counter delivery', roles: ['manager', 'counter', 'delivery'] },
+  { name: 'manager waiter kitchen counter delivery', roles: ['manager', 'waiter', 'kitchen', 'counter', 'delivery'] },
+  { name: 'all standard POS roles', roles: ['manager', 'counter', 'waiter', 'kitchen', 'delivery', 'display'] },
+  { name: 'waiter counter', roles: ['waiter', 'counter'] }
+];
+
+for (const policy of endpointPolicies) {
+  for (const role of testedRoles) {
+    test('runtime authorization matrix: ' + policy.name + ' / role=' + role, () => {
+      const req = { user: { role } };
+      const res = {
+        statusCode: 200,
+        body: null,
+        status(code) {
+          this.statusCode = code;
+          return this;
+        },
+        json(body) {
+          this.body = body;
+          return this;
+        }
+      };
+      let nextCalled = false;
+      authorize(...policy.roles)(req, res, () => { nextCalled = true; });
+
+      if (policy.roles.includes(role)) {
+        assert.equal(nextCalled, true, 'allowed role must reach next()');
+        assert.equal(res.statusCode, 200);
+        assert.equal(res.body, null);
+      } else {
+        assert.equal(nextCalled, false, 'disallowed role must not reach next()');
+        assert.equal(res.statusCode, 403);
+        assert.equal(res.body.success, false);
+        assert.equal(res.body.message, 'Access denied');
+      }
+    });
+  }
+}
+
+test('runtime authorization: role matching is case-sensitive and fails closed', () => {
+  const req = { user: { role: 'Manager' } };
+  const res = makeResponse();
+  let nextCalled = false;
+  authorize('manager')(req, res, () => { nextCalled = true; });
+  assert.equal(nextCalled, false);
+  assert.equal(res.statusCode, 403);
+});
+
+test('runtime authorization: missing user is denied instead of throwing', () => {
+  const req = {};
+  const res = makeResponse();
+  let nextCalled = false;
+  assert.doesNotThrow(() => authorize('manager')(req, res, () => { nextCalled = true; }));
+  assert.equal(nextCalled, false);
+  assert.equal(res.statusCode, 403);
+});
+
+test('runtime authorization: empty allowlist denies every tested role', () => {
+  for (const role of testedRoles) {
+    const req = { user: { role } };
+    const res = makeResponse();
+    let nextCalled = false;
+    authorize()(req, res, () => { nextCalled = true; });
+    assert.equal(nextCalled, false);
+    assert.equal(res.statusCode, 403);
   }
 });
