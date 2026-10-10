@@ -69,6 +69,19 @@ exports.update = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Supplier name is required' });
     }
 
+    // Counter users may maintain supplier contact details, but changes to
+    // opening balances or active status affect financial records/access.
+    if (
+      req.user?.role === 'counter' &&
+      (Object.prototype.hasOwnProperty.call(req.body, 'opening_balance') ||
+       Object.prototype.hasOwnProperty.call(req.body, 'is_active'))
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only a manager can change supplier opening balance or status'
+      });
+    }
+
     const supplier = await supplierModel.updateSupplier(id, restaurantId, req.body);
     if (!supplier) return res.status(404).json({ success: false, message: 'Supplier not found' });
 
