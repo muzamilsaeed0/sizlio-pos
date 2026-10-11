@@ -249,6 +249,9 @@ async function addTransaction({
     const currentStock = Number(item.stock_quantity);
     const amount = Number(quantity);
 
+    if (!Number.isFinite(currentStock) || currentStock < 0) {
+      throw new Error("Current inventory stock is invalid");
+    }
     if (!Number.isFinite(amount) || amount <= 0) {
       throw new Error("Quantity must be greater than 0");
     }
@@ -275,16 +278,24 @@ async function addTransaction({
       throw new Error("Invalid transaction type");
     }
 
+    if (!Number.isFinite(newStock) || newStock < 0) {
+      throw new Error("Calculated inventory stock is invalid");
+    }
+
+    const itemUpdate = await client.query(
+      `UPDATE inventory_items SET stock_quantity = $1
+       WHERE id = $2 AND restaurant_id = $3
+       RETURNING *`,
+      [newStock, inventory_id, restaurant_id]
+    );
+    if (!itemUpdate.rowCount) {
+      throw new Error("Inventory item not found");
+    }
+
     const transactionResult = await client.query(
       `INSERT INTO inventory_transactions (inventory_id, type, quantity, note)
        VALUES ($1,$2,$3,$4) RETURNING *`,
       [inventory_id, transactionType, amount, note]
-    );
-
-    const itemUpdate = await client.query(
-      `UPDATE inventory_items SET stock_quantity = $1
-       WHERE id = $2 AND restaurant_id = $3 RETURNING *`,
-      [newStock, inventory_id, restaurant_id]
     );
 
     await client.query("COMMIT");
