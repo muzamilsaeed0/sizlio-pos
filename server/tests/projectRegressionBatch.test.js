@@ -605,3 +605,10 @@ test('Cafe Lite role restrictions are enforced at login and API middleware', () 
   assert.match(authController, /user\.restaurant_plan === 'Cafe Lite'[\s\S]*?\['counter', 'delivery', 'rider', 'delivery_rider'\]\.includes\(user\.role\)/);
   assert.match(authMiddleware, /r\.plan[\s\S]*?user\.plan === 'Cafe Lite'[\s\S]*?PLAN_ROLE_NOT_ALLOWED/);
 });
+
+
+test('sales report calendar-date validation matches real YYYY-MM-DD digits', () => {
+  const source = readSource('controllers/reportController.js');
+  assert.match(source, /!\/\^\\d\{4\}-\\d\{2\}-\\d\{2\}\$\/\.test\(value\)/);
+  assert.doesNotMatch(source, /\\\\d\{4\}-\\\\d\{2\}-\\\\d\{2\}/);
+});
