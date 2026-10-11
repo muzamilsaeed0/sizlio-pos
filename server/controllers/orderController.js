@@ -655,9 +655,10 @@ exports.placeOrder = async (
   }
 
 
+  let offlineIdempotencyKey = null;
+  let offlineOrderMutationStarted = false;
   try {
     const rawIdempotencyKey = String(req.get('Idempotency-Key') || '').trim();
-    let offlineIdempotencyKey = null;
 
     if (rawIdempotencyKey.startsWith('offline-')) {
       if (rawIdempotencyKey.length < 24 || rawIdempotencyKey.length > 128) {
@@ -727,6 +728,7 @@ if ((order_type === 'dine_in' || order_type === 'walk_in') && tableNo > 0) {
 
     if (existingOrder) {
 
+      if (offlineIdempotencyKey) offlineOrderMutationStarted = true;
       await addItemsToOrder(
         existingOrder.id,
         normalizedItems,
@@ -813,6 +815,7 @@ if ((order_type === 'dine_in' || order_type === 'walk_in') && tableNo > 0) {
     // CREATE NEW ORDER
     // --------------------------------------------------
 
+       if (offlineIdempotencyKey) offlineOrderMutationStarted = true;
        const newOrder =
       await createOrder(
         tableNo,
@@ -884,7 +887,19 @@ if ((order_type === 'dine_in' || order_type === 'walk_in') && tableNo > 0) {
     catch (err) {
     console.error('placeOrder:', err);
 
-    
+    // If the failure happened before any order mutation, release the reservation
+    // so the client can retry. Once mutation starts, preserve it for reconciliation.
+    if (offlineIdempotencyKey && !offlineOrderMutationStarted) {
+      await pool.query(
+        `DELETE FROM public.public_order_requests
+          WHERE restaurant_id = $1
+            AND idempotency_key = $2
+            AND order_id IS NULL
+            AND status = 'processing'`,
+        [restaurantId, offlineIdempotencyKey]
+      ).catch(cleanupErr => console.error('Offline idempotency cleanup:', cleanupErr));
+    }
+
     if (err.error === 'INSUFFICIENT_KITCHEN_STOCK' || err.error === 'KITCHEN_STOCK_NOT_FOUND') {
       return res.status(409).json({
         success: false,
