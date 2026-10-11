@@ -34,13 +34,11 @@ This is a source-level review of the files listed below. The full automated suit
 
 **Risk:** Short passwords have lower entropy even when bcrypt-hashed. Keep this constraint consistent across API and UI, protect accounts with rate limits/session controls, and revisit only if the product owner changes the requirement.
 
-### P2 — POS settings endpoint treats omitted numeric fields as zero
+### P2 — POS settings partial-update bug (patched; final tests pending)
 
-**Evidence:** `server/controllers/settingsController.js`, `savePosSettings`: helper `num(field)` returns `0` when a field is omitted, and the endpoint writes the resulting full settings object.
+**Original issue:** omitted numeric fields could silently reset configured charges/tax values.
 
-**Risk:** A partial client update or a future client that omits a newly added setting can unintentionally reset existing charges/tax values.
-
-**Fix order:** either explicitly require the complete settings schema and reject missing required fields, or load current settings and merge validated supplied fields. Add tests for omitted, null, blank, negative, over-limit, and valid values before changing the API contract.
+**Patch committed:** `savePosSettings` loads existing settings, preserves omitted values, and rejects malformed supplied numeric values. Final regression and live API verification remain pending.
 
 ### P2 — Production database TLS disables certificate verification
 
@@ -50,13 +48,11 @@ This is a source-level review of the files listed below. The full automated suit
 
 **Fix order:** confirm the production database provider's CA requirements, configure trusted CA verification where supported, and test connection from the actual host before enabling strict verification. Do not deploy a TLS change without checking provider compatibility.
 
-### P2 — Login audit IP trusts forwarding headers directly
+### P2 — Login audit IP trusted raw forwarding headers (patched; proxy config still needs verification)
 
-**Evidence:** `server/controllers/authController.js` takes `x-forwarded-for` / `x-real-ip` directly for login tracking.
+**Original issue:** client-supplied `x-forwarded-for` / `x-real-ip` values were used directly for login tracking.
 
-**Risk:** If the app is reachable through paths that do not sanitize proxy headers, the recorded IP can be spoofed. This is primarily audit-log integrity, not authentication bypass.
-
-**Fix order:** use Express's trusted-proxy-aware `req.ip` only after verifying deployment proxy configuration; never use the logged IP as an authorization factor.
+**Patch committed:** login tracking now uses Express `req.ip` and the configured `trust proxy` policy, falling back to the socket address. Confirm the actual Railway proxy path is represented correctly in deployment configuration. The logged IP must never be used as an authorization factor.
 
 ### P2 — Public QR and offline-order idempotency are not fully atomic (stale replay mitigation patched)
 
@@ -66,13 +62,11 @@ This is a source-level review of the files listed below. The full automated suit
 
 **Patch committed:** stale processing reservations are no longer automatically taken over and replayed for either public QR orders or offline syncs. Public-order and offline-order error cleanup release reservations only when failure occurs before any order mutation; once mutation starts, the reservation is preserved. This fails closed and reduces duplicate-item/order risk after a crash. **Remaining limitation:** the reservation and order mutation are still separate transactions, so a stale request requires staff reconciliation; atomic creation/linking or a supported reconciliation workflow remains a release requirement.
 
-### P2 — Report date filters are not validated at the controller boundary
+### P2 — Sales report date validation had a malformed digit regex (patched; runtime verification pending)
 
-**Evidence:** `server/controllers/reportController.js` passes `req.query.from` and `req.query.to` to `server/models/reportModel.js`; the model casts them to dates in SQL when both are supplied.
+**Original issue:** a double-escaped digit pattern rejected valid `YYYY-MM-DD` dates.
 
-**Risk:** malformed or reversed ranges can produce database errors or confusing reports. Tenant scoping is present in the inspected report queries, but input validation and consistent range behavior should be explicit.
-
-**Fix order:** validate strict YYYY-MM-DD calendar dates, reject reversed/oversized ranges, define behavior when only one bound is supplied, and test timezone/date-boundary behavior.
+**Patch committed:** the validator now uses the correct digit regex, validates real calendar dates, requires paired bounds, and rejects reversed ranges. A regression contract was added. The previously reported Sales-page `Server error` still needs confirmation against the deployed logs and the final test run.
 
 ### P1 — Automated payment-provider integration is not implemented in the current adapter
 
