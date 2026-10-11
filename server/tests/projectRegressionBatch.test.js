@@ -738,3 +738,18 @@ test('inactive inventory ingredients cannot be added to recipes or consumed by o
   assert.match(availability, /ii\.is_active AS inventory_is_active/);
   assert.match(availability, /INACTIVE_INVENTORY_ITEM/);
 });
+
+test('kitchen stock requests validate numeric quantities and transfers reject inactive or changed stock', () => {
+  const source = readSource('routes/kitchenInventoryRoutes.js');
+  const createRequest = source.slice(source.indexOf("router.post('/requests'"), source.indexOf("// GET REQUESTS"));
+  const approve = source.slice(source.indexOf("router.put('/requests/:requestId/approve'"), source.indexOf("// REJECT KITCHEN REQUEST"));
+
+  assert.match(createRequest, /Number\.isInteger\(inventoryId\)/);
+  assert.match(createRequest, /Number\.isFinite\(requestedQuantity\)[\s\S]*?requestedQuantity <= 0/);
+  assert.match(createRequest, /SELECT id, is_active FROM inventory_items/);
+  assert.match(createRequest, /Inventory item is inactive/);
+  assert.match(approve, /SELECT stock_quantity, is_active FROM inventory_items[\s\S]*?FOR UPDATE/);
+  assert.match(approve, /Number\.isFinite\(qty\)[\s\S]*?currentStock < qty/);
+  assert.match(approve, /stock_quantity >= \$1[\s\S]*?RETURNING id/);
+  assert.match(approve, /Warehouse stock changed during transfer/);
+});
