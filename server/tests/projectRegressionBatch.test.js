@@ -635,6 +635,17 @@ test('supplier purchase/payment list and ledger validate calendar date filters a
   assert.match(source, /async function getLedger\(supplierId, restaurantId, filters = \{\}\) \{\s*validateDateFilters\(filters\);/);
 });
 
+test('supplier aging report allocates later payments to oldest unpaid purchases first', () => {
+  const source = readSource('models/supplierModel.js');
+  const aging = source.slice(source.indexOf('async function getAgingReport(restaurantId)'), source.indexOf('module.exports'));
+  assert.match(aging, /WITH purchase_rows AS/);
+  assert.match(aging, /SUM\(GREATEST\(total_amount - paid_amount, 0\)\) OVER/);
+  assert.match(aging, /ORDER BY purchase_date ASC, id ASC/);
+  assert.match(aging, /payment_totals AS/);
+  assert.match(aging, /p\.unpaid_amount - GREATEST\([\s\S]*?pay\.total_payment[\s\S]*?p\.prior_unpaid/);
+  assert.match(aging, /oldest_unpaid_date/);
+});
+
 test('supplier opening balances and deletion are manager-only financial controls', () => {
   const controller = readSource('controllers/supplierController.js');
   const model = readSource('models/supplierModel.js');
