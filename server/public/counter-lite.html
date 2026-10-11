@@ -2240,7 +2240,7 @@
           </div>
           <button class="btn btn-ghost" onclick="toggleResetBox(${r.id})">Reset password</button>
           <div class="reset-pw-box hidden" id="reset-box-${r.id}">
-            <input type="password" id="reset-pw-${r.id}" minlength="4" maxlength="8" placeholder="New password" />
+            <input type="password" id="reset-pw-${r.id}" minlength="8" maxlength="72" placeholder="New password" />
             <button class="btn btn-ok" onclick="doResetRiderPassword(${r.id})">Save</button>
           </div>
         </div>
