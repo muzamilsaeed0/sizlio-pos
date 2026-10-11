@@ -692,6 +692,18 @@ exports.addTransaction = async (
       });
     }
 
+    if ([
+      "Quantity must be greater than 0",
+      "A note/reason is required for wastage or stock adjustment",
+      "Current inventory stock is invalid",
+      "Calculated inventory stock is invalid"
+    ].includes(error.message)) {
+      return res.status(400).json({
+        success: false,
+        message: error.message
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: "Server Error"
