@@ -47,7 +47,7 @@ const createStaff = async (
   }
 
   if (typeof password !== 'string' || password.length < 8 || Buffer.byteLength(password, 'utf8') > 72) {
-    const error = new Error('Password must be between 8 and 72 characters');
+    const error = new Error('Password must be at least 8 characters and no more than 72 UTF-8 bytes');
     error.code = 'INVALID_PASSWORD';
     throw error;
   }
