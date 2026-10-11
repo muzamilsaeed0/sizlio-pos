@@ -620,3 +620,12 @@ test('production PostgreSQL TLS verifies certificates by default and requires ex
   assert.match(source, /ssl: production \? \{ rejectUnauthorized \} : false/);
   assert.doesNotMatch(source, /rejectUnauthorized:\s*false/);
 });
+
+
+test('QR settlement prevents reuse of a provider transaction ID across payments', () => {
+  const source = readSource('services/paymentService.js');
+  assert.match(source, /pg_advisory_xact_lock\(hashtext\(\$1\)\)/);
+  assert.match(source, /FROM payment_transactions[\s\S]*?WHERE provider_ref = \$1[\s\S]*?status = 'completed'/);
+  assert.match(source, /Provider transaction ID has already been used/);
+  assert.ok(source.indexOf('pg_advisory_xact_lock') < source.indexOf('INSERT INTO payment_transactions'));
+});
