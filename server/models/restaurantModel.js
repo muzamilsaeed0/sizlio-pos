@@ -182,8 +182,8 @@ const createRestaurant = async (data) => {
       if (typeof manager_password !== "string" || manager_password.length < 8) {
         throw new Error("Manager password must be at least 8 characters.");
       }
-      if (manager_password.length > 72) {
-        throw new Error("Manager password is too long (maximum 72 characters).");
+      if (Buffer.byteLength(manager_password, 'utf8') > 72) {
+        throw new Error("Manager password is too long (maximum 72 UTF-8 bytes).");
       }
     }
 
