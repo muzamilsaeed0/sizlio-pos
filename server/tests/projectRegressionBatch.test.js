@@ -657,6 +657,19 @@ test('supplier opening balances and deletion are manager-only financial controls
   assert.match(model, /!Number\.isFinite\(openingBalance\) \|\| openingBalance < 0/);
 });
 
+test('supplier opening balance cannot rewrite an existing financial ledger', () => {
+  const model = readSource('models/supplierModel.js');
+  const controller = readSource('controllers/supplierController.js');
+  const update = model.slice(model.indexOf('async function updateSupplier'), model.indexOf('async function deleteSupplier'));
+
+  assert.match(update, /SELECT id, opening_balance FROM suppliers WHERE id = \$1 AND restaurant_id = \$2 FOR UPDATE/);
+  assert.match(update, /openingBalanceChanged/);
+  assert.match(update, /FROM supplier_purchases[\s\S]*?FROM supplier_payments[\s\S]*?AS has_history/);
+  assert.match(update, /Opening balance cannot be changed after supplier ledger activity/);
+  assert.match(update, /await client\.query\('COMMIT'\)/);
+  assert.match(controller, /supplier\.update:[\s\S]*?res\.status\(409\)\.json/);
+});
+
 test('production PostgreSQL TLS verifies certificates by default and requires explicit opt-out', () => {
   const source = readSource('config/db.js');
   assert.match(source, /process\.env\.DATABASE_SSL_REJECT_UNAUTHORIZED !== 'false'/);
