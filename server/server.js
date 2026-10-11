@@ -90,8 +90,6 @@ app.use(express.urlencoded({ extended: true, limit: "5mb" }));
    STATIC FILES
 ===================================================== */
 console.log("Static folder path:", path.join(__dirname, "public"));
-app.use(express.static(path.join(__dirname, "public")));
-app.use("/images", express.static(path.join(__dirname, "public", "images")));
 
 
 /* =====================================================
@@ -232,6 +230,23 @@ app.get("/counter-lite", protectedPage("counter-lite.html", { roles: ["counter"]
 
 app.get("/wholesale", protectedPage("wholesale.html", { roles: ["manager", "counter"], businessType: "wholesale" }));
 app.get("/wholesale.html", protectedPage("wholesale.html", { roles: ["manager", "counter"], businessType: "wholesale" }));
+// Apply the same policy to direct .html URLs; otherwise express.static could
+// serve these files without passing through the extensionless page handlers.
+app.get("/counter.html", protectedPage("counter.html", { roles: ["counter"], blockCafeLite: true }));
+app.get("/waiter.html", protectedPage("waiter.html", { roles: ["waiter"], blockCafeLite: true }));
+app.get("/kitchen.html", protectedPage("kitchen.html", { roles: ["kitchen"], blockCafeLite: true }));
+app.get("/rider.html", protectedPage("rider.html", { roles: ["rider", "delivery_rider", "delivery"] }));
+app.get("/manager.html", protectedPage("manager.html", { roles: ["manager"], blockCafeLite: true }));
+app.get("/sales.html", protectedPage("sales.html", { roles: ["manager", "counter"], blockCafeLite: true }));
+app.get("/inventory.html", protectedPage("inventory.html", { roles: ["manager", "counter"], blockCafeLite: true }));
+app.get("/bill.html", protectedPage("bill.html", { roles: ["manager", "counter", "waiter"], blockCafeLite: true }));
+app.get("/superadmin.html", protectedPage("superadmin.html", { roles: ["super_admin"] }));
+app.get("/counter-lite.html", protectedPage("counter-lite.html", { roles: ["counter"], requireCafeLite: true }));
+
+
+// Static assets are mounted after the explicit protected-page aliases.
+app.use(express.static(path.join(__dirname, "public")));
+app.use("/images", express.static(path.join(__dirname, "public", "images")));
 
 /* =====================================================
    API ROUTES
