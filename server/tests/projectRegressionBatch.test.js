@@ -763,3 +763,23 @@ test('inventory update controller does not log user objects or request bodies', 
   assert.doesNotMatch(update, /console\.log\([^)]*req\.body/);
   assert.doesNotMatch(update, /INVENTORY UPDATE DEBUG|UPDATE INVENTORY DEBUG|UPDATE DATA:/);
 });
+
+
+test('kitchen inventory model and route enforce consistent request and transfer safeguards', () => {
+  const model = readSource('models/kitchenInventoryModel.js');
+  const routes = readSource('routes/kitchenInventoryRoutes.js');
+  const createRequest = model.slice(model.indexOf('async function createRequest'), model.indexOf('// ======================================================\\n// GET REQUESTS'));
+  const approve = model.slice(model.indexOf('async function approveRequest'), model.indexOf('// ======================================================\\n// REJECT REQUEST'));
+  const listRequests = routes.slice(routes.indexOf("router.get('/requests'"), routes.indexOf('// ======================================================\\n// APPROVE KITCHEN REQUEST'));
+
+  assert.match(createRequest, /Number\\.isInteger\\(inventoryId\\)/);
+  assert.match(createRequest, /Number\\.isFinite\\(qty\\)[\\s\\S]*?qty <= 0/);
+  assert.match(createRequest, /SELECT id, is_active FROM inventory_items[\\s\\S]*?restaurant_id = \\$2/);
+  assert.match(createRequest, /itemCheck\\.rows\\[0\\]\\.is_active === false/);
+  assert.match(createRequest, /restaurant_id,\\s*inventoryId,\\s*qty/);
+  assert.match(approve, /Number\\.isFinite\\(currentStock\\)[\\s\\S]*?Number\\.isFinite\\(qty\\)/);
+  assert.match(approve, /stock_quantity = stock_quantity - \\$1[\\s\\S]*?stock_quantity >= \\$1[\\s\\S]*?RETURNING id/);
+  assert.match(approve, /INSERT INTO kitchen_inventory_transactions[\\s\\S]*?'IN'/);
+  assert.match(listRequests, /allowedStatuses = new Set\\(\\['all', 'pending', 'approved', 'rejected'\\]\\)/);
+  assert.match(listRequests, /Invalid request status filter/);
+});
