@@ -11,6 +11,11 @@ function isValidIsoDate(value) {
     date.getUTCDate() === day;
 }
 
+function hasAtMostTwoDecimalPlaces(value) {
+  return Number.isFinite(value) &&
+    Math.abs(value * 100 - Math.round(value * 100)) < 1e-7;
+}
+
 function validateDateFilters(filters = {}) {
   const from = filters.from ? String(filters.from) : '';
   const to = filters.to ? String(filters.to) : '';
@@ -250,6 +255,11 @@ async function createPurchase(supplierId, restaurantId, data, userId) {
     if (!Number.isFinite(paidAmount) || paidAmount < 0 || paidAmount > totalAmount) {
       throw new Error('Paid amount must be between 0 and the purchase total');
     }
+    // The database stores purchase totals and paid amounts as NUMERIC(12,2).
+    // Reject extra precision instead of letting PostgreSQL round ledger values.
+    if (!hasAtMostTwoDecimalPlaces(totalAmount) || !hasAtMostTwoDecimalPlaces(paidAmount)) {
+      throw new Error('Purchase amounts may have at most 2 decimal places');
+    }
 
     const items = Array.isArray(data.items) ? data.items : [];
 
@@ -276,6 +286,11 @@ async function createPurchase(supplierId, restaurantId, data, userId) {
           !Number.isFinite(qty) || qty <= 0 ||
           !Number.isFinite(unitPrice) || unitPrice < 0) {
         throw new Error('Invalid purchase item');
+      }
+      // inventory_items.stock_quantity and purchase_price are NUMERIC(12,2).
+      // Match that precision before calculating WAC or writing the stock ledger.
+      if (!hasAtMostTwoDecimalPlaces(qty) || !hasAtMostTwoDecimalPlaces(unitPrice)) {
+        throw new Error('Purchase quantity and unit price may have at most 2 decimal places');
       }
     }
 
