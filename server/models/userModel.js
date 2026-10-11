@@ -46,8 +46,8 @@ const createStaff = async (
     throw error;
   }
 
-  if (typeof password !== 'string' || password.length < 8 || Buffer.byteLength(password, 'utf8') > 72) {
-    const error = new Error('Password must be at least 8 characters and no more than 72 UTF-8 bytes');
+  if (typeof password !== 'string' || password.length < 4 || password.length > 8) {
+    const error = new Error('Password must be between 4 and 8 characters');
     error.code = 'INVALID_PASSWORD';
     throw error;
   }
@@ -145,13 +145,13 @@ const updateStaff = async (id, restaurantId, fullName, username, password) => {
     values.push(username);
   }
   if (password) {
-    if (typeof password !== 'string' || password.length < 8) {
-      const error = new Error('Password must be at least 8 characters');
+    if (typeof password !== 'string' || password.length < 4) {
+      const error = new Error('Password must be at least 4 characters');
       error.code = 'INVALID_PASSWORD';
       throw error;
     }
-    if (Buffer.byteLength(password, 'utf8') > 72) {
-      const error = new Error('Password is too long (maximum 72 UTF-8 bytes)');
+    if (password.length > 8) {
+      const error = new Error('Password is too long (maximum 8 characters)');
       error.code = 'INVALID_PASSWORD';
       throw error;
     }
