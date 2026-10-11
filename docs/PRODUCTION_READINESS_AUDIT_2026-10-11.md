@@ -36,11 +36,11 @@ This is a source-level review of the files listed below. The full automated suit
 
 ### P2 — Production database TLS disables certificate verification
 
-**Evidence:** `server/config/db.js` sets `ssl: { rejectUnauthorized: false }` in production.
+**Evidence:** `server/config/db.js` verifies certificates by default in production. The first deployment attempt returned `self-signed certificate in certificate chain`, so the current database's certificate chain is not trusted by Node.js.
 
-**Risk:** TLS encryption is used but server certificate verification is disabled, weakening protection against an active interception attack.
+**Risk:** the strict setting prevents an unverified database connection, but production is unavailable until the host's correct CA is configured. Disabling verification would weaken protection against active interception.
 
-**Fix order:** confirm the production database provider's CA requirements, configure trusted CA verification where supported, and test connection from the actual host before enabling strict verification. Do not deploy a TLS change without checking provider compatibility.
+**Patch:** `DATABASE_SSL_CA` now accepts the database provider's PEM CA certificate (literal `\\n` sequences are converted to line breaks) while certificate verification remains enabled. Obtain the correct CA from the database provider and set it as a secret/environment variable. If the provider documents that its private network uses a self-signed chain without a CA option, a temporary `DATABASE_SSL_REJECT_UNAUTHORIZED=false` override can restore service while the provider-specific secure configuration is confirmed; treat that as a temporary risk acceptance, not the final production setting. Verify connectivity from the actual host.
 
 ### P2 — Login audit IP trusted raw forwarding headers (patched; proxy config still needs verification)
 
@@ -119,7 +119,7 @@ The following source changes have since been committed. These are **not yet test
 - **Order idempotency crash handling:** public QR and offline order handlers no longer automatically take over stale processing reservations. Once public-order mutation begins, error cleanup preserves the reservation rather than deleting evidence of an uncertain outcome. Stale requests now return an explicit reconciliation-required response instead of automatically replaying a potentially completed mutation.
 - **Login audit IP:** login tracking now uses Express `req.ip` (configured with trusted-proxy policy) rather than raw client-supplied forwarding headers.
 - **Payment settlement reference replay:** successful QR settlement now serializes callbacks sharing a provider transaction ID and rejects a reference already present in the completed payment ledger; disposable-database concurrency verification remains pending.
-- **Database TLS:** production PostgreSQL connections now verify server certificates by default. If the provider uses a private/self-signed CA, configure that CA rather than turning verification off; `DATABASE_SSL_REJECT_UNAUTHORIZED=false` remains an explicit emergency compatibility override and should not be used for normal production.
+- **Database TLS:** production PostgreSQL connections verify certificates by default and now support `DATABASE_SSL_CA` for a provider-supplied PEM CA. Deployment currently reports `self-signed certificate in certificate chain`; configure the correct provider CA and verify connectivity. `DATABASE_SSL_REJECT_UNAUTHORIZED=false` is an emergency temporary override only.
 - **Password regression alignment:** existing source/UI checks and the regression test cases now follow the requested 4–8 character password rule.
 - **Audit artifact:** this document records the remaining findings and release gates.
 
