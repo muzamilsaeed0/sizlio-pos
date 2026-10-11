@@ -71,6 +71,7 @@ const authMiddleware = async (req, res, next) => {
   COALESCE((to_jsonb(u)->>'must_change_password')::boolean, FALSE) AS must_change_password,
   r.name AS restaurant_name,
   r.status,
+  r.plan,
   r.expiry_date
 FROM users u
 LEFT JOIN restaurants r
@@ -88,6 +89,22 @@ WHERE u.id = $1
     }
 
     const user = result.rows[0];
+
+    // Enforce Cafe Lite entitlements at the API/session boundary as well as
+    // page routing. This blocks legacy manager/waiter/kitchen sessions from
+    // calling protected APIs directly on a Counter Lite subscription.
+    const cafeLiteRoles = ['counter', 'delivery', 'rider', 'delivery_rider'];
+    if (
+      user.role !== 'super_admin' &&
+      user.plan === 'Cafe Lite' &&
+      !cafeLiteRoles.includes(user.role)
+    ) {
+      return res.status(403).json({
+        success: false,
+        code: 'PLAN_ROLE_NOT_ALLOWED',
+        message: 'This role is not available on the Cafe Lite plan.'
+      });
+    }
 
     if (!user.is_active) {
       return res.status(403).json({
