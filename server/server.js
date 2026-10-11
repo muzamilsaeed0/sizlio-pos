@@ -140,6 +140,59 @@ pool.query("SELECT NOW()", (err, result) => {
    HTML PAGE ROUTES
 ===================================================== */
 
+// Enforce page access on the server, not only in navigation menus.
+// Browser sessions use the HttpOnly sizlio_session cookie. API routes still
+// enforce their own authorization; this page gate is an additional boundary.
+function protectedPage(filename, policy = {}) {
+  return (req, res) => {
+    const hasSessionCookie = (req.headers.cookie || '')
+      .split(';')
+      .some(part => part.trim().startsWith('sizlio_session='));
+    if (!hasSessionCookie) return res.redirect('/');
+
+    authMiddleware(req, res, async () => {
+      try {
+        const role = req.user?.role;
+        const roles = policy.roles || [];
+        if (!roles.includes(role)) {
+          return res.status(403).send('Access denied for this account.');
+        }
+
+        let restaurant = null;
+        if (role !== 'super_admin') {
+          const restaurantId = Number(req.user?.restaurant_id);
+          if (!Number.isSafeInteger(restaurantId) || restaurantId <= 0) {
+            return res.status(403).send('Restaurant access is required.');
+          }
+          const result = await pool.query(
+            'SELECT plan, business_type FROM restaurants WHERE id = $1',
+            [restaurantId]
+          );
+          if (!result.rows.length) {
+            return res.status(403).send('Restaurant access is unavailable.');
+          }
+          restaurant = result.rows[0];
+        }
+
+        if (policy.requireCafeLite && restaurant?.plan !== 'Cafe Lite') {
+          return res.status(403).send('This screen is only available on the Cafe Lite plan.');
+        }
+        if (policy.blockCafeLite && restaurant?.plan === 'Cafe Lite') {
+          return res.status(403).send('This screen is not available on the Cafe Lite plan. Use Counter Lite or Rider.');
+        }
+        if (policy.businessType && restaurant?.business_type !== policy.businessType) {
+          return res.status(403).send('This screen is not enabled for this business type.');
+        }
+
+        return res.sendFile(path.join(__dirname, 'public', filename));
+      } catch (err) {
+        console.error('Protected page access:', err.message);
+        return res.status(500).send('Unable to load this page.');
+      }
+    });
+  };
+}
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
@@ -148,56 +201,32 @@ app.get("/customer", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "customer.html"));
 });
 
-app.get("/counter", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "counter.html"));
-});
+app.get("/counter", protectedPage("counter.html", { roles: ["counter"], blockCafeLite: true }));
 
-app.get("/waiter", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "waiter.html"));
-});
+app.get("/waiter", protectedPage("waiter.html", { roles: ["waiter"], blockCafeLite: true }));
 
-app.get("/kitchen", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "kitchen.html"));
-});
+app.get("/kitchen", protectedPage("kitchen.html", { roles: ["kitchen"], blockCafeLite: true }));
 
-app.get("/rider", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "rider.html"));
-});
+app.get("/rider", protectedPage("rider.html", { roles: ["rider", "delivery_rider", "delivery"] }));
 
 app.get("/status", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "status.html"));
 });
 
-app.get("/manager", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "manager.html"));
-});
+app.get("/manager", protectedPage("manager.html", { roles: ["manager"], blockCafeLite: true }));
 
-app.get("/sales", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "sales.html"));
-});
+app.get("/sales", protectedPage("sales.html", { roles: ["manager", "counter"], blockCafeLite: true }));
 
-app.get("/inventory", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "inventory.html"));
-});
+app.get("/inventory", protectedPage("inventory.html", { roles: ["manager", "counter"], blockCafeLite: true }));
 
-app.get("/bill", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "bill.html"));
-});
+app.get("/bill", protectedPage("bill.html", { roles: ["manager", "counter", "waiter"], blockCafeLite: true }));
 
-app.get("/admin", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "superadmin.html"));
-});
+app.get("/admin", protectedPage("superadmin.html", { roles: ["super_admin"] }));
 
-app.get("/counter-lite", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "counter-lite.html"));
-});
+app.get("/counter-lite", protectedPage("counter-lite.html", { roles: ["counter"], requireCafeLite: true }));
 
-app.get("/wholesale", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "wholesale.html"));
-});
-app.get("/wholesale.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "wholesale.html"));
-});
+app.get("/wholesale", protectedPage("wholesale.html", { roles: ["manager", "counter"], businessType: "wholesale" }));
+app.get("/wholesale.html", protectedPage("wholesale.html", { roles: ["manager", "counter"], businessType: "wholesale" }));
 
 /* =====================================================
    API ROUTES
