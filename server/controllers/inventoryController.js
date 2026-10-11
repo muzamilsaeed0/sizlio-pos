@@ -258,10 +258,6 @@ exports.updateItem = async (req, res) => {
     const restaurantId =
   req.user.restaurant_id;
 
-console.log("===== INVENTORY UPDATE DEBUG =====");
-console.log("ID:", id);
-console.log("USER:", req.user);
-console.log("RESTAURANT ID:", restaurantId);
 
     const {
       name,
@@ -280,8 +276,6 @@ console.log("RESTAURANT ID:", restaurantId);
     // --------------------------------------------------
 
     const updateData = {};
-    console.log("===== UPDATE INVENTORY DEBUG =====");
-console.log("REQ BODY:", req.body);
 
     if (name !== undefined) {
       if (!String(name).trim()) {
@@ -430,7 +424,6 @@ console.log("REQ BODY:", req.body);
     // UPDATE
     // --------------------------------------------------
 
- console.log("UPDATE DATA:", updateData);
 
     const item =
 
