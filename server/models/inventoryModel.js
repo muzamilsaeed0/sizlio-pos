@@ -386,6 +386,9 @@ async function addRecipeIngredient({
 }) {
   const inventoryItem = await getItemById(inventory_id, restaurant_id);
   if (!inventoryItem) throw new Error("Inventory item not found");
+  if (inventoryItem.is_active === false) {
+    throw new Error("Cannot add an inactive inventory item to a recipe");
+  }
 
   const menuCheck = await pool.query(
     `SELECT id FROM menu_items WHERE id = $1 AND restaurant_id = $2`,
@@ -425,6 +428,7 @@ async function updateRecipeIngredient(id, quantity, restaurantId) {
     WHERE mii.id = $2
       AND i.id = mii.inventory_id
       AND i.restaurant_id = $3
+      AND i.is_active IS DISTINCT FROM FALSE
       AND EXISTS (
         SELECT 1 FROM menu_items m
         WHERE m.id = mii.menu_item_id AND m.restaurant_id = $3
