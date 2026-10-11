@@ -614,6 +614,17 @@ test('sales report calendar-date validation matches real YYYY-MM-DD digits', () 
 });
 
 
+test('supplier opening balances and deletion are manager-only financial controls', () => {
+  const controller = readSource('controllers/supplierController.js');
+  const model = readSource('models/supplierModel.js');
+
+  assert.match(controller, /Opening balance is an accounting entry/);
+  assert.match(controller, /req\.user\?\.role === 'counter' && openingBalance !== 0/);
+  assert.match(controller, /Only a manager can set a supplier opening balance/);
+  assert.match(controller, /exports\.remove = async[\s\S]*?req\.user\?\.role === 'counter'[\s\S]*?Only a manager can delete a supplier/);
+  assert.match(model, /!Number\.isFinite\(openingBalance\) \|\| openingBalance < 0/);
+});
+
 test('production PostgreSQL TLS verifies certificates by default and requires explicit opt-out', () => {
   const source = readSource('config/db.js');
   assert.match(source, /process\.env\.DATABASE_SSL_REJECT_UNAUTHORIZED !== 'false'/);
