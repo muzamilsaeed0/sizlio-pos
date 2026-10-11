@@ -810,3 +810,13 @@ test('manual inventory transactions reject precision that the ledger would round
   assert.match(transaction, /transactionType === "ADJUSTMENT"[\s\S]*?currentStock\.toFixed\(2\)[\s\S]*?newStock\.toFixed\(2\)/);
   assert.match(transaction, /quantity, transactionNote/);
 });
+
+
+test('order availability detects inactive recipe ingredients even when kitchen stock row is missing', () => {
+  const source = readSource('models/orderModel.js');
+  const availability = source.slice(source.indexOf('const checkOrderInventoryAvailability'), source.indexOf('// ======================================================\n// CREATE ORDER'));
+
+  assert.match(availability, /INNER JOIN inventory_items ii[\s\S]*?ii\.restaurant_id = \$2/);
+  assert.match(availability, /LEFT JOIN kitchen_inventory ki[\s\S]*?ki\.restaurant_id = \$2/);
+  assert.ok(availability.indexOf("inventory_is_active === false") < availability.indexOf("if (!ingredientsResult.rows.length)"));
+});
