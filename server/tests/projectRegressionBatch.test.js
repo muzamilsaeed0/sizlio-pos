@@ -753,3 +753,13 @@ test('kitchen stock requests validate numeric quantities and transfers reject in
   assert.match(approve, /stock_quantity >= \$1[\s\S]*?RETURNING id/);
   assert.match(approve, /Warehouse stock changed during transfer/);
 });
+
+test('inventory update controller does not log user objects or request bodies', () => {
+  const source = readSource('controllers/inventoryController.js');
+  const update = source.slice(source.indexOf('exports.updateItem ='), source.indexOf('// DEACTIVATE INVENTORY ITEM'));
+
+  assert.doesNotMatch(update, /console\.log\s*\(/);
+  assert.doesNotMatch(update, /console\.log\([^)]*req\.user/);
+  assert.doesNotMatch(update, /console\.log\([^)]*req\.body/);
+  assert.doesNotMatch(update, /INVENTORY UPDATE DEBUG|UPDATE INVENTORY DEBUG|UPDATE DATA:/);
+});
