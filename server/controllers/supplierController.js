@@ -49,6 +49,23 @@ exports.create = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Supplier name is required' });
     }
 
+    // Opening balance is an accounting entry, not a contact-detail field.
+    // Counter/Cafe Lite users may manage suppliers but cannot create debt
+    // or credit balances through the supplier-create API.
+    const hasOpeningBalance = Object.prototype.hasOwnProperty.call(req.body, 'opening_balance');
+    if (hasOpeningBalance) {
+      const openingBalance = Number(req.body.opening_balance);
+      if (!Number.isFinite(openingBalance) || openingBalance < 0) {
+        return res.status(400).json({ success: false, message: 'Opening balance must be a valid non-negative amount' });
+      }
+      if (req.user?.role === 'counter' && openingBalance !== 0) {
+        return res.status(403).json({
+          success: false,
+          message: 'Only a manager can set a supplier opening balance'
+        });
+      }
+    }
+
     const supplier = await supplierModel.createSupplier(restaurantId, req.body);
     res.status(201).json({ success: true, data: supplier });
   } catch (err) {
@@ -98,6 +115,16 @@ exports.remove = async (req, res) => {
     const id = Number(req.params.id);
     if (!restaurantId) return res.status(401).json({ success: false, message: 'Restaurant missing' });
     if (!id) return res.status(400).json({ success: false, message: 'Invalid ID' });
+
+    // Supplier deletion can affect the business's accounting history. Keep
+    // supplier creation/contact maintenance available to Counter Lite, but
+    // require a manager for the destructive delete operation.
+    if (req.user?.role === 'counter') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only a manager can delete a supplier'
+      });
+    }
 
     const deleted = await supplierModel.deleteSupplier(id, restaurantId);
     if (!deleted) return res.status(404).json({ success: false, message: 'Supplier not found' });
