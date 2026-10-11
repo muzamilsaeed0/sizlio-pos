@@ -591,3 +591,11 @@ test('login audit logging uses trusted proxy-aware request IP', () => {
   assert.doesNotMatch(source, /req\.headers\[['"]x-forwarded-for['"]\]/);
   assert.doesNotMatch(source, /req\.headers\[['"]x-real-ip['"]\]/);
 });
+
+
+test('Cafe Lite role restrictions are enforced at login and API middleware', () => {
+  const authController = readSource('controllers/authController.js');
+  const authMiddleware = readSource('middleware/authMiddleware.js');
+  assert.match(authController, /user\.restaurant_plan === 'Cafe Lite'[\s\S]*?\['counter', 'delivery', 'rider', 'delivery_rider'\]\.includes\(user\.role\)/);
+  assert.match(authMiddleware, /r\.plan[\s\S]*?user\.plan === 'Cafe Lite'[\s\S]*?PLAN_ROLE_NOT_ALLOWED/);
+});
