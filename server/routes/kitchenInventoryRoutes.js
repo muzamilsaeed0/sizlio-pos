@@ -121,6 +121,10 @@ router.post('/requests', authMiddleware, authorize('kitchen', 'manager'), async 
 router.get('/requests', authMiddleware, authorize('kitchen', 'manager'), async (req, res) => {
   const restaurantId = req.user.restaurant_id;
   const status = req.query.status || 'all';
+  const allowedStatuses = new Set(['all', 'pending', 'approved', 'rejected']);
+  if (!allowedStatuses.has(status)) {
+    return res.status(400).json({ success: false, message: 'Invalid request status filter' });
+  }
 
   try {
     let query = `
