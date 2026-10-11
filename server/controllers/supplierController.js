@@ -105,6 +105,9 @@ exports.update = async (req, res) => {
     res.json({ success: true, data: supplier });
   } catch (err) {
     console.error('supplier.update:', err);
+    if (err.message && err.message.includes('Opening balance cannot be changed after supplier ledger activity')) {
+      return res.status(409).json({ success: false, message: err.message });
+    }
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
