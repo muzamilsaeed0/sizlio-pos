@@ -90,22 +90,6 @@ WHERE u.id = $1
 
     const user = result.rows[0];
 
-    // Enforce Cafe Lite entitlements at the API/session boundary as well as
-    // page routing. This blocks legacy manager/waiter/kitchen sessions from
-    // calling protected APIs directly on a Counter Lite subscription.
-    const cafeLiteRoles = ['counter', 'delivery', 'rider', 'delivery_rider'];
-    if (
-      user.role !== 'super_admin' &&
-      user.plan === 'Cafe Lite' &&
-      !cafeLiteRoles.includes(user.role)
-    ) {
-      return res.status(403).json({
-        success: false,
-        code: 'PLAN_ROLE_NOT_ALLOWED',
-        message: 'This role is not available on the Cafe Lite plan.'
-      });
-    }
-
     if (!user.is_active) {
       return res.status(403).json({
         success: false,
@@ -134,6 +118,22 @@ WHERE u.id = $1
       return res.status(403).json({
         success: false,
         message: 'Restaurant subscription expired'
+      });
+    }
+
+    // Enforce Cafe Lite entitlements at the API/session boundary as well as
+    // page routing. This blocks legacy manager/waiter/kitchen sessions from
+    // calling protected APIs directly on a Counter Lite subscription.
+    const cafeLiteRoles = ['counter', 'delivery', 'rider', 'delivery_rider'];
+    if (
+      user.role !== 'super_admin' &&
+      user.plan === 'Cafe Lite' &&
+      !cafeLiteRoles.includes(user.role)
+    ) {
+      return res.status(403).json({
+        success: false,
+        code: 'PLAN_ROLE_NOT_ALLOWED',
+        message: 'This role is not available on the Cafe Lite plan.'
       });
     }
 
