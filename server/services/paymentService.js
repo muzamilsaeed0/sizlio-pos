@@ -323,7 +323,7 @@ async function settleQrPayment({
 
         payment = lockedPaymentResult.rows[0];
 
-        // A replayed webhook/manual-confirm is harmless.
+        // A replayed webhook/manual-confirm for an already-settled QR is harmless.
         if (payment.status !== 'pending') {
             await client.query('COMMIT');
             return {
@@ -331,6 +331,31 @@ async function settleQrPayment({
                 qrPayment: payment,
                 order: null,
             };
+        }
+
+        // A provider transaction ID must never settle two different QR payments.
+        // Serialize callbacks sharing the same reference, then check the durable
+        // accounting ledger inside this transaction. This also protects against
+        // concurrent callbacks targeting different orders with the same ID.
+        if (providerRef !== null && providerRef !== undefined && String(providerRef).trim()) {
+            const normalizedProviderRef = String(providerRef).trim();
+            await client.query(
+                'SELECT pg_advisory_xact_lock(hashtext($1))',
+                [normalizedProviderRef]
+            );
+
+            const existingTransaction = await client.query(
+                `SELECT id, qr_payment_id
+                 FROM payment_transactions
+                 WHERE provider_ref = $1
+                   AND status = 'completed'
+                 LIMIT 1`,
+                [normalizedProviderRef]
+            );
+
+            if (existingTransaction.rows.length) {
+                throw new Error('Provider transaction ID has already been used');
+            }
         }
 
         const expectedQrAmount = Number(payment.amount);
