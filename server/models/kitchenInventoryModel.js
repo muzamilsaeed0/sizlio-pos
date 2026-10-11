@@ -86,7 +86,7 @@ async function createRequest({
 
   const result = await pool.query(query, [
     restaurant_id,
-    inventory_id,
+    inventoryId,
     qty,
     note,
     requested_by
