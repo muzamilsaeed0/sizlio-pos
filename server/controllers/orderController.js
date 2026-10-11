@@ -33,19 +33,12 @@ const reserveOfflineOrderRequest = async (restaurantId, key, requestHash) => {
   if (row.request_hash !== requestHash) return { state: 'conflict' };
   if (row.order_id) return { state: 'duplicate', orderId: Number(row.order_id) };
 
-  // Recover abandoned reservations only after a delay; this mirrors the
-  // public QR-order idempotency policy.
+  // Fail closed on stale requests: the previous process may have created or
+  // mutated an order before crashing. Automatic takeover could duplicate items.
+  // Staff must reconcile the existing order before the key can be cleared.
   if (row.status === 'processing' && row.updated_at &&
       new Date(row.updated_at).getTime() < Date.now() - 5 * 60 * 1000) {
-    const takeover = await pool.query(
-      `UPDATE public.public_order_requests
-          SET updated_at = NOW()
-        WHERE id = $1 AND order_id IS NULL AND status = 'processing'
-          AND updated_at < NOW() - INTERVAL '5 minutes'
-        RETURNING id`,
-      [row.id]
-    );
-    if (takeover.rowCount) return { state: 'new' };
+    return { state: 'stale' };
   }
   return { state: 'processing' };
 };
@@ -695,6 +688,13 @@ exports.placeOrder = async (
       }
       if (requestState.state === 'processing') {
         return res.status(409).json({ success: false, message: 'Order sync is already processing; retry shortly with the same key' });
+      }
+      if (requestState.state === 'stale') {
+        return res.status(409).json({
+          success: false,
+          error: 'IDEMPOTENCY_RECONCILIATION_REQUIRED',
+          message: 'This offline sync was interrupted. Ask staff to verify whether the order already exists before retrying.'
+        });
       }
       if (requestState.state === 'duplicate') {
         const orders = await getAllOrders(restaurantId);
