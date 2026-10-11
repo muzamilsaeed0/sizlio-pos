@@ -46,21 +46,29 @@ async function createRequest({
   note = null,
   requested_by
 }) {
-  // Confirm the inventory item exists for this restaurant
+  const inventoryId = Number(inventory_id);
+  const qty = Number(requested_quantity);
+
+  if (!Number.isInteger(inventoryId) || inventoryId <= 0) {
+    throw new Error("A valid inventory item is required");
+  }
+  if (!Number.isFinite(qty) || qty <= 0) {
+    throw new Error("Requested quantity must be greater than 0");
+  }
+
+  // Keep model-level validation aligned with the HTTP route so direct callers
+  // cannot create replenishment requests for inactive or cross-tenant items.
   const itemCheck = await pool.query(
-    `SELECT id, name, unit FROM inventory_items
+    `SELECT id, is_active FROM inventory_items
      WHERE id = $1 AND restaurant_id = $2`,
-    [inventory_id, restaurant_id]
+    [inventoryId, restaurant_id]
   );
 
   if (itemCheck.rows.length === 0) {
     throw new Error("Inventory item not found");
   }
-
-  const qty = Number(requested_quantity);
-
-  if (!Number.isFinite(qty) || qty <= 0) {
-    throw new Error("Requested quantity must be greater than 0");
+  if (itemCheck.rows[0].is_active === false) {
+    throw new Error("Inventory item is inactive");
   }
 
   const query = `
@@ -192,21 +200,26 @@ async function approveRequest(requestId, restaurantId, approvedBy) {
     const currentStock = Number(item.stock_quantity);
     const qty = Number(request.requested_quantity);
 
+    if (!Number.isFinite(currentStock) || !Number.isFinite(qty) || qty <= 0) {
+      throw new Error("Invalid warehouse stock or requested quantity");
+    }
     if (currentStock < qty) {
       throw new Error(
         `Insufficient warehouse stock (available: ${currentStock})`
       );
     }
 
-    const newWarehouseStock = currentStock - qty;
-
-    // Deduct from warehouse
-    await client.query(
+    // Guard the deduction in SQL as well as holding the row lock.
+    const warehouseUpdate = await client.query(
       `UPDATE inventory_items
-       SET stock_quantity = $1
-       WHERE id = $2 AND restaurant_id = $3`,
-      [newWarehouseStock, request.inventory_id, restaurantId]
+       SET stock_quantity = stock_quantity - $1
+       WHERE id = $2 AND restaurant_id = $3 AND stock_quantity >= $1
+       RETURNING id`,
+      [qty, request.inventory_id, restaurantId]
     );
+    if (!warehouseUpdate.rowCount) {
+      throw new Error("Warehouse stock changed during transfer; retry approval");
+    }
 
     // Log warehouse OUT transaction
     await client.query(
@@ -228,6 +241,22 @@ async function approveRequest(requestId, restaurantId, approvedBy) {
          quantity = kitchen_inventory.quantity + EXCLUDED.quantity,
          updated_at = NOW()`,
       [restaurantId, request.inventory_id, qty]
+    );
+
+    // Log the corresponding kitchen-side IN movement as well.
+    const kitchenItemResult = await client.query(
+      `SELECT id FROM kitchen_inventory
+       WHERE restaurant_id = $1 AND inventory_id = $2`,
+      [restaurantId, request.inventory_id]
+    );
+    if (kitchenItemResult.rows.length !== 1) {
+      throw new Error("Kitchen inventory row missing after transfer");
+    }
+    await client.query(
+      `INSERT INTO kitchen_inventory_transactions
+       (kitchen_inventory_id, type, quantity, note)
+       VALUES ($1, 'IN', $2, $3)`,
+      [kitchenItemResult.rows[0].id, qty, `Request #${requestId} approved`]
     );
 
     // Mark request approved
