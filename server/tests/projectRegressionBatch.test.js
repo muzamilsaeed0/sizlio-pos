@@ -546,3 +546,25 @@ for (const [label, file, routePattern, policyPattern] of apiSecurityMatrix) {
     assert.match(readSource(file), policyPattern);
   });
 }
+
+
+test('operational HTML pages enforce role and plan access server-side', () => {
+  const source = readSource('server.js');
+  assert.match(source, /app\.get\("\/counter", protectedPage\("counter\.html", \{ roles: \["counter"\], blockCafeLite: true \}\)\)/);
+  assert.match(source, /app\.get\("\/counter-lite", protectedPage\("counter-lite\.html", \{ roles: \["counter"\], requireCafeLite: true \}\)\)/);
+  assert.match(source, /app\.get\("\/rider", protectedPage\("rider\.html", \{ roles: \["rider", "delivery_rider", "delivery"\] \}\)\)/);
+  assert.match(source, /if \(policy\.blockCafeLite && restaurant\?\.plan === 'Cafe Lite'\)/);
+  assert.match(source, /if \(policy\.requireCafeLite && restaurant\?\.plan !== 'Cafe Lite'\)/);
+  assert.match(source, /if \(!roles\.includes\(role\)\)/);
+});
+
+test('password validation follows the requested 4–8 character product rule', () => {
+  const userModel = readSource('models/userModel.js');
+  const authController = readSource('controllers/authController.js');
+  const restaurantController = readSource('controllers/restaurantController.js');
+  const changePasswordPage = readSource('public/change-password.html');
+  assert.match(userModel, /password\.length < 4 \|\| password\.length > 8/);
+  assert.match(authController, /newPassword\.length < 4/);
+  assert.match(restaurantController, /manager_password\.length < 4/);
+  assert.match(changePasswordPage, /minlength="4" maxlength="8"/);
+});
