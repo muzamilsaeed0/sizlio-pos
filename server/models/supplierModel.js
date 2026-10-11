@@ -11,6 +11,15 @@ function isValidIsoDate(value) {
     date.getUTCDate() === day;
 }
 
+function validateDateFilters(filters = {}) {
+  const from = filters.from ? String(filters.from) : '';
+  const to = filters.to ? String(filters.to) : '';
+
+  if (from && !isValidIsoDate(from)) throw new Error('Invalid from date');
+  if (to && !isValidIsoDate(to)) throw new Error('Invalid to date');
+  if (from && to && from > to) throw new Error('From date must not be after to date');
+}
+
 /* =====================================================
    SUPPLIERS — CRUD
 ===================================================== */
@@ -147,6 +156,7 @@ async function deleteSupplier(id, restaurantId) {
 ===================================================== */
 
 async function listPurchases(supplierId, restaurantId, filters = {}) {
+  validateDateFilters(filters);
   const params = [supplierId, restaurantId];
   let where = 'WHERE supplier_id = $1 AND restaurant_id = $2';
 
@@ -335,6 +345,7 @@ async function deletePurchase(id, restaurantId) {
 ===================================================== */
 
 async function listPayments(supplierId, restaurantId, filters = {}) {
+  validateDateFilters(filters);
   const params = [supplierId, restaurantId];
   let where = 'WHERE supplier_id = $1 AND restaurant_id = $2';
 
@@ -424,6 +435,7 @@ async function deletePayment(id, restaurantId) {
 ===================================================== */
 
 async function getLedger(supplierId, restaurantId, filters = {}) {
+  validateDateFilters(filters);
   const supplier = await getSupplierById(supplierId, restaurantId);
   if (!supplier) return null;
 
