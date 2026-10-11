@@ -124,16 +124,16 @@ if (!isCafeLite) {
     // --------------------------------------------------
 
     if (manager_username && manager_password) {
-      if (typeof manager_password !== 'string' || manager_password.length < 4) {
+      if (typeof manager_password !== 'string' || manager_password.length < 8) {
         return res.status(400).json({
           success: false,
-          message: 'Manager password must be at least 4 characters'
+          message: 'Manager password must be at least 8 characters'
         });
       }
-      if (manager_password.length > 8) {
+      if (manager_password.length > 72) {
         return res.status(400).json({
           success: false,
-          message: 'Manager password is too long (maximum 8 characters)'
+          message: 'Manager password is too long (maximum 72 characters)'
         });
       }
     }
@@ -587,16 +587,16 @@ async (req, res) => {
     } = req.body;
 
 
-    if (typeof new_password !== 'string' || new_password.length < 4) {
+    if (typeof new_password !== 'string' || new_password.length < 8) {
       return res.status(400).json({
         success: false,
-        message: 'New password must be at least 4 characters'
+        message: 'New password must be at least 8 characters'
       });
     }
-    if (new_password.length > 8) {
+    if (new_password.length > 72) {
       return res.status(400).json({
         success: false,
-        message: 'New password is too long (maximum 8 characters)'
+        message: 'New password is too long (maximum 72 characters)'
       });
     }
 
@@ -1106,16 +1106,16 @@ exports.addStaffMember = async (req, res) => {
     // PASSWORD
     // --------------------------------------------------
 
-    if (typeof password !== 'string' || password.length < 4) {
+    if (typeof password !== 'string' || password.length < 8) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 4 characters'
+        message: 'Password must be at least 8 characters'
       });
     }
-    if (password.length > 8) {
+    if (password.length > 72) {
       return res.status(400).json({
         success: false,
-        message: 'Password is too long (maximum 8 characters)'
+        message: 'Password is too long (maximum 72 characters)'
       });
     }
 
@@ -1200,16 +1200,16 @@ async (req, res) => {
     } = req.body;
 
 
-    if (typeof new_password !== 'string' || new_password.length < 4) {
+    if (typeof new_password !== 'string' || new_password.length < 8) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 4 characters'
+        message: 'Password must be at least 8 characters'
       });
     }
-    if (new_password.length > 8) {
+    if (new_password.length > 72) {
       return res.status(400).json({
         success: false,
-        message: 'Password is too long (maximum 8 characters)'
+        message: 'Password is too long (maximum 72 characters)'
       });
     }
 
