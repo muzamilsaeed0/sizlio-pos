@@ -550,6 +550,49 @@ async function getLedger(supplierId, restaurantId, filters = {}) {
 
 async function getAgingReport(restaurantId) {
   const result = await pool.query(`
+    WITH purchase_rows AS (
+      SELECT
+        supplier_id,
+        id,
+        purchase_date,
+        total_amount,
+        paid_amount,
+        GREATEST(total_amount - paid_amount, 0) AS unpaid_amount,
+        COALESCE(
+          SUM(GREATEST(total_amount - paid_amount, 0)) OVER (
+            PARTITION BY supplier_id
+            ORDER BY purchase_date ASC, id ASC
+            ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+          ),
+          0
+        ) AS prior_unpaid
+      FROM supplier_purchases
+      WHERE restaurant_id = $1
+    ),
+    payment_totals AS (
+      SELECT supplier_id, SUM(amount) AS total_payment
+      FROM supplier_payments
+      WHERE restaurant_id = $1
+      GROUP BY supplier_id
+    ),
+    purchase_summary AS (
+      SELECT
+        p.supplier_id,
+        SUM(p.total_amount) AS total_purchase,
+        SUM(p.paid_amount) AS total_paid,
+        MIN(p.purchase_date) FILTER (
+          WHERE GREATEST(
+            p.unpaid_amount - GREATEST(
+              COALESCE(pay.total_payment, 0) - p.prior_unpaid,
+              0
+            ),
+            0
+          ) > 0
+        ) AS oldest_unpaid_date
+      FROM purchase_rows p
+      LEFT JOIN payment_totals pay ON pay.supplier_id = p.supplier_id
+      GROUP BY p.supplier_id
+    )
     SELECT
       s.id,
       s.name,
@@ -559,26 +602,10 @@ async function getAgingReport(restaurantId) {
         + COALESCE(p.total_purchase, 0)
         - COALESCE(p.total_paid, 0)
         - COALESCE(pay.total_payment, 0) AS balance,
-      COALESCE(p.oldest_unpaid_date, NULL) AS oldest_unpaid_date
+      p.oldest_unpaid_date
     FROM suppliers s
-    LEFT JOIN (
-      SELECT
-        supplier_id,
-        SUM(total_amount) AS total_purchase,
-        SUM(paid_amount) AS total_paid,
-        MIN(purchase_date) FILTER (
-          WHERE total_amount > paid_amount
-        ) AS oldest_unpaid_date
-      FROM supplier_purchases
-      WHERE restaurant_id = $1
-      GROUP BY supplier_id
-    ) p ON p.supplier_id = s.id
-    LEFT JOIN (
-      SELECT supplier_id, SUM(amount) AS total_payment
-      FROM supplier_payments
-      WHERE restaurant_id = $1
-      GROUP BY supplier_id
-    ) pay ON pay.supplier_id = s.id
+    LEFT JOIN purchase_summary p ON p.supplier_id = s.id
+    LEFT JOIN payment_totals pay ON pay.supplier_id = s.id
     WHERE s.restaurant_id = $1 AND s.is_active = true
     ORDER BY balance DESC
   `, [restaurantId]);
@@ -589,9 +616,9 @@ async function getAgingReport(restaurantId) {
     let daysOld = 0;
 
     if (oldestDate && balance > 0) {
-      daysOld = Math.floor(
+      daysOld = Math.max(0, Math.floor(
         (new Date() - new Date(oldestDate)) / 86400000
-      );
+      ));
     }
 
     let bucket = 'Current';
