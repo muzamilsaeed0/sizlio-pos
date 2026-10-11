@@ -80,18 +80,24 @@ router.post('/requests', authMiddleware, authorize('kitchen', 'manager'), async 
   const restaurantId = req.user.restaurant_id;
   const requestedBy = req.user.id;
 
-  if (!inventory_id || !requested_quantity || requested_quantity <= 0) {
-    return res.status(400).json({ success: false, message: 'Invalid input' });
+  const inventoryId = Number(inventory_id);
+  const requestedQuantity = Number(requested_quantity);
+  if (!Number.isInteger(inventoryId) || inventoryId <= 0 ||
+      !Number.isFinite(requestedQuantity) || requestedQuantity <= 0) {
+    return res.status(400).json({ success: false, message: 'Inventory item and a valid positive quantity are required' });
   }
 
   try {
-    // Check if item exists in warehouse
+    // Only active warehouse items may enter the kitchen replenishment workflow.
     const itemCheck = await pool.query(
-      `SELECT id FROM inventory_items WHERE id = $1 AND restaurant_id = $2`,
-      [inventory_id, restaurantId]
+      `SELECT id, is_active FROM inventory_items WHERE id = $1 AND restaurant_id = $2`,
+      [inventoryId, restaurantId]
     );
     if (itemCheck.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Item not found in warehouse' });
+    }
+    if (itemCheck.rows[0].is_active === false) {
+      return res.status(400).json({ success: false, message: 'Inventory item is inactive' });
     }
 
     const result = await pool.query(
@@ -99,7 +105,7 @@ router.post('/requests', authMiddleware, authorize('kitchen', 'manager'), async 
        (restaurant_id, inventory_id, requested_quantity, note, requested_by, status)
        VALUES ($1, $2, $3, $4, $5, 'pending')
        RETURNING *`,
-      [restaurantId, inventory_id, requested_quantity, note, requestedBy]
+      [restaurantId, inventoryId, requestedQuantity, note, requestedBy]
     );
 
     res.json({ success: true, data: result.rows[0] });
@@ -181,7 +187,7 @@ router.put('/requests/:requestId/approve', authMiddleware, authorize('manager'),
 
       // 2. Check warehouse stock
       const warehouseResult = await client.query(
-        `SELECT stock_quantity FROM inventory_items 
+        `SELECT stock_quantity, is_active FROM inventory_items
          WHERE id = $1 AND restaurant_id = $2
          FOR UPDATE`,
         [request.inventory_id, restaurantId]
@@ -191,9 +197,13 @@ router.put('/requests/:requestId/approve', authMiddleware, authorize('manager'),
         await client.query('ROLLBACK');
         return res.status(404).json({ success: false, message: 'Item not found in warehouse' });
       }
+      if (warehouseResult.rows[0].is_active === false) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ success: false, message: 'Inventory item is inactive' });
+      }
 
       const currentStock = Number(warehouseResult.rows[0].stock_quantity);
-      if (currentStock < qty) {
+      if (!Number.isFinite(qty) || qty <= 0 || !Number.isFinite(currentStock) || currentStock < qty) {
         await client.query('ROLLBACK');
         return res.status(400).json({ 
           success: false, 
@@ -202,11 +212,16 @@ router.put('/requests/:requestId/approve', authMiddleware, authorize('manager'),
       }
 
       // 3. Deduct warehouse stock
-      await client.query(
-        `UPDATE inventory_items SET stock_quantity = stock_quantity - $1 
-         WHERE id = $2 AND restaurant_id = $3`,
+      const warehouseUpdate = await client.query(
+        `UPDATE inventory_items
+         SET stock_quantity = stock_quantity - $1
+         WHERE id = $2 AND restaurant_id = $3 AND stock_quantity >= $1
+         RETURNING id`,
         [qty, request.inventory_id, restaurantId]
       );
+      if (!warehouseUpdate.rowCount) {
+        throw new Error('Warehouse stock changed during transfer; retry approval');
+      }
 
       // 3.5 Log this deduction in the WAREHOUSE-SIDE transaction table
       //     (inventory_transactions) so it appears in the Manager's
