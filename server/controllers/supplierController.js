@@ -174,6 +174,22 @@ exports.createPurchase = async (req, res) => {
     res.status(201).json({ success: true, data: row });
   } catch (err) {
     console.error('supplier.createPurchase:', err);
+    const clientValidationErrors = [
+      'Invalid purchase date',
+      'Purchase total must be greater than 0',
+      'Paid amount must be between 0 and the purchase total',
+      'Purchase total does not match purchase item totals',
+      'Invalid purchase item'
+    ];
+    if (
+      clientValidationErrors.includes(err.message) ||
+      /^Inventory item \\d+ (not found|is inactive)$/.test(err.message)
+    ) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    if (err.message === 'Supplier not found or inactive') {
+      return res.status(404).json({ success: false, message: err.message });
+    }
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
