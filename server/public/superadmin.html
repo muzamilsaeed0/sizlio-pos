@@ -2216,7 +2216,7 @@ ${!s.is_active
 
     if (!new_password || new_password.length < 8 || new_password.length > 72) {
       msg.style.color = '#E15A4C';
-      msg.innerText = 'Password must be 4 to 8 characters';
+      msg.innerText = 'Password must be at least 8 characters and no more than 72 UTF-8 bytes';
       return;
     }
 
