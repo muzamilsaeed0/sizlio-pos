@@ -74,6 +74,14 @@ This is a source-level review of the files listed below. The full automated suit
 
 **Fix order:** validate strict YYYY-MM-DD calendar dates, reject reversed/oversized ranges, define behavior when only one bound is supplied, and test timezone/date-boundary behavior.
 
+### P1 — Automated payment-provider integration is not implemented in the current adapter
+
+**Evidence:** `server/services/paymentService.js` supports the `manual` provider path. `createQrWithProvider()` throws for other provider values, and `verifyWebhookSignature()` currently returns false outside the manual HMAC configuration.
+
+**Market impact:** Sizlio can be described as supporting manual QR generation/confirmation only if that is the intended workflow. Do not advertise automated Raast/PayFast settlement as production-integrated until the actual provider API, signatures, callback retries, idempotency, reconciliation, and sandbox certification are implemented and tested.
+
+**Release gate:** Confirm the commercial payment promise. If automated settlement is part of the paid product, this is a blocker and needs provider credentials/API documentation plus sandbox tests; it cannot be safely completed by guessing a bank API contract.
+
 ## Controls observed in the inspected source
 
 - Authentication checks the JWT session against the current database session and rejects inactive users and inactive/expired restaurants.
@@ -133,4 +141,4 @@ Relevant files:
 
 ## Current verdict
 
-**Not yet certified production-ready from this static pass.** The source-level page-gating, password-rule consistency, POS-settings partial-update safety, and report-date validation patches are committed but await the one final full-suite run. Remaining high-risk release gates include completing a transactional or operator-supported reconciliation path for stale public/offline idempotency records, database TLS certificate verification after confirming provider CA requirements, real database migration/restore drills, duplicate/concurrent payment settlement against a disposable database, and browser/load testing. Do not claim production-ready until these are verified.
+**Not yet certified production-ready from this static pass.** The source-level page-gating, password-rule consistency, POS-settings partial-update safety, and report-date validation patches are committed but await the one final full-suite run. Remaining high-risk release gates include completing a transactional or operator-supported reconciliation path for stale public/offline idempotency records, database TLS certificate verification after confirming provider CA requirements, real database migration/restore drills, duplicate/concurrent payment settlement against a disposable database, browser/load testing, and implementing/certifying any automated payment-provider integration that is promised to customers. Do not claim production-ready until these are verified.
