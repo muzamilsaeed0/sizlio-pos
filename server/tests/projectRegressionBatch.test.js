@@ -783,3 +783,19 @@ test('kitchen inventory model and route enforce consistent request and transfer 
   assert.match(listRequests, /allowedStatuses = new Set\(\['all', 'pending', 'approved', 'rejected'\]\)/);
   assert.match(listRequests, /Invalid request status filter/);
 });
+
+
+test('inventory stock transactions validate current stock and update stock before committing a ledger row', () => {
+  const model = readSource('models/inventoryModel.js');
+  const controller = readSource('controllers/inventoryController.js');
+  const transaction = model.slice(model.indexOf('async function addTransaction'), model.indexOf('// ======================================================\\n// GET TRANSACTIONS'));
+  const handler = controller.slice(controller.indexOf('exports.addTransaction ='), controller.indexOf('// ======================================================\\n// GET TRANSACTIONS'));
+
+  assert.match(transaction, /Number\\.isFinite\\(currentStock\\)[\\s\\S]*?currentStock < 0/);
+  assert.match(transaction, /Number\\.isFinite\\(newStock\\)[\\s\\S]*?newStock < 0/);
+  assert.match(transaction, /UPDATE inventory_items SET stock_quantity = \\$1[\\s\\S]*?RETURNING \\*/);
+  assert.match(transaction, /if \\(!itemUpdate\\.rowCount\\)[\\s\\S]*?Inventory item not found/);
+  assert.ok(transaction.indexOf('UPDATE inventory_items SET stock_quantity') < transaction.indexOf('INSERT INTO inventory_transactions'));
+  assert.match(handler, /Current inventory stock is invalid/);
+  assert.match(handler, /res\\.status\\(400\\)\\.json\\(\\{[\\s\\S]*?message: error\\.message/);
+});
