@@ -705,7 +705,7 @@
 
     <input id="r-manager-name" placeholder="Manager Full Name">
     <input id="r-manager-username" placeholder="Manager Username">
-    <input id="r-manager-password" type="password" placeholder="Manager Password">
+    <input id="r-manager-password" type="password" minlength="4" maxlength="8" placeholder="Manager Password">
 
     <button class="primary" onclick="addRestaurant()">Create Restaurant</button>
     <button class="secondary" onclick="closeModal('add-modal')">Cancel</button>
@@ -793,7 +793,7 @@
   </div>
 
   <div class="modal-box">
-    <input id="reset-new-password" type="password" placeholder="New password">
+    <input id="reset-new-password" type="password" minlength="4" maxlength="8" placeholder="New password">
 
     <button class="primary" onclick="saveResetPassword()">Update Password</button>
     <button class="secondary" onclick="closeModal('reset-modal')">Cancel</button>
@@ -857,7 +857,7 @@
 
     <input id="member-full-name" placeholder="Full Name">
     <input id="member-username" placeholder="Username">
-    <input id="member-password" type="password" placeholder="Password">
+    <input id="member-password" type="password" minlength="4" maxlength="8" placeholder="Password">
 
     <select id="member-role">
       <option value="counter">Counter</option>
@@ -886,7 +886,7 @@
   </div>
 
   <div class="modal-box">
-    <input id="staff-reset-password" type="password" placeholder="New password">
+    <input id="staff-reset-password" type="password" minlength="4" maxlength="8" placeholder="New password">
 
     <button class="primary" onclick="saveStaffReset()">Update Password</button>
     <button class="secondary" onclick="closeModal('staff-reset-modal')">Cancel</button>
@@ -907,7 +907,7 @@
   <div class="modal-box">
     <input id="set-username" placeholder="New Username (optional)">
     <input id="set-current-password" type="password" placeholder="Current Password">
-    <input id="set-new-password" type="password" placeholder="New Password (optional)">
+    <input id="set-new-password" type="password" minlength="4" maxlength="8" placeholder="New Password (optional)>
 
     <div class="theme-row">
       <span>Dark / Light Theme</span>
