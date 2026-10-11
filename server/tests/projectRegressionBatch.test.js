@@ -799,3 +799,14 @@ test('inventory stock transactions validate current stock and update stock befor
   assert.match(handler, /Current inventory stock is invalid/);
   assert.match(handler, /res\.status\(400\)\.json\(\{[\s\S]*?message: error\.message/);
 });
+
+
+test('manual inventory transactions reject precision that the ledger would round and adjustment history records before/after balances', () => {
+  const model = readSource('models/inventoryModel.js');
+  const transaction = model.slice(model.indexOf('async function addTransaction'), model.indexOf('// ======================================================\n// GET TRANSACTIONS'));
+
+  assert.match(transaction, /Math\.round\(amount \* 100\) !== amount \* 100/);
+  assert.match(transaction, /Quantity cannot have more than 2 decimal places/);
+  assert.match(transaction, /transactionType === "ADJUSTMENT"[\s\S]*?currentStock\.toFixed\(2\)[\s\S]*?newStock\.toFixed\(2\)/);
+  assert.match(transaction, /quantity, transactionNote/);
+});
