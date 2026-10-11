@@ -179,11 +179,11 @@ const createRestaurant = async (data) => {
 
     // Defense in depth: prevent weak or bcrypt-truncated manager passwords.
     if (manager_username && manager_password) {
-      if (typeof manager_password !== "string" || manager_password.length < 4) {
-        throw new Error("Manager password must be at least 4 characters.");
+      if (typeof manager_password !== "string" || manager_password.length < 8) {
+        throw new Error("Manager password must be at least 8 characters.");
       }
-      if (manager_password.length > 8) {
-        throw new Error("Manager password is too long (maximum 8 characters).");
+      if (manager_password.length > 72) {
+        throw new Error("Manager password is too long (maximum 72 characters).");
       }
     }
 
@@ -1250,10 +1250,10 @@ const addStaffMember = async (
   // PASSWORD
   // --------------------------------------------------
 
-  if (!password || password.length < 4) {
+  if (!password || password.length < 8) {
 
     throw new Error(
-      "Password must be at least 4 characters."
+      "Password must be at least 8 characters."
     );
 
   }
