@@ -130,13 +130,10 @@ exports.login = async (req, res) => {
     // ==========================================
     const sessionId = crypto.randomBytes(16).toString('hex');
 
-    // Client IP (proxy-aware)
-    const clientIp =
-      (req.headers['x-forwarded-for']?.split(',')[0].trim()) ||
-      req.headers['x-real-ip'] ||
-      req.connection?.remoteAddress ||
-      req.ip ||
-      'Unknown';
+    // Express resolves req.ip using the configured trusted-proxy policy.
+    // Do not trust arbitrary X-Forwarded-For / X-Real-IP values directly:
+    // clients can forge those headers when they reach the app outside the proxy.
+    const clientIp = req.ip || req.socket?.remoteAddress || 'Unknown';
 
     // Device info (browser/OS)
     const userAgent = req.headers['user-agent'] || 'Unknown';
