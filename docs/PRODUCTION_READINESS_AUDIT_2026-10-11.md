@@ -14,13 +14,13 @@ This is a source-level review of the files listed below. The full automated suit
 
 **Decision:** Per product-owner instruction, retain the existing minimum of 4 and maximum of 8 characters. All account create, reset, and change paths must enforce this same range; do not silently raise the minimum or change existing credentials. This is a known security trade-off for shared counter/rider workflows and should be clearly documented for customers.
 
-### P1 — Screen URLs are served without server-side plan/role page gating
+### P1 — Screen URLs were served without server-side plan/role page gating (patched in this pass)
 
 **Evidence:** `server/server.js` serves `/counter`, `/waiter`, `/kitchen`, `/rider`, `/manager`, `/sales`, `/inventory`, `/admin`, and `/counter-lite` directly through page handlers/static assets. The page routes themselves do not perform a plan/role check.
 
 **Risk:** Users can open screens outside their plan/role. API middleware remains the real security boundary, so this does not by itself prove protected data can be read, but it fails the intended Counter Lite screen restriction and is not sufficient UI enforcement.
 
-**Fix order:** add a centralized page-access policy that keeps login/public pages usable, resolves the authenticated DB session, checks restaurant plan and role, and redirects/returns a safe denial for disallowed staff screens. Independently verify every corresponding API route; hiding navigation alone is not authorization. For Cafe Lite, the permitted operational screens must match the agreed Counter Lite + Rider plan.
+**Patch committed:** `server/server.js` now applies a centralized `protectedPage` gate to operational routes, validates the cookie-backed session through `authMiddleware`, checks current role and restaurant plan/business type from the database, restricts `/counter-lite` to Cafe Lite counter accounts, and blocks Cafe Lite access to regular operational pages other than Rider. API routes still require independent authorization; this page gate is not a substitute for API security. This source patch remains unverified until the final suite and browser flow run.
 
 ### P1 — QR GPS is a deterrent, not proof of physical presence
 
@@ -112,7 +112,9 @@ The following source changes have since been committed. These are **not yet test
 - **POS settings partial-update safety:** omitted fields now inherit the stored settings instead of silently becoming zero; malformed supplied numeric values are rejected.
 - **Operational health checks:** added `GET /health/live` and `GET /health/ready`; readiness verifies database connectivity and returns only a minimal status.
 - **Database pool resilience:** added a PostgreSQL pool error listener so unexpected idle-client errors are logged rather than becoming unhandled EventEmitter errors.
-- **Sales report input validation:** sales-detail, top-item, payment-summary, and sales-chart endpoints now reject invalid calendar dates, missing paired bounds, and reversed ranges before issuing report queries.
+- **Sales report input validation:** sales-detail, top-item, payment-summary, and sales-chart endpoints reject invalid calendar dates, missing paired bounds, and reversed ranges before issuing report queries.
+- **Operational page authorization:** protected staff pages now check the active cookie session, database role, and current restaurant plan/business type. Cafe Lite is limited to Counter Lite and Rider operational pages. This source patch has not yet been run through the final test suite or browser QA.
+- **Password regression alignment:** existing source/UI checks and the regression test cases now follow the requested 4–8 character password rule.
 - **Audit artifact:** this document records the remaining findings and release gates.
 
 Relevant files:
@@ -129,4 +131,4 @@ Relevant files:
 
 ## Current verdict
 
-**Not yet certified production-ready from this static pass.** The highest-priority engineering work is the consistent password policy, server-side page/plan access behavior, QR idempotency crash window, settings update semantics, and database TLS verification. Complete the fixes, then run the full suite once as requested and separately perform the deployment/database acceptance checks.
+**Not yet certified production-ready from this static pass.** The source-level page-gating, password-rule consistency, POS-settings partial-update safety, and report-date validation patches are committed but await the one final full-suite run. Remaining high-risk release gates include the public QR idempotency crash window, database TLS certificate verification after confirming provider CA requirements, proxy-aware login IP auditing, real database migration/restore drills, duplicate/concurrent payment settlement against a disposable database, and browser/load testing. Do not claim production-ready until these are verified.
