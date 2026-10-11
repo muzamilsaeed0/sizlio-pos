@@ -624,6 +624,17 @@ test('supplier purchase and payment dates accept valid ISO dates and reject impo
   assert.doesNotMatch(source, /!\/^\\\\d\{4\}-\\\\d\{2\}-\\\\d\{2\}\$\//);
 });
 
+test('supplier purchase/payment list and ledger validate calendar date filters and date order', () => {
+  const source = readSource('models/supplierModel.js');
+  assert.match(source, /function validateDateFilters\(filters = \{\}\)/);
+  assert.match(source, /if \(from && !isValidIsoDate\(from\)\) throw new Error\('Invalid from date'\)/);
+  assert.match(source, /if \(to && !isValidIsoDate\(to\)\) throw new Error\('Invalid to date'\)/);
+  assert.match(source, /if \(from && to && from > to\) throw new Error\('From date must not be after to date'\)/);
+  assert.match(source, /async function listPurchases\(supplierId, restaurantId, filters = \{\}\) \{\s*validateDateFilters\(filters\);/);
+  assert.match(source, /async function listPayments\(supplierId, restaurantId, filters = \{\}\) \{\s*validateDateFilters\(filters\);/);
+  assert.match(source, /async function getLedger\(supplierId, restaurantId, filters = \{\}\) \{\s*validateDateFilters\(filters\);/);
+});
+
 test('supplier opening balances and deletion are manager-only financial controls', () => {
   const controller = readSource('controllers/supplierController.js');
   const model = readSource('models/supplierModel.js');
