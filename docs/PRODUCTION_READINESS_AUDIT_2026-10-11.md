@@ -58,13 +58,13 @@ This is a source-level review of the files listed below. The full automated suit
 
 **Fix order:** use Express's trusted-proxy-aware `req.ip` only after verifying deployment proxy configuration; never use the logged IP as an authorization factor.
 
-### P2 — Public QR idempotency spans multiple database operations
+### P2 — Public QR and offline-order idempotency are not fully atomic (stale replay mitigation patched)
 
 **Evidence:** `server/controllers/publicController.js` reserves a public request, creates the order via the order model, and then marks the request completed in a separate operation.
 
 **Risk:** A process crash between order creation and request completion can leave a processing request without its `order_id`; a later stale-request recovery may retry. Confirm the exact order-creation transaction and add a concurrency/crash-window regression test before claiming duplicate-order protection is complete.
 
-**Fix order:** make the idempotency record and order creation atomic in one database transaction where possible; otherwise implement a durable reconciliation strategy that can associate an existing order with its request hash before retrying.
+**Patch committed:** stale processing reservations are no longer automatically taken over and replayed for either public QR orders or offline syncs. Public-order error cleanup also preserves the reservation once order mutation has started. This fails closed and reduces duplicate-item/order risk after a crash. **Remaining limitation:** the reservation and order mutation are still separate transactions, so a stale request requires staff reconciliation; atomic creation/linking or a supported reconciliation workflow remains a release requirement.
 
 ### P2 — Report date filters are not validated at the controller boundary
 
@@ -114,6 +114,8 @@ The following source changes have since been committed. These are **not yet test
 - **Database pool resilience:** added a PostgreSQL pool error listener so unexpected idle-client errors are logged rather than becoming unhandled EventEmitter errors.
 - **Sales report input validation:** sales-detail, top-item, payment-summary, and sales-chart endpoints reject invalid calendar dates, missing paired bounds, and reversed ranges before issuing report queries.
 - **Operational page authorization:** protected staff pages now check the active cookie session, database role, and current restaurant plan/business type. Cafe Lite is limited to Counter Lite and Rider operational pages. This source patch has not yet been run through the final test suite or browser QA.
+- **Order idempotency crash handling:** public QR and offline order handlers no longer automatically take over stale processing reservations. Once public-order mutation begins, error cleanup preserves the reservation rather than deleting evidence of an uncertain outcome. Stale requests now return an explicit reconciliation-required response instead of automatically replaying a potentially completed mutation.
+- **Login audit IP:** login tracking now uses Express `req.ip` (configured with trusted-proxy policy) rather than raw client-supplied forwarding headers.
 - **Password regression alignment:** existing source/UI checks and the regression test cases now follow the requested 4–8 character password rule.
 - **Audit artifact:** this document records the remaining findings and release gates.
 
@@ -131,4 +133,4 @@ Relevant files:
 
 ## Current verdict
 
-**Not yet certified production-ready from this static pass.** The source-level page-gating, password-rule consistency, POS-settings partial-update safety, and report-date validation patches are committed but await the one final full-suite run. Remaining high-risk release gates include the public QR idempotency crash window, database TLS certificate verification after confirming provider CA requirements, proxy-aware login IP auditing, real database migration/restore drills, duplicate/concurrent payment settlement against a disposable database, and browser/load testing. Do not claim production-ready until these are verified.
+**Not yet certified production-ready from this static pass.** The source-level page-gating, password-rule consistency, POS-settings partial-update safety, and report-date validation patches are committed but await the one final full-suite run. Remaining high-risk release gates include completing a transactional or operator-supported reconciliation path for stale public/offline idempotency records, database TLS certificate verification after confirming provider CA requirements, real database migration/restore drills, duplicate/concurrent payment settlement against a disposable database, and browser/load testing. Do not claim production-ready until these are verified.
