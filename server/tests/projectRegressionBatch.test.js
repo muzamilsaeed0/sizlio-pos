@@ -820,3 +820,19 @@ test('order availability detects inactive recipe ingredients even when kitchen s
   assert.match(availability, /LEFT JOIN kitchen_inventory ki[\s\S]*?ki\.restaurant_id = \$2/);
   assert.ok(availability.indexOf("inventory_is_active === false") < availability.indexOf("if (!ingredientsResult.rows.length)"));
 });
+
+
+test('kitchen stock and movement ledger preserve three-decimal recipe consumption precision', () => {
+  const schema = readSource('restaurant_pos_schema.sql');
+  const migration = readSource('migrations/017_kitchen_inventory_precision.sql');
+  const orderModel = readSource('models/orderModel.js');
+  const deduction = orderModel.slice(orderModel.indexOf('const deductStockForOrder'), orderModel.indexOf('// PLACE-TIME INVENTORY AVAILABILITY CHECK'));
+
+  const kitchenSchema = schema.slice(schema.indexOf('CREATE TABLE public.kitchen_inventory ('), schema.indexOf('CREATE TABLE public.kitchen_inventory_requests'));
+  assert.match(kitchenSchema, /CREATE TABLE public\.kitchen_inventory \([\s\S]*?quantity NUMERIC\(12,3\)/);
+  assert.match(kitchenSchema, /CREATE TABLE public\.kitchen_inventory_transactions \([\s\S]*?quantity NUMERIC\(12,3\)/);
+  assert.match(migration, /ALTER TABLE public\.kitchen_inventory[\s\S]*?ALTER COLUMN quantity TYPE NUMERIC\(12,3\)/);
+  assert.match(migration, /ALTER TABLE public\.kitchen_inventory_transactions[\s\S]*?ALTER COLUMN quantity TYPE NUMERIC\(12,3\)/);
+  assert.match(deduction, /SET quantity = quantity - \$1/);
+  assert.match(deduction, /INSERT INTO kitchen_inventory_transactions[\s\S]*?\$1/);
+});
