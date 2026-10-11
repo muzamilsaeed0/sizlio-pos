@@ -556,6 +556,9 @@ test('operational HTML pages enforce role and plan access server-side', () => {
   assert.match(source, /if \(policy\.blockCafeLite && restaurant\?\.plan === 'Cafe Lite'\)/);
   assert.match(source, /if \(policy\.requireCafeLite && restaurant\?\.plan !== 'Cafe Lite'\)/);
   assert.match(source, /if \(!roles\.includes\(role\)\)/);
+  assert.match(source, /app\.get\("\/counter-lite\.html", protectedPage\("counter-lite\.html"/);
+  assert.match(source, /if \(!hasSessionCookie\)[\s\S]*?res\.sendFile/);
+  assert.ok(source.indexOf('app.get("/counter-lite.html"') < source.indexOf('app.use(express.static'));
 });
 
 test('password validation follows the requested 4–8 character product rule', () => {
