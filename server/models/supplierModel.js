@@ -119,28 +119,72 @@ async function updateSupplier(id, restaurantId, data) {
     throw new Error('Opening balance must be a valid non-negative amount');
   }
 
-  const result = await pool.query(`
-    UPDATE suppliers SET
-      name = $3,
-      phone = $4,
-      email = $5,
-      address = $6,
-      opening_balance = COALESCE($7, opening_balance),
-      is_active = COALESCE($8, is_active),
-      updated_at = NOW()
-    WHERE id = $1 AND restaurant_id = $2
-    RETURNING *
-  `, [
-    id,
-    restaurantId,
-    data.name,
-    data.phone || null,
-    data.email || null,
-    data.address || null,
-    openingBalance,
-    data.is_active
-  ]);
-  return result.rows[0] || null;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Serialize edits against purchase/payment creation, which also locks
+    // this tenant-scoped supplier row. Once ledger history exists, changing
+    // the starting balance would silently rewrite historical accounts.
+    const currentResult = await client.query(
+      'SELECT id, opening_balance FROM suppliers WHERE id = $1 AND restaurant_id = $2 FOR UPDATE',
+      [id, restaurantId]
+    );
+    const current = currentResult.rows[0];
+    if (!current) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+
+    const openingBalanceChanged = hasOpeningBalance &&
+      Number(current.opening_balance || 0) !== openingBalance;
+
+    if (openingBalanceChanged) {
+      const historyResult = await client.query(`
+        SELECT EXISTS (
+          SELECT 1 FROM supplier_purchases
+          WHERE supplier_id = $1 AND restaurant_id = $2
+        ) OR EXISTS (
+          SELECT 1 FROM supplier_payments
+          WHERE supplier_id = $1 AND restaurant_id = $2
+        ) AS has_history
+      `, [id, restaurantId]);
+
+      if (historyResult.rows[0]?.has_history) {
+        throw new Error('Opening balance cannot be changed after supplier ledger activity; use an audited adjustment workflow');
+      }
+    }
+
+    const result = await client.query(`
+      UPDATE suppliers SET
+        name = $3,
+        phone = $4,
+        email = $5,
+        address = $6,
+        opening_balance = COALESCE($7, opening_balance),
+        is_active = COALESCE($8, is_active),
+        updated_at = NOW()
+      WHERE id = $1 AND restaurant_id = $2
+      RETURNING *
+    `, [
+      id,
+      restaurantId,
+      data.name,
+      data.phone || null,
+      data.email || null,
+      data.address || null,
+      openingBalance,
+      data.is_active
+    ]);
+
+    await client.query('COMMIT');
+    return result.rows[0] || null;
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch {}
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 async function deleteSupplier(id, restaurantId) {
