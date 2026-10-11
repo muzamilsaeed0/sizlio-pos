@@ -286,7 +286,7 @@ const checkOrderInventoryAvailability = async (
       INNER JOIN inventory_items ii
         ON ii.id = mii.inventory_id
 
-      INNER JOIN kitchen_inventory ki -- Added JOIN
+      LEFT JOIN kitchen_inventory ki
         ON ki.inventory_id = ii.id
         AND ki.restaurant_id = $2
 
