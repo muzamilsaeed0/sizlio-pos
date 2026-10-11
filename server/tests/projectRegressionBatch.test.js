@@ -629,3 +629,12 @@ test('QR settlement prevents reuse of a provider transaction ID across payments'
   assert.match(source, /Provider transaction ID has already been used/);
   assert.ok(source.indexOf('pg_advisory_xact_lock') < source.indexOf('INSERT INTO payment_transactions'));
 });
+
+
+test('production PostgreSQL TLS accepts an explicitly configured trusted CA', () => {
+  const source = readSource('config/db.js');
+  assert.match(source, /process\.env\.DATABASE_SSL_CA/);
+  assert.match(source, /replace\(\/\\\\n\/g, '\\n'\)/);
+  assert.match(source, /\? \{ ca: databaseSslCa \} : \{\}/);
+  assert.match(source, /rejectUnauthorized,/);
+});
