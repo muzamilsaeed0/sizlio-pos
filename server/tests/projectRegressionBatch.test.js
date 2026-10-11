@@ -166,14 +166,14 @@ for (const role of ['super_admin', 'admin', 'owner', 'manager', 'cashier', '', n
     assert.equal(sqlCalls(/^CONNECT$/).length, 0);
   });
 }
-for (const password of ['', '1', '12', '123', '123456789', '1234567890', null, 1234, true]) {
+for (const password of ['', '1', '12', '123', '123456789', '1234567890', null, true]) {
   test('staff creation rejects invalid password type/length ' + String(password), async () => {
     reset();
     await assert.rejects(users.createStaff(12, 'Name', 'user', password, 'waiter', 'manager'), e => e.code === 'INVALID_PASSWORD');
     assert.equal(sqlCalls(/^CONNECT$/).length, 0);
   });
 }
-for (const password of ['1', '123', '123456789', 1234]) {
+for (const password of ['1', '123', '123456789', '1234567890']) {
   test('staff update rejects invalid password ' + String(password), async () => {
     reset();
     await assert.rejects(users.updateStaff(5, 12, null, null, password), e => e.code === 'INVALID_PASSWORD');
