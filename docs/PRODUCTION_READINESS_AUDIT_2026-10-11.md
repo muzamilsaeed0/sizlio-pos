@@ -16,9 +16,7 @@ This is a source-level review of the files listed below. The full automated suit
 
 ### P1 — Screen URLs were served without server-side plan/role page gating (patched in this pass)
 
-**Evidence:** `server/server.js` serves `/counter`, `/waiter`, `/kitchen`, `/rider`, `/manager`, `/sales`, `/inventory`, `/admin`, and `/counter-lite` directly through page handlers/static assets. The page routes themselves do not perform a plan/role check.
-
-**Risk:** Users can open screens outside their plan/role. API middleware remains the real security boundary, so this does not by itself prove protected data can be read, but it fails the intended Counter Lite screen restriction and is not sufficient UI enforcement.
+**Original issue:** extensionless and direct `.html` URLs were served without checking the current session's role and restaurant plan. This allowed authenticated users to open screens outside their intended plan, even when the APIs were separately protected.
 
 **Patch committed:** `server/server.js` now applies a centralized `protectedPage` gate to operational routes, validates the cookie-backed session through `authMiddleware`, checks current role and restaurant plan/business type from the database, restricts `/counter-lite` to Cafe Lite counter accounts, and blocks Cafe Lite access to regular operational pages other than Rider. API routes still require independent authorization; this page gate is not a substitute for API security. This source patch remains unverified until the final suite and browser flow run.
 
@@ -29,10 +27,6 @@ This is a source-level review of the files listed below. The full automated suit
 **Risk:** Browser GPS coordinates are client-controlled and can be spoofed. Server-side distance checks stop accidental reuse outside the venue but cannot cryptographically prove physical presence. Table QR HMAC and idempotency are useful controls, but do not prevent deliberate coordinate spoofing.
 
 **Fix order:** keep server-side radius checks and table-token validation; document GPS as best-effort; consider short-lived signed location challenges, Wi-Fi/local-network signals where appropriate, per-table order throttles, and abuse monitoring. Do not promise spoof-proof geofencing.
-
-### P1 — Passwords remain limited to 4–8 characters by explicit product decision
-
-**Risk:** Short passwords have lower entropy even when bcrypt-hashed. Keep this constraint consistent across API and UI, protect accounts with rate limits/session controls, and revisit only if the product owner changes the requirement.
 
 ### P2 — POS settings partial-update bug (patched; final tests pending)
 
