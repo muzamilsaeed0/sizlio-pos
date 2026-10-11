@@ -131,6 +131,7 @@ The following source changes have since been committed. These are **not yet test
 - **Password regression alignment:** existing source/UI checks and the regression test cases now follow the requested 4–8 character password rule.
 
 - **Kitchen stock request/transfer validation:** the route-level request handler now validates a positive finite quantity and a positive integer inventory ID, rejects inactive inventory items, and the approval transaction rechecks activity while locking the warehouse row. The warehouse deduction also has a guarded `stock_quantity >= quantity` update and fails closed if stock changed. Source-contract regression coverage was added; database concurrency/rollback behavior and the final full suite remain unverified.
+- **Sensitive inventory debug logs:** removed the update handler's temporary logs that printed the authenticated user object, restaurant ID, request body, and update payload. Added source-contract regression coverage. This is a static patch; the full suite remains reserved for the final verification pass.
 - **Audit artifact:** this document records the remaining findings and release gates.
 
 Relevant files:
