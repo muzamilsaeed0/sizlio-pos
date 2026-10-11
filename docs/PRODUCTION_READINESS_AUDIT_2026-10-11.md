@@ -64,7 +64,7 @@ This is a source-level review of the files listed below. The full automated suit
 
 **Risk:** A process crash between order creation and request completion can leave a processing request without its `order_id`; a later stale-request recovery may retry. Confirm the exact order-creation transaction and add a concurrency/crash-window regression test before claiming duplicate-order protection is complete.
 
-**Patch committed:** stale processing reservations are no longer automatically taken over and replayed for either public QR orders or offline syncs. Public-order error cleanup also preserves the reservation once order mutation has started. This fails closed and reduces duplicate-item/order risk after a crash. **Remaining limitation:** the reservation and order mutation are still separate transactions, so a stale request requires staff reconciliation; atomic creation/linking or a supported reconciliation workflow remains a release requirement.
+**Patch committed:** stale processing reservations are no longer automatically taken over and replayed for either public QR orders or offline syncs. Public-order and offline-order error cleanup release reservations only when failure occurs before any order mutation; once mutation starts, the reservation is preserved. This fails closed and reduces duplicate-item/order risk after a crash. **Remaining limitation:** the reservation and order mutation are still separate transactions, so a stale request requires staff reconciliation; atomic creation/linking or a supported reconciliation workflow remains a release requirement.
 
 ### P2 — Report date filters are not validated at the controller boundary
 
