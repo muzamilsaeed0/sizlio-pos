@@ -34,8 +34,8 @@ exports.addStaff = async (req, res) => {
     if (typeof password !== 'string' || password.length < 8) {
       return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
     }
-    if (password.length > 72) {
-      return res.status(400).json({ success: false, message: 'Password is too long (maximum 72 characters)' });
+    if (Buffer.byteLength(password, 'utf8') > 72) {
+      return res.status(400).json({ success: false, message: 'Password is too long (maximum 72 UTF-8 bytes)' });
     }
 
     const staff = await createStaff(
@@ -125,10 +125,10 @@ exports.editStaff = async (req, res) => {
           message: 'Password must be at least 8 characters'
         });
       }
-      if (password.length > 72) {
+      if (Buffer.byteLength(password, 'utf8') > 72) {
         return res.status(400).json({
           success: false,
-          message: 'Password is too long (maximum 72 characters)'
+          message: 'Password is too long (maximum 72 UTF-8 bytes)'
         });
       }
     }
