@@ -179,6 +179,8 @@ exports.createPurchase = async (req, res) => {
       'Purchase total must be greater than 0',
       'Paid amount must be between 0 and the purchase total',
       'Purchase total does not match purchase item totals',
+      'Purchase amounts may have at most 2 decimal places',
+      'Purchase quantity and unit price may have at most 2 decimal places',
       'Invalid purchase item'
     ];
     if (
