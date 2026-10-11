@@ -95,8 +95,8 @@ async function createSupplier(restaurantId, data) {
 async function updateSupplier(id, restaurantId, data) {
   const hasOpeningBalance = data.opening_balance !== undefined && data.opening_balance !== null && data.opening_balance !== '';
   const openingBalance = hasOpeningBalance ? Number(data.opening_balance) : null;
-  if (hasOpeningBalance && !Number.isFinite(openingBalance)) {
-    throw new Error('Invalid supplier opening balance');
+  if (hasOpeningBalance && (!Number.isFinite(openingBalance) || openingBalance < 0)) {
+    throw new Error('Opening balance must be a valid non-negative amount');
   }
 
   const result = await pool.query(`
