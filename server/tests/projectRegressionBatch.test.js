@@ -614,6 +614,16 @@ test('sales report calendar-date validation matches real YYYY-MM-DD digits', () 
 });
 
 
+test('supplier purchase and payment dates accept valid ISO dates and reject impossible calendar dates', () => {
+  const source = readSource('models/supplierModel.js');
+  assert.match(source, /function isValidIsoDate\(value\)/);
+  assert.match(source, /!\/^\\d\{4\}-\\d\{2\}-\\d\{2\}\$\//);
+  assert.match(source, /date\.getUTCFullYear\(\) === year/);
+  assert.match(source, /if \(!isValidIsoDate\(String\(purchaseDate\)\)\)/);
+  assert.match(source, /if \(!isValidIsoDate\(String\(paymentDate\)\)\)/);
+  assert.doesNotMatch(source, /!\/^\\\\d\{4\}-\\\\d\{2\}-\\\\d\{2\}\$\//);
+});
+
 test('supplier opening balances and deletion are manager-only financial controls', () => {
   const controller = readSource('controllers/supplierController.js');
   const model = readSource('models/supplierModel.js');
