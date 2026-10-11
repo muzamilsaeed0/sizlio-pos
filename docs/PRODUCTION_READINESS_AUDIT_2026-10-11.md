@@ -10,17 +10,9 @@ This is a source-level review of the files listed below. The full automated suit
 
 ## Findings and priority
 
-### P1 — Weak password policy is enforced across account workflows
+### P1 — Password policy is a deliberate product constraint (4–8 characters)
 
-**Evidence**
-- `server/controllers/authController.js`: account settings password change accepts 4–8 characters.
-- `server/controllers/restaurantController.js`: manager/staff create/reset validation accepts 4–8 characters.
-- `server/controllers/userController.js` and `server/models/userModel.js`: staff create/reset/update paths accept 4–8 characters.
-- `server/models/restaurantModel.js`: initial manager/staff account creation also caps passwords at 8 characters.
-
-**Risk:** Short passwords materially weaken accounts, especially shared counter/rider devices. Password policy is duplicated across layers, so changing only one validation will produce inconsistent behavior.
-
-**Fix order:** centralize policy; allow a practical minimum of at least 10–12 characters and a bcrypt-safe maximum of 72 UTF-8 bytes; update all create/reset/change paths and UI constraints together; preserve forced password change for generated credentials; provide a migration path for existing accounts. Do not silently change existing credentials.
+**Decision:** Per product-owner instruction, retain the existing minimum of 4 and maximum of 8 characters. All account create, reset, and change paths must enforce this same range; do not silently raise the minimum or change existing credentials. This is a known security trade-off for shared counter/rider workflows and should be clearly documented for customers.
 
 ### P1 — Screen URLs are served without server-side plan/role page gating
 
@@ -38,13 +30,9 @@ This is a source-level review of the files listed below. The full automated suit
 
 **Fix order:** keep server-side radius checks and table-token validation; document GPS as best-effort; consider short-lived signed location challenges, Wi-Fi/local-network signals where appropriate, per-table order throttles, and abuse monitoring. Do not promise spoof-proof geofencing.
 
-### P1 — Passwords remain limited to 4–8 characters despite bcrypt hashing
+### P1 — Passwords remain limited to 4–8 characters by explicit product decision
 
-**Evidence:** same paths as the weak password policy finding.
-
-**Risk:** Hashing protects stored passwords, but it does not compensate for weak password entropy. The policy must be fixed consistently rather than changing one controller in isolation.
-
-**Fix order:** one shared validator + consistent UI/API enforcement, with regression tests for every create/reset/change endpoint.
+**Risk:** Short passwords have lower entropy even when bcrypt-hashed. Keep this constraint consistent across API and UI, protect accounts with rate limits/session controls, and revisit only if the product owner changes the requirement.
 
 ### P2 — POS settings endpoint treats omitted numeric fields as zero
 
@@ -120,7 +108,7 @@ These are positive source-level controls, not proof that every caller and runtim
 
 The following source changes have since been committed. These are **not yet test-verified**; the requested full suite run is intentionally deferred until the audit patches are complete.
 
-- **Password policy:** user-set passwords now require at least 8 characters and are capped at 72 UTF-8 bytes across login-password change, initial password change, manager/staff create/reset, and the related Super Admin / Counter Lite forms. Auto-generated temporary credentials still use the existing forced-change flow. Review any remaining account/password screens during final UI pass.
+- **Password policy:** product-owner requirement is minimum 4, maximum 8 characters; validation and UI limits are aligned to this range. This is a deliberate security trade-off, not a production security recommendation.
 - **POS settings partial-update safety:** omitted fields now inherit the stored settings instead of silently becoming zero; malformed supplied numeric values are rejected.
 - **Operational health checks:** added `GET /health/live` and `GET /health/ready`; readiness verifies database connectivity and returns only a minimal status.
 - **Database pool resilience:** added a PostgreSQL pool error listener so unexpected idle-client errors are logged rather than becoming unhandled EventEmitter errors.
