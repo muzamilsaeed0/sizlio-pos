@@ -681,6 +681,7 @@ test('supplier purchases reject inactive inventory and report validation errors 
   assert.match(purchase, /is inactive/);
   assert.match(purchase, /await client\.query\('ROLLBACK'\)/);
   assert.match(handler, /clientValidationErrors\.includes\(err\.message\)/);
+  assert.match(handler, /\\d\+/);
   assert.match(handler, /res\.status\(400\)\.json\(\{ success: false, message: err\.message \}\)/);
   assert.match(handler, /Supplier not found or inactive[\s\S]*?res\.status\(404\)/);
 });
