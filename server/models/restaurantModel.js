@@ -1251,11 +1251,10 @@ const addStaffMember = async (
   // --------------------------------------------------
 
   if (!password || password.length < 8) {
-
-    throw new Error(
-      "Password must be at least 8 characters."
-    );
-
+    throw new Error("Password must be at least 8 characters.");
+  }
+  if (Buffer.byteLength(password, "utf8") > 72) {
+    throw new Error("Password is too long (maximum 72 UTF-8 bytes).");
   }
 
 
