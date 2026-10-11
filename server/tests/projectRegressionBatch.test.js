@@ -670,6 +670,21 @@ test('supplier opening balance cannot rewrite an existing financial ledger', () 
   assert.match(controller, /supplier\.update:[\s\S]*?res\.status\(409\)\.json/);
 });
 
+test('supplier purchases reject inactive inventory and report validation errors as client errors', () => {
+  const model = readSource('models/supplierModel.js');
+  const controller = readSource('controllers/supplierController.js');
+  const purchase = model.slice(model.indexOf('async function createPurchase'), model.indexOf('async function deletePurchase'));
+  const handler = controller.slice(controller.indexOf('exports.createPurchase ='), controller.indexOf('exports.deletePurchase ='));
+
+  assert.match(purchase, /SELECT stock_quantity, purchase_price, name, unit, is_active/);
+  assert.match(purchase, /if \(!current\.is_active\)/);
+  assert.match(purchase, /is inactive/);
+  assert.match(purchase, /await client\.query\('ROLLBACK'\)/);
+  assert.match(handler, /clientValidationErrors\.includes\(err\.message\)/);
+  assert.match(handler, /res\.status\(400\)\.json\(\{ success: false, message: err\.message \}\)/);
+  assert.match(handler, /Supplier not found or inactive[\s\S]*?res\.status\(404\)/);
+});
+
 test('production PostgreSQL TLS verifies certificates by default and requires explicit opt-out', () => {
   const source = readSource('config/db.js');
   assert.match(source, /process\.env\.DATABASE_SSL_REJECT_UNAUTHORIZED !== 'false'/);
