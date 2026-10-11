@@ -566,10 +566,14 @@ test('password validation follows the requested 4–8 character product rule', (
   const authController = readSource('controllers/authController.js');
   const restaurantController = readSource('controllers/restaurantController.js');
   const changePasswordPage = readSource('public/change-password.html');
+  const managerPage = readSource('public/manager.html');
+  const superAdminPage = readSource('public/superadmin.html');
   assert.match(userModel, /password\.length < 4 \|\| password\.length > 8/);
   assert.match(authController, /newPassword\.length < 4/);
   assert.match(restaurantController, /manager_password\.length < 4/);
   assert.match(changePasswordPage, /minlength="4" maxlength="8"/);
+  assert.match(managerPage, /id="staff-password" type="password" minlength="4" maxlength="8"/);
+  assert.match(superAdminPage, /id="member-password" type="password" minlength="4" maxlength="8"/);
 });
 
 
