@@ -6,6 +6,40 @@ const {
   getSalesChart
 } = require('../models/reportModel');
 
+function isCalendarDate(value) {
+  if (typeof value !== 'string' || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) {
+    return false;
+  }
+  const parsed = new Date(value + 'T00:00:00.000Z');
+  return Number.isFinite(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === value;
+}
+
+function validateReportDateRange(req, res) {
+  const { from, to } = req.query || {};
+  if (from === undefined && to === undefined) return true;
+
+  if (!isCalendarDate(from) || !isCalendarDate(to)) {
+    res.status(400).json({
+      success: false,
+      code: 'INVALID_DATE_RANGE',
+      message: 'Provide valid from and to dates in YYYY-MM-DD format.'
+    });
+    return false;
+  }
+
+  if (from > to) {
+    res.status(400).json({
+      success: false,
+      code: 'INVALID_DATE_RANGE',
+      message: 'The from date must be on or before the to date.'
+    });
+    return false;
+  }
+
+  return true;
+}
+
 
 // Manager Dashboard Summary
 exports.summary = async (req, res) => {
@@ -45,6 +79,8 @@ exports.summary = async (req, res) => {
 
 // Sales Details
 exports.salesDetails = async (req,res)=>{
+  if (!validateReportDateRange(req, res)) return;
+
 
   if(!['manager','counter'].includes(req.user.role)){
     return res.status(403).json({
@@ -89,6 +125,8 @@ exports.salesDetails = async (req,res)=>{
 
 // Top Selling Items
 exports.topItems = async (req,res)=>{
+  if (!validateReportDateRange(req, res)) return;
+
 
 
   if(!['manager','counter'].includes(req.user.role)){
@@ -140,6 +178,8 @@ exports.topItems = async (req,res)=>{
 
 // Payment Summary
 exports.paymentSummary = async (req,res)=>{
+  if (!validateReportDateRange(req, res)) return;
+
 
   if(!['manager','counter'].includes(req.user.role)){
 
@@ -189,6 +229,8 @@ exports.paymentSummary = async (req,res)=>{
 
 
 exports.salesChart = async(req,res)=>{
+  if (!validateReportDateRange(req, res)) return;
+
 
 
 try{
