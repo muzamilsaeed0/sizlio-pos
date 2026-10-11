@@ -115,6 +115,20 @@ exports.login = async (req, res) => {
       });
     }
 
+    // Cafe Lite only supports Counter Lite and Rider operational roles.
+    // Check this only after password verification so role/plan state is not
+    // disclosed to unauthenticated callers.
+    if (
+      user.role !== 'super_admin' &&
+      user.restaurant_plan === 'Cafe Lite' &&
+      !['counter', 'delivery', 'rider', 'delivery_rider'].includes(user.role)
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: 'This role is not available on the Cafe Lite plan.'
+      });
+    }
+
     // ==========================================
     // SUBSCRIPTION EXPIRY
     // ==========================================
