@@ -710,3 +710,15 @@ test('production PostgreSQL TLS accepts an explicitly configured trusted CA', ()
   assert.match(source, /\? \{ ca: databaseSslCa \} : \{\}/);
   assert.match(source, /rejectUnauthorized,/);
 });
+
+test('supplier purchase rejects decimal precision that would be rounded by NUMERIC(12,2) inventory columns', () => {
+  const model = readSource('models/supplierModel.js');
+  const controller = readSource('controllers/supplierController.js');
+  const purchase = model.slice(model.indexOf('async function createPurchase'), model.indexOf('async function deletePurchase'));
+
+  assert.match(model, /function hasAtMostTwoDecimalPlaces\(value\)/);
+  assert.match(purchase, /!hasAtMostTwoDecimalPlaces\(totalAmount\)[\s\S]*?!hasAtMostTwoDecimalPlaces\(paidAmount\)/);
+  assert.match(purchase, /!hasAtMostTwoDecimalPlaces\(qty\)[\s\S]*?!hasAtMostTwoDecimalPlaces\(unitPrice\)/);
+  assert.match(controller, /'Purchase amounts may have at most 2 decimal places'/);
+  assert.match(controller, /'Purchase quantity and unit price may have at most 2 decimal places'/);
+});
