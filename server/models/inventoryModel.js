@@ -255,6 +255,9 @@ async function addTransaction({
     if (!Number.isFinite(amount) || amount <= 0) {
       throw new Error("Quantity must be greater than 0");
     }
+    if (Math.round(amount * 100) !== amount * 100) {
+      throw new Error("Quantity cannot have more than 2 decimal places");
+    }
 
     const normalizedType = String(type).trim().toLowerCase();
     let newStock;
@@ -292,10 +295,16 @@ async function addTransaction({
       throw new Error("Inventory item not found");
     }
 
+    // For adjustments, quantity is the target balance (not a delta). Keep
+    // that meaning explicit in the immutable ledger note for later reconciliation.
+    const transactionNote = transactionType === "ADJUSTMENT"
+      ? `${String(note).trim()} | Stock adjusted from ${currentStock.toFixed(2)} to ${newStock.toFixed(2)}`
+      : note;
+
     const transactionResult = await client.query(
       `INSERT INTO inventory_transactions (inventory_id, type, quantity, note)
        VALUES ($1,$2,$3,$4) RETURNING *`,
-      [inventory_id, transactionType, amount, note]
+      [inventory_id, transactionType, amount, transactionNote]
     );
 
     await client.query("COMMIT");
