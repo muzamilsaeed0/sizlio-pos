@@ -54,10 +54,34 @@ exports.savePosSettings = async (req, res) => {
 
     const body = req.body || {};
 
-    // Reject malformed values instead of silently replacing them with zero.
-    // Silent fallback can unexpectedly erase a restaurant's existing charges.
+    // Merge partial updates with the saved settings. Treating an omitted
+    // field as zero can silently erase a restaurant's configured charges.
+    const existingResult = await pool.query(
+      `SELECT pos_settings, delivery_charge, dine_charge, card_charge, bank_charge
+       FROM restaurants WHERE id = $1`,
+      [restaurantId]
+    );
+    if (!existingResult.rowCount) {
+      return res.status(404).json({ success: false, message: 'Restaurant not found' });
+    }
+    const stored = existingResult.rows[0];
+    const currentSettings = {
+      ...DEFAULT_POS_SETTINGS,
+      ...(stored.pos_settings || {}),
+      delivery_charge: stored.pos_settings?.delivery_charge ?? stored.delivery_charge ?? 0,
+      dine_charge: stored.pos_settings?.dine_charge ?? stored.dine_charge ?? 0,
+      card_charge: stored.pos_settings?.card_charge ?? stored.card_charge ?? 0,
+      bank_charge: stored.pos_settings?.bank_charge ?? stored.bank_charge ?? 0
+    };
+
     const num = (field, max = null) => {
-      if (body[field] === undefined) return 0;
+      if (body[field] === undefined) {
+        const existing = Number(currentSettings[field] ?? DEFAULT_POS_SETTINGS[field] ?? 0);
+        if (!Number.isFinite(existing) || existing < 0 || (max !== null && existing > max)) {
+          throw Object.assign(new Error('Stored ' + field + ' is invalid; provide a valid value to repair it'), { statusCode: 400 });
+        }
+        return existing;
+      }
       const raw = body[field];
       if (raw === null || (typeof raw === 'string' && raw.trim() === '')) {
         throw Object.assign(new Error('Invalid ' + field), { statusCode: 400 });
@@ -72,8 +96,21 @@ exports.savePosSettings = async (req, res) => {
     if (body.discount_type !== undefined && !['none', 'percent', 'fixed'].includes(body.discount_type)) {
       return res.status(400).json({ success: false, message: 'Invalid discount type' });
     }
-    const discountType = body.discount_type === undefined ? 'none' : body.discount_type;
+    const discountType = body.discount_type === undefined
+      ? (currentSettings.discount_type || 'none')
+      : body.discount_type;
     const discountValue = num('discount_value', discountType === 'percent' ? 100 : null);
+
+    let discountEnabled = Boolean(currentSettings.discount_enabled);
+    if (body.discount_enabled !== undefined) {
+      if (typeof body.discount_enabled === 'boolean') {
+        discountEnabled = body.discount_enabled;
+      } else if (body.discount_enabled === 'true' || body.discount_enabled === 'false') {
+        discountEnabled = body.discount_enabled === 'true';
+      } else {
+        return res.status(400).json({ success: false, message: 'Invalid discount_enabled' });
+      }
+    }
 
     const settings = {
       gst_percent:       num('gst_percent', 100),
@@ -82,10 +119,12 @@ exports.savePosSettings = async (req, res) => {
       dine_charge:       num('dine_charge'),
       card_charge:       num('card_charge', 100),
       bank_charge:       num('bank_charge', 100),
-      discount_enabled:  !!body.discount_enabled,
+      discount_enabled:  discountEnabled,
       discount_type:     discountType,
       discount_value:    discountValue,
-      discount_reason:   String(body.discount_reason || '').slice(0, 200)
+      discount_reason:   body.discount_reason === undefined
+        ? String(currentSettings.discount_reason || '').slice(0, 200)
+        : String(body.discount_reason || '').slice(0, 200)
     };
 
     await pool.query(
