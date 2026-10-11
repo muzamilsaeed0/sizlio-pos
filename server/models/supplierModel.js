@@ -313,7 +313,7 @@ async function createPurchase(supplierId, restaurantId, data, userId) {
 
         // Get current stock + price
         const currentRes = await client.query(`
-          SELECT stock_quantity, purchase_price, name, unit
+          SELECT stock_quantity, purchase_price, name, unit, is_active
           FROM inventory_items
           WHERE id = $1 AND restaurant_id = $2
           FOR UPDATE
@@ -324,6 +324,9 @@ async function createPurchase(supplierId, restaurantId, data, userId) {
         }
 
         const current = currentRes.rows[0];
+        if (!current.is_active) {
+          throw new Error(`Inventory item ${inventoryId} is inactive`);
+        }
         const currentQty = Number(current.stock_quantity || 0);
         const currentPrice = Number(current.purchase_price || 0);
 
