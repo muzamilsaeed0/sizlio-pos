@@ -458,7 +458,7 @@
         <h3>Settings</h3> 
         <input id="set-username" placeholder="New Username (optional)" autocomplete="username"> 
         <input id="set-current-password" type="password" placeholder="Current Password" autocomplete="current-password">
-        <input id="set-new-password" type="password" placeholder="New Password (optional)" autocomplete="new-password"> 
+        <input id="set-new-password" type="password" minlength="4" maxlength="8" placeholder="New Password (optional)" autocomplete="new-password"> 
         <button onclick="saveSettings()">Save</button> 
         <button style="background: transparent; color: var(--text); border: 1px solid var(--border);" onclick="closeSettings()">Cancel</button> 
         <p id="settings-msg" style="font-size: 12px; text-align: center;"></p> 
@@ -688,7 +688,7 @@
         <div id="staff-list" style="max-height: 220px; overflow-y: auto; margin-bottom: 14px;"></div>
         <input id="staff-fullname" placeholder="Full Name">
         <input id="staff-username" placeholder="Username" autocomplete="username">
-        <input id="staff-password" type="password" placeholder="Password (leave blank to keep same)" autocomplete="new-password">
+        <input id="staff-password" type="password" minlength="4" maxlength="8" placeholder="Password (leave blank to keep same)" autocomplete="new-password">
         <select id="staff-role">
           <option value="waiter">Waiter</option>
           <option value="kitchen">Kitchen</option>
@@ -1565,6 +1565,7 @@ function isWholesale() {
       const new_password = document.getElementById("set-new-password").value;
       const msg = document.getElementById("settings-msg");
       if (!current_password) { msg.style.color = "var(--danger)"; msg.innerText = "Current password is required"; return; }
+      if (new_password && (new_password.length < 4 || new_password.length > 8)) { msg.style.color = "var(--danger)"; msg.innerText = "New password must be between 4 and 8 characters"; return; }
       try {
         const res = await fetch("/api/auth/settings", { method: "PUT", headers: authHeaders(), body: JSON.stringify({ username, current_password, new_password }) });
         if (checkUnauthorized(res)) return;
