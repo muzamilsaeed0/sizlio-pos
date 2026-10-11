@@ -1,5 +1,16 @@
 const pool = require('../config/db');
 
+function isValidIsoDate(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day;
+}
+
 /* =====================================================
    SUPPLIERS — CRUD
 ===================================================== */
@@ -173,6 +184,11 @@ async function createPurchase(supplierId, restaurantId, data, userId) {
 
     const totalAmount = Number(data.total_amount);
     const paidAmount = Number(data.paid_amount || 0);
+    const purchaseDate = data.purchase_date || new Date().toISOString().slice(0, 10);
+
+    if (!isValidIsoDate(String(purchaseDate))) {
+      throw new Error('Invalid purchase date');
+    }
 
     if (!Number.isFinite(totalAmount) || totalAmount <= 0) {
       throw new Error('Purchase total must be greater than 0');
@@ -219,7 +235,7 @@ async function createPurchase(supplierId, restaurantId, data, userId) {
     `, [
       restaurantId,
       supplierId,
-      data.purchase_date || new Date().toISOString().slice(0, 10),
+      purchaseDate,
       data.invoice_no || null,
       totalAmount,
       paidAmount,
@@ -352,7 +368,7 @@ async function createPayment(supplierId, restaurantId, data, userId) {
   }
 
   const paymentDate = data.payment_date || new Date().toISOString().slice(0, 10);
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(paymentDate))) {
+  if (!isValidIsoDate(String(paymentDate))) {
     throw new Error('Invalid payment date');
   }
 
