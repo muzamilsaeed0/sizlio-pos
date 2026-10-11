@@ -2214,7 +2214,7 @@ ${!s.is_active
     const new_password = document.getElementById('staff-reset-password').value;
     const msg = document.getElementById('staff-reset-msg');
 
-    if (!new_password || new_password.length < 8 || new_password.length > 72) {
+    if (!new_password || new_password.length < 8 || new TextEncoder().encode(new_password).length > 72) {
       msg.style.color = '#E15A4C';
       msg.innerText = 'Password must be at least 8 characters and no more than 72 UTF-8 bytes';
       return;
