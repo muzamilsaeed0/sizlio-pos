@@ -617,7 +617,7 @@ test('sales report calendar-date validation matches real YYYY-MM-DD digits', () 
 test('production PostgreSQL TLS verifies certificates by default and requires explicit opt-out', () => {
   const source = readSource('config/db.js');
   assert.match(source, /process\.env\.DATABASE_SSL_REJECT_UNAUTHORIZED !== 'false'/);
-  assert.match(source, /ssl: production \? \{ rejectUnauthorized \} : false/);
+  assert.match(source, /ssl: production[\s\S]*?rejectUnauthorized,[\s\S]*?\? \{ ca: databaseSslCa \} : \{\}[\s\S]*?: false/);
   assert.doesNotMatch(source, /rejectUnauthorized:\s*false/);
 });
 
