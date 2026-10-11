@@ -110,28 +110,16 @@ const reservePublicOrderRequest = async (restaurantId, idempotencyKey, requestHa
     return { state: 'duplicate', orderId: Number(row.order_id) };
   }
 
-  // Recover a request abandoned by a crashed/terminated process.
+  // Never automatically take over an abandoned reservation. The process may
+  // have mutated the order before it crashed but before recording order_id.
+  // Retrying that key automatically could append duplicate items or orders.
+  // A stale key therefore fails closed and requires operator reconciliation.
   if (
     row.status === 'processing' &&
     row.updated_at &&
     new Date(row.updated_at).getTime() < Date.now() - (5 * 60 * 1000)
   ) {
-    const takeover = await pool.query(
-      `
-        UPDATE public.public_order_requests
-        SET status = 'processing', updated_at = NOW()
-        WHERE id = $1
-          AND order_id IS NULL
-          AND status = 'processing'
-          AND updated_at < NOW() - INTERVAL '5 minutes'
-        RETURNING id
-      `,
-      [row.id]
-    );
-
-    if (takeover.rowCount) {
-      return { state: 'new' };
-    }
+    return { state: 'stale' };
   }
 
   return { state: 'processing' };
@@ -328,6 +316,7 @@ exports.callWaiter = async (req, res) => {
 
 
 exports.placePublicOrder = async (req, res) => {
+  let publicOrderMutationStarted = false;
 
   try {
 
@@ -486,7 +475,15 @@ exports.placePublicOrder = async (req, res) => {
     if (requestState.state === 'processing') {
       return res.status(409).json({
         success: false,
-        message: 'This order request is already being processed. Please wait and retry.'
+        message: 'This order request is already being processed. Please retry with the same key.'
+      });
+    }
+
+    if (requestState.state === 'stale') {
+      return res.status(409).json({
+        success: false,
+        error: 'IDEMPOTENCY_RECONCILIATION_REQUIRED',
+        message: 'This request was interrupted and cannot be retried automatically. Ask restaurant staff to verify the order before submitting again.'
       });
     }
 
@@ -516,6 +513,7 @@ exports.placePublicOrder = async (req, res) => {
 
     if (existingOrder) {
 
+      publicOrderMutationStarted = true;
       await addItemsToOrder(
         existingOrder.id,
         items,
@@ -557,6 +555,7 @@ exports.placePublicOrder = async (req, res) => {
 
     }
 
+    publicOrderMutationStarted = true;
     const order =
       await createOrder(
         tableNo,
@@ -602,7 +601,7 @@ exports.placePublicOrder = async (req, res) => {
       req.get('Idempotency-Key') || req.body?.idempotency_key || ''
     ).trim();
 
-    if (failedKey) {
+    if (failedKey && !publicOrderMutationStarted) {
       await pool.query(
         `
           DELETE FROM public.public_order_requests
