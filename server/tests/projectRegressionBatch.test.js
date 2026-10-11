@@ -568,3 +568,23 @@ test('password validation follows the requested 4–8 character product rule', (
   assert.match(restaurantController, /manager_password\.length < 4/);
   assert.match(changePasswordPage, /minlength="4" maxlength="8"/);
 });
+
+
+test('stale public and offline idempotency keys fail closed instead of auto-replaying', () => {
+  const publicController = readSource('controllers/publicController.js');
+  const orderController = readSource('controllers/orderController.js');
+  assert.match(publicController, /return \{ state: 'stale' \}/);
+  assert.match(publicController, /failedKey && !publicOrderMutationStarted/);
+  assert.match(publicController, /IDEMPOTENCY_RECONCILIATION_REQUIRED/);
+  assert.doesNotMatch(publicController, /const takeover = await pool\.query/);
+  assert.match(orderController, /return \{ state: 'stale' \}/);
+  assert.match(orderController, /IDEMPOTENCY_RECONCILIATION_REQUIRED/);
+  assert.doesNotMatch(orderController, /const takeover = await pool\.query/);
+});
+
+test('login audit logging uses trusted proxy-aware request IP', () => {
+  const source = readSource('controllers/authController.js');
+  assert.match(source, /const clientIp = req\.ip \|\| req\.socket\?\.remoteAddress \|\| 'Unknown'/);
+  assert.doesNotMatch(source, /req\.headers\[['"]x-forwarded-for['"]\]/);
+  assert.doesNotMatch(source, /req\.headers\[['"]x-real-ip['"]\]/);
+});
