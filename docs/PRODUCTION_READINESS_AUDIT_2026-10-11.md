@@ -123,6 +123,7 @@ The following source changes have since been committed. These are **not yet test
 - **Password policy:** user-set passwords now require at least 8 characters and are capped at 72 UTF-8 bytes across login-password change, initial password change, manager/staff create/reset, and the related Super Admin / Counter Lite forms. Auto-generated temporary credentials still use the existing forced-change flow. Review any remaining account/password screens during final UI pass.
 - **POS settings partial-update safety:** omitted fields now inherit the stored settings instead of silently becoming zero; malformed supplied numeric values are rejected.
 - **Operational health checks:** added `GET /health/live` and `GET /health/ready`; readiness verifies database connectivity and returns only a minimal status.
+- **Sales report input validation:** sales-detail, top-item, payment-summary, and sales-chart endpoints now reject invalid calendar dates, missing paired bounds, and reversed ranges before issuing report queries.
 - **Audit artifact:** this document records the remaining findings and release gates.
 
 Relevant files:
