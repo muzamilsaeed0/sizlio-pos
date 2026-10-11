@@ -157,3 +157,6 @@ Relevant files:
 
 
 - **Inactive recipe availability edge case:** changed the order-time ingredient query to a tenant-scoped LEFT JOIN for kitchen stock. This ensures an inactive recipe ingredient is still returned for the explicit inactive-item rejection even if it has no kitchen-stock row; a missing active stock row continues to fail closed during stock validation. Source-contract regression coverage added; final test suite and live order-flow/rollback checks remain pending.
+
+
+- **Kitchen stock precision reconciliation:** recipe ingredients support three decimal places, but kitchen balances and kitchen movement ledger previously stored only two. PostgreSQL could round a small deduction out of the stock balance while recording a rounded ledger movement. Added migration 017 to widen both kitchen quantities to `NUMERIC(12,3)` and aligned the canonical schema. A source-contract regression test covers the schema/migration and deduction-ledger path. Migration execution, live balance-to-ledger reconciliation, rollback checks, and the final full suite remain pending.
