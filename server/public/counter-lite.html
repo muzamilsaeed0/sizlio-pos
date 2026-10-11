@@ -703,7 +703,7 @@
       </div>
       <label>New password</label>
       <div class="pw-wrap" style="margin-bottom:0;">
-        <input id="accNewPw" type="password" minlength="4" maxlength="8" placeholder="Leave blank to keep same" />
+        <input id="accNewPw" type="password" minlength="8" maxlength="72" placeholder="Leave blank to keep same" />
         <span class="pw-eye"
               onmousedown="peek('accNewPw','text')"
               onmouseup="peek('accNewPw','password')"
@@ -2258,7 +2258,7 @@
     async function doResetRiderPassword(id) {
       const inp = document.getElementById('reset-pw-' + id);
       const pw = (inp?.value || '').trim();
-      if (pw.length < 4 || pw.length > 8) { alert('Password must be 4 to 8 characters'); return; }
+      if (pw.length < 8 || new TextEncoder().encode(pw).length > 72) { alert('Password must be at least 8 characters and no more than 72 UTF-8 bytes'); return; }
       try {
         await api('/users/' + id, {
           method: 'PUT',
