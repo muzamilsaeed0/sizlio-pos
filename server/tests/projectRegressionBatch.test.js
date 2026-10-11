@@ -585,6 +585,8 @@ test('stale public and offline idempotency keys fail closed instead of auto-repl
   assert.match(publicController, /IDEMPOTENCY_RECONCILIATION_REQUIRED/);
   assert.doesNotMatch(publicController, /const takeover = await pool\.query/);
   assert.match(orderController, /return \{ state: 'stale' \}/);
+  assert.match(orderController, /offlineOrderMutationStarted/);
+  assert.match(orderController, /offlineIdempotencyKey && !offlineOrderMutationStarted/);
   assert.match(orderController, /IDEMPOTENCY_RECONCILIATION_REQUIRED/);
   assert.doesNotMatch(orderController, /const takeover = await pool\.query/);
 });
