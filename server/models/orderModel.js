@@ -82,7 +82,8 @@ const deductStockForOrder = async (client, orderId, restaurantId) => {
     }
 
     const ingredientsResult = await client.query(
-        `SELECT mii.inventory_id, mii.quantity AS recipe_quantity, oi.quantity AS order_quantity
+        `SELECT mii.inventory_id, mii.quantity AS recipe_quantity, oi.quantity AS order_quantity,
+                ii.is_active AS inventory_is_active
          FROM order_items oi
          JOIN menu_items mi ON mi.id = oi.menu_item_id
          JOIN menu_item_ingredients mii ON mii.menu_item_id = mi.id
@@ -94,6 +95,10 @@ const deductStockForOrder = async (client, orderId, restaurantId) => {
            AND mi.restaurant_id = $2`,
         [orderId, restaurantId]
     );
+    if (ingredientsResult.rows.some(row => row.inventory_is_active === false)) {
+        throw new Error('Order recipe contains an inactive inventory item.');
+    }
+
     if (!ingredientsResult.rows.length) {
         await client.query(
             `UPDATE orders
@@ -259,6 +264,8 @@ const checkOrderInventoryAvailability = async (
 
         ii.name AS ingredient_name,
 
+        ii.is_active AS inventory_is_active,
+
         ii.unit,
 
         ki.quantity AS stock_quantity, 
@@ -302,6 +309,12 @@ const checkOrderInventoryAvailability = async (
   // If menu items have no recipe,
   // there is nothing to validate.
   // ----------------------------------------------------
+
+  if (ingredientsResult.rows.some(row => row.inventory_is_active === false)) {
+    const err = new Error('Order recipe contains an inactive inventory item.');
+    err.error = 'INACTIVE_INVENTORY_ITEM';
+    throw err;
+  }
 
   if (!ingredientsResult.rows.length) {
 
