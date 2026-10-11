@@ -129,6 +129,8 @@ The following source changes have since been committed. These are **not yet test
 - **Supplier aging FIFO allocation:** the aging report now allocates recorded supplier payments against oldest outstanding purchase balances in purchase-date/ID order before selecting the oldest unpaid invoice date. This prevents already-covered older invoices from incorrectly aging every remaining supplier balance. This is a FIFO reporting assumption, not invoice-level payment allocation; final suite and disposable-database reconciliation are still required.
 - **Database TLS:** production PostgreSQL connections verify certificates by default and now support `DATABASE_SSL_CA` for a provider-supplied PEM CA. Deployment currently reports `self-signed certificate in certificate chain`; configure the correct provider CA and verify connectivity. `DATABASE_SSL_REJECT_UNAUTHORIZED=false` is an emergency temporary override only.
 - **Password regression alignment:** existing source/UI checks and the regression test cases now follow the requested 4–8 character password rule.
+
+- **Kitchen stock request/transfer validation:** the route-level request handler now validates a positive finite quantity and a positive integer inventory ID, rejects inactive inventory items, and the approval transaction rechecks activity while locking the warehouse row. The warehouse deduction also has a guarded `stock_quantity >= quantity` update and fails closed if stock changed. Source-contract regression coverage was added; database concurrency/rollback behavior and the final full suite remain unverified.
 - **Audit artifact:** this document records the remaining findings and release gates.
 
 Relevant files:
