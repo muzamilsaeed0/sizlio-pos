@@ -116,6 +116,27 @@ These are positive source-level controls, not proof that every caller and runtim
 - [ ] Run load/concurrency tests with realistic traffic and database connection limits.
 - [ ] Review licensing, privacy policy, terms, support process, and customer data-retention expectations before commercial launch.
 
+## Remediation log (main branch)
+
+The following source changes have since been committed. These are **not yet test-verified**; the requested full suite run is intentionally deferred until the audit patches are complete.
+
+- **Password policy:** user-set passwords now require at least 8 characters and are capped at 72 UTF-8 bytes across login-password change, initial password change, manager/staff create/reset, and the related Super Admin / Counter Lite forms. Auto-generated temporary credentials still use the existing forced-change flow. Review any remaining account/password screens during final UI pass.
+- **POS settings partial-update safety:** omitted fields now inherit the stored settings instead of silently becoming zero; malformed supplied numeric values are rejected.
+- **Operational health checks:** added `GET /health/live` and `GET /health/ready`; readiness verifies database connectivity and returns only a minimal status.
+- **Audit artifact:** this document records the remaining findings and release gates.
+
+Relevant files:
+- `server/controllers/authController.js`
+- `server/controllers/restaurantController.js`
+- `server/controllers/userController.js`
+- `server/models/restaurantModel.js`
+- `server/models/userModel.js`
+- `server/public/change-password.html`
+- `server/public/counter-lite.html`
+- `server/public/superadmin.html`
+- `server/controllers/settingsController.js`
+- `server/server.js`
+
 ## Current verdict
 
 **Not yet certified production-ready from this static pass.** The highest-priority engineering work is the consistent password policy, server-side page/plan access behavior, QR idempotency crash window, settings update semantics, and database TLS verification. Complete the fixes, then run the full suite once as requested and separately perform the deployment/database acceptance checks.
