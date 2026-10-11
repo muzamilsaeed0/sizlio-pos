@@ -183,7 +183,7 @@ exports.createPurchase = async (req, res) => {
     ];
     if (
       clientValidationErrors.includes(err.message) ||
-      /^Inventory item \\d+ (not found|is inactive)$/.test(err.message)
+      /^Inventory item \d+ (not found|is inactive)$/.test(err.message)
     ) {
       return res.status(400).json({ success: false, message: err.message });
     }
