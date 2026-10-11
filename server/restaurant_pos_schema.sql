@@ -267,7 +267,7 @@ CREATE TABLE public.kitchen_inventory (
     REFERENCES public.restaurants(id) ON DELETE CASCADE,
   inventory_id INTEGER NOT NULL
     REFERENCES public.inventory_items(id) ON DELETE CASCADE,
-  quantity NUMERIC(12,2) NOT NULL DEFAULT 0
+  quantity NUMERIC(12,3) NOT NULL DEFAULT 0
     CHECK (quantity >= 0),
   updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (restaurant_id, inventory_id)
@@ -281,7 +281,7 @@ CREATE TABLE public.kitchen_inventory_transactions (
   kitchen_inventory_id INTEGER NOT NULL
     REFERENCES public.kitchen_inventory(id) ON DELETE CASCADE,
   type VARCHAR(20) NOT NULL,
-  quantity NUMERIC(12,2) NOT NULL CHECK (quantity > 0),
+  quantity NUMERIC(12,3) NOT NULL CHECK (quantity > 0),
   note TEXT,
   order_id INTEGER,
   created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
