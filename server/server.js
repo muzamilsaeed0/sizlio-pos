@@ -148,7 +148,12 @@ function protectedPage(filename, policy = {}) {
     const hasSessionCookie = (req.headers.cookie || '')
       .split(';')
       .some(part => part.trim().startsWith('sizlio_session='));
-    if (!hasSessionCookie) return res.redirect('/');
+    // Login screens must remain reachable before authentication. Their data
+    // APIs are independently protected; once a cookie exists, enforce role
+    // and plan restrictions here so authenticated users cannot switch screens.
+    if (!hasSessionCookie) {
+      return res.sendFile(path.join(__dirname, 'public', filename));
+    }
 
     authMiddleware(req, res, async () => {
       try {
