@@ -130,10 +130,10 @@ if (!isCafeLite) {
           message: 'Manager password must be at least 8 characters'
         });
       }
-      if (manager_password.length > 72) {
+      if (Buffer.byteLength(manager_password, 'utf8') > 72) {
         return res.status(400).json({
           success: false,
-          message: 'Manager password is too long (maximum 72 characters)'
+          message: 'Manager password is too long (maximum 72 UTF-8 bytes)'
         });
       }
     }
@@ -593,10 +593,10 @@ async (req, res) => {
         message: 'New password must be at least 8 characters'
       });
     }
-    if (new_password.length > 72) {
+    if (Buffer.byteLength(new_password, 'utf8') > 72) {
       return res.status(400).json({
         success: false,
-        message: 'New password is too long (maximum 72 characters)'
+        message: 'New password is too long (maximum 72 UTF-8 bytes)'
       });
     }
 
@@ -1112,10 +1112,10 @@ exports.addStaffMember = async (req, res) => {
         message: 'Password must be at least 8 characters'
       });
     }
-    if (password.length > 72) {
+    if (Buffer.byteLength(password, 'utf8') > 72) {
       return res.status(400).json({
         success: false,
-        message: 'Password is too long (maximum 72 characters)'
+        message: 'Password is too long (maximum 72 UTF-8 bytes)'
       });
     }
 
@@ -1206,10 +1206,10 @@ async (req, res) => {
         message: 'Password must be at least 8 characters'
       });
     }
-    if (new_password.length > 72) {
+    if (Buffer.byteLength(new_password, 'utf8') > 72) {
       return res.status(400).json({
         success: false,
-        message: 'Password is too long (maximum 72 characters)'
+        message: 'Password is too long (maximum 72 UTF-8 bytes)'
       });
     }
 
