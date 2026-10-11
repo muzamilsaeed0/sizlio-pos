@@ -423,6 +423,25 @@ io.on("connection", (socket) => {
 app.set("io", io);
 
 /* =====================================================
+   HEALTH CHECKS
+   Liveness is process-only; readiness verifies the database.
+   Keep responses minimal and never expose connection details.
+===================================================== */
+app.get("/health/live", (req, res) => {
+  return res.status(200).json({ status: "ok" });
+});
+
+app.get("/health/ready", async (req, res) => {
+  try {
+    await pool.query("SELECT 1");
+    return res.status(200).json({ status: "ready" });
+  } catch (err) {
+    console.error("Readiness check failed:", err.message);
+    return res.status(503).json({ status: "not_ready" });
+  }
+});
+
+/* =====================================================
    PUBLIC URL
 ===================================================== */
 const PUBLIC_URL =
