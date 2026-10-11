@@ -722,3 +722,19 @@ test('supplier purchase rejects decimal precision that would be rounded by NUMER
   assert.match(controller, /'Purchase amounts may have at most 2 decimal places'/);
   assert.match(controller, /'Purchase quantity and unit price may have at most 2 decimal places'/);
 });
+
+test('inactive inventory ingredients cannot be added to recipes or consumed by orders', () => {
+  const inventoryModel = readSource('models/inventoryModel.js');
+  const orderModel = readSource('models/orderModel.js');
+  const addRecipe = inventoryModel.slice(inventoryModel.indexOf('async function addRecipeIngredient'), inventoryModel.indexOf('async function updateRecipeIngredient'));
+  const updateRecipe = inventoryModel.slice(inventoryModel.indexOf('async function updateRecipeIngredient'), inventoryModel.indexOf('async function deleteRecipeIngredient'));
+  const deduction = orderModel.slice(orderModel.indexOf('const deductStockForOrder'), orderModel.indexOf('// PLACE-TIME INVENTORY AVAILABILITY CHECK'));
+  const availability = orderModel.slice(orderModel.indexOf('const checkOrderInventoryAvailability'), orderModel.indexOf('// CREATE ORDER'));
+
+  assert.match(addRecipe, /inventoryItem\.is_active === false/);
+  assert.match(updateRecipe, /i\.is_active IS DISTINCT FROM FALSE/);
+  assert.match(deduction, /ii\.is_active AS inventory_is_active/);
+  assert.match(deduction, /ingredientsResult\.rows\.some\(row => row\.inventory_is_active === false\)/);
+  assert.match(availability, /ii\.is_active AS inventory_is_active/);
+  assert.match(availability, /INACTIVE_INVENTORY_ITEM/);
+});
