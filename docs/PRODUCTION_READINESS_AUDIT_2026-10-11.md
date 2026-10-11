@@ -154,3 +154,6 @@ Relevant files:
 
 
 - **Manual inventory ledger precision and adjustment traceability:** manual stock transactions now reject quantities with more than two decimal places, matching the schema's `NUMERIC(12,2)` ledger precision and avoiding stock/history rounding disagreement. Adjustment quantity remains the target stock balance (not a delta), and the ledger note records the prior and resulting balances alongside the required reason. Source-contract regression coverage added; runtime ledger reconciliation and the final suite remain pending.
+
+
+- **Inactive recipe availability edge case:** changed the order-time ingredient query to a tenant-scoped LEFT JOIN for kitchen stock. This ensures an inactive recipe ingredient is still returned for the explicit inactive-item rejection even if it has no kitchen-stock row; a missing active stock row continues to fail closed during stock validation. Source-contract regression coverage added; final test suite and live order-flow/rollback checks remain pending.
