@@ -23,20 +23,20 @@
     .hidden { display: none !important; }
     .btn {
       border: 1px solid var(--border); background: var(--panel2); color: var(--text);
-      border-radius: 10px; padding: 10px 14px; cursor: pointer; font-weight: 600;
+      border-radius: 10px; padding: 8px 12px; cursor: pointer; font-weight: 600; font-size: 13px;
     }
     .btn:hover { border-color: rgba(255,255,255,.18); }
     .btn-accent { background: var(--accent); color: #1B1404; border-color: transparent; }
     .btn-ok { background: rgba(41,194,154,.15); color: var(--ok); border-color: rgba(41,194,154,.35); }
     .btn-danger { background: rgba(239,91,80,.12); color: var(--danger); border-color: rgba(239,91,80,.3); }
     .btn-ghost { background: transparent; }
+    .btn-sm { padding: 6px 10px; font-size: 12px; }
     input, select {
       width: 100%; padding: 10px 12px; border-radius: 10px;
       border: 1px solid var(--border); background: var(--bg); color: var(--text); margin-bottom: 8px;
     }
     label { display: block; font-size: 12px; color: var(--muted); margin: 6px 0 4px; }
 
-    /* login */
     #login-box {
       max-width: 380px; margin: 12vh auto; padding: 28px;
       background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
@@ -45,87 +45,95 @@
     #login-box p { color: var(--muted); font-size: 13px; margin: 0 0 18px; }
     #login-error { color: var(--danger); font-size: 13px; min-height: 18px; }
 
-    /* top bar */
     .top {
       display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
       padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--panel);
     }
     .brand { font-weight: 800; font-size: 16px; }
     .pill {
-      font-size: 11px; padding: 4px 10px; border-radius: 999px;
-      background: rgba(232,172,62,.12); color: var(--accent); font-weight: 600;
+      font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+      background: rgba(232,172,62,.15); color: var(--accent);
     }
     .spacer { flex: 1; }
+    .muted { color: var(--muted); font-size: 13px; }
 
-    /* tabs */
     .tabs {
-      display: flex; gap: 6px; padding: 10px 16px; border-bottom: 1px solid var(--border);
-      overflow-x: auto;
+      display: flex; gap: 8px; padding: 12px 16px; flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
     }
     .tab {
-      padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border);
-      background: transparent; color: var(--muted); cursor: pointer; font-weight: 600; font-size: 13px;
-      white-space: nowrap;
+      border: 1px solid var(--border); background: transparent; color: var(--muted);
+      border-radius: 999px; padding: 8px 16px; cursor: pointer; font-weight: 600; font-size: 13px;
     }
     .tab.active { background: var(--accent); color: #1B1404; border-color: transparent; }
 
     .page { display: none; padding: 16px; }
     .page.active { display: block; }
 
-    /* sale layout */
     .sale-grid {
-      display: grid; grid-template-columns: 1fr 340px; gap: 16px;
+      display: grid; grid-template-columns: 1.4fr 0.9fr; gap: 14px;
     }
     @media (max-width: 900px) {
       .sale-grid { grid-template-columns: 1fr; }
     }
     .panel {
-      background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px;
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px;
     }
-    .panel h3 { font-size: 14px; margin-bottom: 10px; }
+    .panel h3 { font-size: 15px; margin-bottom: 10px; }
     .search { margin-bottom: 10px; }
+
     .prod-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;
       max-height: 62vh; overflow: auto;
     }
     .prod-card {
-      background: var(--panel2); border: 1px solid var(--border); border-radius: 10px;
+      background: var(--panel2); border: 1px solid var(--border); border-radius: 12px;
       padding: 12px; cursor: pointer; transition: border-color .15s;
     }
-    .prod-card:hover { border-color: var(--accent); }
-    .prod-card .nm { font-weight: 700; font-size: 13px; }
-    .prod-card .meta { color: var(--muted); font-size: 11px; margin-top: 4px; }
-    .prod-card .pr { color: var(--accent); font-weight: 800; margin-top: 8px; font-size: 14px; }
-    .prod-card.low { border-color: rgba(239,91,80,.4); }
+    .prod-card:hover { border-color: rgba(232,172,62,.45); }
+    .prod-card.low { border-color: rgba(239,91,80,.45); }
+    .prod-card .name { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+    .prod-card .meta { font-size: 11px; color: var(--muted); }
+    .prod-card .price { margin-top: 8px; font-weight: 800; color: var(--accent); font-size: 14px; }
 
     .cart-row {
       display: flex; align-items: center; gap: 8px; padding: 8px 0;
       border-bottom: 1px solid var(--border); font-size: 13px;
     }
-    .cart-row .nm { flex: 1; font-weight: 600; }
+    .cart-row .nm { flex: 1; min-width: 0; }
     .qty-btn {
       width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border);
       background: var(--bg); color: var(--text); cursor: pointer; font-weight: 700;
     }
-    .totals .line { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
-    .totals .grand { font-weight: 800; font-size: 16px; margin-top: 6px; color: var(--accent); }
-    .empty { color: var(--muted); font-size: 13px; padding: 20px 0; text-align: center; }
+    .totals { margin-top: 12px; font-size: 14px; }
+    .totals .row { display: flex; justify-content: space-between; margin: 4px 0; }
+    .totals .grand { font-size: 18px; font-weight: 800; margin-top: 8px; color: var(--accent); }
 
-    /* products admin */
-    .admin-grid { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
-    @media (max-width: 900px) { .admin-grid { grid-template-columns: 1fr; } }
+    .split { display: grid; grid-template-columns: 1.3fr 0.9fr; gap: 14px; }
+    @media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
+
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
-    th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; }
-    .muted { color: var(--muted); }
+    th, td { padding: 8px 6px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 600; font-size: 12px; }
+    .empty { color: var(--muted); padding: 20px 0; text-align: center; font-size: 13px; }
+
+    .stat-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;
+      margin-bottom: 16px;
+    }
+    .stat {
+      background: var(--panel2); border: 1px solid var(--border); border-radius: 12px; padding: 14px;
+    }
+    .stat .lbl { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+    .stat .val { font-size: 18px; font-weight: 800; }
   </style>
 </head>
 <body>
 
-  <!-- LOGIN -->
   <div id="login-box">
     <h1>Wholesale</h1>
-    <p>Sizlio · products, cash sale, stock</p>
+    <p>Sizlio · products, cash sale, stock, reports</p>
     <label>Username</label>
     <input id="username" autocomplete="username" />
     <label>Password</label>
@@ -134,13 +142,13 @@
     <button class="btn btn-accent" style="width:100%;margin-top:12px;" onclick="login()">Login</button>
   </div>
 
-  <!-- APP -->
-  <div id="app-box" class="hidden">
+  <div id="app" class="hidden">
     <div class="top">
       <span class="brand" id="brandName">Wholesale</span>
       <span class="pill">Wholesale</span>
+      <span class="muted" id="todaySales">Today: —</span>
       <span class="spacer"></span>
-      <span class="muted" id="todaySales" style="font-size:13px;">Today: —</span>
+      <span class="muted" id="userLabel"></span>
       <button class="btn btn-ghost" onclick="logout()">Logout</button>
     </div>
 
@@ -148,24 +156,27 @@
       <button class="tab active" data-tab="sale" onclick="showTab('sale')">Sale</button>
       <button class="tab" data-tab="products" onclick="showTab('products')">Products</button>
       <button class="tab" data-tab="invoices" onclick="showTab('invoices')">Invoices</button>
+      <button class="tab" data-tab="report" onclick="showTab('report')">Today</button>
     </div>
 
     <!-- SALE -->
     <div id="page-sale" class="page active">
       <div class="sale-grid">
         <div class="panel">
-          <h3>Products</h3>
-          <input class="search" id="saleSearch" placeholder="Search name / SKU…" oninput="renderSaleGrid()" />
+          <input class="search" id="saleSearch" placeholder="Search name / SKU / barcode…" oninput="renderSaleGrid()" />
           <div class="prod-grid" id="saleGrid"></div>
         </div>
         <div class="panel">
           <h3>Cart</h3>
-          <label>Customer name</label>
+          <label>Customer name (optional)</label>
           <input id="custName" placeholder="Walk-in" />
           <div id="cartList"><div class="empty">Tap products to add</div></div>
-          <div class="totals" id="cartTotals"></div>
-          <label>Discount (Rs)</label>
-          <input id="saleDiscount" type="number" min="0" step="1" value="0" oninput="renderCart()" />
+          <div class="totals">
+            <div class="row"><span class="muted">Subtotal</span><span id="cartSub">Rs 0</span></div>
+            <label>Discount Rs</label>
+            <input id="saleDiscount" type="number" min="0" step="1" value="0" oninput="renderCart()" />
+            <div class="row grand"><span>Total</span><span id="cartTotal">Rs 0</span></div>
+          </div>
           <button class="btn btn-accent" style="width:100%;margin-top:10px;" onclick="placeSale()">Cash sale</button>
         </div>
       </div>
@@ -173,14 +184,17 @@
 
     <!-- PRODUCTS -->
     <div id="page-products" class="page">
-      <div class="admin-grid">
+      <div class="split">
         <div class="panel">
-          <h3>All products</h3>
-          <div style="overflow:auto;max-height:70vh;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h3>All products</h3>
+            <button class="btn btn-sm" onclick="loadProducts()">Refresh</button>
+          </div>
+          <div style="overflow:auto;">
             <table>
               <thead>
                 <tr>
-                  <th>Name</th><th>SKU</th><th>Unit</th><th>Sale</th><th>Stock</th><th></th>
+                  <th>Name</th><th>SKU</th><th>Stock</th><th>Sale</th><th></th>
                 </tr>
               </thead>
               <tbody id="productTable"></tbody>
@@ -192,7 +206,7 @@
           <input type="hidden" id="editProdId" value="" />
           <label>Name *</label>
           <input id="pName" />
-          <label>SKU</label>
+          <label>SKU / Barcode</label>
           <input id="pSku" placeholder="optional" />
           <label>Unit</label>
           <select id="pUnit">
@@ -201,6 +215,9 @@
             <option value="box">box</option>
             <option value="bag">bag</option>
             <option value="kg">kg</option>
+            <option value="g">g</option>
+            <option value="ltr">ltr</option>
+            <option value="ml">ml</option>
             <option value="set">set</option>
           </select>
           <label>Purchase price</label>
@@ -224,15 +241,36 @@
     <!-- INVOICES -->
     <div id="page-invoices" class="page">
       <div class="panel">
-        <h3>Recent invoices</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <h3>Recent invoices</h3>
+          <button class="btn btn-sm" onclick="loadInvoices()">Refresh</button>
+        </div>
         <div style="overflow:auto;">
           <table>
             <thead>
-              <tr><th>#</th><th>Customer</th><th>Total</th><th>Paid</th><th>Time</th></tr>
+              <tr><th>#</th><th>Customer</th><th>Total</th><th>Paid</th><th>Time</th><th></th></tr>
             </thead>
             <tbody id="invoiceTable"></tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <!-- TODAY REPORT -->
+    <div id="page-report" class="page">
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h3>Today summary</h3>
+          <button class="btn btn-sm" onclick="loadReport()">Refresh</button>
+        </div>
+        <div class="stat-grid" id="reportStats">
+          <div class="stat"><div class="lbl">Invoices</div><div class="val" id="stCount">—</div></div>
+          <div class="stat"><div class="lbl">Sales</div><div class="val" id="stSales">—</div></div>
+          <div class="stat"><div class="lbl">Paid</div><div class="val" id="stPaid">—</div></div>
+          <div class="stat"><div class="lbl">Discount</div><div class="val" id="stDisc">—</div></div>
+        </div>
+        <h3 style="margin-bottom:8px;">Low stock</h3>
+        <div id="lowStockBox" class="muted">—</div>
       </div>
     </div>
   </div>
@@ -243,86 +281,93 @@
   let restaurantId = Number(params.get('restaurant')) || Number(localStorage.getItem('ws_restaurant_id')) || null;
   let token = localStorage.getItem('ws_token') || '';
   let products = [];
-  let cart = []; // { product_id, name, price, qty, unit, stock }
+  let cart = [];
 
   function money(n) {
     return 'Rs ' + (Number(n) || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
   }
   function esc(s) {
-    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+    return String(s ?? '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
   }
 
   async function api(path, opts = {}) {
-    const res = await fetch(API + path, {
-      ...opts,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + token,
-        ...(opts.headers || {})
-      }
-    });
-    if (res.status === 401) { logout(); throw new Error('Session expired'); }
+    const headers = Object.assign(
+      { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      opts.headers || {}
+    );
+    const res = await fetch(API + path, Object.assign({}, opts, { headers }));
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.message || 'Request failed');
+    if (!res.ok || data.success === false) {
+      const msg = data.message || ('Request failed (' + res.status + ')');
+      if (res.status === 401) { logout(); }
+      throw new Error(msg);
+    }
     return data;
   }
 
   async function login() {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
+    const rid = Number(new URLSearchParams(location.search).get('restaurant')) || restaurantId;
     const err = document.getElementById('login-error');
     err.textContent = '';
-    if (!username || !password) { err.textContent = 'Username and password required'; return; }
+    if (!rid) {
+      err.textContent = 'Open link with restaurant id, e.g. wholesale.html?restaurant=57';
+      return;
+    }
+    if (!username || !password) {
+      err.textContent = 'Username and password required';
+      return;
+    }
     try {
-      const body = {
-        username, password,
-        restaurant_id: restaurantId || undefined,
-        role: 'counter'
-      };
+      const body = { username, password, role: 'counter', restaurant_id: rid };
       const res = await fetch(API + '/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) { err.textContent = data.message || 'Login failed'; return; }
-      if (!data.token) { err.textContent = 'No token'; return; }
-      if (data.user.must_change_password) {
-          sessionStorage.setItem('sizlio_first_login_token', data.token);
-          sessionStorage.setItem('sizlio_first_login_user', JSON.stringify(data.user));
-          location.href = '/change-password.html';
-          return;
-        }
-      token = data.token;
-      localStorage.setItem('ws_token', token);
-      if (data.user?.restaurant_id) {
-        restaurantId = data.user.restaurant_id;
-        localStorage.setItem('ws_restaurant_id', String(restaurantId));
+      const data = await res.json();
+      if (!data.token) {
+        err.textContent = data.message || 'Login failed';
+        return;
       }
+      if (data.user && data.user.business_type && data.user.business_type !== 'wholesale') {
+        err.textContent = 'This login is not a wholesale shop. Use restaurant POS screens.';
+        return;
+      }
+      if (!['counter', 'manager'].includes(data.user?.role)) {
+        err.textContent = 'Only counter or manager can use wholesale screen.';
+        return;
+      }
+      token = data.token;
+      restaurantId = data.user.restaurant_id;
+      localStorage.setItem('ws_token', token);
+      localStorage.setItem('ws_restaurant_id', String(restaurantId));
+      localStorage.setItem('ws_user', JSON.stringify(data.user));
       await boot();
     } catch (e) {
-      err.textContent = e.message || 'Login failed';
+      err.textContent = e.message || 'Server connection failed';
     }
   }
 
   function logout() {
     token = '';
     localStorage.removeItem('ws_token');
-    document.getElementById('app-box').classList.add('hidden');
-    document.getElementById('login-box').classList.remove('hidden');
+    localStorage.removeItem('ws_user');
+    location.reload();
   }
 
   async function boot() {
     document.getElementById('login-box').classList.add('hidden');
-    document.getElementById('app-box').classList.remove('hidden');
-    try {
-      const me = await api('/restaurants/me');
-      const d = me.data || me;
-      document.getElementById('brandName').textContent = d.name || 'Wholesale';
-    } catch (_) {}
+    document.getElementById('app').classList.remove('hidden');
+    const user = JSON.parse(localStorage.getItem('ws_user') || '{}');
+    document.getElementById('brandName').textContent = user.restaurant_name || 'Wholesale';
+    document.getElementById('userLabel').textContent = (user.name || user.role || '') + '';
     await loadProducts();
     await loadInvoices();
-    showTab('sale');
+    loadReport().catch(() => {});
   }
 
   function showTab(name) {
@@ -330,9 +375,9 @@
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     const page = document.getElementById('page-' + name);
     if (page) page.classList.add('active');
-    if (name === 'sale') renderSaleGrid();
-    if (name === 'products') renderProductTable();
+    if (name === 'sale' || name === 'products') loadProducts();
     if (name === 'invoices') loadInvoices();
+    if (name === 'report') loadReport();
   }
 
   async function loadProducts() {
@@ -343,30 +388,33 @@
   }
 
   function renderSaleGrid() {
-    const q = (document.getElementById('saleSearch').value || '').toLowerCase();
+    const q = (document.getElementById('saleSearch').value || '').toLowerCase().trim();
     const list = products.filter(p => {
       if (!q) return true;
-      return String(p.name).toLowerCase().includes(q) || String(p.sku || '').toLowerCase().includes(q);
+      return [p.name, p.sku, p.barcode, p.category]
+        .filter(Boolean)
+        .some(v => String(v).toLowerCase().includes(q));
     });
-    const el = document.getElementById('saleGrid');
+    const grid = document.getElementById('saleGrid');
     if (!list.length) {
-      el.innerHTML = '<div class="empty">No products</div>';
+      grid.innerHTML = '<div class="empty">No products</div>';
       return;
     }
-    el.innerHTML = list.map(p => {
+    grid.innerHTML = list.map(p => {
       const low = Number(p.min_stock) > 0 && Number(p.stock) <= Number(p.min_stock);
-      return `<div class="prod-card ${low ? 'low' : ''}" onclick="addToCart(${p.id})">
-        <div class="nm">${esc(p.name)}</div>
-        <div class="meta">${esc(p.unit || 'pcs')} · Stock ${Number(p.stock)}</div>
-        <div class="pr">${money(p.sale_price)}</div>
-      </div>`;
+      return `
+        <div class="prod-card ${low ? 'low' : ''}" onclick="addToCart(${p.id})">
+          <div class="name">${esc(p.name)}</div>
+          <div class="meta">${esc(p.unit || 'pcs')} · Stock ${Number(p.stock)}${p.sku ? ' · ' + esc(p.sku) : ''}</div>
+          <div class="price">${money(p.sale_price)}</div>
+        </div>`;
     }).join('');
   }
 
   function addToCart(productId) {
     const p = products.find(x => Number(x.id) === Number(productId));
     if (!p) return;
-    const row = cart.find(c => c.product_id === Number(productId));
+    const row = cart.find(c => Number(c.product_id) === Number(productId));
     if (row) {
       if (row.qty + 1 > Number(p.stock)) { alert('Not enough stock'); return; }
       row.qty += 1;
@@ -377,7 +425,7 @@
         name: p.name,
         price: Number(p.sale_price),
         qty: 1,
-        unit: p.unit,
+        unit: p.unit || 'pcs',
         stock: Number(p.stock)
       });
     }
@@ -385,60 +433,61 @@
   }
 
   function changeQty(productId, delta) {
-    const row = cart.find(c => c.product_id === Number(productId));
+    const row = cart.find(c => Number(c.product_id) === Number(productId));
     if (!row) return;
     row.qty += delta;
-    if (row.qty <= 0) cart = cart.filter(c => c.product_id !== Number(productId));
+    if (row.qty <= 0) cart = cart.filter(c => Number(c.product_id) !== Number(productId));
     else if (row.qty > row.stock) { row.qty = row.stock; alert('Max stock ' + row.stock); }
     renderCart();
   }
 
   function renderCart() {
-    const el = document.getElementById('cartList');
+    const box = document.getElementById('cartList');
     if (!cart.length) {
-      el.innerHTML = '<div class="empty">Tap products to add</div>';
-    } else {
-      el.innerHTML = cart.map(c => `
+      box.innerHTML = '<div class="empty">Tap products to add</div>';
+      document.getElementById('cartSub').textContent = money(0);
+      document.getElementById('cartTotal').textContent = money(0);
+      return;
+    }
+    let sub = 0;
+    box.innerHTML = cart.map(c => {
+      const line = c.price * c.qty;
+      sub += line;
+      return `
         <div class="cart-row">
-          <div class="nm">${esc(c.name)}</div>
+          <div class="nm"><b>${esc(c.name)}</b><div class="muted">${money(c.price)} / ${esc(c.unit)}</div></div>
           <button class="qty-btn" onclick="changeQty(${c.product_id},-1)">−</button>
           <span>${c.qty}</span>
           <button class="qty-btn" onclick="changeQty(${c.product_id},1)">+</button>
-          <strong>${money(c.price * c.qty)}</strong>
-        </div>`).join('');
-    }
-    const sub = cart.reduce((s, c) => s + c.price * c.qty, 0);
+          <b>${money(line)}</b>
+        </div>`;
+    }).join('');
     const disc = Number(document.getElementById('saleDiscount').value || 0);
-    const total = Math.max(0, sub - disc);
-    document.getElementById('cartTotals').innerHTML = `
-      <div class="line"><span>Subtotal</span><span>${money(sub)}</span></div>
-      ${disc > 0 ? `<div class="line"><span>Discount</span><span>-${money(disc)}</span></div>` : ''}
-      <div class="line grand"><span>Total</span><span>${money(total)}</span></div>`;
+    const total = Math.max(0, sub - (Number.isFinite(disc) ? disc : 0));
+    document.getElementById('cartSub').textContent = money(sub);
+    document.getElementById('cartTotal').textContent = money(total);
   }
 
   async function placeSale() {
-    if (!cart.length) { alert('Cart empty'); return; }
+    if (!cart.length) { alert('Cart is empty'); return; }
     const discount = Number(document.getElementById('saleDiscount').value || 0);
     const body = {
-      customer_name: document.getElementById('custName').value.trim() || 'Walk-in',
-      discount,
-      tax: 0,
-      items: cart.map(c => ({
-        product_id: c.product_id,
-        qty: c.qty,
-        unit_price: c.price
-      }))
+      items: cart.map(c => ({ product_id: c.product_id, qty: c.qty })),
+      discount: Number.isFinite(discount) ? discount : 0,
+      customer_name: document.getElementById('custName').value.trim() || 'Walk-in'
     };
     try {
       const data = await api('/wholesale/sales', { method: 'POST', body: JSON.stringify(body) });
       const inv = data.invoice || {};
-      alert(`Invoice #${inv.local_number || inv.id} · ${money(inv.total)} saved`);
       cart = [];
       document.getElementById('saleDiscount').value = 0;
       document.getElementById('custName').value = '';
       renderCart();
       await loadProducts();
       await loadInvoices();
+      if (confirm('Sale done. Invoice #' + (inv.local_number || inv.id) + ' · ' + money(inv.total) + '\n\nPrint invoice?')) {
+        if (inv.id) printInvoice(inv.id);
+      }
     } catch (e) {
       alert(e.message || 'Sale failed');
     }
@@ -447,19 +496,19 @@
   function renderProductTable() {
     const tb = document.getElementById('productTable');
     if (!products.length) {
-      tb.innerHTML = '<tr><td colspan="6" class="muted">No products</td></tr>';
+      tb.innerHTML = '<tr><td colspan="5" class="muted">No products</td></tr>';
       return;
     }
     tb.innerHTML = products.map(p => `
       <tr>
-        <td><strong>${esc(p.name)}</strong><div class="muted">${esc(p.category || '')}</div></td>
-        <td>${esc(p.sku || '—')}</td>
-        <td>${esc(p.unit)}</td>
+        <td><b>${esc(p.name)}</b><div class="muted">${esc(p.category || '')}</div></td>
+        <td class="muted">${esc(p.sku || '—')}</td>
+        <td>${Number(p.stock)} <span class="muted">${esc(p.unit || '')}</span></td>
         <td>${money(p.sale_price)}</td>
-        <td>${Number(p.stock)}</td>
-        <td>
-          <button class="btn btn-ghost" style="padding:6px 10px;" onclick="editProduct(${p.id})">Edit</button>
-          <button class="btn btn-ghost" style="padding:6px 10px;color:var(--danger);" onclick="deleteProduct(${p.id})">Del</button>
+        <td style="white-space:nowrap;">
+          <button class="btn btn-sm" onclick="editProduct(${p.id})">Edit</button>
+          <button class="btn btn-sm btn-ok" onclick="adjustStock(${p.id})">Stock ±</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteProduct(${p.id})">Del</button>
         </td>
       </tr>`).join('');
   }
@@ -530,22 +579,42 @@
     }
   }
 
+  async function adjustStock(id) {
+    const p = products.find(x => Number(x.id) === Number(id));
+    const delta = Number(prompt(
+      (p ? p.name + ' · current ' + Number(p.stock) + '\n' : '') +
+      'Stock change (+ purchase / − damage):',
+      '10'
+    ));
+    if (!Number.isFinite(delta) || delta === 0) return;
+    const reason = prompt('Reason (optional):', '') || null;
+    try {
+      await api('/wholesale/products/' + id + '/stock', {
+        method: 'POST',
+        body: JSON.stringify({ delta, reason })
+      });
+      await loadProducts();
+      alert('Stock updated');
+    } catch (e) {
+      alert(e.message || 'Stock adjust failed');
+    }
+  }
+
   async function loadInvoices() {
     try {
       const data = await api('/wholesale/invoices');
       const list = data.data || [];
       const tb = document.getElementById('invoiceTable');
       if (!list.length) {
-        tb.innerHTML = '<tr><td colspan="5" class="muted">No invoices yet</td></tr>';
+        tb.innerHTML = '<tr><td colspan="6" class="muted">No invoices yet</td></tr>';
         document.getElementById('todaySales').textContent = 'Today: —';
         return;
       }
-      const today = new Date().toISOString().slice(0, 10);
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Karachi' });
       let todayTotal = 0;
       list.forEach(inv => {
-        if (String(inv.created_at || '').slice(0, 10) === today) {
-          todayTotal += Number(inv.total || 0);
-        }
+        const d = inv.created_at ? new Date(inv.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Karachi' }) : '';
+        if (d === today) todayTotal += Number(inv.total || 0);
       });
       document.getElementById('todaySales').textContent = 'Today: ' + money(todayTotal);
       tb.innerHTML = list.map(inv => `
@@ -555,13 +624,81 @@
           <td>${money(inv.total)}</td>
           <td>${money(inv.paid)}</td>
           <td class="muted">${inv.created_at ? new Date(inv.created_at).toLocaleString() : ''}</td>
+          <td><button class="btn btn-sm" onclick="printInvoice(${Number(inv.id)})">Print</button></td>
         </tr>`).join('');
     } catch (e) {
       console.warn(e);
     }
   }
 
-  // auto session
+  async function printInvoice(id) {
+    try {
+      const data = await api('/wholesale/invoices/' + id);
+      const inv = data.invoice;
+      const items = data.items || [];
+      const shop = document.getElementById('brandName')?.textContent || 'Wholesale';
+      const w = window.open('', '_blank', 'width=420,height=640');
+      if (!w) { alert('Allow popups to print'); return; }
+      w.document.write(`<!DOCTYPE html><html><head><title>Invoice #${esc(inv.local_number)}</title>
+        <style>
+          body{font-family:monospace;padding:16px;font-size:13px;color:#111}
+          table{width:100%;border-collapse:collapse;margin-top:8px}
+          td,th{padding:4px;text-align:left;border-bottom:1px dotted #ccc}
+          hr{border:none;border-top:1px dashed #333;margin:10px 0}
+          h2{margin:0 0 6px;font-size:16px}
+        </style></head><body>
+        <h2>${esc(shop)}</h2>
+        <div>Invoice #${esc(inv.local_number)} · ${inv.created_at ? new Date(inv.created_at).toLocaleString() : ''}</div>
+        <div>Customer: ${esc(inv.customer_name || 'Walk-in')}</div>
+        <hr>
+        <table>
+          <thead><tr><th>Item</th><th>Qty</th><th>Rate</th><th>Amt</th></tr></thead>
+          <tbody>
+            ${items.map(it => `<tr>
+              <td>${esc(it.name)}</td>
+              <td>${esc(it.qty)}</td>
+              <td>${money(it.unit_price)}</td>
+              <td>${money(it.line_total)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        <hr>
+        <div>Subtotal: ${money(inv.subtotal)}</div>
+        <div>Discount: ${money(inv.discount)}</div>
+        <div><b>Total: ${money(inv.total)}</b></div>
+        <div>Paid (${esc(inv.payment_type || 'cash')}): ${money(inv.paid)}</div>
+        <script>window.onload=function(){window.print();}</` + `script>
+        </body></html>`);
+      w.document.close();
+    } catch (e) {
+      alert(e.message || 'Print failed — ensure backend GET /invoices/:id is deployed');
+    }
+  }
+
+  async function loadReport() {
+    try {
+      const data = await api('/wholesale/reports/today');
+      const s = data.data || {};
+      document.getElementById('stCount').textContent = s.invoice_count ?? 0;
+      document.getElementById('stSales').textContent = money(s.total_sales);
+      document.getElementById('stPaid').textContent = money(s.total_paid);
+      document.getElementById('stDisc').textContent = money(s.total_discount);
+      document.getElementById('todaySales').textContent = 'Today: ' + money(s.total_sales);
+      const low = s.low_stock || [];
+      document.getElementById('lowStockBox').innerHTML = low.length
+        ? '<table><thead><tr><th>Product</th><th>Stock</th><th>Min</th></tr></thead><tbody>' +
+          low.map(p => `<tr><td>${esc(p.name)}</td><td>${Number(p.stock)} ${esc(p.unit || '')}</td><td>${Number(p.min_stock)}</td></tr>`).join('') +
+          '</tbody></table>'
+        : 'No low-stock items';
+    } catch (e) {
+      // fallback from invoices list if report API not deployed yet
+      document.getElementById('stCount').textContent = '—';
+      document.getElementById('stSales').textContent = document.getElementById('todaySales').textContent.replace('Today: ', '') || '—';
+      document.getElementById('lowStockBox').innerHTML =
+        '<span class="muted">' + esc(e.message || 'Report API not available yet') + '</span>';
+    }
+  }
+
   if (token) boot().catch(() => logout());
   document.getElementById('password')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') login();

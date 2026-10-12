@@ -207,11 +207,99 @@ async function listInvoices(restaurantId, limit = 50) {
   return r.rows;
 }
 
+async function adjustStock(restaurantId, productId, { delta, reason }) {
+  const qty = Number(delta);
+  if (!Number.isFinite(qty) || qty === 0) {
+    throw new Error('Stock change must be a non-zero number');
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const pr = await client.query(
+      `SELECT id, name, stock FROM wholesale_products
+       WHERE id = $1 AND restaurant_id = $2 AND active = TRUE FOR UPDATE`,
+      [productId, restaurantId]
+    );
+    if (!pr.rowCount) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+    const current = Number(pr.rows[0].stock);
+    const next = current + qty;
+    if (next < 0) {
+      await client.query('ROLLBACK');
+      throw new Error('Stock cannot go below zero');
+    }
+    const r = await client.query(
+      `UPDATE wholesale_products
+       SET stock = $1, updated_at = NOW()
+       WHERE id = $2 AND restaurant_id = $3
+       RETURNING *`,
+      [next, productId, restaurantId]
+    );
+    // optional log table skip for Phase B — stock field is source of truth
+    await client.query('COMMIT');
+    return {
+      product: r.rows[0],
+      previous_stock: current,
+      delta: qty,
+      reason: reason || null
+    };
+  } catch (e) {
+    try { await client.query('ROLLBACK'); } catch (_) {}
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+
+async function getInvoiceById(restaurantId, invoiceId) {
+  const inv = await pool.query(
+    `SELECT * FROM wholesale_invoices
+     WHERE id = $1 AND restaurant_id = $2`,
+    [invoiceId, restaurantId]
+  );
+  if (!inv.rowCount) return null;
+  const items = await pool.query(
+    `SELECT * FROM wholesale_invoice_items WHERE invoice_id = $1 ORDER BY id`,
+    [invoiceId]
+  );
+  return { invoice: inv.rows[0], items: items.rows };
+}
+
+async function getTodaySummary(restaurantId) {
+  const r = await pool.query(
+    `SELECT
+       COUNT(*)::int AS invoice_count,
+       COALESCE(SUM(total), 0)::numeric AS total_sales,
+       COALESCE(SUM(paid), 0)::numeric AS total_paid,
+       COALESCE(SUM(discount), 0)::numeric AS total_discount
+     FROM wholesale_invoices
+     WHERE restaurant_id = $1
+       AND created_at::date = (NOW() AT TIME ZONE 'Asia/Karachi')::date
+       AND status = 'completed'`,
+    [restaurantId]
+  );
+  const low = await pool.query(
+    `SELECT id, name, stock, min_stock, unit
+     FROM wholesale_products
+     WHERE restaurant_id = $1 AND active = TRUE
+       AND min_stock > 0 AND stock <= min_stock
+     ORDER BY stock ASC
+     LIMIT 20`,
+    [restaurantId]
+  );
+  return { ...(r.rows[0] || {}), low_stock: low.rows };
+}
+
 module.exports = {
   listProducts,
   createProduct,
   updateProduct,
   deactivateProduct,
   createCashSale,
-  listInvoices
+  listInvoices,
+  adjustStock,
+  getInvoiceById,
+  getTodaySummary
 };

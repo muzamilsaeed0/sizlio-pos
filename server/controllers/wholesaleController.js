@@ -99,3 +99,37 @@ exports.getInvoices = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+exports.adjustStock = async (req, res) => {
+  try {
+    const data = await model.adjustStock(rid(req), Number(req.params.id), req.body || {});
+    if (!data) return res.status(404).json({ success: false, message: 'Not found' });
+    res.json({ success: true, data });
+  } catch (e) {
+    console.error(e);
+    const safeMessage = safeWholesaleValidationMessage(e);
+    res.status(safeMessage ? 400 : 500).json({
+      success: false,
+      message: safeMessage || 'Stock adjust failed'
+    });
+  }
+};
+
+exports.getInvoice = async (req, res) => {
+  try {
+    const data = await model.getInvoiceById(rid(req), Number(req.params.id));
+    if (!data) return res.status(404).json({ success: false, message: 'Not found' });
+    res.json({ success: true, ...data });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.getTodaySummary = async (req, res) => {
+  try {
+    const data = await model.getTodaySummary(rid(req));
+    res.json({ success: true, data });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
