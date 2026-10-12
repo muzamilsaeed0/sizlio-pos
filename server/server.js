@@ -143,36 +143,72 @@ pool.query("SELECT NOW()", (err, result) => {
 // enforce their own authorization; this page gate is an additional boundary.
 function protectedPage(filename, policy = {}) {
   return (req, res) => {
+    const sendPage = () =>
+      res.sendFile(path.join(__dirname, 'public', filename));
+
+    const clearSessionAndShowLogin = () => {
+      res.clearCookie('sizlio_session', {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+      });
+      return sendPage();
+    };
+
     const hasSessionCookie = (req.headers.cookie || '')
       .split(';')
       .some(part => part.trim().startsWith('sizlio_session='));
-    // Login screens must remain reachable before authentication. Their data
-    // APIs are independently protected; once a cookie exists, enforce role
-    // and plan restrictions here so authenticated users cannot switch screens.
+
+    // No cookie → always show the page (login UI inside HTML)
     if (!hasSessionCookie) {
-      return res.sendFile(path.join(__dirname, 'public', filename));
+      return sendPage();
     }
 
+    // Cookie present: authenticate, but NEVER return API JSON for HTML routes.
+    // On expired/invalid session or wrong role → clear cookie + show login page.
+    const originalJson = res.json.bind(res);
+    const originalStatus = res.status.bind(res);
+    let blocked = false;
+
+    res.status = (code) => {
+      if (code === 401 || code === 403) blocked = true;
+      return originalStatus(code);
+    };
+
+    res.json = (body) => {
+      if (blocked) {
+        return clearSessionAndShowLogin();
+      }
+      return originalJson(body);
+    };
+
     authMiddleware(req, res, async () => {
+      // Restore normal res methods after successful auth
+      res.status = originalStatus;
+      res.json = originalJson;
+
       try {
         const role = req.user?.role;
         const roles = policy.roles || [];
+
         if (!roles.includes(role)) {
-          return res.status(403).send('Access denied for this account.');
+          // Wrong role for this screen → login page, not JSON / plain 403
+          return clearSessionAndShowLogin();
         }
 
         let restaurant = null;
         if (role !== 'super_admin') {
           const restaurantId = Number(req.user?.restaurant_id);
           if (!Number.isSafeInteger(restaurantId) || restaurantId <= 0) {
-            return res.status(403).send('Restaurant access is required.');
+            return clearSessionAndShowLogin();
           }
           const result = await pool.query(
             'SELECT plan, business_type FROM restaurants WHERE id = $1',
             [restaurantId]
           );
           if (!result.rows.length) {
-            return res.status(403).send('Restaurant access is unavailable.');
+            return clearSessionAndShowLogin();
           }
           restaurant = result.rows[0];
         }
@@ -187,10 +223,10 @@ function protectedPage(filename, policy = {}) {
           return res.status(403).send('This screen is not enabled for this business type.');
         }
 
-        return res.sendFile(path.join(__dirname, 'public', filename));
+        return sendPage();
       } catch (err) {
         console.error('Protected page access:', err.message);
-        return res.status(500).send('Unable to load this page.');
+        return clearSessionAndShowLogin();
       }
     });
   };

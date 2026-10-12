@@ -5339,26 +5339,14 @@ const cancelOrder = async (
     // CANNOT CANCEL AFTER SERVING
     // --------------------------------------------------
 
+    // Allow cancel until completed/served/cancelled (paid orders OK — void + release stock)
     if (
-      ![
-        'pending',
-        'placed',
-        'accepted',
-        'preparing',
-        'confirmed',
-        'ready',
-        'ready_to_dispatch',
-        'ready_to_deliver'
-      ].includes(order.status) ||
-      order.payment_status === 'paid'
+      ['completed', 'cancelled', 'served'].includes(order.status)
     ) {
-
       await client.query('ROLLBACK');
-
       throw new Error(
         'This order cannot be cancelled.'
       );
-
     }
 
 
