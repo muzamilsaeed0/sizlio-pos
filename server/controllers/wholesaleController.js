@@ -133,3 +133,52 @@ exports.getTodaySummary = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+exports.getCustomers = async (req, res) => {
+  try {
+    const data = await model.listCustomers(rid(req));
+    res.json({ success: true, data });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.addCustomer = async (req, res) => {
+  try {
+    const data = await model.createCustomer(rid(req), req.body || {});
+    res.status(201).json({ success: true, data });
+  } catch (e) {
+    console.error(e);
+    const safeMessage = safeWholesaleValidationMessage(e);
+    res.status(safeMessage ? 400 : 500).json({
+      success: false,
+      message: safeMessage || 'Server error'
+    });
+  }
+};
+
+exports.getCustomerLedger = async (req, res) => {
+  try {
+    const data = await model.getCustomerLedger(rid(req), Number(req.params.id));
+    if (!data) return res.status(404).json({ success: false, message: 'Not found' });
+    res.json({ success: true, ...data });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.receivePayment = async (req, res) => {
+  try {
+    const body = { ...(req.body || {}), customer_id: Number(req.params.id) };
+    const data = await model.receiveCustomerPayment(rid(req), req.user?.id, body);
+    if (!data) return res.status(404).json({ success: false, message: 'Customer not found' });
+    res.status(201).json({ success: true, ...data });
+  } catch (e) {
+    console.error(e);
+    const safeMessage = safeWholesaleValidationMessage(e);
+    res.status(safeMessage ? 400 : 500).json({
+      success: false,
+      message: safeMessage || 'Payment failed'
+    });
+  }
+};

@@ -151,9 +151,41 @@ async function createCashSale(restaurantId, userId, payload) {
     }
     const total = subtotal - discount + tax;
     if (!Number.isFinite(total) || total < 0) throw new Error('Invalid sale total');
-    const paid = total; // Phase A: cash only
+    const paymentType = String(payload.payment_type || 'cash').toLowerCase();
+    if (!['cash', 'credit', 'partial'].includes(paymentType)) {
+      throw new Error('payment_type must be cash, credit, or partial');
+    }
 
-    // Serialize invoice-number allocation per restaurant to prevent duplicate numbers.
+    let paid = Number(payload.paid_amount);
+    if (paymentType === 'cash') {
+      paid = total;
+    } else if (paymentType === 'credit') {
+      if (!Number.isFinite(paid) || paid < 0) paid = 0;
+      if (paid > total) paid = total;
+    } else {
+      if (!Number.isFinite(paid) || paid < 0) throw new Error('paid_amount required for partial');
+      if (paid > total) paid = total;
+    }
+
+    const due = Number((total - paid).toFixed(2));
+    const status = due > 0.001 ? 'open' : 'completed';
+
+    let customerId = payload.customer_id ? Number(payload.customer_id) : null;
+    let customerName = String(payload.customer_name || 'Walk-in').trim() || 'Walk-in';
+
+    if (due > 0.001) {
+      if (!customerId || !Number.isSafeInteger(customerId)) {
+        throw new Error('Select a customer for credit / partial payment');
+      }
+      const cu = await client.query(
+        `SELECT id, name FROM wholesale_customers
+         WHERE id = $1 AND restaurant_id = $2 AND active = TRUE`,
+        [customerId, restaurantId]
+      );
+      if (!cu.rowCount) throw new Error('Customer not found');
+      customerName = cu.rows[0].name;
+    }
+
     await client.query('SELECT pg_advisory_xact_lock($1::bigint)', [Number(restaurantId)]);
     const ln = await client.query(
       `SELECT COALESCE(MAX(local_number), 0) + 1 AS n
@@ -164,15 +196,15 @@ async function createCashSale(restaurantId, userId, payload) {
 
     const inv = await client.query(
       `INSERT INTO wholesale_invoices
-        (restaurant_id, local_number, customer_name, subtotal, discount, tax, total, paid,
-         payment_type, status, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'cash','completed',$9)
+        (restaurant_id, local_number, customer_name, customer_id,
+         subtotal, discount, tax, total, paid, payment_type, status, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
        RETURNING *`,
       [
-        restaurantId, localNumber,
-        payload.customer_name || 'Walk-in',
+        restaurantId, localNumber, customerName, customerId,
         subtotal.toFixed(2), discount.toFixed(2), tax.toFixed(2),
-        total.toFixed(2), paid.toFixed(2), userId || null
+        total.toFixed(2), Number(paid).toFixed(2),
+        paymentType, status, userId || null
       ]
     );
     const invoice = inv.rows[0];
@@ -292,6 +324,127 @@ async function getTodaySummary(restaurantId) {
   return { ...(r.rows[0] || {}), low_stock: low.rows };
 }
 
+async function listCustomers(restaurantId) {
+  const r = await pool.query(
+    `SELECT c.*,
+       COALESCE((
+         SELECT SUM(i.total - i.paid)
+         FROM wholesale_invoices i
+         WHERE i.customer_id = c.id AND i.restaurant_id = c.restaurant_id
+           AND i.status = 'open'
+       ), 0)::numeric AS balance
+     FROM wholesale_customers c
+     WHERE c.restaurant_id = $1 AND c.active = TRUE
+     ORDER BY c.name`,
+    [restaurantId]
+  );
+  return r.rows;
+}
+
+async function createCustomer(restaurantId, data) {
+  const name = String(data.name || '').trim();
+  if (!name) throw new Error('Customer name is required');
+  const r = await pool.query(
+    `INSERT INTO wholesale_customers (restaurant_id, name, phone, address, notes)
+     VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+    [restaurantId, name, data.phone || null, data.address || null, data.notes || null]
+  );
+  return r.rows[0];
+}
+
+async function getCustomerLedger(restaurantId, customerId) {
+  const c = await pool.query(
+    `SELECT * FROM wholesale_customers WHERE id = $1 AND restaurant_id = $2`,
+    [customerId, restaurantId]
+  );
+  if (!c.rowCount) return null;
+
+  const invoices = await pool.query(
+    `SELECT id, local_number, total, paid, (total - paid) AS due,
+            payment_type, status, created_at, customer_name
+     FROM wholesale_invoices
+     WHERE restaurant_id = $1 AND customer_id = $2
+     ORDER BY created_at DESC LIMIT 100`,
+    [restaurantId, customerId]
+  );
+
+  const payments = await pool.query(
+    `SELECT * FROM wholesale_customer_payments
+     WHERE restaurant_id = $1 AND customer_id = $2
+     ORDER BY created_at DESC LIMIT 100`,
+    [restaurantId, customerId]
+  );
+
+  const bal = await pool.query(
+    `SELECT COALESCE(SUM(total - paid), 0)::numeric AS balance
+     FROM wholesale_invoices
+     WHERE restaurant_id = $1 AND customer_id = $2 AND status = 'open'`,
+    [restaurantId, customerId]
+  );
+
+  return {
+    customer: c.rows[0],
+    balance: bal.rows[0].balance,
+    invoices: invoices.rows,
+    payments: payments.rows
+  };
+}
+
+async function receiveCustomerPayment(restaurantId, userId, { customer_id, amount, note }) {
+  const pay = Number(amount);
+  const customerId = Number(customer_id);
+  if (!Number.isSafeInteger(customerId) || customerId <= 0) throw new Error('customer_id required');
+  if (!Number.isFinite(pay) || pay <= 0) throw new Error('amount must be > 0');
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const cu = await client.query(
+      `SELECT id, name FROM wholesale_customers
+       WHERE id = $1 AND restaurant_id = $2 AND active = TRUE FOR UPDATE`,
+      [customerId, restaurantId]
+    );
+    if (!cu.rowCount) { await client.query('ROLLBACK'); return null; }
+
+    let remaining = pay;
+    const open = await client.query(
+      `SELECT id, total, paid FROM wholesale_invoices
+       WHERE restaurant_id = $1 AND customer_id = $2 AND status = 'open'
+       ORDER BY created_at ASC FOR UPDATE`,
+      [restaurantId, customerId]
+    );
+
+    for (const inv of open.rows) {
+      if (remaining <= 0) break;
+      const due = Number(inv.total) - Number(inv.paid);
+      if (due <= 0) continue;
+      const apply = Math.min(due, remaining);
+      const newPaid = Number(inv.paid) + apply;
+      const newStatus = newPaid + 0.001 >= Number(inv.total) ? 'completed' : 'open';
+      await client.query(
+        `UPDATE wholesale_invoices SET paid = $1, status = $2 WHERE id = $3`,
+        [newPaid.toFixed(2), newStatus, inv.id]
+      );
+      remaining -= apply;
+    }
+
+    const payment = await client.query(
+      `INSERT INTO wholesale_customer_payments
+        (restaurant_id, customer_id, amount, note, created_by)
+       VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      [restaurantId, customerId, pay.toFixed(2), note || null, userId || null]
+    );
+
+    await client.query('COMMIT');
+    return { payment: payment.rows[0], unallocated: Number(remaining.toFixed(2)), customer: cu.rows[0] };
+  } catch (e) {
+    try { await client.query('ROLLBACK'); } catch (_) {}
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+
 module.exports = {
   listProducts,
   createProduct,
@@ -301,5 +454,9 @@ module.exports = {
   listInvoices,
   adjustStock,
   getInvoiceById,
-  getTodaySummary
+  getTodaySummary,
+  listCustomers,
+  createCustomer,
+  getCustomerLedger,
+  receiveCustomerPayment
 };

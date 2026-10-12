@@ -16,4 +16,9 @@ router.get('/invoices', authMiddleware, staff, c.getInvoices);
 router.get('/invoices/:id', authMiddleware, staff, c.getInvoice);
 router.get('/reports/today', authMiddleware, staff, c.getTodaySummary);
 
+router.get('/customers', authMiddleware, staff, c.getCustomers);
+router.post('/customers', authMiddleware, staff, c.addCustomer);
+router.get('/customers/:id/ledger', authMiddleware, staff, c.getCustomerLedger);
+router.post('/customers/:id/payments', authMiddleware, staff, c.receivePayment);
+
 module.exports = router;
