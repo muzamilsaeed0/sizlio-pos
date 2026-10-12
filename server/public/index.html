@@ -56,6 +56,7 @@ body::before{
 }
 body>*{position:relative;z-index:1}
 a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
 .container{width:min(1120px,calc(100% - 40px));margin-inline:auto}
 
 .nav{
@@ -155,8 +156,9 @@ section{padding:72px 0}
 /* Compare table */
 .compare-wrap{
   background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
 }
-.compare-table{width:100%;border-collapse:collapse;font-size:0.875rem}
+.compare-table{width:100%;border-collapse:collapse;font-size:0.875rem;min-width:560px}
 .compare-table th,.compare-table td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--border)}
 .compare-table th{background:var(--surface2);font-weight:600;color:var(--text2);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em}
 .compare-table td:first-child{color:var(--text2);font-weight:500}
@@ -200,7 +202,8 @@ section{padding:72px 0}
 .step h3{font-size:0.9rem;font-weight:700;margin-bottom:4px}
 .step p{font-size:0.78rem;color:var(--muted)}
 
-.pricing{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-items:stretch}
+/* FIXED: 4 columns, no inline style */
+.pricing{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:stretch}
 .plan{
   background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:26px 22px;
   display:flex;flex-direction:column;
@@ -256,22 +259,66 @@ footer{border-top:1px solid var(--border);padding:44px 0 24px;margin-top:20px}
   display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:0.8rem;color:var(--muted);
 }
 
+/* ---------- RESPONSIVE ---------- */
+
+/* Tablet */
 @media(max-width:900px){
-  .hero-grid,.strip,.footer-grid{grid-template-columns:1fr}
+  .hero-grid,.strip{grid-template-columns:1fr}
+  .hero{padding:52px 0 44px}
+  .hero-grid{gap:32px}
   .bento{grid-template-columns:1fr 1fr}
   .card.span-2{grid-column:span 2}
   .steps{grid-template-columns:1fr 1fr}
-  .pricing{grid-template-columns:1fr}
+  .pricing{grid-template-columns:repeat(2,1fr)}
+  .footer-grid{grid-template-columns:1fr 1fr 1fr}
   .nav-links a:not(.btn){display:none}
-  .compare-table{font-size:0.78rem}
-  .compare-table th,.compare-table td{padding:10px 10px}
+  .nav-links .btn{display:inline-flex}
+  .strip{padding:26px 22px}
+  .cta{padding:36px 24px}
 }
+
+/* Mobile */
 @media(max-width:560px){
+  .container{width:calc(100% - 28px)}
   .bento,.why,.reviews,.steps{grid-template-columns:1fr}
   .card.span-2{grid-column:span 1}
-  .hero{padding:44px 0 36px}
-  section{padding:52px 0}
-  .container{width:calc(100% - 28px)}
+  .pricing{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr 1fr;gap:20px}
+  .footer-brand{grid-column:span 2}
+  .hero{padding:40px 0 32px}
+  .hero-grid{gap:26px}
+  .hero h1{font-size:1.85rem}
+  .hero-lead{font-size:0.98rem}
+  .hero-actions{gap:8px}
+  .hero-actions .btn{flex:1;justify-content:center}
+  .hero-stats{gap:16px}
+  .stat strong{font-size:1.05rem}
+  .stat span{font-size:0.75rem}
+  .preview{padding:14px}
+  .preview-grid{grid-template-columns:1fr 1fr;gap:6px}
+  .preview-tile{padding:12px 10px}
+  section{padding:48px 0}
+  .section-head{margin-bottom:28px}
+  .section-title{font-size:1.5rem}
+  .card{padding:18px}
+  .strip{padding:22px 18px;gap:20px}
+  .strip h2{font-size:1.2rem}
+  .step{padding:16px 12px}
+  .plan{padding:22px 18px}
+  .cta{padding:28px 18px;border-radius:16px}
+  .cta-actions .btn{flex:1;justify-content:center}
+  .footer-grid{gap:18px}
+  .footer-bottom{flex-direction:column;text-align:center;gap:4px}
+  .compare-table{font-size:0.78rem;min-width:520px}
+  .compare-table th,.compare-table td{padding:10px 10px}
+  .quote{padding:18px}
+}
+
+/* Very small phones */
+@media(max-width:380px){
+  .hero h1{font-size:1.6rem}
+  .hero-actions .btn{font-size:0.85rem;padding:10px 14px}
+  .preview-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -350,7 +397,7 @@ footer{border-top:1px solid var(--border);padding:44px 0 24px;margin-top:20px}
       <div class="card">
         <div class="ico">🍳</div>
         <h3>KDS — Serve tak</h3>
-        <p>Pending → Preparing → Ready → <strong>Served</strong>. Auto-print. Sirf “ready” nahi — full service status.</p>
+        <p>Pending → Preparing → Ready → <strong>Served</strong>. Auto-print. Sirf "ready" nahi — full service status.</p>
         <span class="chip chip-brand">Serve-tak</span>
       </div>
       <div class="card">
@@ -580,7 +627,7 @@ footer{border-top:1px solid var(--border);padding:44px 0 24px;margin-top:20px}
       <h2 class="section-title">Same features. Staff limits differ.</h2>
       <p class="section-desc">Har plan mein full product — Offline, KDS Serve-tak, QR, Rider, Inventory, FBR.</p>
     </div>
-    <div class="pricing" style="grid-template-columns:repeat(4,1fr)">
+    <div class="pricing">
       <div class="plan featured">
         <h3>Cafe Lite</h3>
         <p class="sub">One-screen café POS</p>
@@ -647,14 +694,14 @@ footer{border-top:1px solid var(--border);padding:44px 0 24px;margin-top:20px}
     </div>
     <div class="reviews">
       <div class="quote">
-        <p>“Pehle order miss ho jaate the. Ab QR se customers khud order karte hain, kitchen display clear hai. Offline mode ne outage mein bacha liya.”</p>
+        <p>"Pehle order miss ho jaate the. Ab QR se customers khud order karte hain, kitchen display clear hai. Offline mode ne outage mein bacha liya."</p>
         <div class="quote-author">
           <div class="avatar">ZA</div>
           <div><strong>Zain Ahmed</strong><span>Café Owner · Khanewal</span></div>
         </div>
       </div>
       <div class="quote">
-        <p>“Recipe inventory ne manual counting khatam kar di. Jab order serve hota hai, kitchen stock automatically kam ho jata hai.”</p>
+        <p>"Recipe inventory ne manual counting khatam kar di. Jab order serve hota hai, kitchen stock automatically kam ho jata hai."</p>
         <div class="quote-author">
           <div class="avatar">AK</div>
           <div><strong>Ayesha Khan</strong><span>Restaurant Manager · Lahore</span></div>
@@ -668,7 +715,7 @@ footer{border-top:1px solid var(--border);padding:44px 0 24px;margin-top:20px}
   <div class="container">
     <div class="cta">
       <h2>Restaurant streamline karna hai?</h2>
-      <p>7-day free trial · No card · Setup \~24 hrs · Free training · Thermal printer ready</p>
+      <p>7-day free trial · No card · Setup ~24 hrs · Free training · Thermal printer ready</p>
       <div class="cta-actions">
         <a href="https://wa.me/923019128606?text=Hi!%20Sizlio%20free%20trial%20shuru%20karna%20hai." class="btn btn-primary">Start free trial</a>
         <a href="tel:+923019128606" class="btn btn-ghost">+92 301 9128606</a>
@@ -711,7 +758,7 @@ footer{border-top:1px solid var(--border);padding:44px 0 24px;margin-top:20px}
         <a href="/privacy-policy.html">Privacy</a>
         <a href="/terms-of-service.html">Terms</a>
       </div>
-            <div class="footer-col">
+      <div class="footer-col">
         <h4>Guides</h4>
         <a href="/blog/restaurant-pos-pakistan.html">Restaurant POS Pakistan</a>
         <a href="/blog/offline-pos-pakistan.html">Offline POS</a>
