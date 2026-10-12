@@ -2048,7 +2048,7 @@ const markCompleted = async (id, restaurantId, riderId = null) => {
          WHERE id = $1
            AND restaurant_id = $2
            AND status NOT IN ('completed', 'cancelled')
-           AND ($3 IS NULL OR delivery_rider_id = $3)
+           AND ($3::integer IS NULL OR delivery_rider_id = $3::integer)
          FOR UPDATE`,
         [id, restaurantId, riderId]
       );
@@ -2061,7 +2061,7 @@ const markCompleted = async (id, restaurantId, riderId = null) => {
            AND order_type = 'delivery'
            AND status = 'delivered'
            AND delivery_rider_id IS NOT NULL
-           AND ($3 IS NULL OR delivery_rider_id = $3)
+           AND ($3::integer IS NULL OR delivery_rider_id = $3::integer)
          FOR UPDATE`,
         [id, restaurantId, riderId]
       );
