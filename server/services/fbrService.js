@@ -2,18 +2,52 @@ const axios = require('axios');
 const fbrModel = require('../models/fbrModel');
 
 // ── Endpoints ────────────────────────────────────────────────────────────
-const FBR_SANDBOX_URL = process.env.FBR_SANDBOX_URL || 'https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata_sb';
-const FBR_PRODUCTION_URL = process.env.FBR_PRODUCTION_URL || 'https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata';
+const FBR_SANDBOX_URL =
+  process.env.FBR_SANDBOX_URL ||
+  'https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata_sb';
+const FBR_PRODUCTION_URL =
+  process.env.FBR_PRODUCTION_URL ||
+  'https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata';
+
+/** Set FBR_MOCK=true on Railway to skip real FBR and return dummy success */
+function isMockMode() {
+  const v = String(process.env.FBR_MOCK || '').toLowerCase();
+  return v === 'true' || v === '1' || v === 'yes';
+}
 
 function endpointFor(environment) {
   return environment === 'production' ? FBR_PRODUCTION_URL : FBR_SANDBOX_URL;
 }
 
+/**
+ * Normalize tax rate string for FBR (e.g. "18%", "0%").
+ * Prefer order GST; fall back to item / default 0.
+ */
+function taxRatePercent(order, item) {
+  const fromOrder = Number(order.gst_percent);
+  if (Number.isFinite(fromOrder) && fromOrder >= 0) return fromOrder;
+  const fromItem = Number(item.gst_percent ?? item.tax_percent);
+  if (Number.isFinite(fromItem) && fromItem >= 0) return fromItem;
+  return 0;
+}
+
+function hsCodeFor(item) {
+  const raw = String(item.hs_code || item.hsCode || '').trim();
+  // FBR restaurant/services common default; override per menu item when you have real codes
+  if (raw) return raw;
+  return '9963.0000';
+}
+
 // ── Payload builder ──────────────────────────────────────────────────────
 function buildInvoicePayload(order, orderItems, restaurant) {
+  const isSandbox =
+    String(restaurant.fbr_environment || 'sandbox').toLowerCase() !== 'production';
+
   return {
     invoiceType: 'Sale Invoice',
-    invoiceDate: new Date(order.created_at || order.order_date).toISOString().slice(0, 10),
+    invoiceDate: new Date(order.created_at || order.order_date || Date.now())
+      .toISOString()
+      .slice(0, 10),
     sellerNTNCNIC: restaurant.fbr_seller_ntn_cnic,
     sellerBusinessName: restaurant.fbr_seller_business_name,
     sellerProvince: restaurant.fbr_seller_province,
@@ -23,19 +57,22 @@ function buildInvoicePayload(order, orderItems, restaurant) {
     buyerBusinessName: order.customer_name || 'Walk-in Customer',
     buyerProvince: restaurant.fbr_seller_province,
     buyerAddress: '',
-    invoiceRefNo: '',
-    scenarioId: restaurant.fbr_environment === 'sandbox' ? 'SN001' : undefined,
-    items: orderItems.map((item) => {
-      const excludingST = Number(item.price) * Number(item.quantity);
-      const taxRate = Number(order.gst_percent || 0);
-      const salesTax = Math.round((excludingST * taxRate) / 100 * 100) / 100;
+    invoiceRefNo: String(order.local_number || order.id || ''),
+    // Sandbox scenario — required by FBR DI sandbox in many flows
+    scenarioId: isSandbox ? restaurant.fbr_scenario_id || 'SN001' : undefined,
+    items: (orderItems || []).map((item) => {
+      const qty = Number(item.quantity ?? item.qty) || 0;
+      const unit = Number(item.price ?? item.unit_price) || 0;
+      const excludingST = Math.round(unit * qty * 100) / 100;
+      const taxRate = taxRatePercent(order, item);
+      const salesTax = Math.round(((excludingST * taxRate) / 100) * 100) / 100;
 
       return {
-        hsCode: item.hs_code || '9963.0000',
-        productDescription: item.name,
+        hsCode: hsCodeFor(item),
+        productDescription: item.name || item.productDescription || 'Item',
         rate: `${taxRate}%`,
-        uoM: 'Numbers, PCS',
-        quantity: item.quantity,
+        uoM: item.uoM || item.unit || 'Numbers, PCS',
+        quantity: qty,
         totalValues: excludingST + salesTax,
         valueSalesExcludingST: excludingST,
         fixedNotifiedValueOrRetailPrice: 0,
@@ -45,7 +82,7 @@ function buildInvoicePayload(order, orderItems, restaurant) {
         furtherTax: 0,
         sroScheduleNo: '',
         fedPayable: 0,
-        discount: item.discount || 0,
+        discount: Number(item.discount) || 0,
         saleType: 'Goods at standard rate (default)',
         sroItemSerialNo: '',
       };
@@ -55,6 +92,19 @@ function buildInvoicePayload(order, orderItems, restaurant) {
 
 // ── Submission ───────────────────────────────────────────────────────────
 async function submitToFbr(payload, restaurant) {
+  if (isMockMode()) {
+    const inv = `MOCK-${Date.now()}-${Math.floor(Math.random() * 9000 + 1000)}`;
+    const qrPayload = encodeURIComponent(inv);
+    return {
+      invoiceNumber: inv,
+      InvoiceNumber: inv,
+      qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${qrPayload}`,
+      QRCode: `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${qrPayload}`,
+      mock: true,
+      message: 'FBR_MOCK success — not sent to FBR gateway',
+    };
+  }
+
   const url = endpointFor(restaurant.fbr_environment);
   const response = await axios.post(url, payload, {
     headers: {
@@ -74,7 +124,6 @@ async function submitInvoiceForOrder(orderOrId, orderItems, restaurantId = null)
   let order;
   let items;
 
-  // ✅ Flexible: agar orderId (number) diya gaya hai to khud fetch karo
   if (typeof orderOrId === 'number' || typeof orderOrId === 'string') {
     const { getOrderById, getOrderItemsByOrderId } = require('../models/orderModel');
     if (!Number.isInteger(Number(restaurantId)) || Number(restaurantId) <= 0) {
@@ -86,10 +135,7 @@ async function submitInvoiceForOrder(orderOrId, orderItems, restaurantId = null)
       throw new Error('Order not found for this restaurant');
     }
 
-    items = await getOrderItemsByOrderId(
-      Number(orderOrId),
-      Number(restaurantId)
-    );
+    items = await getOrderItemsByOrderId(Number(orderOrId), Number(restaurantId));
   } else {
     order = orderOrId;
     items = orderItems;
@@ -117,7 +163,7 @@ async function submitInvoiceForOrder(orderOrId, orderItems, restaurantId = null)
       result.qrCode || result.QRCode || null,
       result
     );
-    return { success: true, invoiceLogId, result };
+    return { success: true, invoiceLogId, result, mock: !!result.mock };
   } catch (err) {
     const message = err.response?.data ? JSON.stringify(err.response.data) : err.message;
     await fbrModel.markInvoiceFailed(invoiceLogId, order.restaurant_id, message);
@@ -126,15 +172,9 @@ async function submitInvoiceForOrder(orderOrId, orderItems, restaurantId = null)
 }
 
 /**
- * Retry worker — call this on a schedule (see server/services/fbrRetryWorker.js)
- * to resubmit invoices that failed or got stuck.
- *
- * @param {number|null} restaurantId
- *   - null → ALL pending invoices (super_admin/global retry)
- *   - number → sirf us restaurant ki pending invoices (manager-scoped retry)
+ * Retry worker — resubmit failed / stuck invoices.
  */
 async function retryPendingInvoices(restaurantId = null) {
-  // ✅ Restaurant-scoped retry
   const pending = restaurantId
     ? await fbrModel.getPendingInvoicesForRestaurant(restaurantId)
     : await fbrModel.getPendingInvoices();
@@ -154,7 +194,7 @@ async function retryPendingInvoices(restaurantId = null) {
         result.qrCode || result.QRCode || null,
         result
       );
-      results.push({ id: invoice.id, success: true });
+      results.push({ id: invoice.id, success: true, mock: !!result.mock });
     } catch (err) {
       const message = err.response?.data ? JSON.stringify(err.response.data) : err.message;
       await fbrModel.markInvoiceFailed(invoice.id, invoice.restaurant_id, message);
@@ -170,4 +210,5 @@ module.exports = {
   submitToFbr,
   submitInvoiceForOrder,
   retryPendingInvoices,
+  isMockMode,
 };
