@@ -5,9 +5,9 @@ const production = process.env.NODE_ENV === 'production';
 const databaseSslCa = process.env.DATABASE_SSL_CA
   ? process.env.DATABASE_SSL_CA.replace(/\\n/g, '\n')
   : null;
+// Production PostgreSQL connections verify certificates unless explicitly disabled.
 const rejectUnauthorized =
-  process.env.DATABASE_SSL_REJECT_UNAUTHORIZED === 'true' ||
-  !!databaseSslCa;
+  process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== 'false' || !!databaseSslCa;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
