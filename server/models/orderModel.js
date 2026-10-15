@@ -2058,10 +2058,24 @@ const markCompleted = async (id, restaurantId, riderId = null) => {
          FROM orders
          WHERE id = $1
            AND restaurant_id = $2
-           AND order_type = 'delivery'
-           AND status = 'delivered'
-           AND delivery_rider_id IS NOT NULL
-           AND ($3::integer IS NULL OR delivery_rider_id = $3::integer)
+           AND (
+             (
+               order_type = 'delivery'
+               AND status = 'delivered'
+               AND delivery_rider_id IS NOT NULL
+               AND ($3::integer IS NULL OR delivery_rider_id = $3::integer)
+             )
+             OR (
+               order_type IN ('dine_in', 'walk_in', 'takeaway')
+               AND status = 'served'
+               AND payment_status = 'paid'
+             )
+             OR (
+               order_type = 'walk_in'
+               AND status = 'ready_to_dispatch'
+               AND payment_status = 'paid'
+             )
+           )
          FOR UPDATE`,
         [id, restaurantId, riderId]
       );
