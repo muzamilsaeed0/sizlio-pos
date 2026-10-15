@@ -70,10 +70,25 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
     try {
         // Signature verification must use the exact bytes received from the
         // provider. JSON.parse/stringify can change whitespace or serialization.
-        const rawBody = Buffer.isBuffer(req.body) ? Buffer.from(req.body) : null;
+        // The global express.json() parser runs before this router and stores
+        // the original request bytes in req.rawBody. express.raw() below cannot
+        // recover those bytes after the JSON parser has already consumed them.
+        const rawBody = Buffer.isBuffer(req.body)
+            ? Buffer.from(req.body)
+            : Buffer.isBuffer(req.rawBody)
+                ? Buffer.from(req.rawBody)
+                : null;
+
+        // Payment signatures must be checked against the exact bytes received.
+        // Never fall back to JSON.stringify(body): whitespace/key-order changes
+        // would change the signed message and could weaken provider validation.
+        if (!rawBody) {
+            return res.status(400).json({ ok: false, message: 'Raw webhook payload required' });
+        }
+
         let body;
         try {
-            body = rawBody ? JSON.parse(rawBody.toString('utf8')) : req.body;
+            body = JSON.parse(rawBody.toString('utf8'));
         } catch {
             return res.status(400).json({ ok: false, message: 'Invalid JSON webhook payload' });
         }
