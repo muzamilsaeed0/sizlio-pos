@@ -1995,7 +1995,7 @@ exports.completed = async (
       success: false,
 
       message:
-        'Only delivery, manager or counter can complete delivery orders'
+        'Only delivery, manager or counter can complete orders'
 
     });
 
@@ -2132,15 +2132,15 @@ exports.completed = async (
     }
 
 
+        const msg =
+      order.order_type === 'delivery'
+        ? 'Delivery order completed successfully'
+        : 'Order completed successfully';
+
     return res.status(200).json({
-
       success: true,
-
-      message:
-        'Delivery order completed successfully',
-
+      message: msg,
       order
-
     });
 
   }
