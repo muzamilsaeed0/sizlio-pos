@@ -248,6 +248,7 @@ async function addTransaction({
 
     const currentStock = Number(item.stock_quantity);
     const amount = Number(quantity);
+    const normalizedType = String(type).trim().toLowerCase();
 
     if (!Number.isFinite(currentStock) || currentStock < 0) {
       throw new Error("Current inventory stock is invalid");
@@ -262,7 +263,6 @@ async function addTransaction({
       throw new Error("Quantity cannot have more than 2 decimal places");
     }
 
-    const normalizedType = String(type).trim().toLowerCase();
     let newStock;
     let transactionType;
 
