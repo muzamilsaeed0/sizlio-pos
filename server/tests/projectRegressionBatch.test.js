@@ -808,7 +808,9 @@ test('manual inventory transactions reject precision that the ledger would round
   assert.match(transaction, /Math\.round\(amount \* 100\) !== amount \* 100/);
   assert.match(transaction, /Quantity cannot have more than 2 decimal places/);
   assert.match(transaction, /transactionType === "ADJUSTMENT"[\s\S]*?currentStock\.toFixed\(2\)[\s\S]*?newStock\.toFixed\(2\)/);
-  assert.match(transaction, /quantity, transactionNote/);
+  // SQL persists the ledger column as "note"; the fourth bound value is transactionNote.
+  assert.match(transaction, /INSERT INTO inventory_transactions\s*\(inventory_id, type, quantity, note\)/);
+  assert.match(transaction, /\[inventory_id, transactionType, amount, transactionNote\]/);
 });
 
 
