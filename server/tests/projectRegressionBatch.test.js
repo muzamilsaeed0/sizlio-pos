@@ -836,3 +836,15 @@ test('kitchen stock and movement ledger preserve three-decimal recipe consumptio
   assert.match(deduction, /SET quantity = quantity - \$1/);
   assert.match(deduction, /INSERT INTO kitchen_inventory_transactions[\s\S]*?\$1/);
 });
+
+
+// Regression: an adjustment's quantity is the target balance, so zero is valid.
+// Other transaction types still require a positive quantity.
+test('inventory stock adjustment accepts zero target stock but rejects negative targets', () => {
+  const source = readSource('models/inventoryModel.js');
+  const controllerSource = readSource('controllers/inventoryController.js');
+  assert.match(source, /isAdjustment \? amount < 0 : amount <= 0/);
+  assert.match(controllerSource, /isAdjustment \? amount < 0 : amount <= 0/);
+  assert.match(source, /newStock = amount;\s*transactionType = "ADJUSTMENT"/);
+  assert.match(controllerSource, /Adjustment quantity must be 0 or greater/);
+});

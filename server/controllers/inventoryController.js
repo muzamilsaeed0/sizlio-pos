@@ -602,14 +602,16 @@ exports.addTransaction = async (
     const amount =
       Number(quantity);
 
+    const isAdjustment = String(type).trim().toLowerCase() === "adjustment";
     if (
       !Number.isFinite(amount) ||
-      amount <= 0
+      (isAdjustment ? amount < 0 : amount <= 0)
     ) {
       return res.status(400).json({
         success: false,
-        message:
-          "Quantity must be greater than 0"
+        message: isAdjustment
+          ? "Adjustment quantity must be 0 or greater"
+          : "Quantity must be greater than 0"
       });
     }
 
