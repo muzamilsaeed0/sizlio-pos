@@ -252,8 +252,11 @@ async function addTransaction({
     if (!Number.isFinite(currentStock) || currentStock < 0) {
       throw new Error("Current inventory stock is invalid");
     }
-    if (!Number.isFinite(amount) || amount <= 0) {
-      throw new Error("Quantity must be greater than 0");
+    const isAdjustment = normalizedType === "adjustment";
+    if (!Number.isFinite(amount) || (isAdjustment ? amount < 0 : amount <= 0)) {
+      throw new Error(isAdjustment
+        ? "Adjustment quantity must be 0 or greater"
+        : "Quantity must be greater than 0");
     }
     if (Math.round(amount * 100) !== amount * 100) {
       throw new Error("Quantity cannot have more than 2 decimal places");
