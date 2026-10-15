@@ -95,6 +95,20 @@ exports.login = async (req, res) => {
       });
     }
 
+    // A staff account must not enter through the Super Admin-style
+    // username-only lookup when restaurant context and role were omitted.
+    // Enforce this after password verification so the response does not
+    // reveal whether the username belongs to a staff account.
+    if (
+      user.role !== 'super_admin' &&
+      (!restaurant_id || !role || String(restaurant_id) !== String(user.restaurant_id))
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid username or password'
+      });
+    }
+
     // ==========================================
     // RESTAURANT ACTIVE CHECK
     // ==========================================
