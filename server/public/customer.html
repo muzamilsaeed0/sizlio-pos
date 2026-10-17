@@ -812,7 +812,9 @@ function showLocationBlockedScreen(message) {
     btn.disabled = true;
     btn.innerText = 'Getting location...';
 
-    const customer_name = document.getElementById('customer-name')?.value.trim() || 'Walk-in';
+    const customer_name =
+      document.getElementById('customer-name')?.value.trim() ||
+      ('Table ' + tableNo);
 
     try {
       // GPS coordinates — server requires these
