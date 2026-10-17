@@ -556,12 +556,18 @@ exports.placePublicOrder = async (req, res) => {
     }
 
     publicOrderMutationStarted = true;
+
+    const safeCustomerName =
+      String(customer_name || '').trim() &&
+      !/^walk-?in$/i.test(String(customer_name || '').trim())
+        ? String(customer_name).trim()
+        : `Table ${tableNo}`;
     const order =
       await createOrder(
         tableNo,
         items,
         restaurantId,
-        customer_name,
+        safeCustomerName,
         'pending',
         {},
         'dine_in',

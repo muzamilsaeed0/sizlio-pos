@@ -671,7 +671,7 @@ async function login(){
     const data = await res.json().catch(() => ({}));
     console.log('Kitchen login response:', data);
     if(!res.ok){ errorBox.innerText = data.message || 'Invalid username or password'; return; }
-    if(!data.token || !data.user || data.user.role !== 'kitchen'){ errorBox.innerText = 'Invalid kitchen login'; localStorage.removeItem('token'); token = null; return; }
+    if(!data.token || !data.user || data.user.role !== 'kitchen'){ errorBox.innerText = 'Invalid kitchen login'; localStorage.removeItem('kitchen_token'); token = null; return; }
     if (data.user.must_change_password) {
           sessionStorage.setItem('sizlio_first_login_token', data.token);
           sessionStorage.setItem('sizlio_first_login_user', JSON.stringify(data.user));
@@ -680,8 +680,8 @@ async function login(){
         }
     token = data.token;
     localStorage.setItem('kitchen_token', token);
-    localStorage.setItem('restaurant_id', String(data.user.restaurant_id || restaurantId));
-    localStorage.setItem('kitchenRestaurantId', String(data.user.restaurant_id || restaurantId));
+localStorage.setItem('kitchenRestaurantId', String(data.user.restaurant_id || restaurantId));
+
     createSocket();
     if(socket && !socket.connected) socket.connect();
     showApp();
@@ -2150,6 +2150,7 @@ function kitchenNewOrderAlert(){
 function logout(){
   document.getElementById('kitchenHistoryModal').classList.remove('show');
   localStorage.removeItem('kitchen_token');
+  localStorage.removeItem('kitchenRestaurantId');
   token = null;
   printedOrderIds = null;
   if(socket){ try{ socket.disconnect(); }catch(error){ console.warn('Socket logout error:', error); } }

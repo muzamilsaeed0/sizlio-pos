@@ -1430,9 +1430,9 @@
         }
                 token = data.token;
                 currentUser = data.user;
-                localStorage.setItem('counter_token', token);
-                localStorage.setItem('restaurant_id', currentUser.restaurant_id);
-                localStorage.setItem('user', JSON.stringify(currentUser));
+               localStorage.setItem('counter_token', token);
+localStorage.setItem('counter_restaurant_id', String(currentUser.restaurant_id));
+localStorage.setItem('counter_user', JSON.stringify(currentUser));
                 showApp();
                 await startCounter();
             } catch (err) {
@@ -1455,9 +1455,9 @@
             dealCart = [];
             orders = [];
             currentShift = null;
-            localStorage.removeItem('token');
-            localStorage.removeItem('restaurant_id');
-            localStorage.removeItem('user');
+            localStorage.removeItem('counter_token');
+            localStorage.removeItem('counter_restaurant_id');
+            localStorage.removeItem('counter_user');
             showLogin();
             document.getElementById('brand-header').style.display = 'none';
             document.getElementById('loginPassword').value = '';
@@ -3690,7 +3690,7 @@ const newLocalNo = data.order?.local_number || newOrderId;
 
         async function restoreCounterSession() {
             token = localStorage.getItem('counter_token') || '';
-            const savedUser = localStorage.getItem('user');
+            const savedUser = localStorage.getItem('counter_user');
             if (!token || !savedUser) {
                 showLogin();
                 return;

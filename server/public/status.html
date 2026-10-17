@@ -924,7 +924,10 @@ async function getJsonResponse(res){
 function handleAuthFailure(){
 
     localStorage.removeItem(
-        'token'
+        'status_token'
+    );
+    localStorage.removeItem(
+        'display_restaurant_id'
     );
 
 
@@ -1383,7 +1386,7 @@ async function login(){
 
 
         localStorage.setItem(
-            'token',
+            'status_token',
             token
         );
 
@@ -2413,7 +2416,7 @@ window.addEventListener(
 
         const saved =
             localStorage.getItem(
-                'token'
+                'status_token'
             );
 
 

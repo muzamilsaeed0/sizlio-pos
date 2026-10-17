@@ -441,7 +441,10 @@ window.addEventListener('DOMContentLoaded', () => {
 //  GLOBALS
 // ============================================================
 let token = localStorage.getItem('waiter_token');
-let restaurantId = new URLSearchParams(window.location.search).get('restaurant') || localStorage.getItem('restaurant_id');
+let restaurantId =
+  new URLSearchParams(window.location.search).get('restaurant') ||
+  localStorage.getItem('waiter_restaurant_id') ||
+  localStorage.getItem('restaurant_id');
 let menu = [];
 let cart = [];
 let dealCart = [];
@@ -555,7 +558,7 @@ async function login() {
 
     token = data.token;
     localStorage.setItem('waiter_token', token);
-    localStorage.setItem('restaurant_id', String(restaurantId));
+    localStorage.setItem('waiter_restaurant_id', String(restaurantId));
 
     socket.auth = { token };
     if (!socket.connected) socket.connect();
@@ -581,9 +584,9 @@ async function login() {
 // ============================================================
 function logout() {
   localStorage.removeItem('waiter_token');
-  localStorage.removeItem('token');
-  localStorage.removeItem('restaurant_id');
-  localStorage.removeItem('user');
+  
+  localStorage.removeItem('waiter_restaurant_id');
+
   token = null;
   restaurantId = null;
   if (socket.connected) socket.disconnect();
@@ -1276,9 +1279,9 @@ window.onload = async () => {
   const urlRestaurantId = new URLSearchParams(window.location.search).get('restaurant');
   if (urlRestaurantId) {
     restaurantId = urlRestaurantId;
-    localStorage.setItem('restaurant_id', restaurantId);
+    localStorage.setItem('waiter_restaurant_id', restaurantId);
   } else {
-    restaurantId = localStorage.getItem('restaurant_id') || null;
+    restaurantId = localStorage.getItem('waiter_restaurant_id') || localStorage.getItem('restaurant_id') || null;
   }
 
   if (token && restaurantId) {
@@ -1287,8 +1290,8 @@ window.onload = async () => {
       const data = await res.json();
       if (!res.ok || !data.success || String(data.data.id) !== String(restaurantId)) {
         localStorage.removeItem('waiter_token');
-        localStorage.removeItem('token');
-        localStorage.removeItem('restaurant_id');
+     
+        localStorage.removeItem('waiter_restaurant_id');
         token = null;
         document.getElementById('login-box').style.display = 'block';
         document.getElementById('app-box').style.display = 'none';
