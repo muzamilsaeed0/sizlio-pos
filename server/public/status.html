@@ -1682,24 +1682,23 @@ async function loadOrders(){
                     ).toLowerCase();
 
 
-                return (
+                // completed / cancelled hide; paid bhi cooking pipeline me dikhao
+                if (status === 'completed' || status === 'cancelled') {
+                    return false;
+                }
 
-                    paymentStatus !== 'paid'
-
-                    &&
-
-                    [
-                        'pending',
-                        'placed',
-                        'accepted',
-                        'confirmed',
-                        'preparing',
-                        'ready',
-                        'ready_to_deliver',
-                        'out_for_delivery'
-                    ].includes(status)
-
-                );
+                return [
+                    'pending',
+                    'placed',
+                    'accepted',
+                    'confirmed',
+                    'preparing',
+                    'ready',
+                    'ready_to_dispatch',
+                    'ready_to_deliver',
+                    'out_for_delivery',
+                    'served'
+                ].includes(status);
 
             });
 

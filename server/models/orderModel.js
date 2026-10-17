@@ -2743,10 +2743,9 @@ const markWalkInHandedOver = async (
     // unpaid → served (counter phir payment collect karega)
     // --------------------------------------------------
 
-    const wasPaid = String(order.payment_status).toLowerCase() === 'paid';
-    const newStatus = wasPaid ? 'completed' : 'served';
-
-       const completedAt = wasPaid ? new Date() : null;
+    // Hand over → always served; Mark Complete se completed hoga
+    const newStatus = 'served';
+    const completedAt = null;
 
     const result = await client.query(
       `
