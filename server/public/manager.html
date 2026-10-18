@@ -1496,12 +1496,13 @@ function isWholesale() {
           <tr><th>Gross Profit</th><td>Rs ${Number(d.profit || 0).toLocaleString()}</td></tr>
           <tr><th>Margin</th><td>${Number(d.margin_percent || 0).toFixed(1)}%</td></tr>
         </table>
-        ${d.items_without_recipe > 0
+               ${d.items_without_recipe > 0
           ? `<p class="warn">Note: ${d.items_without_recipe} sold line(s) have no recipe — COGS may be understated.</p>`
           : ''}
-        <script>window.onload=function(){window.print();}</script>
         </body></html>`);
       w.document.close();
+      w.focus();
+      setTimeout(() => { try { w.print(); } catch (e) {} }, 250);
     }
 
     function downloadProfitCsv() {
