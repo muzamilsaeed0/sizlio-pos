@@ -306,6 +306,7 @@ app.use("/api/push", pushRoutes);
 app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/settings", require("./routes/settingsRoutes"));
 app.use("/api/wholesale", wholesaleRoutes);
+app.use("/api/refunds", require("./routes/refundRoutes"));
 /* =====================================================
    HTTP SERVER + SOCKET.IO
 ===================================================== */
