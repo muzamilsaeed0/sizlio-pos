@@ -156,7 +156,7 @@ const updateStaff = async (id, restaurantId, fullName, username, password) => {
       throw error;
     }
     const hashed = await bcrypt.hash(password, 12);
-    updates.push(`password = ${idx++}`);
+    updates.push(`password = $${idx++}`);
     values.push(hashed);
     // Require the staff member to choose their own password after a reset.
     updates.push('must_change_password = TRUE');
