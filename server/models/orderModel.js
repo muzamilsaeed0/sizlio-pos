@@ -1950,7 +1950,7 @@ const markOutForDelivery = async (
         AND status = 'ready_to_deliver'
 
         AND delivery_rider_id IS NOT NULL
-        AND ($3 IS NULL OR delivery_rider_id = $3)
+        AND ($3::integer IS NULL OR delivery_rider_id = $3::integer)
 
       RETURNING *
       `,
@@ -2002,7 +2002,7 @@ const markDelivered = async (
         AND status = 'out_for_delivery'
 
         AND delivery_rider_id IS NOT NULL
-        AND ($3 IS NULL OR delivery_rider_id = $3)
+        AND ($3::integer IS NULL OR delivery_rider_id = $3::integer)
 
       RETURNING *
       `,
