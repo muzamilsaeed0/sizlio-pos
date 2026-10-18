@@ -877,6 +877,10 @@
         <div class="stat" style="grid-column:1/-1;"><div class="label">Margin</div><div class="value" id="profit-margin">-</div></div>
       </div>
       <p id="profit-warn" style="display:none;font-size:12px;color:#f59e0b;margin-top:12px;"></p>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+        <button type="button" onclick="printProfitReport()" style="width:auto;flex:1;margin:0;background:transparent;border:1px solid var(--border);color:var(--text);">🖨️ Print</button>
+        <button type="button" onclick="downloadProfitCsv()" style="width:auto;flex:1;margin:0;background:transparent;border:1px solid var(--border);color:var(--text);">📥 CSV</button>
+      </div>
     </div>
   </div>
 
@@ -1423,6 +1427,7 @@ function isWholesale() {
           return;
         }
         const d = result.data;
+                window._lastProfitReport = d;
         document.getElementById('profit-orders').textContent = d.orders_count ?? 0;
         document.getElementById('profit-revenue').textContent =
           'Rs ' + Number(d.revenue || 0).toLocaleString();
@@ -1445,6 +1450,69 @@ function isWholesale() {
         console.error('loadProfit:', err);
         alert('Server connection failed');
       }
+    }
+
+        function printProfitReport() {
+      const d = window._lastProfitReport;
+      if (!d) { alert('Load report first'); return; }
+      const range = document.getElementById('profit-range-label')?.textContent || '';
+      const name = (typeof restaurantInfo !== 'undefined' && restaurantInfo?.name)
+        ? restaurantInfo.name
+        : 'Restaurant';
+      const w = window.open('', '_blank', 'width=720,height=900');
+      if (!w) { alert('Allow popups to print'); return; }
+      w.document.write(`<!DOCTYPE html><html><head><title>Profit Report</title>
+        <style>
+          body{font-family:system-ui,sans-serif;padding:24px;color:#111}
+          h1{margin:0 0 4px;font-size:20px}
+          .sub{color:#666;font-size:13px;margin-bottom:20px}
+          table{width:100%;border-collapse:collapse;margin-top:12px}
+          th,td{border:1px solid #ddd;padding:10px 12px;text-align:left}
+          th{background:#f5f5f5;width:40%}
+          td{font-weight:600}
+          .warn{margin-top:16px;color:#b45309;font-size:13px}
+          @media print{body{padding:12px}}
+        </style></head><body>
+        <h1>${name} — Profit Report</h1>
+        <div class="sub">${range} · printed ${new Date().toLocaleString()}</div>
+        <table>
+          <tr><th>Orders</th><td>${d.orders_count ?? 0}</td></tr>
+          <tr><th>Revenue</th><td>Rs ${Number(d.revenue || 0).toLocaleString()}</td></tr>
+          <tr><th>COGS (Recipes)</th><td>Rs ${Number(d.cogs || 0).toLocaleString()}</td></tr>
+          <tr><th>Gross Profit</th><td>Rs ${Number(d.profit || 0).toLocaleString()}</td></tr>
+          <tr><th>Margin</th><td>${Number(d.margin_percent || 0).toFixed(1)}%</td></tr>
+        </table>
+        ${d.items_without_recipe > 0
+          ? `<p class="warn">Note: ${d.items_without_recipe} sold line(s) have no recipe — COGS may be understated.</p>`
+          : ''}
+        <script>window.onload=function(){window.print();}</script>
+        </body></html>`);
+      w.document.close();
+    }
+
+    function downloadProfitCsv() {
+      const d = window._lastProfitReport;
+      if (!d) { alert('Load report first'); return; }
+      const range = document.getElementById('profit-range-label')?.textContent || '';
+      const rows = [
+        ['Field', 'Value'],
+        ['Range', range],
+        ['Orders', d.orders_count ?? 0],
+        ['Revenue', Number(d.revenue || 0).toFixed(2)],
+        ['COGS', Number(d.cogs || 0).toFixed(2)],
+        ['Gross Profit', Number(d.profit || 0).toFixed(2)],
+        ['Margin %', Number(d.margin_percent || 0).toFixed(2)],
+        ['Items without recipe', d.items_without_recipe ?? 0],
+      ];
+      const csv = rows.map(r =>
+        r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')
+      ).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `profit_${d.from || 'from'}_${d.to || 'to'}.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
     }
 
     /* MENU MANAGEMENT */
