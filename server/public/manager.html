@@ -437,6 +437,7 @@
       <button onclick="openProfitReport()">💰 Profit</button>
       <button onclick="openPage('inventory.html')">📦 Inventory</button>
       <button onclick="openKitchenRequestsModal()">📥 Kitchen Requests</button>
+      <button onclick="openRefundsModal()">💸 Refund Requests</button>
       <button onclick="openFbrSetupModal()">🧾 FBR Setup <span id="fbr-pending-badge" class="fbr-badge hidden">0</span></button>
       <button onclick="openStaffPerformance()">📈 Staff Performance</button>
       <button class="menu-parent" onclick="toggleMenuSubmenu()">🍔 Menu <span>▾</span></button>
@@ -782,6 +783,19 @@
         <div id="kitchen-requests-list" style="max-height: 420px; overflow-y: auto;"></div>
       </div>
     </div>
+
+     <div class="modal-overlay" id="refunds-modal">
+    <div class="modal-box" style="max-width:560px;">
+      <button type="button" class="modal-close-x" onclick="closeRefundsModal()" aria-label="Close">×</button>
+      <h3>💸 Refund Requests</h3>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button type="button" onclick="loadRefunds('pending')" style="width:auto;flex:1;margin:0;">Pending</button>
+        <button type="button" onclick="loadRefunds('approved')" style="width:auto;flex:1;margin:0;">Approved</button>
+        <button type="button" onclick="loadRefunds('rejected')" style="width:auto;flex:1;margin:0;">Rejected</button>
+      </div>
+      <div id="refunds-list" style="max-height:420px;overflow-y:auto;"></div>
+    </div>
+  </div>
 
     <!-- STAFF PERFORMANCE MODAL -->
     <div class="modal-overlay" id="staff-performance-modal">
@@ -1848,6 +1862,101 @@ function isWholesale() {
 
     /* KITCHEN INVENTORY REQUESTS */
     function openKitchenRequestsModal() { closeMenu(); document.getElementById("kitchen-requests-modal").classList.add("open"); loadKitchenRequests(); }
+    
+     function openRefundsModal() {
+      closeMenu();
+      document.getElementById('refunds-modal').classList.add('open');
+      loadRefunds('pending');
+    }
+    function closeRefundsModal() {
+      document.getElementById('refunds-modal').classList.remove('open');
+    }
+    async function loadRefunds(status) {
+      const list = document.getElementById('refunds-list');
+      list.innerHTML = '<div style="color:var(--muted);padding:12px;">Loading...</div>';
+      try {
+        const res = await fetch('/api/refunds?status=' + encodeURIComponent(status || 'pending'), {
+          headers: authHeaders()
+        });
+        if (checkUnauthorized(res)) return;
+        const result = await res.json().catch(() => ({}));
+        if (!result.success) {
+          list.innerHTML = '<div style="color:var(--danger);">' + escapeHtml(result.message || 'Failed') + '</div>';
+          return;
+        }
+        const rows = result.data || [];
+        if (!rows.length) {
+          list.innerHTML = '<div style="color:var(--muted);padding:12px;">No ' + escapeHtml(status) + ' refunds</div>';
+          return;
+        }
+        list.innerHTML = rows.map(r => {
+          const canReview = r.status === 'pending';
+          return `
+            <div style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;background:var(--bg);">
+              <div style="display:flex;justify-content:space-between;gap:8px;">
+                <strong>#${escapeHtml(r.local_number || r.order_id)}</strong>
+                <span>Rs ${Number(r.amount || 0).toLocaleString()}</span>
+              </div>
+              <div style="font-size:12px;color:var(--muted);margin-top:4px;">
+                ${escapeHtml(r.customer_name || '—')} · ${escapeHtml(r.order_type || '')}
+                · ${escapeHtml(r.status)}
+              </div>
+              <div style="font-size:12px;margin-top:6px;">${escapeHtml(r.reason || 'No reason')}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px;">
+                By ${escapeHtml(r.requested_by_name || r.requested_by_username || '—')}
+                · ${r.created_at ? new Date(r.created_at).toLocaleString() : ''}
+              </div>
+              ${canReview ? `
+                <div style="display:flex;gap:8px;margin-top:10px;">
+                  <button type="button" style="width:auto;flex:1;margin:0;" onclick="approveRefund(${Number(r.id)})">Approve</button>
+                  <button type="button" style="width:auto;flex:1;margin:0;background:transparent;border:1px solid var(--border);color:var(--text);" onclick="rejectRefund(${Number(r.id)})">Reject</button>
+                </div>
+              ` : ''}
+            </div>`;
+        }).join('');
+      } catch (e) {
+        console.error(e);
+        list.innerHTML = '<div style="color:var(--danger);">Server error</div>';
+      }
+    }
+    async function approveRefund(id) {
+      if (!confirm('Approve full refund for this order? Sales will exclude it.')) return;
+      try {
+        const res = await fetch('/api/refunds/' + id + '/approve', {
+          method: 'PUT',
+          headers: authHeaders()
+        });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) {
+          alert(data.message || 'Approve failed');
+          return;
+        }
+        alert(data.message || 'Approved');
+        loadRefunds('pending');
+      } catch (e) {
+        alert('Server error');
+      }
+    }
+    async function rejectRefund(id) {
+      const reason = prompt('Reject reason (optional)') || '';
+      try {
+        const res = await fetch('/api/refunds/' + id + '/reject', {
+          method: 'PUT',
+          headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason })
+        });
+        if (checkUnauthorized(res)) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) {
+          alert(data.message || 'Reject failed');
+          return;
+        }
+        loadRefunds('pending');
+      } catch (e) {
+        alert('Server error');
+      }
+    }
     function closeKitchenRequestsModal() { document.getElementById("kitchen-requests-modal").classList.remove("open"); }
     async function loadKitchenRequests() {
       const list = document.getElementById("kitchen-requests-list");

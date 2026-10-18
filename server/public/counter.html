@@ -3688,6 +3688,28 @@ const newLocalNo = data.order?.local_number || newOrderId;
             startPolling();
         }
 
+        async function requestRefund(orderId, amount) {
+  const reason = prompt('Refund reason (required for manager):');
+  if (reason === null) return;
+  if (!String(reason).trim()) {
+    alert('Please enter a reason');
+    return;
+  }
+  if (!confirm('Send refund request for Rs ' + Number(amount || 0).toFixed(0) + ' to manager?')) return;
+  try {
+    const data = await apiFetch(`${API_BASE}/refunds`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_id: orderId, reason: String(reason).trim() })
+    });
+    alert(data.message || 'Refund request sent');
+    await loadOrders();
+  } catch (err) {
+    alert(err.message || 'Refund request failed');
+  }
+}
+
+
         async function restoreCounterSession() {
             token = localStorage.getItem('counter_token') || '';
             const savedUser = localStorage.getItem('counter_user');
@@ -3873,7 +3895,7 @@ const newLocalNo = data.order?.local_number || newOrderId;
         window.closeQrModal = closeQrModal;
         window.checkQrAvailability = checkQrAvailability;
         window.loadPosSettingsFromServer = loadPosSettingsFromServer;
-
+        window.requestRefund = requestRefund;
        
     </script>
 </body>
