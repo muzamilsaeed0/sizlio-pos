@@ -1501,13 +1501,7 @@ function renderShiftOrdersWithIngredients(ordersList, ingredientSummary) {
       tableLabel = '📋 Order';
     }
 
-      const ordersTotal = ordersList.reduce((s, o) => s + Number(o.total_amount || 0), 0);
-  const ordersTotalHtml = `
-    <div style="margin-top:12px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;display:flex;justify-content:space-between;align-items:center;background:var(--panel);">
-      <span style="font-weight:700;">Orders Total Amount</span>
-      <strong style="color:var(--accent);font-size:16px;">${money(ordersTotal)}</strong>
-    </div>
-  `;
+     
 
     return `
       <div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:var(--bg);">
@@ -1525,6 +1519,14 @@ function renderShiftOrdersWithIngredients(ordersList, ingredientSummary) {
       </div>
     `;
   }).join('');
+
+   const ordersTotal = ordersList.reduce((s, o) => s + Number(o.total_amount || 0), 0);
+  const ordersTotalHtml = `
+    <div style="margin-top:12px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;display:flex;justify-content:space-between;align-items:center;background:var(--panel);">
+      <span style="font-weight:700;">Orders Total Amount</span>
+      <strong style="color:var(--accent);font-size:16px;">${money(ordersTotal)}</strong>
+    </div>
+  `;
 
   // Build ingredient summary HTML
   let ingredientHtml = '';
