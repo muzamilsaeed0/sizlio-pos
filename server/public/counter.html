@@ -3068,6 +3068,7 @@ const newLocalNo = data.order?.local_number || newOrderId;
                         const canComplete = (delivery && statusValue === 'delivered') || (!delivery && statusValue === 'served');
                         if (canComplete) {
                             actions += `<button class="action-btn serve" onclick="markCompleted(${o.id})">Mark Completed</button>`;
+                            actions += `<button class="action-btn cancel" onclick="requestRefund(${o.id}, ${Number(o.total_amount || 0)})">Request Refund</button>`;
                         } else {
                             const waitingFor = delivery ? 'delivery' : 'serving';
                             actions += `<span style="color:var(--muted);font-size:12px;">⏳ Paid – waiting for ${waitingFor}</span>`;
