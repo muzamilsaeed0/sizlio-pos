@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sizlio POS - User Manual</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #F59E0B;
+    --bg: #FAFAFA;
+    --text: #18181B;
+    --text-muted: #52525B;
+    --border: #E4E4E7;
+    --surface: #FFFFFF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 20px;
+  }
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: var(--surface);
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  }
+  h1, h2, h3 { color: var(--text); margin-top: 1.5em; margin-bottom: 0.5em; }
+  h1 { font-size: 2rem; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+  h2 { font-size: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+  h3 { font-size: 1.2rem; }
+  p, ul, ol { margin-bottom: 1em; color: var(--text-muted); }
+  li { margin-bottom: 0.5em; }
+  
+  /* Urdu Text Styling */
+  .urdu {
+    font-family: 'Noto Nastaliq Urdu', serif;
+    direction: rtl;
+    text-align: right;
+    color: #3F3F46;
+    font-size: 1.1rem;
+    margin-top: -5px;
+    margin-bottom: 1em;
+    display: block;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 0.9rem;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background-color: #F4F4F5;
+    font-weight: bold;
+  }
+
+  /* Notice Box */
+  .notice {
+    background-color: #FEF3C7;
+    border-left: 4px solid var(--primary);
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .notice strong { color: #92400E; }
+
+  @media (max-width: 600px) {
+    .container { padding: 20px; }
+    table { display: block; overflow-x: auto; white-space: nowrap; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Sizlio POS - User Manual</h1>
+
+  <h2>1. System overview</h2>
+  <p>Sizlio is a cloud POS for restaurants in Pakistan. One account can run Full POS, Cafe Lite, or Wholesale depending on plan.</p>
+  <div class="urdu">سسٹم کا تعارف: سزلیو پاکستان میں ریسٹورنٹس کے لیے کلاؤڈ POS ہے۔ ایک اکاؤنٹ پلان کے مطابق فل POS، کیفے لائٹ یا ہول سیل چلا سکتا ہے۔</div>
+  
+  <p><strong>Order types:</strong> Dine-in (table), Walk-in/Takeaway, Delivery.</p>
+  <div class="urdu">آرڈر کی اقسام: ڈائن اِن (ٹیبل)، واک اِن/ٹیک اوے، ڈیلیوری۔</div>
+
+  <h2>2. Login</h2>
+  <ol>
+    <li>Open your role URL shared by the manager.</li>
+    <li>Enter username and password (staff passwords are 4–8 characters).</li>
+    <li>If asked to change password on first login, set a new one.</li>
+  </ol>
+  <div class="notice">
+    <strong>Note:</strong> Avoid logging multiple roles in the same browser session to prevent unexpected logouts.
+    <br><br>
+    <span class="urdu">نوٹ: ایک ہی براؤزر سیشن میں کئی رولز لاگ اِن کرنے سے بچیں تاکہ اچانک لاگ آؤٹ نہ ہو۔</span>
+  </div>
+
+  <h2>3. Manager screen</h2>
+  <p>Manager controls sales, menu, staff, inventory, suppliers, refunds, settings, FBR, and table QR.</p>
+  <div class="urdu">مینیجر سیلز، مینو، اسٹاف، انوینٹری، سپلائرز، ریفنڈز، سیٹنگز، FBR اور ٹیبل QR کنٹرول کرتا ہے۔</div>
+
+  <h3>3.1 Sales & Profit</h3>
+  <ul>
+    <li><strong>Sales</strong> — today, month, or custom date range.</li>
+    <li><strong>Profit</strong> — Revenue, COGS (recipes × purchase price), Gross Profit, Margin %. Print & CSV available.</li>
+  </ul>
+  <div class="urdu">سیلز — آج، مہینہ، یا کسٹم تاریخ۔ منافع — آمدنی، COGS (ریسیپی × خرید قیمت)، مجموعی منافع، مارجن٪۔ پرنٹ اور CSV۔</div>
+  <div class="notice">
+    <strong>Note:</strong> COGS is accurate only when menu items have kitchen recipes and inventory has purchase prices.
+    <br><br>
+    <span class="urdu">نوٹ: COGS تب درست ہوتا ہے جب مینو آئٹمز کی ریسیپی ہو اور انوینٹری پر خرید قیمت ہو۔</span>
+  </div>
+
+  <h3>3.2 Menu</h3>
+  <ol>
+    <li><strong>Menu → Items:</strong> add name, category, price.</li>
+    <li><strong>Categories:</strong> manage allowed categories.</li>
+    <li><strong>Deals/Combos:</strong> set deal price and included items.</li>
+  </ol>
+  <div class="urdu">مینو → آئٹمز: نام، کیٹیگری، قیمت۔ کیٹیگریز: مینج کریں۔ ڈیلز: قیمت اور شامل آئٹمز۔</div>
+
+  <h3>3.3 Staff</h3>
+  <ol>
+    <li><strong>Staff → Add:</strong> name, username, password (4–8 chars), role.</li>
+    <li>Reset password from Staff edit (4-8 characters).</li>
+    <li>Deactivate staff who left so they cannot log in.</li>
+  </ol>
+  <div class="urdu">اسٹاف شامل کریں: نام، یوزرنیم، پاس ورڈ، رول۔ پاس ورڈ ری سیٹ کریں۔ جوہڑک والے اسٹاف کو ڈی ایکٹیویٹ کریں۔</div>
+
+  <h3>3.4 Inventory & Suppliers</h3>
+  <ul>
+    <li>Inventory: add items with unit, stock, min stock, purchase price, supplier.</li>
+    <li>Stock in/out transactions for adjustments.</li>
+    <li>Suppliers: create with phone/address; balances show on list.</li>
+  </ul>
+  <div class="urdu">انوینٹری: یونٹ، اسٹاک، کم از کم اسٹاک، خرید قیمت، سپلائر۔ اسٹاک اِن/آؤٹ۔ سپلائرز بنائیں۔</div>
+
+  <h3>3.5 Kitchen requests</h3>
+  <ol>
+    <li>Kitchen requests stock from warehouse.</li>
+    <li>Manager → Kitchen Requests → Approve or Reject.</li>
+  </ol>
+  <p>Approve transfers quantity from warehouse inventory to kitchen inventory.</p>
+  <div class="urdu">کچن گودام سے اسٹاک مانگتا ہے۔ مینیجر منظور یا مسترد کرے۔ منظوری پر مقدار گودام سے کچن انوینٹری میں منتقل ہوتی ہے۔</div>
+
+  <h3>3.6 Refunds</h3>
+  <ol>
+    <li>Counter requests refund on paid served/delivered order with reason.</li>
+    <li>Manager → Refund Requests → Pending.</li>
+    <li>Approve → payment becomes refunded (excluded from sales). Reject keeps order paid.</li>
+  </ol>
+  <div class="urdu">کاؤنٹر ریفنڈ مانگے۔ مینیجر → ریفنڈ درخواستیں → Pending۔ منظوری پر payment_status = refunded ہو جاتا ہے۔</div>
+  <div class="notice">
+    <strong>Note:</strong> Refund does not return ingredients to kitchen stock. Food is treated as already used.
+    <br><br>
+    <span class="urdu">نوٹ: ریفنڈ پر کچن اسٹاک واپس نہیں ہوتا۔ کھانا استعمال شدہ سمجھا جاتا ہے۔</span>
+  </div>
+
+  <h3>3.7 Table QR & Settings</h3>
+  <ul>
+    <li>Generate and print table QR codes; set GPS while inside the restaurant.</li>
+    <li>Settings: GST, tax, delivery/dine/card charges, discounts.</li>
+    <li>FBR Setup: enable when you have live FBR credentials.</li>
+  </ul>
+  <div class="urdu">ٹیبل QR بنائیں اور پرنٹ کریں؛ ریسٹورنٹ کے اندر GPS سیٹ کریں۔ سیٹنگز: ٹیکس، ڈیلیوری/ڈائن/کارڈ چارجز۔ FBR سیٹ اپ۔</div>
+
+  <h2>4. Counter</h2>
+  <ol>
+    <li>Select Dine-in, Walk-in, or Delivery.</li>
+    <li>Add items/deals. For dine-in set table; for delivery set phone & address.</li>
+    <li>Pay Now (Cash/Card) or Pay Later.</li>
+    <li>After kitchen ready: handover / wait for waiter serve / assign rider as needed.</li>
+    <li>Mark Paid (if needed) → Mark Completed. Or Request Refund before/after as policy allows.</li>
+  </ol>
+  <div class="urdu">
+    1. ڈائن اِن، واک اِن یا ڈیلیوری چنیں۔<br>
+    2. آئٹمز شامل کریں۔ ڈائن اِن پر ٹیبل؛ ڈیلیوری پر فون اور ایڈریس۔<br>
+    3. Pay Now یا Pay Later۔<br>
+    4. کچن ریڈی کے بعد: ہینڈ اوور، ویٹر سرو، یا رائیڈر اسائن۔<br>
+    5. Mark Paid → Mark Completed یا Request Refund۔
+  </div>
+  <p><strong>Cancellation:</strong> Cancel only before served/completed — releases inventory reservation.</p>
+  <div class="urdu">Cancel صرف serve/complete ہونے سے پہلے — انوینٹری ریزرویشن ریلیز ہو جاتی ہے۔</div>
+
+  <h2>5. Kitchen (KDS)</h2>
+  <ol>
+    <li>Start shift.</li>
+    <li>Confirm order (prep minutes) → preparing.</li>
+    <li>Mark Ready when done.</li>
+    <li>Maintain recipes for each menu item.</li>
+    <li>Request stock when low; end shift to see totals.</li>
+  </ol>
+  <div class="urdu">شفت شروع کریں۔ آرڈر کنفرم کریں (تیاری کے منٹ) → preparing۔ تیار ہونے پر Mark Ready۔ ہر مینو آئٹم کی ریسیپی رکھیں۔ اسٹاک کم ہو تو درخواست دیں؛ شفت اینڈ پر ٹوٹل دیکھیں۔</div>
+
+  <h2>6. Waiter, Rider, Status</h2>
+  <ul>
+    <li><strong>Waiter:</strong> Serve ready dine-in orders to the table.</li>
+    <li><strong>Rider:</strong> Take assigned delivery; counter marks out-for-delivery / delivered / COD.</li>
+    <li><strong>Status board:</strong> Show order progress on a display screen.</li>
+  </ul>
+  <div class="urdu">ویٹر: ریڈی ڈائن اِن آرڈر ٹیبل پر سرو کریں۔ رائیڈر: اسائنڈ ڈیلیوری لیں؛ کاؤنٹر آؤٹ فار ڈیلیوری / ڈیلیورڈ / COD مارک کرے۔ اسٹیٹس بورڈ: ڈسپلے پر آرڈر کی پیش رفت دکھائیں۔</div>
+
+  <h2>7. Customer QR order</h2>
+  <ol>
+    <li>Guest scans table QR.</li>
+    <li>Must be inside GPS radius set by manager on site.</li>
+    <li>Place order → kitchen/waiter dine-in flow for that table.</li>
+  </ol>
+  <div class="urdu">مہمان ٹیبل QR اسکین کرے۔ مینیجر کے سیٹ کردہ GPS دائرے کے اندر ہونا ضروری ہے۔ آرڈر پلیس → اس ٹیبل کا کچن/ویٹر فلو۔</div>
+
+  <h2>8. Example flows</h2>
+  <ul>
+    <li><strong>Walk-in Pay Now:</strong> Counter pay → Kitchen confirm/ready → Handover → Complete.</li>
+    <li><strong>Dine-in Pay Later:</strong> Counter place → Kitchen → Waiter Serve → Counter Pay → Complete.</li>
+    <li><strong>Delivery COD:</strong> Counter place → Kitchen → Assign rider → Out → Delivered → Pay → Complete.</li>
+  </ul>
+  <div class="urdu">واک اِن Pay Now: کاؤنٹر ادائیگی → کچن → ہینڈ اوور → مکمل۔<br>ڈائن اِن Pay Later: کاؤنٹر → کچن → ویٹر سرو → کاؤنٹر ادائیگی → مکمل۔<br>ڈیلیوری COD: کاؤنٹر → کچن → رائیڈر → آؤٹ → ڈیلیورڈ → ادائیگی → مکمل۔</div>
+
+  <h2>9. Cafe Lite & Wholesale</h2>
+  <ul>
+    <li><strong>Cafe Lite:</strong> One counter-lite screen + optional rider; no full waiter/kitchen daily screens.</li>
+    <li><strong>Wholesale:</strong> wholesale.html for products, stock, cash sale, invoices — not table service.</li>
+  </ul>
+  <div class="urdu">کیفے لائٹ: ایک کاؤنٹر لائٹ اسکرین + آپشنل رائیڈر؛ مکمل ویٹر/کچن روزمرہ اسکرین نہیں۔<br>ہول سیل: پروڈکٹس، اسٹاک، کیش سیل، انوائسز — ٹیبل سروس نہیں۔</div>
+
+  <h2>10. Troubleshooting</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Problem</th>
+        <th>Try / Solution</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Unexpected logout</td>
+        <td>One role per browser session.</td>
+      </tr>
+      <tr>
+        <td>QR order blocked</td>
+        <td>Set GPS inside restaurant.</td>
+      </tr>
+      <tr>
+        <td>Profit COGS low</td>
+        <td>Add recipes + purchase prices.</td>
+      </tr>
+      <tr>
+        <td>Cannot cancel</td>
+        <td>Already served — use refund if paid.</td>
+      </tr>
+      <tr>
+        <td>Refund missing in sales</td>
+        <td>Correct — refunded excluded.</td>
+      </tr>
+      <tr>
+        <td>Staff password error</td>
+        <td>Password must be 4-8 characters.</td>
+      </tr>
+      <tr>
+        <td>Delivery stuck</td>
+        <td>Assign rider before Out for delivery.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="notice" style="margin-top: 40px;">
+    <strong>Support:</strong> sizlio.com — share restaurant ID, screen, time, and screenshot when reporting issues.
+    <br><br>
+    <span class="urdu">سپورٹ: sizlio.com — مسئلہ بتاتے وقت ریسٹورنٹ ID، اسکرین، وقت اور اسکرین شاٹ بھیجیں۔</span>
+  </div>
+
+</div>
+
+</body>
+</html>
