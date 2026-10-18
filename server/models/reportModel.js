@@ -367,10 +367,102 @@ const getSalesChart = async(
   return result.rows;
 };
 
+
+const getProfitReport = async (restaurantId, from, to) => {
+  const params = [restaurantId];
+  let dateFilter = '';
+
+  if (from && to) {
+    dateFilter = ` AND o.paid_at::date BETWEEN $2 AND $3 `;
+    params.push(from, to);
+  } else {
+    // default: current month
+    dateFilter = ` AND date_trunc('month', o.paid_at) = date_trunc('month', CURRENT_DATE) `;
+  }
+
+  const revenueRes = await pool.query(
+    `
+    SELECT
+      COUNT(*)::int AS orders_count,
+      COALESCE(SUM(o.total_amount), 0)::numeric(12,2) AS revenue
+    FROM orders o
+    WHERE o.restaurant_id = $1
+      AND o.payment_status = 'paid'
+      AND o.status = 'completed'
+      ${dateFilter}
+    `,
+    params
+  );
+
+  const cogsRes = await pool.query(
+    `
+    SELECT
+      COALESCE(SUM(
+        (oi.quantity * mii.quantity) * COALESCE(ii.purchase_price, 0)
+      ), 0)::numeric(12,2) AS cogs
+    FROM orders o
+    INNER JOIN order_items oi
+      ON oi.order_id = o.id
+    INNER JOIN menu_item_ingredients mii
+      ON mii.menu_item_id = oi.menu_item_id
+     AND (mii.variant_id IS NOT DISTINCT FROM oi.variant_id)
+    INNER JOIN inventory_items ii
+      ON ii.id = mii.inventory_id
+     AND ii.restaurant_id = o.restaurant_id
+    WHERE o.restaurant_id = $1
+      AND o.payment_status = 'paid'
+      AND o.status = 'completed'
+      ${dateFilter}
+    `,
+    params
+  );
+
+  // Order lines with no recipe (warning count)
+  const missingRes = await pool.query(
+    `
+    SELECT COUNT(*)::int AS items_without_recipe
+    FROM (
+      SELECT oi.id
+      FROM orders o
+      INNER JOIN order_items oi ON oi.order_id = o.id
+      WHERE o.restaurant_id = $1
+        AND o.payment_status = 'paid'
+        AND o.status = 'completed'
+        ${dateFilter}
+        AND NOT EXISTS (
+          SELECT 1
+          FROM menu_item_ingredients mii
+          WHERE mii.menu_item_id = oi.menu_item_id
+            AND (mii.variant_id IS NOT DISTINCT FROM oi.variant_id)
+        )
+    ) t
+    `,
+    params
+  );
+
+  const revenue = Number(revenueRes.rows[0]?.revenue || 0);
+  const cogs = Number(cogsRes.rows[0]?.cogs || 0);
+  const profit = Math.round((revenue - cogs) * 100) / 100;
+  const margin =
+    revenue > 0 ? Math.round((profit / revenue) * 10000) / 100 : 0;
+
+  return {
+    from: from || null,
+    to: to || null,
+    orders_count: Number(revenueRes.rows[0]?.orders_count || 0),
+    revenue,
+    cogs,
+    profit,
+    margin_percent: margin,
+    items_without_recipe: Number(missingRes.rows[0]?.items_without_recipe || 0),
+  };
+};
+
 module.exports = {
   getSummary,
   getSalesDetails,
   getTopItems,
   getPaymentSummary,
-  getSalesChart
+  getSalesChart,
+  getProfitReport,
 };

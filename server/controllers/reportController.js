@@ -3,7 +3,8 @@ const {
   getSalesDetails,
   getTopItems,
   getPaymentSummary,
-  getSalesChart
+  getSalesChart,
+  getProfitReport,
 } = require('../models/reportModel');
 
 function isCalendarDate(value) {
@@ -269,4 +270,27 @@ message:'Server error'
 
 }
 
+};
+
+exports.profit = async (req, res) => {
+  if (!validateReportDateRange(req, res)) return;
+
+  if (!['manager', 'counter'].includes(req.user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Only manager or counter can view profit report',
+    });
+  }
+
+  try {
+    const data = await getProfitReport(
+      req.user.restaurant_id,
+      req.query.from,
+      req.query.to
+    );
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error('profit report:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
 };

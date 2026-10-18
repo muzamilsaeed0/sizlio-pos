@@ -3,12 +3,14 @@ const router = express.Router();
 
 const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 
+
 const {
   summary,
   salesDetails,
   topItems,
   paymentSummary,
-  salesChart
+  salesChart,
+  profit,
 } = require('../controllers/reportController');
 
 
@@ -32,5 +34,11 @@ router.get('/payment-summary', authMiddleware, authorize('manager', 'counter'), 
 
 router.get('/sales-chart', authMiddleware, authorize('manager', 'counter'), salesChart);
 
+router.get(
+  '/profit',
+  authMiddleware,
+  authorize('manager', 'counter'),
+  profit
+);
 
 module.exports = router;

@@ -434,6 +434,7 @@
     <div class="side-menu" id="side-menu">
       <div class="menu-heading">Manager Menu</div>
       <button onclick="openPage('sales.html?type=today')">📊 Sales</button>
+      <button onclick="openProfitReport()">💰 Profit</button>
       <button onclick="openPage('inventory.html')">📦 Inventory</button>
       <button onclick="openKitchenRequestsModal()">📥 Kitchen Requests</button>
       <button onclick="openFbrSetupModal()">🧾 FBR Setup <span id="fbr-pending-badge" class="fbr-badge hidden">0</span></button>
@@ -851,6 +852,32 @@
       <button onclick="generateQRs()">Generate</button>
     </div>
     <div id="qr-grid"></div>
+  </div>
+
+    <!-- PROFIT REPORT -->
+  <div class="modal-overlay" id="profit-modal">
+    <div class="modal-box" style="max-width:520px;">
+      <button type="button" class="modal-close-x" onclick="closeProfitReport()" aria-label="Close">×</button>
+      <h3>💰 Profit Report</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        <button type="button" onclick="loadProfit('today')" style="width:auto;flex:1;margin:0;">Today</button>
+        <button type="button" onclick="loadProfit('month')" style="width:auto;flex:1;margin:0;">This Month</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+        <input type="date" id="profit-from" style="flex:1;margin:0;">
+        <input type="date" id="profit-to" style="flex:1;margin:0;">
+        <button type="button" onclick="loadProfit('custom')" style="width:auto;margin:0;padding:10px 14px;">Go</button>
+      </div>
+      <p id="profit-range-label" style="font-size:12px;color:var(--muted);margin:0 0 10px;"></p>
+      <div class="stats" style="grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="stat"><div class="label">Orders</div><div class="value" id="profit-orders">-</div></div>
+        <div class="stat"><div class="label">Revenue</div><div class="value" id="profit-revenue">-</div></div>
+        <div class="stat"><div class="label">COGS (Recipes)</div><div class="value" id="profit-cogs">-</div></div>
+        <div class="stat"><div class="label">Gross Profit</div><div class="value" id="profit-profit" style="color:var(--accent);">-</div></div>
+        <div class="stat" style="grid-column:1/-1;"><div class="label">Margin</div><div class="value" id="profit-margin">-</div></div>
+      </div>
+      <p id="profit-warn" style="display:none;font-size:12px;color:#f59e0b;margin-top:12px;"></p>
+    </div>
   </div>
 
   <!-- NOTIFICATIONS -->
@@ -1351,6 +1378,73 @@ function isWholesale() {
         document.getElementById("month-count").innerText = month.orders_count ?? 0;
         document.getElementById("month-sales").innerText = "Rs " + Number(month.total_sales || 0).toLocaleString();
       } catch (error) { console.error("loadSummary:", error); }
+    }
+
+        function openProfitReport() {
+      closeMenu();
+      document.getElementById('profit-modal').classList.add('open');
+      loadProfit('month');
+    }
+    function closeProfitReport() {
+      document.getElementById('profit-modal').classList.remove('open');
+    }
+    function profitDateStr(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+    async function loadProfit(mode) {
+      try {
+        let from, to;
+        const now = new Date();
+        if (mode === 'today') {
+          from = to = profitDateStr(now);
+        } else if (mode === 'month') {
+          from = profitDateStr(new Date(now.getFullYear(), now.getMonth(), 1));
+          to = profitDateStr(now);
+        } else {
+          from = document.getElementById('profit-from').value;
+          to = document.getElementById('profit-to').value;
+          if (!from || !to) { alert('Select from and to dates'); return; }
+        }
+        document.getElementById('profit-from').value = from;
+        document.getElementById('profit-to').value = to;
+        document.getElementById('profit-range-label').textContent = from + ' → ' + to;
+
+        const res = await fetch(
+          `/api/reports/profit?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+          { headers: authHeaders() }
+        );
+        if (checkUnauthorized(res)) return;
+        const result = await res.json().catch(() => ({}));
+        if (!result.success || !result.data) {
+          alert(result.message || 'Unable to load profit');
+          return;
+        }
+        const d = result.data;
+        document.getElementById('profit-orders').textContent = d.orders_count ?? 0;
+        document.getElementById('profit-revenue').textContent =
+          'Rs ' + Number(d.revenue || 0).toLocaleString();
+        document.getElementById('profit-cogs').textContent =
+          'Rs ' + Number(d.cogs || 0).toLocaleString();
+        document.getElementById('profit-profit').textContent =
+          'Rs ' + Number(d.profit || 0).toLocaleString();
+        document.getElementById('profit-margin').textContent =
+          Number(d.margin_percent || 0).toFixed(1) + '%';
+
+        const warn = document.getElementById('profit-warn');
+        if (d.items_without_recipe > 0) {
+          warn.style.display = 'block';
+          warn.textContent =
+            `⚠ ${d.items_without_recipe} sold line(s) have no recipe — COGS may be understated. Add recipes in Kitchen.`;
+        } else {
+          warn.style.display = 'none';
+        }
+      } catch (err) {
+        console.error('loadProfit:', err);
+        alert('Server connection failed');
+      }
     }
 
     /* MENU MANAGEMENT */
