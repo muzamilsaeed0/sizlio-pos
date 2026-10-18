@@ -1422,6 +1422,12 @@
                 if (data.user.role !== 'counter') {
                     throw new Error('Access denied. This account is not a Counter account.');
                 }
+                // Wholesale shop → only wholesale screen
+                if (data.user.business_type === 'wholesale') {
+                    const rid = data.user.restaurant_id || RESTAURANT_ID_FROM_URL;
+                    location.replace('/wholesale.html?restaurant=' + rid);
+                    return;
+                }
                 if (data.user.must_change_password) {
           sessionStorage.setItem('sizlio_first_login_token', data.token);
           sessionStorage.setItem('sizlio_first_login_user', JSON.stringify(data.user));

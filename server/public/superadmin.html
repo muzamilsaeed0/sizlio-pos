@@ -692,12 +692,14 @@
   </select>
 </div>
 
-    <select id="r-food-type">
-      <option value="Fast Food">Fast Food</option>
-      <option value="Desi / Pakistani">Desi / Pakistani</option>
-      <option value="Fast Food + Desi">Fast Food + Desi</option>
-      <option value="Other / Custom">Other / Custom</option>
-    </select>
+   <div id="r-food-type-wrap">
+  <select id="r-food-type">
+    <option value="Fast Food">Fast Food</option>
+    <option value="Desi / Pakistani">Desi / Pakistani</option>
+    <option value="Fast Food + Desi">Fast Food + Desi</option>
+    <option value="Other / Custom">Other / Custom</option>
+  </select>
+</div>
 
     <input id="r-expiry" type="date">
 
@@ -1745,6 +1747,18 @@
 
   document.getElementById('r-plan').addEventListener('change', updateCreatePlanLimits);
 
+  function syncCreateBusinessTypeUI() {
+    const isWh = document.getElementById('r-business-type')?.value === 'wholesale';
+    const foodWrap = document.getElementById('r-food-type-wrap')
+      || document.getElementById('r-food-type')?.closest('label')
+      || document.getElementById('r-food-type')?.parentElement;
+    if (foodWrap) foodWrap.style.display = isWh ? 'none' : '';
+  }
+
+  document.getElementById('r-business-type')?.addEventListener('change', syncCreateBusinessTypeUI);
+
+  syncCreateBusinessTypeUI();
+
   async function addRestaurant() {
     if (creatingRestaurant) return;
     creatingRestaurant = true;
@@ -1898,30 +1912,37 @@
   }
 
   function filterMemberRolesByPlan() {
-    const plan = activeRestaurant && activeRestaurant.plan ? activeRestaurant.plan : 'Basic';
-    const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.Basic;
+  const plan = activeRestaurant && activeRestaurant.plan ? activeRestaurant.plan : 'Basic';
+  const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.Basic;
+  const isWholesale = activeRestaurant && activeRestaurant.business_type === 'wholesale';
 
-    const roleSelect = document.getElementById('member-role');
-    const allRoles = ['counter', 'waiter', 'kitchen', 'display', 'delivery'];
+  const roleSelect = document.getElementById('member-role');
+  const allRoles = ['counter', 'waiter', 'kitchen', 'display', 'delivery'];
 
-    Array.from(roleSelect.options).forEach(opt => {
-      const role = opt.value;
-      const limitRole = role === 'delivery' ? 'rider' : role;
-      const isAllowed = plan === 'Cafe Lite'
-        ? ['counter', 'delivery'].includes(role)
-        : (limits[limitRole] || 0) > 0;
-      opt.disabled = !isAllowed;
-      opt.style.display = isAllowed ? '' : 'none';
-    });
+  Array.from(roleSelect.options).forEach(opt => {
+    const role = opt.value;
+    const limitRole = role === 'delivery' ? 'rider' : role;
+    let isAllowed;
+    if (isWholesale) {
+      isAllowed = role === 'counter';   // wholesale: only counter
+    } else if (plan === 'Cafe Lite') {
+      isAllowed = ['counter', 'delivery'].includes(role);
+    } else {
+      isAllowed = (limits[limitRole] || 0) > 0;
+    }
+    opt.disabled = !isAllowed;
+    opt.style.display = isAllowed ? '' : 'none';
+  });
 
-    const firstAllowed = allRoles.find(role => {
-      const limitRole = role === 'delivery' ? 'rider' : role;
-      return plan === 'Cafe Lite'
-        ? ['counter', 'delivery'].includes(role)
-        : (limits[limitRole] || 0) > 0;
-    });
-    if (firstAllowed) roleSelect.value = firstAllowed;
-  }
+  const firstAllowed = allRoles.find(role => {
+    if (isWholesale) return role === 'counter';
+    const limitRole = role === 'delivery' ? 'rider' : role;
+    return plan === 'Cafe Lite'
+      ? ['counter', 'delivery'].includes(role)
+      : (limits[limitRole] || 0) > 0;
+  });
+  if (firstAllowed) roleSelect.value = firstAllowed;
+}
 
   /* =========================================================
      MEMBER PLAN INFORMATION

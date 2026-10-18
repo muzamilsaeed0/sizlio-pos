@@ -1064,6 +1064,12 @@ function isWholesale() {
         const data = await res.json().catch(() => ({}));
         if (!res.ok) { error.innerText = data.message || "Login failed"; return; }
         if (!data.user || data.user.role !== "manager") { error.innerText = "Manager account required"; return; }
+        // Wholesale shop → only wholesale screen
+        if (data.user.business_type === "wholesale") {
+          const rid = data.user.restaurant_id || urlRestaurantId;
+          location.replace("/wholesale.html?restaurant=" + rid);
+          return;
+        }
         if (data.user.must_change_password) {
           sessionStorage.setItem('sizlio_first_login_token', data.token);
           sessionStorage.setItem('sizlio_first_login_user', JSON.stringify(data.user));
