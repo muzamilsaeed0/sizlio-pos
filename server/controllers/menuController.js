@@ -108,9 +108,9 @@ exports.editMenuItem = async (req, res) => {
     });
   }
 
-  const id = Number(req.params.id);   // ← YE LINE ZAROORI HAI
-  let { name, price, category, package_size, package_unit } = req.body;
 
+  let { name, price, category, package_size, package_unit } = req.body;
+const id = Number(req.params.id);
   name = name?.trim();
 
   if (!id || Number.isNaN(id)) {
