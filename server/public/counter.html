@@ -1562,17 +1562,33 @@ localStorage.setItem('counter_user', JSON.stringify(currentUser));
             }
         }
 
-        async function loadShiftStatus() {
-            try {
-                const data = await apiFetch(`${API_BASE}/shifts/current`);
-                currentShift = data.data || null;
-                renderShiftUI();
-            } catch (err) {
-                console.error('loadShiftStatus:', err);
-                document.getElementById('shiftStatus').textContent = 'Unable to load shift status';
-                document.getElementById('shiftBtn').disabled = false;
-            }
+       async function loadShiftStatus() {
+  try {
+    const data = await apiFetch(`${API_BASE}/shifts/current`);
+    currentShift = data.data || null;
+    renderShiftUI();
+
+    if (currentShift && currentShift.status === 'active') {
+      const hoursOpen = (Date.now() - new Date(currentShift.started_at).getTime()) / 3600000;
+      const started = new Date(currentShift.started_at);
+      const isOldDay = started.toDateString() !== new Date().toDateString();
+      if (hoursOpen >= 14 || isOldDay) {
+        if (confirm(
+          'Previous shift still open since ' + started.toLocaleString() +
+          ' (' + formatDuration(currentShift.started_at) + ').\n\nEnd it now?'
+        )) {
+          const endData = await apiFetch(`${API_BASE}/shifts/${currentShift.id}/end`, { method: 'PUT' });
+          currentShift = null;
+          renderShiftUI();
+          if (endData.data) openShiftSummary(endData.data);
         }
+      }
+    }
+  } catch (err) {
+    console.error('loadShiftStatus:', err);
+    document.getElementById('shiftStatus').textContent = 'Unable to load shift status';
+  }
+}
         let lastShiftSummary = null;
 
         async function toggleShift() {
@@ -1808,6 +1824,45 @@ localStorage.setItem('counter_user', JSON.stringify(currentUser));
             if (!shiftReportsData.length) return;
             printShiftReportHtml(shiftReportsData, 'Shift Reports');
         }
+
+        function formatDuration(fromIso) {
+  const ms = Date.now() - new Date(fromIso).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return '';
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  if (h >= 24) {
+    const d = Math.floor(h / 24);
+    return `${d}d ${h % 24}h`;
+  }
+  return `${h}h ${m}m`;
+}
+
+function renderShiftUI() {
+  const statusBox = document.getElementById('shiftStatus');
+  const btn = document.getElementById('shiftBtn');
+  btn.disabled = false;
+  if (currentShift && currentShift.status === 'active') {
+    const start = new Date(currentShift.started_at);
+    const dur = formatDuration(currentShift.started_at);
+    statusBox.textContent =
+      'Active since ' + start.toLocaleString() + (dur ? ' · ' + dur : '');
+    // stale warning
+    const hoursOpen = (Date.now() - start.getTime()) / 3600000;
+    if (hoursOpen >= 14) {
+      statusBox.textContent += ' ⚠ long shift — please end';
+      statusBox.style.color = 'var(--danger)';
+    } else {
+      statusBox.style.color = '';
+    }
+    btn.textContent = 'End Shift';
+    btn.classList.add('on');
+  } else {
+    statusBox.textContent = 'No active shift';
+    statusBox.style.color = '';
+    btn.textContent = 'Start Shift';
+    btn.classList.remove('on');
+  }
+}
 
         function printShiftReportHtml(shifts, title) {
             const rows = shifts.map(s => `
@@ -3908,6 +3963,9 @@ const newLocalNo = data.order?.local_number || newOrderId;
         window.checkQrAvailability = checkQrAvailability;
         window.loadPosSettingsFromServer = loadPosSettingsFromServer;
         window.requestRefund = requestRefund;
+        window.restoreCounterSession = restoreCounterSession;
+        window.formatDuration = formatDuration;
+        window.renderShiftUI = renderShiftUI;
        
     </script>
 </body>

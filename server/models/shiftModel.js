@@ -189,7 +189,7 @@ const getShiftSummary = async (shiftId, restaurantId) => {
         name,
         quantity,
         unit_price,
-        variant_label
+        COALESCE(variant_label, NULL) AS variant_label
       FROM order_items
       WHERE order_id = ANY($1::int[])
       ORDER BY id
