@@ -31,10 +31,11 @@
     .btn-danger { background: rgba(239,91,80,.12); color: var(--danger); border-color: rgba(239,91,80,.3); }
     .btn-ghost { background: transparent; }
     .btn-sm { padding: 6px 10px; font-size: 12px; }
-    input, select {
+    input, select, textarea {
       width: 100%; padding: 10px 12px; border-radius: 10px;
       border: 1px solid var(--border); background: var(--bg); color: var(--text); margin-bottom: 8px;
     }
+    textarea { min-height: 64px; resize: vertical; }
     label { display: block; font-size: 12px; color: var(--muted); margin: 6px 0 4px; }
 
     #login-box {
@@ -51,52 +52,48 @@
     }
     .brand { font-weight: 800; font-size: 16px; }
     .pill {
-      font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+      font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px;
       background: rgba(232,172,62,.15); color: var(--accent);
     }
-    .spacer { flex: 1; }
     .muted { color: var(--muted); font-size: 13px; }
+    .spacer { flex: 1; }
 
     .tabs {
-      display: flex; gap: 8px; padding: 12px 16px; flex-wrap: wrap;
-      border-bottom: 1px solid var(--border);
+      display: flex; gap: 6px; padding: 10px 16px; flex-wrap: wrap;
+      border-bottom: 1px solid var(--border); background: var(--panel);
     }
     .tab {
       border: 1px solid var(--border); background: transparent; color: var(--muted);
-      border-radius: 999px; padding: 8px 16px; cursor: pointer; font-weight: 600; font-size: 13px;
+      border-radius: 999px; padding: 7px 14px; cursor: pointer; font-weight: 600; font-size: 13px;
     }
     .tab.active { background: var(--accent); color: #1B1404; border-color: transparent; }
 
-    .page { display: none; padding: 16px; }
+    .page { display: none; padding: 14px 16px 40px; }
     .page.active { display: block; }
-
-    .sale-grid {
-      display: grid; grid-template-columns: 1.4fr 0.9fr; gap: 14px;
-    }
-    @media (max-width: 900px) {
-      .sale-grid { grid-template-columns: 1fr; }
-    }
     .panel {
       background: var(--panel); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 14px;
     }
-    .panel h3 { font-size: 15px; margin-bottom: 10px; }
+    .sale-grid {
+      display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px;
+    }
+    @media (max-width: 900px) { .sale-grid { grid-template-columns: 1fr; } }
+    .split {
+      display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px;
+    }
+    @media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
     .search { margin-bottom: 10px; }
-
     .prod-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px;
       max-height: 62vh; overflow: auto;
     }
     .prod-card {
-      background: var(--panel2); border: 1px solid var(--border); border-radius: 12px;
-      padding: 12px; cursor: pointer; transition: border-color .15s;
+      background: var(--panel2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 10px; cursor: pointer; text-align: left;
     }
-    .prod-card:hover { border-color: rgba(232,172,62,.45); }
-    .prod-card.low { border-color: rgba(239,91,80,.45); }
-    .prod-card .name { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+    .prod-card:hover { border-color: var(--accent); }
+    .prod-card b { display: block; font-size: 13px; margin-bottom: 4px; }
     .prod-card .meta { font-size: 11px; color: var(--muted); }
-    .prod-card .price { margin-top: 8px; font-weight: 800; color: var(--accent); font-size: 14px; }
-
     .cart-row {
       display: flex; align-items: center; gap: 8px; padding: 8px 0;
       border-bottom: 1px solid var(--border); font-size: 13px;
@@ -104,36 +101,42 @@
     .cart-row .nm { flex: 1; min-width: 0; }
     .qty-btn {
       width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border);
-      background: var(--bg); color: var(--text); cursor: pointer; font-weight: 700;
+      background: var(--panel2); color: var(--text); cursor: pointer; font-weight: 700;
     }
-    .totals { margin-top: 12px; font-size: 14px; }
-    .totals .row { display: flex; justify-content: space-between; margin: 4px 0; }
-    .totals .grand { font-size: 18px; font-weight: 800; margin-top: 8px; color: var(--accent); }
-
-    .split { display: grid; grid-template-columns: 1.3fr 0.9fr; gap: 14px; }
-    @media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
-
+    .totals { margin-top: 10px; }
+    .totals .row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 13px; }
+    .totals .grand { font-size: 16px; font-weight: 800; margin-top: 8px; }
+    .empty { color: var(--muted); font-size: 13px; padding: 16px 0; text-align: center; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { padding: 8px 6px; text-align: left; border-bottom: 1px solid var(--border); }
-    th { color: var(--muted); font-weight: 600; font-size: 12px; }
-    .empty { color: var(--muted); padding: 20px 0; text-align: center; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; }
+    .stat { background: var(--panel2); border-radius: 10px; padding: 12px; border: 1px solid var(--border); }
+    .stat .lbl { font-size: 11px; color: var(--muted); }
+    .stat .val { font-size: 18px; font-weight: 800; margin-top: 4px; }
+    .bal-pos { color: var(--danger); font-weight: 700; }
+    .bal-zero { color: var(--ok); font-weight: 600; }
 
-    .stat-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;
-      margin-bottom: 16px;
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 50;
+      display: flex; align-items: center; justify-content: center; padding: 16px;
     }
-    .stat {
-      background: var(--panel2); border: 1px solid var(--border); border-radius: 12px; padding: 14px;
+    .modal {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+      width: min(560px, 100%); max-height: 90vh; overflow: auto; padding: 16px;
     }
-    .stat .lbl { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-    .stat .val { font-size: 18px; font-weight: 800; }
+    .modal-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px;
+    }
+    .pay-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+    .pay-row .btn { flex: 1; min-width: 90px; }
+    .pay-row .btn.active { background: var(--accent); color: #1B1404; border-color: transparent; }
   </style>
 </head>
 <body>
-
   <div id="login-box">
-    <h1>Wholesale</h1>
-    <p>Sizlio · products, cash sale, stock, reports</p>
+    <h1>Wholesale Login</h1>
+    <p>Counter / manager account for this shop</p>
     <label>Username</label>
     <input id="username" autocomplete="username" />
     <label>Password</label>
@@ -155,6 +158,7 @@
     <div class="tabs">
       <button class="tab active" data-tab="sale" onclick="showTab('sale')">Sale</button>
       <button class="tab" data-tab="products" onclick="showTab('products')">Products</button>
+      <button class="tab" data-tab="customers" onclick="showTab('customers')">Customers</button>
       <button class="tab" data-tab="invoices" onclick="showTab('invoices')">Invoices</button>
       <button class="tab" data-tab="report" onclick="showTab('report')">Today</button>
     </div>
@@ -168,7 +172,11 @@
         </div>
         <div class="panel">
           <h3>Cart</h3>
-          <label>Customer name (optional)</label>
+          <label>Customer</label>
+          <select id="saleCustomer" onchange="onSaleCustomerChange()">
+            <option value="">Walk-in (cash only)</option>
+          </select>
+          <label>Or type name (walk-in)</label>
           <input id="custName" placeholder="Walk-in" />
           <div id="cartList"><div class="empty">Tap products to add</div></div>
           <div class="totals">
@@ -176,8 +184,18 @@
             <label>Discount Rs</label>
             <input id="saleDiscount" type="number" min="0" step="1" value="0" oninput="renderCart()" />
             <div class="row grand"><span>Total</span><span id="cartTotal">Rs 0</span></div>
+            <label>Payment</label>
+            <div class="pay-row">
+              <button type="button" class="btn btn-sm active" id="payCash" onclick="setPayType('cash')">Cash</button>
+              <button type="button" class="btn btn-sm" id="payCredit" onclick="setPayType('credit')">Credit</button>
+              <button type="button" class="btn btn-sm" id="payPartial" onclick="setPayType('partial')">Partial</button>
+            </div>
+            <div id="paidWrap" class="hidden">
+              <label>Paid now Rs</label>
+              <input id="salePaid" type="number" min="0" step="1" value="0" />
+            </div>
           </div>
-          <button class="btn btn-accent" style="width:100%;margin-top:10px;" onclick="placeSale()">Cash sale</button>
+          <button class="btn btn-accent" style="width:100%;margin-top:10px;" id="saleBtn" onclick="placeSale()">Cash sale</button>
         </div>
       </div>
     </div>
@@ -238,6 +256,46 @@
       </div>
     </div>
 
+    <!-- CUSTOMERS -->
+    <div id="page-customers" class="page">
+      <div class="split">
+        <div class="panel">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+            <h3>Customers</h3>
+            <div style="display:flex;gap:6px;">
+              <input id="custSearch" placeholder="Search name / phone" style="width:160px;margin:0;" oninput="renderCustomerTable()" />
+              <button class="btn btn-sm" onclick="loadCustomers()">Refresh</button>
+            </div>
+          </div>
+          <div style="overflow:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th><th>Phone</th><th>Balance</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="customerTable"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Add customer</h3>
+          <label>Name *</label>
+          <input id="cName" placeholder="Shop / person name" />
+          <label>Phone</label>
+          <input id="cPhone" placeholder="03xx…" />
+          <label>Address</label>
+          <input id="cAddress" />
+          <label>Notes</label>
+          <textarea id="cNotes" placeholder="optional"></textarea>
+          <button class="btn btn-accent" style="width:100%;margin-top:8px;" onclick="saveCustomer()">Save customer</button>
+          <p class="muted" style="margin-top:12px;font-size:12px;">
+            Credit / partial sales require a saved customer. Open ledger to receive payment against open invoices.
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- INVOICES -->
     <div id="page-invoices" class="page">
       <div class="panel">
@@ -256,35 +314,68 @@
       </div>
     </div>
 
-    <!-- TODAY REPORT -->
+    <!-- REPORT -->
     <div id="page-report" class="page">
       <div class="panel">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <h3>Today summary</h3>
+          <h3>Today</h3>
           <button class="btn btn-sm" onclick="loadReport()">Refresh</button>
         </div>
-        <div class="stat-grid" id="reportStats">
+        <div class="stats">
           <div class="stat"><div class="lbl">Invoices</div><div class="val" id="stCount">—</div></div>
           <div class="stat"><div class="lbl">Sales</div><div class="val" id="stSales">—</div></div>
           <div class="stat"><div class="lbl">Paid</div><div class="val" id="stPaid">—</div></div>
           <div class="stat"><div class="lbl">Discount</div><div class="val" id="stDisc">—</div></div>
         </div>
-        <h3 style="margin-bottom:8px;">Low stock</h3>
+        <h3 style="margin:16px 0 8px;font-size:14px;">Low stock</h3>
         <div id="lowStockBox" class="muted">—</div>
       </div>
     </div>
   </div>
 
+  <!-- LEDGER MODAL -->
+  <div id="ledgerModal" class="modal-overlay hidden" onclick="if(event.target===this)closeLedger()">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="ledgerTitle">Customer ledger</h3>
+        <button class="btn btn-sm btn-ghost" onclick="closeLedger()">✕</button>
+      </div>
+      <div id="ledgerMeta" class="muted" style="margin-bottom:10px;"></div>
+      <div class="stats" style="grid-template-columns:1fr 1fr;">
+        <div class="stat"><div class="lbl">Open balance</div><div class="val" id="ledgerBalance">—</div></div>
+        <div class="stat"><div class="lbl">Open invoices</div><div class="val" id="ledgerOpenCount">—</div></div>
+      </div>
+      <h3 style="font-size:13px;margin:12px 0 6px;">Receive payment</h3>
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+        <div style="flex:1;min-width:120px;">
+          <label>Amount Rs</label>
+          <input id="payAmount" type="number" min="0" step="1" style="margin:0;" />
+        </div>
+        <div style="flex:1.4;min-width:140px;">
+          <label>Note</label>
+          <input id="payNote" placeholder="optional" style="margin:0;" />
+        </div>
+        <button class="btn btn-ok" onclick="receivePayment()">Receive</button>
+      </div>
+      <h3 style="font-size:13px;margin:16px 0 6px;">Invoices</h3>
+      <div id="ledgerInvoices" style="overflow:auto;"></div>
+      <h3 style="font-size:13px;margin:16px 0 6px;">Payments</h3>
+      <div id="ledgerPayments" style="overflow:auto;"></div>
+    </div>
+  </div>
+
 <script>
   const API = '/api';
-  const params = new URLSearchParams(location.search);
-  let restaurantId = Number(params.get('restaurant')) || Number(localStorage.getItem('ws_restaurant_id')) || null;
   let token = localStorage.getItem('ws_token') || '';
+  let restaurantId = Number(localStorage.getItem('ws_restaurant_id')) || 0;
   let products = [];
+  let customers = [];
   let cart = [];
+  let payType = 'cash';
+  let ledgerCustomerId = null;
 
   function money(n) {
-    return 'Rs ' + (Number(n) || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    return 'Rs ' + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
   }
   function esc(s) {
     return String(s ?? '').replace(/[&<>"']/g, c => ({
@@ -363,23 +454,24 @@
     document.getElementById('login-box').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
     const user = JSON.parse(localStorage.getItem('ws_user') || '{}');
-    document.getElementById('brandName').textContent = user.restaurant_name || 'Wholesale';
-    document.getElementById('userLabel').textContent = (user.name || user.role || '') + '';
+    document.getElementById('userLabel').textContent = (user.name || user.username || user.role || '') + '';
+    document.getElementById('brandName').textContent = 'Wholesale #' + restaurantId;
     await loadProducts();
+    await loadCustomers();
     await loadInvoices();
     loadReport().catch(() => {});
   }
 
   function showTab(name) {
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    const page = document.getElementById('page-' + name);
-    if (page) page.classList.add('active');
+    document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
     if (name === 'sale' || name === 'products') loadProducts();
+    if (name === 'customers') loadCustomers();
     if (name === 'invoices') loadInvoices();
     if (name === 'report') loadReport();
   }
 
+  /* ---------- PRODUCTS / SALE GRID ---------- */
   async function loadProducts() {
     const data = await api('/wholesale/products');
     products = data.data || [];
@@ -389,44 +481,39 @@
 
   function renderSaleGrid() {
     const q = (document.getElementById('saleSearch').value || '').toLowerCase().trim();
+    const box = document.getElementById('saleGrid');
     const list = products.filter(p => {
       if (!q) return true;
-      return [p.name, p.sku, p.barcode, p.category]
-        .filter(Boolean)
-        .some(v => String(v).toLowerCase().includes(q));
+      return [p.name, p.sku, p.category].some(x => String(x || '').toLowerCase().includes(q));
     });
-    const grid = document.getElementById('saleGrid');
     if (!list.length) {
-      grid.innerHTML = '<div class="empty">No products</div>';
+      box.innerHTML = '<div class="empty">No products</div>';
       return;
     }
-    grid.innerHTML = list.map(p => {
-      const low = Number(p.min_stock) > 0 && Number(p.stock) <= Number(p.min_stock);
-      return `
-        <div class="prod-card ${low ? 'low' : ''}" onclick="addToCart(${p.id})">
-          <div class="name">${esc(p.name)}</div>
-          <div class="meta">${esc(p.unit || 'pcs')} · Stock ${Number(p.stock)}${p.sku ? ' · ' + esc(p.sku) : ''}</div>
-          <div class="price">${money(p.sale_price)}</div>
-        </div>`;
-    }).join('');
+    box.innerHTML = list.map(p => `
+      <button type="button" class="prod-card" onclick="addToCart(${p.id})">
+        <b>${esc(p.name)}</b>
+        <div class="meta">${money(p.sale_price)} · ${Number(p.stock)} ${esc(p.unit || '')}</div>
+      </button>
+    `).join('');
   }
 
   function addToCart(productId) {
     const p = products.find(x => Number(x.id) === Number(productId));
     if (!p) return;
+    if (Number(p.stock) <= 0) { alert('Out of stock'); return; }
     const row = cart.find(c => Number(c.product_id) === Number(productId));
     if (row) {
-      if (row.qty + 1 > Number(p.stock)) { alert('Not enough stock'); return; }
+      if (row.qty + 1 > Number(p.stock)) { alert('Max stock ' + p.stock); return; }
       row.qty += 1;
     } else {
-      if (Number(p.stock) < 1) { alert('Out of stock'); return; }
       cart.push({
         product_id: Number(p.id),
         name: p.name,
         price: Number(p.sale_price),
-        qty: 1,
         unit: p.unit || 'pcs',
-        stock: Number(p.stock)
+        stock: Number(p.stock),
+        qty: 1
       });
     }
     renderCart();
@@ -468,23 +555,66 @@
     document.getElementById('cartTotal').textContent = money(total);
   }
 
+  function setPayType(type) {
+    payType = type;
+    ['cash', 'credit', 'partial'].forEach(t => {
+      const el = document.getElementById('pay' + t.charAt(0).toUpperCase() + t.slice(1));
+      if (el) el.classList.toggle('active', t === type);
+    });
+    document.getElementById('paidWrap').classList.toggle('hidden', type === 'cash' || type === 'credit');
+    const btn = document.getElementById('saleBtn');
+    if (type === 'cash') btn.textContent = 'Cash sale';
+    else if (type === 'credit') btn.textContent = 'Credit sale';
+    else btn.textContent = 'Partial sale';
+  }
+
+  function onSaleCustomerChange() {
+    const sel = document.getElementById('saleCustomer');
+    const id = sel.value;
+    if (id) {
+      const c = customers.find(x => String(x.id) === String(id));
+      if (c) document.getElementById('custName').value = c.name || '';
+    }
+  }
+
   async function placeSale() {
     if (!cart.length) { alert('Cart is empty'); return; }
     const discount = Number(document.getElementById('saleDiscount').value || 0);
+    const customerId = document.getElementById('saleCustomer').value
+      ? Number(document.getElementById('saleCustomer').value)
+      : null;
+    const customerName = document.getElementById('custName').value.trim() || 'Walk-in';
     const body = {
       items: cart.map(c => ({ product_id: c.product_id, qty: c.qty })),
       discount: Number.isFinite(discount) ? discount : 0,
-      customer_name: document.getElementById('custName').value.trim() || 'Walk-in'
+      customer_name: customerName,
+      payment_type: payType
     };
+    if (customerId) body.customer_id = customerId;
+    if (payType === 'partial') {
+      body.paid_amount = Number(document.getElementById('salePaid').value || 0);
+    }
+    if (payType === 'credit') {
+      body.paid_amount = 0;
+    }
+    if ((payType === 'credit' || payType === 'partial') && !customerId) {
+      alert('Select a saved customer for credit / partial payment');
+      showTab('customers');
+      return;
+    }
     try {
       const data = await api('/wholesale/sales', { method: 'POST', body: JSON.stringify(body) });
       const inv = data.invoice || {};
       cart = [];
       document.getElementById('saleDiscount').value = 0;
+      document.getElementById('salePaid').value = 0;
       document.getElementById('custName').value = '';
+      document.getElementById('saleCustomer').value = '';
+      setPayType('cash');
       renderCart();
       await loadProducts();
       await loadInvoices();
+      await loadCustomers();
       if (confirm('Sale done. Invoice #' + (inv.local_number || inv.id) + ' · ' + money(inv.total) + '\n\nPrint invoice?')) {
         if (inv.id) printInvoice(inv.id);
       }
@@ -501,16 +631,17 @@
     }
     tb.innerHTML = products.map(p => `
       <tr>
-        <td><b>${esc(p.name)}</b><div class="muted">${esc(p.category || '')}</div></td>
-        <td class="muted">${esc(p.sku || '—')}</td>
-        <td>${Number(p.stock)} <span class="muted">${esc(p.unit || '')}</span></td>
+        <td><b>${esc(p.name)}</b></td>
+        <td>${esc(p.sku || '—')}</td>
+        <td>${Number(p.stock)} ${esc(p.unit || '')}</td>
         <td>${money(p.sale_price)}</td>
         <td style="white-space:nowrap;">
           <button class="btn btn-sm" onclick="editProduct(${p.id})">Edit</button>
           <button class="btn btn-sm btn-ok" onclick="adjustStock(${p.id})">Stock ±</button>
           <button class="btn btn-sm btn-danger" onclick="deleteProduct(${p.id})">Del</button>
         </td>
-      </tr>`).join('');
+      </tr>
+    `).join('');
   }
 
   function resetProdForm() {
@@ -554,102 +685,223 @@
       min_stock: Number(document.getElementById('pMin').value || 0),
       category: document.getElementById('pCat').value.trim() || null
     };
-    if (!body.name || !(body.sale_price >= 0)) {
-      alert('Name and sale price required');
-      return;
-    }
+    if (!body.name || !(body.sale_price >= 0)) { alert('Name and sale price required'); return; }
     try {
       if (id) await api('/wholesale/products/' + id, { method: 'PUT', body: JSON.stringify(body) });
       else await api('/wholesale/products', { method: 'POST', body: JSON.stringify(body) });
       resetProdForm();
       await loadProducts();
-      alert('Saved');
-    } catch (e) {
-      alert(e.message || 'Save failed');
-    }
+    } catch (e) { alert(e.message || 'Save failed'); }
   }
 
   async function deleteProduct(id) {
-    if (!confirm('Remove this product?')) return;
+    if (!confirm('Deactivate this product?')) return;
     try {
       await api('/wholesale/products/' + id, { method: 'DELETE' });
       await loadProducts();
-    } catch (e) {
-      alert(e.message || 'Delete failed');
-    }
+    } catch (e) { alert(e.message || 'Delete failed'); }
   }
 
   async function adjustStock(id) {
-    const p = products.find(x => Number(x.id) === Number(id));
-    const delta = Number(prompt(
-      (p ? p.name + ' · current ' + Number(p.stock) + '\n' : '') +
-      'Stock change (+ purchase / − damage):',
-      '10'
-    ));
-    if (!Number.isFinite(delta) || delta === 0) return;
-    const reason = prompt('Reason (optional):', '') || null;
+    const delta = prompt('Stock change (+ purchase / − damage):', '0');
+    if (delta === null) return;
+    const n = Number(delta);
+    if (!Number.isFinite(n) || n === 0) return;
     try {
       await api('/wholesale/products/' + id + '/stock', {
         method: 'POST',
-        body: JSON.stringify({ delta, reason })
+        body: JSON.stringify({ delta: n, note: 'Manual adjust' })
       });
       await loadProducts();
       alert('Stock updated');
+    } catch (e) { alert(e.message || 'Stock update failed'); }
+  }
+
+  /* ---------- CUSTOMERS ---------- */
+  async function loadCustomers() {
+    try {
+      const data = await api('/wholesale/customers');
+      customers = data.data || [];
     } catch (e) {
-      alert(e.message || 'Stock adjust failed');
+      customers = [];
+      console.error(e);
+    }
+    fillSaleCustomerSelect();
+    renderCustomerTable();
+  }
+
+  function fillSaleCustomerSelect() {
+    const sel = document.getElementById('saleCustomer');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Walk-in (cash only)</option>' +
+      customers.map(c => `<option value="${c.id}">${esc(c.name)}${Number(c.balance) > 0 ? ' · due ' + money(c.balance) : ''}</option>`).join('');
+    if (cur) sel.value = cur;
+  }
+
+  function renderCustomerTable() {
+    const q = (document.getElementById('custSearch')?.value || '').toLowerCase().trim();
+    const list = customers.filter(c => {
+      if (!q) return true;
+      return [c.name, c.phone, c.address].some(x => String(x || '').toLowerCase().includes(q));
+    });
+    const tb = document.getElementById('customerTable');
+    if (!list.length) {
+      tb.innerHTML = '<tr><td colspan="4" class="muted">No customers yet</td></tr>';
+      return;
+    }
+    tb.innerHTML = list.map(c => {
+      const bal = Number(c.balance || 0);
+      return `
+        <tr>
+          <td><b>${esc(c.name)}</b>${c.address ? '<div class="muted">' + esc(c.address) + '</div>' : ''}</td>
+          <td>${esc(c.phone || '—')}</td>
+          <td class="${bal > 0.001 ? 'bal-pos' : 'bal-zero'}">${money(bal)}</td>
+          <td style="white-space:nowrap;">
+            <button class="btn btn-sm" onclick="openLedger(${c.id})">Ledger</button>
+            <button class="btn btn-sm btn-ok" onclick="useCustomerOnSale(${c.id})">Use on sale</button>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  function useCustomerOnSale(id) {
+    showTab('sale');
+    document.getElementById('saleCustomer').value = String(id);
+    onSaleCustomerChange();
+    setPayType('credit');
+  }
+
+  async function saveCustomer() {
+    const body = {
+      name: document.getElementById('cName').value.trim(),
+      phone: document.getElementById('cPhone').value.trim() || null,
+      address: document.getElementById('cAddress').value.trim() || null,
+      notes: document.getElementById('cNotes').value.trim() || null
+    };
+    if (!body.name) { alert('Customer name required'); return; }
+    try {
+      await api('/wholesale/customers', { method: 'POST', body: JSON.stringify(body) });
+      document.getElementById('cName').value = '';
+      document.getElementById('cPhone').value = '';
+      document.getElementById('cAddress').value = '';
+      document.getElementById('cNotes').value = '';
+      await loadCustomers();
+      alert('Customer saved');
+    } catch (e) { alert(e.message || 'Save failed'); }
+  }
+
+  async function openLedger(id) {
+    ledgerCustomerId = id;
+    document.getElementById('ledgerModal').classList.remove('hidden');
+    document.getElementById('ledgerTitle').textContent = 'Loading…';
+    document.getElementById('ledgerMeta').textContent = '';
+    document.getElementById('ledgerBalance').textContent = '—';
+    document.getElementById('ledgerOpenCount').textContent = '—';
+    document.getElementById('ledgerInvoices').innerHTML = '';
+    document.getElementById('ledgerPayments').innerHTML = '';
+    document.getElementById('payAmount').value = '';
+    document.getElementById('payNote').value = '';
+    try {
+      const data = await api('/wholesale/customers/' + id + '/ledger');
+      const c = data.customer || {};
+      const invoices = data.invoices || [];
+      const payments = data.payments || [];
+      const openInv = invoices.filter(i => i.status === 'open');
+      const balance = openInv.reduce((s, i) => s + (Number(i.total) - Number(i.paid)), 0);
+      document.getElementById('ledgerTitle').textContent = c.name || 'Customer';
+      document.getElementById('ledgerMeta').textContent =
+        [c.phone, c.address, c.notes].filter(Boolean).join(' · ') || 'No contact details';
+      document.getElementById('ledgerBalance').textContent = money(balance);
+      document.getElementById('ledgerOpenCount').textContent = String(openInv.length);
+      document.getElementById('ledgerInvoices').innerHTML = invoices.length
+        ? '<table><thead><tr><th>#</th><th>Total</th><th>Paid</th><th>Status</th><th>Date</th></tr></thead><tbody>' +
+          invoices.map(i => `<tr>
+            <td>${esc(i.local_number || i.id)}</td>
+            <td>${money(i.total)}</td>
+            <td>${money(i.paid)}</td>
+            <td>${esc(i.status)}</td>
+            <td>${i.created_at ? new Date(i.created_at).toLocaleString() : '—'}</td>
+          </tr>`).join('') + '</tbody></table>'
+        : '<div class="empty">No invoices</div>';
+      document.getElementById('ledgerPayments').innerHTML = payments.length
+        ? '<table><thead><tr><th>Amount</th><th>Note</th><th>Date</th></tr></thead><tbody>' +
+          payments.map(p => `<tr>
+            <td>${money(p.amount)}</td>
+            <td>${esc(p.note || '—')}</td>
+            <td>${p.created_at ? new Date(p.created_at).toLocaleString() : '—'}</td>
+          </tr>`).join('') + '</tbody></table>'
+        : '<div class="empty">No payments yet</div>';
+    } catch (e) {
+      document.getElementById('ledgerTitle').textContent = 'Error';
+      document.getElementById('ledgerMeta').textContent = e.message || 'Failed to load ledger';
     }
   }
 
+  function closeLedger() {
+    document.getElementById('ledgerModal').classList.add('hidden');
+    ledgerCustomerId = null;
+  }
+
+  async function receivePayment() {
+    if (!ledgerCustomerId) return;
+    const amount = Number(document.getElementById('payAmount').value || 0);
+    if (!(amount > 0)) { alert('Enter payment amount'); return; }
+    try {
+      await api('/wholesale/customers/' + ledgerCustomerId + '/payments', {
+        method: 'POST',
+        body: JSON.stringify({
+          amount,
+          note: document.getElementById('payNote').value.trim() || null
+        })
+      });
+      await loadCustomers();
+      await openLedger(ledgerCustomerId);
+      alert('Payment recorded');
+    } catch (e) { alert(e.message || 'Payment failed'); }
+  }
+
+  /* ---------- INVOICES ---------- */
   async function loadInvoices() {
     try {
       const data = await api('/wholesale/invoices');
-      const list = data.data || [];
+      const rows = data.data || [];
       const tb = document.getElementById('invoiceTable');
-      if (!list.length) {
-        tb.innerHTML = '<tr><td colspan="6" class="muted">No invoices yet</td></tr>';
-        document.getElementById('todaySales').textContent = 'Today: —';
+      if (!rows.length) {
+        tb.innerHTML = '<tr><td colspan="6" class="muted">No invoices</td></tr>';
         return;
       }
-      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Karachi' });
-      let todayTotal = 0;
-      list.forEach(inv => {
-        const d = inv.created_at ? new Date(inv.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Karachi' }) : '';
-        if (d === today) todayTotal += Number(inv.total || 0);
-      });
-      document.getElementById('todaySales').textContent = 'Today: ' + money(todayTotal);
-      tb.innerHTML = list.map(inv => `
+      tb.innerHTML = rows.map(inv => `
         <tr>
           <td>#${esc(inv.local_number || inv.id)}</td>
           <td>${esc(inv.customer_name || '—')}</td>
           <td>${money(inv.total)}</td>
-          <td>${money(inv.paid)}</td>
-          <td class="muted">${inv.created_at ? new Date(inv.created_at).toLocaleString() : ''}</td>
-          <td><button class="btn btn-sm" onclick="printInvoice(${Number(inv.id)})">Print</button></td>
-        </tr>`).join('');
+          <td>${money(inv.paid)} <span class="muted">${esc(inv.payment_type || '')}</span></td>
+          <td>${inv.created_at ? new Date(inv.created_at).toLocaleString() : '—'}</td>
+          <td><button class="btn btn-sm" onclick="printInvoice(${inv.id})">Print</button></td>
+        </tr>
+      `).join('');
     } catch (e) {
-      console.warn(e);
+      document.getElementById('invoiceTable').innerHTML =
+        '<tr><td colspan="6" class="muted">' + esc(e.message) + '</td></tr>';
     }
   }
 
   async function printInvoice(id) {
     try {
       const data = await api('/wholesale/invoices/' + id);
-      const inv = data.invoice;
-      const items = data.items || [];
-      const shop = document.getElementById('brandName')?.textContent || 'Wholesale';
-      const w = window.open('', '_blank', 'width=420,height=640');
-      if (!w) { alert('Allow popups to print'); return; }
-      w.document.write(`<!DOCTYPE html><html><head><title>Invoice #${esc(inv.local_number)}</title>
+      const inv = data.data || data.invoice || {};
+      const items = data.items || inv.items || [];
+      const w = window.open('', '_blank');
+      w.document.write(`<!DOCTYPE html><html><head><title>Invoice #${esc(inv.local_number || inv.id)}</title>
         <style>
-          body{font-family:monospace;padding:16px;font-size:13px;color:#111}
-          table{width:100%;border-collapse:collapse;margin-top:8px}
-          td,th{padding:4px;text-align:left;border-bottom:1px dotted #ccc}
-          hr{border:none;border-top:1px dashed #333;margin:10px 0}
-          h2{margin:0 0 6px;font-size:16px}
+          body{font-family:system-ui,sans-serif;padding:20px;color:#111}
+          table{width:100%;border-collapse:collapse;margin-top:12px}
+          th,td{border-bottom:1px solid #ddd;padding:6px;text-align:left;font-size:13px}
+          h1{font-size:18px;margin:0 0 8px}
         </style></head><body>
-        <h2>${esc(shop)}</h2>
-        <div>Invoice #${esc(inv.local_number)} · ${inv.created_at ? new Date(inv.created_at).toLocaleString() : ''}</div>
+        <h1>Invoice #${esc(inv.local_number || inv.id)}</h1>
         <div>Customer: ${esc(inv.customer_name || 'Walk-in')}</div>
+        <div>Date: ${inv.created_at ? new Date(inv.created_at).toLocaleString() : ''}</div>
         <hr>
         <table>
           <thead><tr><th>Item</th><th>Qty</th><th>Rate</th><th>Amt</th></tr></thead>
@@ -667,11 +919,11 @@
         <div>Discount: ${money(inv.discount)}</div>
         <div><b>Total: ${money(inv.total)}</b></div>
         <div>Paid (${esc(inv.payment_type || 'cash')}): ${money(inv.paid)}</div>
-        <script>window.onload=function(){window.print();}</` + `script>
+        <script>window.onload=function(){window.print();}<\/script>
         </body></html>`);
       w.document.close();
     } catch (e) {
-      alert(e.message || 'Print failed — ensure backend GET /invoices/:id is deployed');
+      alert(e.message || 'Print failed');
     }
   }
 
@@ -691,11 +943,9 @@
           '</tbody></table>'
         : 'No low-stock items';
     } catch (e) {
-      // fallback from invoices list if report API not deployed yet
       document.getElementById('stCount').textContent = '—';
-      document.getElementById('stSales').textContent = document.getElementById('todaySales').textContent.replace('Today: ', '') || '—';
       document.getElementById('lowStockBox').innerHTML =
-        '<span class="muted">' + esc(e.message || 'Report API not available yet') + '</span>';
+        '<span class="muted">' + esc(e.message || 'Report API not available') + '</span>';
     }
   }
 
