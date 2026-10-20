@@ -3019,7 +3019,7 @@ const newLocalNo = data.order?.local_number || newOrderId;
             return order.delivery_rider_name || order.delivery_rider_username || '';
         }
 
-               function renderRiderAssignment(order) {
+                      function renderRiderAssignment(order) {
             if (order.order_type !== 'delivery') return '';
             const status = String(order.status || '').toLowerCase();
             
@@ -3037,8 +3037,21 @@ const newLocalNo = data.order?.local_number || newOrderId;
                 Boolean(r.shift_active) === true && Boolean(r.is_active) === true
             );
 
-            // Agar koi active rider nahi hai to dropdown ki jagah message show karein
+            // Agar koi active rider nahi mila lekin order par pehle se rider assigned hai
             if (activeRiders.length === 0) {
+                if (current) {
+                    return `
+                        <div style="margin-top:8px;padding:10px;border:1px solid var(--success);border-radius:9px;background:rgba(16,185,129,0.1);">
+                            <div style="font-size:12px;color:var(--success);font-weight:700;">
+                                🚚 Assigned Rider: ${esc(current)}
+                            </div>
+                            <div style="font-size:11px;color:var(--muted);margin-top:4px;">
+                                (Rider is currently off-shift or data is loading)
+                            </div>
+                        </div>
+                    `;
+                }
+                
                 return `
                     <div style="margin-top:8px;padding:10px;border:1px solid var(--danger);border-radius:9px;background:rgba(239,68,68,0.1);">
                         <div style="font-size:12px;color:var(--danger);font-weight:700;">
@@ -3759,17 +3772,20 @@ const newLocalNo = data.order?.local_number || newOrderId;
             URL.revokeObjectURL(url);
         }
 
-        /* ✅ UPDATED: Load POS settings from server first, then reset charges */
-        async function startCounter() {
+               async function startCounter() {
             setOrderType('dine_in');
 
-            await loadPosSettingsFromServer();   /* ← NEW: fetch manager settings */
+            await loadPosSettingsFromServer();   
             resetChargesToDefaults();
             renderCart();
 
             await loadBranding();
             await loadMenu();
             await loadDeals();
+            
+            // ✅ Riders ko pehle load karein taake dropdown mein show hon
+            await loadDeliveryRiders(); 
+            
             await loadOrders();
             await loadShiftStatus();
             if (!window._shiftUiTimer) {
