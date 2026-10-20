@@ -301,11 +301,10 @@ const listShifts = async (restaurantId, filters = {}) => {
 
       s.status,
 
-      COALESCE(o_stats.orders_count, 0) AS orders_count,
-
+           COALESCE(o_stats.orders_count, 0) AS orders_count,
       COALESCE(o_stats.total_sales, 0) AS total_sales,
-
-      COALESCE(o_stats.total_collected, 0) AS total_collected
+      COALESCE(o_stats.total_collected, 0) AS total_collected,
+      COALESCE(o_stats.total_refunded, 0) AS total_refunded
 
     FROM shifts s
 
@@ -315,30 +314,39 @@ const listShifts = async (restaurantId, filters = {}) => {
     LEFT JOIN LATERAL (
 
       SELECT
+        COUNT(*) FILTER (
+          WHERE COALESCE(payment_status, '') <> 'refunded'
+        )::int AS orders_count,
 
-        COUNT(*)::int AS orders_count,
-
-        COALESCE(SUM(total_amount), 0) AS total_sales,
+        COALESCE(
+          SUM(total_amount) FILTER (
+            WHERE COALESCE(payment_status, '') <> 'refunded'
+          ),
+          0
+        ) AS total_sales,
 
         COALESCE(
           SUM(
             CASE
               WHEN payment_status = 'paid' AND paid_by_user_id = s.user_id
                 THEN total_amount
-            ELSE 0
-          END
-        ),
-        0
-      ) AS total_collected
+              ELSE 0
+            END
+          ),
+          0
+        ) AS total_collected,
+
+        COALESCE(
+          SUM(total_amount) FILTER (
+            WHERE payment_status = 'refunded'
+          ),
+          0
+        ) AS total_refunded
 
       FROM orders
-
       WHERE created_by_user_id = s.user_id
-
         AND restaurant_id = s.restaurant_id
-
         AND created_at >= s.started_at
-
         AND created_at <= COALESCE(s.ended_at, NOW())
 
     ) o_stats ON true
@@ -415,9 +423,10 @@ const getAllShiftsForManager = async (restaurantId, filters = {}) => {
       s.ended_at,
       s.status,
 
-      COALESCE(o_stats.orders_count, 0)     AS orders_count,
+          COALESCE(o_stats.orders_count, 0)     AS orders_count,
       COALESCE(o_stats.total_sales, 0)      AS total_sales,
-      COALESCE(o_stats.total_collected, 0)  AS total_collected
+      COALESCE(o_stats.total_collected, 0)  AS total_collected,
+      COALESCE(o_stats.total_refunded, 0)   AS total_refunded
 
     FROM shifts s
 
@@ -427,42 +436,41 @@ const getAllShiftsForManager = async (restaurantId, filters = {}) => {
     LEFT JOIN LATERAL (
 
       SELECT
+        COUNT(*) FILTER (
+          WHERE COALESCE(payment_status, '') <> 'refunded'
+        )::int AS orders_count,
 
-        COUNT(*)::int AS orders_count,
-
-        COALESCE(SUM(total_amount), 0) AS total_sales,
+        COALESCE(
+          SUM(total_amount) FILTER (
+            WHERE COALESCE(payment_status, '') <> 'refunded'
+          ),
+          0
+        ) AS total_sales,
 
         COALESCE(
           SUM(
             CASE
-              WHEN payment_status = 'paid'
-                THEN total_amount
+              WHEN payment_status = 'paid' THEN total_amount
               ELSE 0
             END
           ),
           0
-        ) AS total_collected
+        ) AS total_collected,
+
+        COALESCE(
+          SUM(total_amount) FILTER (
+            WHERE payment_status = 'refunded'
+          ),
+          0
+        ) AS total_refunded
 
       FROM orders
-
       WHERE restaurant_id = s.restaurant_id
-
         AND created_at >= s.started_at
-
         AND created_at <= COALESCE(s.ended_at, NOW())
-
-        -- ✅ Rider ke liye: assigned delivery orders count karo
-        --    Baaki roles ke liye: created_by_user_id
         AND (
-          -- 🚴 Rider: assigned delivery orders
           (u.role = 'delivery' AND delivery_rider_id = s.user_id)
-
-          -- 💰 Counter / 🍽️ Waiter: orders they created
           OR (u.role IN ('counter', 'waiter') AND created_by_user_id = s.user_id)
-
-          -- 🍳 Kitchen: there is currently no kitchen-user attribution
-          -- column on orders, so do not attribute restaurant-wide orders
-          -- to every kitchen staff member.
         )
 
     ) o_stats ON true
@@ -476,27 +484,28 @@ const getAllShiftsForManager = async (restaurantId, filters = {}) => {
     params
   );
 
-  const shifts = result.rows.map(row => ({
-    id:            row.id,
-    user_id:       row.user_id,
-    username:      row.username,
-    full_name:     row.full_name,
-    role:          row.role,
-    started_at:    row.started_at,
-    ended_at:      row.ended_at,
-    status:        row.status,
-    orders_count:  Number(row.orders_count || 0),
-    total_sales:   Number(row.total_sales || 0),
-    total_collected: Number(row.total_collected || 0)
+   const shifts = result.rows.map(row => ({
+    id:              row.id,
+    user_id:         row.user_id,
+    username:        row.username,
+    full_name:       row.full_name,
+    role:            row.role,
+    started_at:      row.started_at,
+    ended_at:        row.ended_at,
+    status:          row.status,
+    orders_count:    Number(row.orders_count || 0),
+    total_sales:     Number(row.total_sales || 0),
+    total_collected: Number(row.total_collected || 0),
+    total_refunded:  Number(row.total_refunded || 0)
   }));
 
   // Role-wise totals
-  const totalsByRole = {
-    rider:   { shifts: 0, orders: 0, sales: 0, collected: 0 },
-    kitchen: { shifts: 0, orders: 0, sales: 0, collected: 0 },
-    counter: { shifts: 0, orders: 0, sales: 0, collected: 0 },
-    waiter:  { shifts: 0, orders: 0, sales: 0, collected: 0 },
-    other:   { shifts: 0, orders: 0, sales: 0, collected: 0 }
+    const totalsByRole = {
+    rider:   { shifts: 0, orders: 0, sales: 0, collected: 0, refunded: 0 },
+    kitchen: { shifts: 0, orders: 0, sales: 0, collected: 0, refunded: 0 },
+    counter: { shifts: 0, orders: 0, sales: 0, collected: 0, refunded: 0 },
+    waiter:  { shifts: 0, orders: 0, sales: 0, collected: 0, refunded: 0 },
+    other:   { shifts: 0, orders: 0, sales: 0, collected: 0, refunded: 0 }
   };
 
   const roleMap = {
@@ -512,6 +521,7 @@ const getAllShiftsForManager = async (restaurantId, filters = {}) => {
     totalsByRole[key].orders    += s.orders_count;
     totalsByRole[key].sales     += s.total_sales;
     totalsByRole[key].collected += s.total_collected;
+    totalsByRole[key].refunded  += s.total_refunded;
   }
 
   return { shifts, totals_by_role: totalsByRole };
@@ -525,5 +535,5 @@ module.exports = {
   getShiftById,
   getShiftSummary,
   listShifts,
-  getAllShiftsForManager   // ✅ NEW
+  getAllShiftsForManager  
 };
