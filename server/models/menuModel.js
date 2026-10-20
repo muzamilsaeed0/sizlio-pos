@@ -13,9 +13,39 @@ const getAllMenuItems = async (restaurantId) => {
     `,
     [restaurantId]
   );
-  return result.rows;
-};
 
+  const items = result.rows;
+  if (!items.length) return items;
+
+  const variantsResult = await pool.query(
+    `
+    SELECT miv.id, miv.menu_item_id, miv.label, miv.price
+    FROM menu_item_variants miv
+    JOIN menu_items mi ON mi.id = miv.menu_item_id
+    WHERE mi.restaurant_id = $1
+      AND mi.active = true
+      AND miv.active = true
+    ORDER BY miv.price ASC, miv.id ASC
+    `,
+    [restaurantId]
+  );
+
+  const byItem = {};
+  for (const v of variantsResult.rows) {
+    if (!byItem[v.menu_item_id]) byItem[v.menu_item_id] = [];
+    byItem[v.menu_item_id].push({
+      id: v.id,
+      menu_item_id: v.menu_item_id,
+      label: v.label,
+      price: v.price
+    });
+  }
+
+  return items.map(item => ({
+    ...item,
+    variants: byItem[item.id] || []
+  }));
+};
 const createMenuItem = async (
   name,
   price,
