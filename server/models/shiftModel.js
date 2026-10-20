@@ -181,18 +181,23 @@ const getShiftSummary = async (shiftId, restaurantId) => {
   let itemsByOrder = {};
   let dealsByOrder = {};
 
-  if (orderIds.length) {
+   if (orderIds.length) {
+    // order_items me name/variant_label nahi — join se lao
     const itemsResult = await pool.query(
       `
       SELECT
-        order_id,
-        name,
-        quantity,
-        unit_price,
-        COALESCE(variant_label, NULL) AS variant_label
-      FROM order_items
-      WHERE order_id = ANY($1::int[])
-      ORDER BY id
+        oi.order_id,
+        m.name,
+        oi.quantity,
+        oi.unit_price,
+        miv.label AS variant_label
+      FROM order_items oi
+      INNER JOIN menu_items m
+        ON m.id = oi.menu_item_id
+      LEFT JOIN menu_item_variants miv
+        ON miv.id = oi.variant_id
+      WHERE oi.order_id = ANY($1::int[])
+      ORDER BY oi.id
       `,
       [orderIds]
     );
@@ -201,16 +206,16 @@ const getShiftSummary = async (shiftId, restaurantId) => {
       itemsByOrder[row.order_id].push(row);
     }
 
-    // Deals (agar table exist karti ho)
     try {
       const dealsResult = await pool.query(
         `
         SELECT
           od.order_id,
-          od.deal_name,
-          od.quantity,
-          od.id AS order_deal_id
+          d.name AS deal_name,
+          od.quantity
         FROM order_deals od
+        INNER JOIN deals d
+          ON d.id = od.deal_id
         WHERE od.order_id = ANY($1::int[])
         ORDER BY od.id
         `,
@@ -225,7 +230,7 @@ const getShiftSummary = async (shiftId, restaurantId) => {
         });
       }
     } catch (e) {
-      // order_deals table na ho to ignore
+      // order_deals / deals missing → ignore
     }
   }
 
