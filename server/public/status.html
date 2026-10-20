@@ -470,6 +470,17 @@ body{
     border-left-color:#E3A23B;
 }
 
+
+
+.status-served {
+    color: #2FA37D;          
+}
+
+.row.served {
+    border-left-color: #2FA37D;
+    opacity: 0.75;          
+}
+
  .row .right{ 
     
     display:flex; 
@@ -1195,7 +1206,10 @@ const STATUS_LABEL = {
         'Ready To Deliver',
 
     out_for_delivery:
-        'Out For Delivery'
+        'Out For Delivery',
+
+        served: 'Served' 
+
 
 };
 
@@ -1884,26 +1898,43 @@ function renderOrders(orders){
                 o.table_number ??
                 null;
 
+let locationLabel = '';
 
-                        let locationLabel = '';
+// Customer name (may come from different field names)
+const customerName =
+    o.customer_name ??
+    o.customerName ??
+    o.name ??
+    o.customer?.name ??
+    '';
 
-            // ✅ Priority: Delivery > Walk-in > Takeaway > Table > Order
-            if (orderType === 'delivery') {
-                locationLabel = 'Delivery';
-            } else if (orderType === 'walk_in' || orderType === 'walkin' || orderType === 'walk in') {
-                locationLabel = 'Walk-in';
-            } else if (orderType === 'takeaway' || orderType === 'take away') {
-                locationLabel = 'Takeaway';
-            } else if (
-                rawTableNo !== null &&
-                rawTableNo !== undefined &&
-                String(rawTableNo).trim() !== '' &&
-                Number(rawTableNo) !== 0
-            ) {
-                locationLabel = `Table ${escapeHtml(rawTableNo)}`;
-            } else {
-                locationLabel = 'Order';
-            }
+// ✅ Priority: Delivery > Walk-in > Takeaway > Table > Order
+if (orderType === 'delivery') {
+    locationLabel = 'Delivery';
+} else if (orderType === 'walk_in' || orderType === 'walkin' || orderType === 'walk in') {
+    locationLabel = 'Walk-in';
+} else if (orderType === 'takeaway' || orderType === 'take away') {
+    locationLabel = 'Takeaway';
+} else if (
+    rawTableNo !== null &&
+    rawTableNo !== undefined &&
+    String(rawTableNo).trim() !== '' &&
+    Number(rawTableNo) !== 0
+) {
+    locationLabel = `Table ${escapeHtml(rawTableNo)}`;
+} else {
+    locationLabel = 'Order';
+}
+
+// Append customer name for walk-in / takeaway orders
+if (
+    customerName &&
+    String(customerName).trim() !== '' &&
+    (orderType === 'walk_in' || orderType === 'walkin' || orderType === 'walk in' ||
+     orderType === 'takeaway' || orderType === 'take away')
+) {
+    locationLabel += ` – ${escapeHtml(String(customerName).trim())}`;
+}
 
 
             let prepText = '';
