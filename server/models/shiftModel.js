@@ -423,36 +423,49 @@ const getAllShiftsForManager = async (restaurantId, filters = {}) => {
       s.ended_at,
       s.status,
 
-          COALESCE(o_stats.orders_count, 0)     AS orders_count,
-      COALESCE(o_stats.total_sales, 0)      AS total_sales,
-      COALESCE(o_stats.total_collected, 0)  AS total_collected,
-      COALESCE(o_stats.total_refunded, 0)   AS total_refunded
+          COALESCE(o_stats.orders_count, 0)       AS orders_count,
+      COALESCE(o_stats.total_sales, 0)        AS total_sales,
+      COALESCE(o_stats.total_collected, 0)    AS total_collected,
+      COALESCE(o_stats.total_refunded, 0)     AS total_refunded,
+      COALESCE(o_stats.orders_prepared, 0)    AS orders_prepared,
+      COALESCE(o_stats.items_prepared, 0)     AS items_prepared,
+      COALESCE(o_stats.ingredients_used, 0)   AS ingredients_used
 
     FROM shifts s
 
     INNER JOIN users u
       ON u.id = s.user_id
 
-    LEFT JOIN LATERAL (
+       LEFT JOIN LATERAL (
 
       SELECT
+        -- Counter / Rider / Waiter
         COUNT(*) FILTER (
           WHERE COALESCE(payment_status, '') <> 'refunded'
+            AND (
+              (u.role = 'delivery' AND delivery_rider_id = s.user_id)
+              OR (u.role IN ('counter', 'waiter') AND created_by_user_id = s.user_id)
+            )
         )::int AS orders_count,
 
         COALESCE(
           SUM(total_amount) FILTER (
             WHERE COALESCE(payment_status, '') <> 'refunded'
+              AND (
+                (u.role = 'delivery' AND delivery_rider_id = s.user_id)
+                OR (u.role IN ('counter', 'waiter') AND created_by_user_id = s.user_id)
+              )
           ),
           0
         ) AS total_sales,
 
         COALESCE(
-          SUM(
-            CASE
-              WHEN payment_status = 'paid' THEN total_amount
-              ELSE 0
-            END
+          SUM(total_amount) FILTER (
+            WHERE payment_status = 'paid'
+              AND (
+                (u.role = 'delivery' AND delivery_rider_id = s.user_id)
+                OR (u.role IN ('counter', 'waiter') AND created_by_user_id = s.user_id)
+              )
           ),
           0
         ) AS total_collected,
@@ -460,9 +473,51 @@ const getAllShiftsForManager = async (restaurantId, filters = {}) => {
         COALESCE(
           SUM(total_amount) FILTER (
             WHERE payment_status = 'refunded'
+              AND (
+                (u.role = 'delivery' AND delivery_rider_id = s.user_id)
+                OR (u.role IN ('counter', 'waiter') AND created_by_user_id = s.user_id)
+              )
           ),
           0
-        ) AS total_refunded
+        ) AS total_refunded,
+
+        -- Kitchen: shift window me prepared orders (ready/served/completed)
+        CASE WHEN u.role = 'kitchen' THEN (
+          SELECT COUNT(*)::int
+          FROM orders o2
+          WHERE o2.restaurant_id = s.restaurant_id
+            AND o2.created_at >= s.started_at
+            AND o2.created_at <= COALESCE(s.ended_at, NOW())
+            AND o2.status IN ('ready', 'served', 'completed', 'delivered', 'handed_over')
+            AND COALESCE(o2.payment_status, '') <> 'refunded'
+        ) ELSE 0 END AS orders_prepared,
+
+        CASE WHEN u.role = 'kitchen' THEN (
+          SELECT COALESCE(SUM(oi.quantity), 0)::int
+          FROM orders o3
+          JOIN order_items oi ON oi.order_id = o3.id
+          WHERE o3.restaurant_id = s.restaurant_id
+            AND o3.created_at >= s.started_at
+            AND o3.created_at <= COALESCE(s.ended_at, NOW())
+            AND o3.status IN ('ready', 'served', 'completed', 'delivered', 'handed_over')
+            AND COALESCE(o3.payment_status, '') <> 'refunded'
+        ) ELSE 0 END AS items_prepared,
+
+        CASE WHEN u.role = 'kitchen' THEN (
+          SELECT COALESCE(SUM(t.quantity), 0)
+          FROM kitchen_inventory_transactions t
+          JOIN kitchen_inventory ki ON ki.id = t.kitchen_inventory_id
+          WHERE ki.restaurant_id = s.restaurant_id
+            AND t.type = 'OUT'
+            AND t.order_id IS NOT NULL
+            AND EXISTS (
+              SELECT 1 FROM orders o4
+              WHERE o4.id = t.order_id
+                AND o4.restaurant_id = s.restaurant_id
+                AND o4.created_at >= s.started_at
+                AND o4.created_at <= COALESCE(s.ended_at, NOW())
+            )
+        ) ELSE 0 END AS ingredients_used
 
       FROM orders
       WHERE restaurant_id = s.restaurant_id
@@ -471,6 +526,7 @@ const getAllShiftsForManager = async (restaurantId, filters = {}) => {
         AND (
           (u.role = 'delivery' AND delivery_rider_id = s.user_id)
           OR (u.role IN ('counter', 'waiter') AND created_by_user_id = s.user_id)
+          OR (u.role = 'kitchen')
         )
 
     ) o_stats ON true
@@ -484,28 +540,30 @@ const getAllShiftsForManager = async (restaurantId, filters = {}) => {
     params
   );
 
-   const shifts = result.rows.map(row => ({
-    id:              row.id,
-    user_id:         row.user_id,
-    username:        row.username,
-    full_name:       row.full_name,
-    role:            row.role,
-    started_at:      row.started_at,
-    ended_at:        row.ended_at,
-    status:          row.status,
-    orders_count:    Number(row.orders_count || 0),
-    total_sales:     Number(row.total_sales || 0),
-    total_collected: Number(row.total_collected || 0),
-    total_refunded:  Number(row.total_refunded || 0)
+     const shifts = result.rows.map(row => ({
+    id:               row.id,
+    user_id:          row.user_id,
+    username:         row.username,
+    full_name:        row.full_name,
+    role:             row.role,
+    started_at:       row.started_at,
+    ended_at:         row.ended_at,
+    status:           row.status,
+    orders_count:     Number(row.orders_count || 0),
+    total_sales:      Number(row.total_sales || 0),
+    total_collected:  Number(row.total_collected || 0),
+    total_refunded:   Number(row.total_refunded || 0),
+    orders_prepared:  Number(row.orders_prepared || 0),
+    items_prepared:   Number(row.items_prepared || 0),
+    ingredients_used: Number(row.ingredients_used || 0)
   }));
-
   // Role-wise totals
-    const totalsByRole = {
-    rider:   { shifts: 0, orders: 0, sales: 0, collected: 0, refunded: 0 },
-    kitchen: { shifts: 0, orders: 0, sales: 0, collected: 0, refunded: 0 },
-    counter: { shifts: 0, orders: 0, sales: 0, collected: 0, refunded: 0 },
-    waiter:  { shifts: 0, orders: 0, sales: 0, collected: 0, refunded: 0 },
-    other:   { shifts: 0, orders: 0, sales: 0, collected: 0, refunded: 0 }
+      const totalsByRole = {
+    rider:   { shifts: 0, orders: 0, sales: 0, collected: 0, refunded: 0, orders_prepared: 0, items_prepared: 0, ingredients_used: 0 },
+    kitchen: { shifts: 0, orders: 0, sales: 0, collected: 0, refunded: 0, orders_prepared: 0, items_prepared: 0, ingredients_used: 0 },
+    counter: { shifts: 0, orders: 0, sales: 0, collected: 0, refunded: 0, orders_prepared: 0, items_prepared: 0, ingredients_used: 0 },
+    waiter:  { shifts: 0, orders: 0, sales: 0, collected: 0, refunded: 0, orders_prepared: 0, items_prepared: 0, ingredients_used: 0 },
+    other:   { shifts: 0, orders: 0, sales: 0, collected: 0, refunded: 0, orders_prepared: 0, items_prepared: 0, ingredients_used: 0 }
   };
 
   const roleMap = {
@@ -515,13 +573,16 @@ const getAllShiftsForManager = async (restaurantId, filters = {}) => {
     waiter:   'waiter'
   };
 
-  for (const s of shifts) {
+    for (const s of shifts) {
     const key = roleMap[s.role] || 'other';
-    totalsByRole[key].shifts    += 1;
-    totalsByRole[key].orders    += s.orders_count;
-    totalsByRole[key].sales     += s.total_sales;
-    totalsByRole[key].collected += s.total_collected;
-    totalsByRole[key].refunded  += s.total_refunded;
+    totalsByRole[key].shifts            += 1;
+    totalsByRole[key].orders            += s.orders_count;
+    totalsByRole[key].sales             += s.total_sales;
+    totalsByRole[key].collected         += s.total_collected;
+    totalsByRole[key].refunded          += s.total_refunded;
+    totalsByRole[key].orders_prepared   += s.orders_prepared;
+    totalsByRole[key].items_prepared    += s.items_prepared;
+    totalsByRole[key].ingredients_used  += s.ingredients_used;
   }
 
   return { shifts, totals_by_role: totalsByRole };
