@@ -101,15 +101,16 @@ exports.addMenuItem = async (req, res) => {
 // Edit Menu Item
 exports.editMenuItem = async (req, res) => {
 
- if (!['manager', 'counter'].includes(req.user.role)) {
+  if (!['manager', 'counter'].includes(req.user.role)) {
     return res.status(403).json({
       success: false,
       message: 'Only manager or counter can edit menu items'
     });
   }
 
+  const id = Number(req.params.id);   // ← YE LINE ZAROORI HAI
   let { name, price, category, package_size, package_unit } = req.body;
-const id = Number(req.params.id);
+
   name = name?.trim();
 
   if (!id || Number.isNaN(id)) {
@@ -134,16 +135,15 @@ const id = Number(req.params.id);
   }
 
   try {
-
     const item = await updateMenuItem(
-    id,
-    name,
-    Number(price),
-    category,
-    req.user.restaurant_id,
-    package_size,
-    package_unit
-  );
+      id,
+      name,
+      Number(price),
+      category,
+      req.user.restaurant_id,
+      package_size,
+      package_unit
+    );
 
     if (!item) {
       return res.status(404).json({
@@ -159,25 +159,19 @@ const id = Number(req.params.id);
     });
 
   } catch (err) {
-
     if (err.message === 'Menu item already exists') {
       return res.status(409).json({
         success: false,
         message: err.message
       });
     }
-
     console.error(err);
-
     return res.status(500).json({
       success: false,
       message: 'Server error'
     });
-
   }
-
 };
-
 
 // Remove Menu Item
 exports.removeMenuItem = async (req, res) => {
