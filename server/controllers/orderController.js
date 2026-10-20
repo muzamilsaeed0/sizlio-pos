@@ -697,7 +697,7 @@ exports.placeOrder = async (
           message: 'This offline sync was interrupted. Ask staff to verify whether the order already exists before retrying.'
         });
       }
-      if (requestState.state === 'duplicate') {
+            if (requestState.state === 'duplicate') {
         const orders = await getAllOrders(restaurantId);
         const previousOrder = orders.find(order => Number(order.id) === requestState.orderId);
         if (!previousOrder) {

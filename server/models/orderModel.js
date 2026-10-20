@@ -1722,6 +1722,10 @@ const getAllOrders = async (
         AND rider.role = 'delivery'
 
       WHERE o.restaurant_id = $1
+        AND o.status != 'refunded'
+        AND o.status != 'cancelled'
+        AND o.status != 'completed'
+        AND o.payment_status != 'refunded'
 
       ORDER BY
         o.created_at DESC
