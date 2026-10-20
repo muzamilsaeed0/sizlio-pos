@@ -190,7 +190,7 @@ body{
 ===================================================== */
 .row .left{ 
     display:flex; 
-    flex-direction: column; /* Name ko niche lane ke liye */
+    flex-direction: column; 
     align-items: flex-start; 
     gap: 4px; 
     min-width:0; 
@@ -205,7 +205,6 @@ body{
     max-width:100%; 
 }
 
-/* Naya CSS Customer Name ke liye */
 .customer-name {
     font-size: clamp(14px, 1.8vw, 28px);
     color: #9CA3AF;
@@ -272,7 +271,6 @@ body{
     border-left-color:#E3A23B;
 }
 
-/* Served Status Color & Border */
 .status-served {
     color: #2FA37D;          
 }
@@ -644,12 +642,12 @@ function renderOrders(orders){
             locationLabel = 'Order';
         }
 
-        // HTML for Customer Name (Only show if exists, else empty)
+        // HTML for Customer Name (Show for Delivery, Walk-in, Takeaway)
         let nameHtml = '';
         if (
             customerName && 
             String(customerName).trim() !== '' && 
-            (orderType === 'walk_in' || orderType === 'walkin' || orderType === 'walk in' || orderType === 'takeaway' || orderType === 'take away')
+            (orderType === 'delivery' || orderType === 'walk_in' || orderType === 'walkin' || orderType === 'walk in' || orderType === 'takeaway' || orderType === 'take away')
         ) {
             nameHtml = `<span class="customer-name">${escapeHtml(String(customerName).trim())}</span>`;
         }
@@ -711,11 +709,7 @@ async function loadBranding(){
     }
 }
 
-/* =====================================================
-   LOGOUT - FIXED
-===================================================== */
 function logout(){
-    // Sahi token remove kar rahe hain
     localStorage.removeItem('status_token');
     localStorage.removeItem('display_restaurant_id');
 

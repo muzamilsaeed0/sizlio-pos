@@ -3019,22 +3019,48 @@ const newLocalNo = data.order?.local_number || newOrderId;
             return order.delivery_rider_name || order.delivery_rider_username || '';
         }
 
-        function renderRiderAssignment(order) {
+               function renderRiderAssignment(order) {
             if (order.order_type !== 'delivery') return '';
             const status = String(order.status || '').toLowerCase();
+            
+            // Agar order ready_to_deliver nahi hai, to sirf assigned rider ka naam dikhayein
             if (status !== 'ready_to_deliver') {
                 const current = riderNameForOrder(order);
                 return current ?
                     `<div style="margin-top:8px;padding:8px 10px;border-radius:8px;background:rgba(16,185,129,.10);font-size:12px;">🚚 Rider: <strong>${esc(current)}</strong></div>` : '';
             }
+
             const current = riderNameForOrder(order);
-            const options = deliveryRiders.map(r => {
+
+            // ✅ SIRF ACTIVE AUR ON-SHIFT RIDERS FILTER KAREIN
+            const activeRiders = deliveryRiders.filter(r => 
+                Boolean(r.shift_active) === true && Boolean(r.is_active) === true
+            );
+
+            // Agar koi active rider nahi hai to dropdown ki jagah message show karein
+            if (activeRiders.length === 0) {
+                return `
+                    <div style="margin-top:8px;padding:10px;border:1px solid var(--danger);border-radius:9px;background:rgba(239,68,68,0.1);">
+                        <div style="font-size:12px;color:var(--danger);font-weight:700;">
+                            ⚠️ Koi Rider On-Shift Nahi Hai
+                        </div>
+                        <div style="font-size:11px;color:var(--muted);margin-top:4px;">
+                            Assign karne ke liye pehle kisi rider ka shift start karein.
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Dropdown options banayein (sirf active riders ke)
+            const options = activeRiders.map(r => {
                 const selected = Number(order.delivery_rider_id) === Number(r.id) ? ' selected' : '';
                 return `<option value="${Number(r.id)}"${selected}>${esc(r.full_name || r.username || `Rider #${r.id}`)}</option>`;
             }).join('');
+
             return `
                     <div style="margin-top:8px;padding:10px;border:1px solid var(--border);border-radius:9px;background:var(--bg-2);">
                         ${current ? `<div style="font-size:12px;margin-bottom:8px;">🚚 Assigned Rider: <strong>${esc(current)}</strong></div>` : `<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">No rider assigned</div>`}
+                        
                         <div style="display:flex;gap:6px;flex-wrap:wrap;">
                             <select id="riderSelect-${Number(order.id)}" style="flex:1;min-width:150px;padding:8px;border-radius:7px;border:1px solid var(--border);background:var(--panel);color:inherit;">
                                 <option value="">Select rider...</option>

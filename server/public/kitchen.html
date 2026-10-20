@@ -868,6 +868,14 @@ function printOrderReceipt(order){
     tableLabel = 'Order';
   }
 
+  // ✅ Customer Name check
+  const customerName = order.customer_name || order.customerName || order.name || order.customer?.name || '';
+  const nameHtml = (
+    customerName && 
+    String(customerName).trim() !== '' && 
+    (orderType === 'delivery' || orderType === 'walk_in' || orderType === 'walkin' || orderType === 'walk in' || orderType === 'takeaway' || orderType === 'take away')
+  ) ? `<div style="font-size:12px;color:#555;margin-top:2px;">Customer: ${escapeHtml(String(customerName).trim())}</div>` : '';
+
   const printerWidth = localStorage.getItem('printerWidth') || 'auto';
   const pageSizeRule = printerWidth === 'auto' ? 'auto' : (printerWidth + ' auto');
   const bodyWidthRule = printerWidth === 'auto' ? '100%' : printerWidth;
@@ -901,6 +909,7 @@ function printOrderReceipt(order){
     .new-badge{color:#E15A4C;font-weight:bold;}
   </style></head><body>
     <h2>${tableLabel}</h2>
+    ${nameHtml}  <!-- ✅ Added Customer Name Here -->
     <div class="line"></div>
     <div>Order #${escapeHtml(order.local_number || order.id)} — ${new Date().toLocaleTimeString()}</div>
     <div class="line"></div>
@@ -998,13 +1007,22 @@ function renderOrders(orders){
     } else {
       tableLabel = 'Order';
     }
+
+    // ✅ Customer Name (Delivery & Walk-in)
+    const customerName = o.customer_name || o.customerName || o.name || o.customer?.name || '';
+    const nameHtml = (
+      customerName && 
+      String(customerName).trim() !== '' && 
+      (orderType === 'delivery' || orderType === 'walk_in' || orderType === 'walkin' || orderType === 'walk in' || orderType === 'takeaway' || orderType === 'take away')
+    ) ? `<div style="font-size:13px;color:#555;margin-top:2px;font-weight:600;">${escapeHtml(String(customerName).trim())}</div>` : '';
+
     let action = '';
     if(status === 'placed' || status === 'accepted' || status === 'confirmed'){
       action = `<div class="row"><input id="prep-${Number(o.id)}" value="15" type="number" min="1" step="1" aria-label="Preparation minutes"><button class="btn-confirm" onclick="confirmOrder(${Number(o.id)})">Confirm</button></div>`;
     } else if(status === 'preparing'){
       action = `<div class="meta">Est ${escapeHtml(o.prep_minutes || 0)} min</div><button class="btn-ready" onclick="readyOrder(${Number(o.id)})">Mark Ready</button>`;
     }
-    return `<div class="ticket ${o.is_new ? 'new-order' : ''}"><div class="perf"></div><div class="body"><div class="head"><div class="${tableClass}">${tableLabel}</div><div class="order-id">#${escapeHtml(o.id)}</div></div><div class="items">${items || `<div class="order-item"><span style="color:#b91c1c">No items found on this order</span></div>`}</div>${action}</div></div>`;
+    return `<div class="ticket ${o.is_new ? 'new-order' : ''}"><div class="perf"></div><div class="body"><div class="head"><div><div class="${tableClass}">${tableLabel}</div>${nameHtml}</div><div class="order-id">#${escapeHtml(o.id)}</div></div><div class="items">${items || `<div class="order-item"><span style="color:#b91c1c">No items found on this order</span></div>`}</div>${action}</div></div>`;
   }).join('');
 }
 
