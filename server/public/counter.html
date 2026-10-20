@@ -1660,6 +1660,11 @@ localStorage.setItem('counter_user', JSON.stringify(currentUser));
                 <div class="pricing-grid" style="grid-template-columns:1fr 1fr 1fr;margin-top:12px;">
                     <div class="field"><label>Orders</label><div style="font-size:18px;font-weight:800;">${summary.orders_count}</div></div>
                     <div class="field"><label>Total Sales</label><div style="font-size:18px;font-weight:800;">${money(summary.total_sales)}</div></div>
+                    <div class="field"><label>Refunded</label>
+  <div style="font-size:16px;font-weight:700;color:var(--danger);">
+    ${money(summary.total_refunded || 0)}
+  </div>
+</div>
                     <div class="field"><label>Collected</label><div style="font-size:18px;font-weight:800;color:var(--success);">${money(summary.total_collected)}</div></div>
                 </div>
                 <h4 style="margin:16px 0 8px;">Orders in this Shift</h4>

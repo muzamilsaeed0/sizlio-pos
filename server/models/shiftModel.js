@@ -89,24 +89,9 @@ const endShift = async (shiftId, userId, restaurantId) => {
   return result.rows[0] || null;
 };
 
-const getShiftById = async (shiftId, restaurantId) => {
-  const result = await pool.query(
-    `
-    SELECT *
-    FROM shifts
-    WHERE id = $1
-      AND restaurant_id = $2
-    `,
-    [shiftId, restaurantId]
-  );
-
-  return result.rows[0] || null;
-};
-
 const getShiftSummary = async (shiftId, restaurantId) => {
 
   const shift = await getShiftById(shiftId, restaurantId);
-
   if (!shift) return null;
 
   const endTime = shift.ended_at || new Date();
@@ -114,10 +99,16 @@ const getShiftSummary = async (shiftId, restaurantId) => {
   const summaryResult = await pool.query(
     `
     SELECT
+      COUNT(*) FILTER (
+        WHERE COALESCE(payment_status, '') <> 'refunded'
+      )::int AS orders_count,
 
-      COUNT(*)::int AS orders_count,
-
-      COALESCE(SUM(total_amount), 0) AS total_sales,
+      COALESCE(
+        SUM(total_amount) FILTER (
+          WHERE COALESCE(payment_status, '') <> 'refunded'
+        ),
+        0
+      ) AS total_sales,
 
       COALESCE(
         SUM(
@@ -128,76 +119,113 @@ const getShiftSummary = async (shiftId, restaurantId) => {
           END
         ),
         0
-      ) AS total_collected
+      ) AS total_collected,
+
+      COALESCE(
+        SUM(total_amount) FILTER (
+          WHERE payment_status = 'refunded'
+        ),
+        0
+      ) AS total_refunded
 
     FROM orders
-
     WHERE created_by_user_id = $1
-
       AND restaurant_id = $2
-
       AND created_at >= $3
-
       AND created_at <= $4
     `,
-    [
-      shift.user_id,
-      restaurantId,
-      shift.started_at,
-      endTime
-    ]
+    [shift.user_id, restaurantId, shift.started_at, endTime]
   );
 
   const ordersResult = await pool.query(
     `
     SELECT
-
       id,
-
+      local_number,
       table_no,
-
       order_type,
-
       status,
-
       payment_status,
-
       payment_method,
-
       total_amount,
-
       paid_amount,
-
       created_at,
-
       paid_at
-
     FROM orders
-
     WHERE created_by_user_id = $1
-
       AND restaurant_id = $2
-
       AND created_at >= $3
-
       AND created_at <= $4
-
     ORDER BY created_at DESC
     `,
-    [
-      shift.user_id,
-      restaurantId,
-      shift.started_at,
-      endTime
-    ]
+    [shift.user_id, restaurantId, shift.started_at, endTime]
   );
+
+  const orders = ordersResult.rows;
+  const orderIds = orders.map(o => o.id);
+
+  let itemsByOrder = {};
+  let dealsByOrder = {};
+
+  if (orderIds.length) {
+    const itemsResult = await pool.query(
+      `
+      SELECT
+        order_id,
+        name,
+        quantity,
+        unit_price,
+        variant_label
+      FROM order_items
+      WHERE order_id = ANY($1::int[])
+      ORDER BY id
+      `,
+      [orderIds]
+    );
+    for (const row of itemsResult.rows) {
+      if (!itemsByOrder[row.order_id]) itemsByOrder[row.order_id] = [];
+      itemsByOrder[row.order_id].push(row);
+    }
+
+    // Deals (agar table exist karti ho)
+    try {
+      const dealsResult = await pool.query(
+        `
+        SELECT
+          od.order_id,
+          od.deal_name,
+          od.quantity,
+          od.id AS order_deal_id
+        FROM order_deals od
+        WHERE od.order_id = ANY($1::int[])
+        ORDER BY od.id
+        `,
+        [orderIds]
+      );
+      for (const d of dealsResult.rows) {
+        if (!dealsByOrder[d.order_id]) dealsByOrder[d.order_id] = [];
+        dealsByOrder[d.order_id].push({
+          deal_name: d.deal_name,
+          quantity: d.quantity,
+          items: []
+        });
+      }
+    } catch (e) {
+      // order_deals table na ho to ignore
+    }
+  }
+
+  const ordersWithItems = orders.map(o => ({
+    ...o,
+    items: itemsByOrder[o.id] || [],
+    deals: dealsByOrder[o.id] || []
+  }));
 
   const userResult = await pool.query(
     `
     SELECT username, full_name
     FROM users
-    WHERE id = $1
-      AND restaurant_id = $2
+    WHERE id = $1 AND restaurant_id = $2
     `,
     [shift.user_id, restaurantId]
   );
@@ -207,7 +235,7 @@ const getShiftSummary = async (shiftId, restaurantId) => {
     ...summaryResult.rows[0],
     username: userResult.rows[0]?.username || null,
     full_name: userResult.rows[0]?.full_name || null,
-    orders: ordersResult.rows
+    orders: ordersWithItems
   };
 };
 

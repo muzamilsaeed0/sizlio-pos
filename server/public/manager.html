@@ -2761,9 +2761,8 @@ function isWholesale() {
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.success || !data.data) return;
         restaurantInfo = data.data;
-        console.log("Restaurant:", restaurantInfo);
-console.log("Business type:", businessType());
-console.log("Is wholesale:", isWholesale());
+        
+
         const header = document.getElementById("brand-header");
         header.style.display = "flex";
         const logo = restaurantInfo.logo_url ? normalizeLogoUrl(restaurantInfo.logo_url) : "";
