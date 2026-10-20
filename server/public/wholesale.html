@@ -373,6 +373,7 @@
   let cart = [];
   let payType = 'cash';
   let ledgerCustomerId = null;
+  let restaurantBrand = { name: '', logo: '', address: '', phone: '' };
 
   function money(n) {
     return 'Rs ' + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -450,12 +451,35 @@
     location.reload();
   }
 
+  function normalizeLogoUrl(value) {
+    if (!value) return '';
+    let url = String(value).trim();
+    if (/^https?:\/\//i.test(url) || url.startsWith('//') || url.startsWith('/')) return url;
+    return '/' + url;
+  }
+
+  async function loadBranding() {
+    try {
+      const data = await api('/restaurants/me');
+      const r = data.data || {};
+      restaurantBrand.name = r.name || '';
+      restaurantBrand.logo = normalizeLogoUrl(r.logo_url || '');
+      restaurantBrand.address = r.address || '';
+      restaurantBrand.phone = r.phone || '';
+      const label = restaurantBrand.name || ('Wholesale #' + restaurantId);
+      document.getElementById('brandName').textContent = label;
+    } catch (e) {
+      console.error('loadBranding', e);
+      document.getElementById('brandName').textContent = 'Wholesale #' + restaurantId;
+    }
+  }
+
   async function boot() {
     document.getElementById('login-box').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
     const user = JSON.parse(localStorage.getItem('ws_user') || '{}');
     document.getElementById('userLabel').textContent = (user.name || user.username || user.role || '') + '';
-    document.getElementById('brandName').textContent = 'Wholesale #' + restaurantId;
+    await loadBranding();
     await loadProducts();
     await loadCustomers();
     await loadInvoices();
@@ -888,37 +912,81 @@
 
   async function printInvoice(id) {
     try {
+      if (!restaurantBrand.name && token) {
+        try { await loadBranding(); } catch (_) {}
+      }
       const data = await api('/wholesale/invoices/' + id);
       const inv = data.data || data.invoice || {};
       const items = data.items || inv.items || [];
-      const w = window.open('', '_blank');
-      w.document.write(`<!DOCTYPE html><html><head><title>Invoice #${esc(inv.local_number || inv.id)}</title>
-        <style>
-          body{font-family:system-ui,sans-serif;padding:20px;color:#111}
-          table{width:100%;border-collapse:collapse;margin-top:12px}
-          th,td{border-bottom:1px solid #ddd;padding:6px;text-align:left;font-size:13px}
-          h1{font-size:18px;margin:0 0 8px}
-        </style></head><body>
-        <h1>Invoice #${esc(inv.local_number || inv.id)}</h1>
-        <div>Customer: ${esc(inv.customer_name || 'Walk-in')}</div>
-        <div>Date: ${inv.created_at ? new Date(inv.created_at).toLocaleString() : ''}</div>
-        <hr>
-        <table>
-          <thead><tr><th>Item</th><th>Qty</th><th>Rate</th><th>Amt</th></tr></thead>
-          <tbody>
-            ${items.map(it => `<tr>
+      const shopName = esc(restaurantBrand.name || 'Wholesale');
+      const shopLogo = restaurantBrand.logo || '';
+      const shopAddr = esc(restaurantBrand.address || '');
+      const shopPhone = esc(restaurantBrand.phone || '');
+      const invNo = esc(inv.local_number || inv.id);
+      const due = Math.max(0, Number(inv.total || 0) - Number(inv.paid || 0));
+      const payType = esc(inv.payment_type || 'cash');
+      const status = esc(inv.status || '');
+      const when = inv.created_at ? new Date(inv.created_at).toLocaleString() : '';
+      const rows = items.map(it => `<tr>
               <td>${esc(it.name)}</td>
-              <td>${esc(it.qty)}</td>
-              <td>${money(it.unit_price)}</td>
-              <td>${money(it.line_total)}</td>
-            </tr>`).join('')}
-          </tbody>
+              <td style="text-align:center">${esc(it.qty)}</td>
+              <td style="text-align:right">${money(it.unit_price)}</td>
+              <td style="text-align:right">${money(it.line_total)}</td>
+            </tr>`).join('');
+      const logoHtml = shopLogo
+        ? `<img class="logo" src="${shopLogo}" alt="" onerror="this.style.display='none'" />`
+        : '';
+      const contactHtml = [shopAddr, shopPhone].filter(Boolean).map(x => `<div class="sub">${x}</div>`).join('');
+      const w = window.open('', '_blank');
+      if (!w) { alert('Allow popups to print'); return; }
+      w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Invoice #${invNo}</title>
+        <style>
+          *{box-sizing:border-box}
+          body{font-family:system-ui,-apple-system,sans-serif;padding:24px;color:#111;max-width:720px;margin:0 auto}
+          .head{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+          .logo{width:64px;height:64px;object-fit:contain;border-radius:8px}
+          .shop{font-size:20px;font-weight:800;margin:0}
+          .sub{font-size:12px;color:#555;margin-top:2px}
+          .meta{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px;margin:12px 0}
+          .badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#f3f4f6;font-size:11px;font-weight:700;text-transform:uppercase}
+          table{width:100%;border-collapse:collapse;margin-top:8px}
+          th,td{border-bottom:1px solid #e5e7eb;padding:8px 6px;font-size:13px}
+          th{text-align:left;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+          .totals{margin-top:12px;font-size:13px;max-width:280px;margin-left:auto}
+          .totals div{display:flex;justify-content:space-between;padding:3px 0}
+          .totals .grand{font-size:16px;font-weight:800;border-top:1px solid #111;margin-top:6px;padding-top:8px}
+          .foot{margin-top:28px;font-size:11px;color:#6b7280;text-align:center}
+          @media print{body{padding:0} .noprint{display:none}}
+        </style></head><body>
+        <div class="head">
+          ${logoHtml}
+          <div>
+            <div class="shop">${shopName}</div>
+            ${contactHtml}
+          </div>
+        </div>
+        <div class="meta">
+          <div>
+            <div><b>Invoice #${invNo}</b> <span class="badge">${status || payType}</span></div>
+            <div>Date: ${when}</div>
+          </div>
+          <div>
+            <div><b>Customer</b></div>
+            <div>${esc(inv.customer_name || 'Walk-in')}</div>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount</th></tr></thead>
+          <tbody>${rows}</tbody>
         </table>
-        <hr>
-        <div>Subtotal: ${money(inv.subtotal)}</div>
-        <div>Discount: ${money(inv.discount)}</div>
-        <div><b>Total: ${money(inv.total)}</b></div>
-        <div>Paid (${esc(inv.payment_type || 'cash')}): ${money(inv.paid)}</div>
+        <div class="totals">
+          <div><span>Subtotal</span><span>${money(inv.subtotal)}</span></div>
+          <div><span>Discount</span><span>${money(inv.discount)}</span></div>
+          <div class="grand"><span>Total</span><span>${money(inv.total)}</span></div>
+          <div><span>Paid (${payType})</span><span>${money(inv.paid)}</span></div>
+          <div><span>Due</span><span>${money(due)}</span></div>
+        </div>
+        <div class="foot">Thank you for your business · Powered by Sizlio</div>
         <script>window.onload=function(){window.print();}<\/script>
         </body></html>`);
       w.document.close();
