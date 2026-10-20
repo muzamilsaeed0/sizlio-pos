@@ -1476,7 +1476,7 @@ localStorage.setItem('counter_user', JSON.stringify(currentUser));
                 const res = await apiFetch(`${API_BASE}/settings/pos`);
                 if (res && res.success && res.data) {
                     posSettings = { ...posSettings, ...res.data };
-                    console.log('POS settings loaded from server:', posSettings);
+                   
                 }
             } catch (err) {
                 console.warn('loadPosSettingsFromServer failed:', err.message);
@@ -1547,20 +1547,7 @@ localStorage.setItem('counter_user', JSON.stringify(currentUser));
             return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
 
-        function renderShiftUI() {
-            const statusBox = document.getElementById('shiftStatus');
-            const btn = document.getElementById('shiftBtn');
-            btn.disabled = false;
-            if (currentShift && currentShift.status === 'active') {
-                statusBox.textContent = 'Active since ' + formatShiftTime(currentShift.started_at);
-                btn.textContent = 'End Shift';
-                btn.classList.add('on');
-            } else {
-                statusBox.textContent = 'No active shift';
-                btn.textContent = 'Start Shift';
-                btn.classList.remove('on');
-            }
-        }
+        
 
        async function loadShiftStatus() {
   try {
@@ -1748,7 +1735,7 @@ localStorage.setItem('counter_user', JSON.stringify(currentUser));
                         <td class="col-date">${new Date(s.started_at).toLocaleDateString()}</td>
                         <td class="col-staff">${esc(s.full_name || s.username)}</td>
                         <td class="col-time">${new Date(s.started_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</td>
-                        <td class="col-time">${s.ended_at ? new Date(s.ended_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '-'}</td>
+                        <td class="col-time">${s.ended_at ? new Date(s.ended_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : 'Open'}</td>
                         <td class="col-status"><span class="status-badge ${statusClass}">${esc(s.status)}</span></td>
                         <td class="col-numbers">${s.orders_count}</td>
                         <td class="col-numbers">${money(s.total_sales)}</td>
@@ -1870,7 +1857,7 @@ function renderShiftUI() {
                         <td>${new Date(s.started_at).toLocaleDateString()}</td>
                         <td>${esc(s.full_name || s.username)}</td>
                         <td>${new Date(s.started_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</td>
-                        <td>${s.ended_at ? new Date(s.ended_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '-'}</td>
+                        <td>${s.ended_at ? new Date(s.ended_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : 'Open'}</td>
                         <td>${esc(s.status)}</td>
                         <td style="text-align:right">${s.orders_count}</td>
                         <td style="text-align:right">${money(s.total_sales)}</td>
@@ -3746,6 +3733,11 @@ const newLocalNo = data.order?.local_number || newOrderId;
             await loadDeals();
             await loadOrders();
             await loadShiftStatus();
+            if (!window._shiftUiTimer) {
+              window._shiftUiTimer = setInterval(() => {
+                if (currentShift && currentShift.status === 'active') renderShiftUI();
+              }, 60000);
+            }
             await loadOfflineOrders();
             updateSyncStatus();
 
