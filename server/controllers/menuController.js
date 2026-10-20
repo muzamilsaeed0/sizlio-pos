@@ -109,8 +109,15 @@ exports.editMenuItem = async (req, res) => {
   }
 
   let { name, price, category, package_size, package_unit } = req.body;
-
+const id = Number(req.params.id);
   name = name?.trim();
+
+  if (!id || Number.isNaN(id)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid menu item id'
+    });
+  }
 
   if (!name || price === undefined) {
     return res.status(400).json({
