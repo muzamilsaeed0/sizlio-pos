@@ -89,6 +89,20 @@ const endShift = async (shiftId, userId, restaurantId) => {
   return result.rows[0] || null;
 };
 
+const getShiftById = async (shiftId, restaurantId) => {
+  const result = await pool.query(
+    `
+    SELECT *
+    FROM shifts
+    WHERE id = $1
+      AND restaurant_id = $2
+    `,
+    [shiftId, restaurantId]
+  );
+
+  return result.rows[0] || null;
+};
+
 const getShiftSummary = async (shiftId, restaurantId) => {
 
   const shift = await getShiftById(shiftId, restaurantId);
