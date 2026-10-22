@@ -852,6 +852,22 @@
             .shift-report-table th, .shift-report-table td { padding: 7px 5px; font-size: 10px; }
             .shift-report-table .status-badge { font-size: 9px; padding: 2px 7px; }
         }
+
+                .table-chip {
+            display: inline-block;
+            padding: 3px 9px;
+            margin: 2px 4px 2px 0;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.35);
+        }
+        .table-chip-free {
+            color: var(--muted);
+            font-weight: 600;
+        }
     </style>
 </head>
 <body data-theme="dark">
@@ -930,9 +946,12 @@
                         <button class="type-btn" id="deliveryBtn" onclick="setOrderType('delivery')">🛵 Delivery</button>
                         <button class="type-btn" id="walkinBtn" onclick="setOrderType('walk_in')">🛍️ Walk-in</button>
                     </div>
-                    <div class="field" id="tableField">
-                        <label>Table No</label>
-                        <input id="tableNo" type="number" min="1" placeholder="Table" />
+                    <div class="field" id="tableField" style="flex-direction:column;align-items:stretch;gap:6px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <label style="min-width:70px;">Table No</label>
+                            <input id="tableNo" type="number" min="1" placeholder="Table" style="flex:1;" />
+                        </div>
+                        <div id="occupiedTablesBar" style="font-size:11px;color:var(--muted);min-height:18px;"></div>
                     </div>
                 </div>
 
@@ -1941,6 +1960,7 @@ function renderShiftUI() {
             document.getElementById('orderTypeDisplay').value = labels[type] || type;
 
             renderCart();
+                        renderOccupiedTables();
         }
 
         function setPaymentTiming(isPayNow) {
@@ -3122,6 +3142,7 @@ const newLocalNo = data.order?.local_number || newOrderId;
                 const all = data.orders || [];
                 orders = all.filter(o => !isOrderDone(o));
                 renderOrders();
+                renderOccupiedTables();
             } catch (err) {
                 console.error('loadOrders:', err);
                 if (err.message.includes('session expired')) return;
@@ -3260,6 +3281,35 @@ const newLocalNo = data.order?.local_number || newOrderId;
         </div>
     `;
             }).join('');
+        }
+
+                function getOccupiedTables() {
+            const set = new Set();
+            (orders || []).forEach(o => {
+                const type = String(o.order_type || '').toLowerCase();
+                if (type !== 'dine_in') return;
+                const t = Number(o.table_no);
+                if (Number.isInteger(t) && t > 0) set.add(t);
+            });
+            return Array.from(set).sort((a, b) => a - b);
+        }
+
+        function renderOccupiedTables() {
+            const bar = document.getElementById('occupiedTablesBar');
+            if (!bar) return;
+            // sirf dine-in mode me dikhao
+            if (orderType !== 'dine_in') {
+                bar.innerHTML = '';
+                return;
+            }
+            const used = getOccupiedTables();
+            if (!used.length) {
+                bar.innerHTML = '<span class="table-chip-free">No tables in use</span>';
+                return;
+            }
+            bar.innerHTML =
+                '<span style="margin-right:6px;">In use:</span>' +
+                used.map(t => `<span class="table-chip" title="Table ${t} has an open order">T${t}</span>`).join('');
         }
 
         function editBill(id) {
@@ -4013,6 +4063,8 @@ const newLocalNo = data.order?.local_number || newOrderId;
         window.restoreCounterSession = restoreCounterSession;
         window.formatDuration = formatDuration;
         window.renderShiftUI = renderShiftUI;
+        window.getOccupiedTables = getOccupiedTables;
+        window.renderOccupiedTables = renderOccupiedTables;
        
     </script>
 </body>
