@@ -11,12 +11,9 @@ const rejectUnauthorized =
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: production
-    ? {
-        rejectUnauthorized,
-        ...(databaseSslCa ? { ca: databaseSslCa } : {})
-      }
-    : false
+  ssl: {
+    rejectUnauthorized: false  // Railway internal Postgres self-signed cert use karta hai
+  }
 });
 // Handle background errors from idle pooled clients. Without a listener,
 // an idle-client error may become an unhandled EventEmitter error.
