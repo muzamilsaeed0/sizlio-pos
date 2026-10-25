@@ -427,7 +427,6 @@
         <span class="brand" id="brandName">Cafe</span>
       </div>
       <span class="pill" id="planPill">Cafe Lite</span>
-      <span class="pill" id="shiftPill">Shift…</span>
       <span class="spacer"></span>
       <span class="sales-chip" id="todaySales">Today: Rs 0</span>
       <button class="btn btn-ghost" onclick="openSalesReport()">Sales Report</button>
@@ -527,6 +526,7 @@
             </tr>
           </thead>
           <tbody id="salesOrdersBody"></tbody>
+          <tfoot id="salesOrdersFooter" style="background:var(--panel2); font-weight:800; border-top:2px solid var(--border);"></tfoot>
         </table>
       </div>
     </div>
@@ -750,7 +750,6 @@
     let dealCart = [];
     let deliveryRiders = [];
     let staffList = [];        // for rider password reset section
-    let currentShift = null;
     let posSettings = {
       gst_percent: 0, tax_percent: 0, delivery_charge: 0, dine_charge: 0,
       card_charge: 0, bank_charge: 0,
@@ -903,7 +902,7 @@
       setInterval(() => { loadCafeBrand().catch(() => {}); }, 120000);
 
       await Promise.all([
-        loadShift(), loadMenu(), loadDeals(), loadOrders(),
+        loadMenu(), loadDeals(), loadOrders(),
         loadTodaySales(), loadDeliveryRiders()
       ]);
 
@@ -947,30 +946,6 @@
         const data = await api('/orders/delivery-riders');
         deliveryRiders = Array.isArray(data.riders) ? data.riders : [];
       } catch (e) { deliveryRiders = []; }
-    }
-
-    /* ================= SHIFT ================= */
-    async function loadShift() {
-      const pill = document.getElementById('shiftPill');
-      pill.onclick = null;
-      pill.style.cursor = 'default';
-      try {
-        const data = await api('/shifts/current');
-        currentShift = data.data || data.shift || null;
-        if (currentShift && (currentShift.id || currentShift.status === 'active')) {
-          pill.textContent = 'Shift open';
-          pill.className = 'pill ok';
-        } else {
-          pill.textContent = 'No shift — tap to start';
-          pill.className = 'pill warn';
-          pill.style.cursor = 'pointer';
-          pill.onclick = startShift;
-        }
-      } catch { pill.textContent = 'Shift ?'; pill.className = 'pill'; }
-    }
-    async function startShift() {
-      try { await api('/shifts/start', { method: 'POST' }); await loadShift(); }
-      catch (e) { alert(e.message || 'Could not start shift'); }
     }
 
     /* ================= MENU ================= */
@@ -1870,9 +1845,16 @@
         }
 
         const body = document.getElementById('salesOrdersBody');
+        const footer = document.getElementById('salesOrdersFooter');
+        
         if (!salesCache.orders.length) {
           body.innerHTML = '<tr><td colspan="14" style="color:var(--muted);text-align:center;">No orders</td></tr>';
+          if (footer) footer.innerHTML = '';
         } else {
+          // Grand Totals Calculate
+          let totalSub = 0, totalDisc = 0, totalGst = 0, totalTax = 0;
+          let totalDine = 0, totalDel = 0, totalCard = 0, totalBank = 0, totalAmount = 0;
+
           body.innerHTML = salesCache.orders.map(o => {
             const t = o.created_at || o.paid_at || '';
             const time = t ? new Date(t).toLocaleString() : '—';
@@ -1900,6 +1882,17 @@
             const bank = Number(o.bank_charge || 0);
             const total = Number(o.total_amount || o.total || 0);
 
+            // Add to Grand Total
+            totalSub += sub;
+            totalDisc += disc;
+            totalGst += gst;
+            totalTax += tax;
+            totalDine += dine;
+            totalDel += del;
+            totalCard += card;
+            totalBank += bank;
+            totalAmount += total;
+
             return `<tr class="sales-order-row">
               <td>#${esc(o.local_number || o.id)}</td>
               <td>${esc(orderTypeLabel(o.order_type))}</td>
@@ -1917,6 +1910,25 @@
               <td>${esc(time)}</td>
             </tr>`;
           }).join('');
+
+          // Footer (Grand Total) Render
+          if (footer) {
+            footer.innerHTML = `
+              <tr>
+                <td colspan="4" style="text-align:right; padding-right:10px;">Grand Total:</td>
+                <td>${totalSub ? money(totalSub) : '—'}</td>
+                <td>${totalDisc ? money(totalDisc) : '—'}</td>
+                <td>${totalGst ? money(totalGst) : '—'}</td>
+                <td>${totalTax ? money(totalTax) : '—'}</td>
+                <td>${totalDine ? money(totalDine) : '—'}</td>
+                <td>${totalDel ? money(totalDel) : '—'}</td>
+                <td>${totalCard ? money(totalCard) : '—'}</td>
+                <td>${totalBank ? money(totalBank) : '—'}</td>
+                <td style="color:var(--accent);">${money(totalAmount)}</td>
+                <td></td>
+              </tr>
+            `;
+          }
         }
       } catch (e) {
         alert(e.message || 'Failed to load sales report');
@@ -1952,6 +1964,27 @@
           o.created_at || o.paid_at || ''
         ]);
       });
+      
+      // Add Total Row in CSV
+      let csvSub = 0, csvDisc = 0, csvGst = 0, csvTax = 0, csvDine = 0, csvDel = 0, csvCard = 0, csvBank = 0, csvTotal = 0;
+      salesCache.orders.forEach(o => {
+        csvSub += Number(o.subtotal || 0);
+        csvDisc += Number(o.discount_amount || 0);
+        csvGst += Number(o.gst_amount || 0);
+        csvTax += Number(o.tax_amount || 0);
+        csvDine += Number(o.dine_charge || 0);
+        csvDel += Number(o.delivery_charge || 0);
+        csvCard += Number(o.card_charge || 0);
+        csvBank += Number(o.bank_charge || 0);
+        csvTotal += Number(o.total_amount || o.total || 0);
+      });
+      rows.push([
+        'GRAND TOTAL', '', '', '', '', '', '',
+        csvSub, csvDisc, csvGst, csvTax,
+        csvDine, csvDel, csvCard, csvBank,
+        csvTotal, '', ''
+      ]);
+
       const csv = rows.map(r =>
         r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')
       ).join('\n');
@@ -1974,6 +2007,9 @@
           <th>Dine</th><th>Del</th><th>Card</th><th>Bank</th>
           <th>Total</th><th>Time</th>
         </tr>`;
+        
+      let pSub = 0, pDisc = 0, pGst = 0, pTax = 0, pDine = 0, pDel = 0, pCard = 0, pBank = 0, pTotal = 0;
+
       salesCache.orders.forEach(o => {
         const items = orderItemsOf(o);
         const itemsStr = items.map(i => {
@@ -1984,6 +2020,17 @@
         const pay = (o.payment_status || '') + (o.payment_method ? '/' + o.payment_method : '');
         const time = (o.paid_at || o.created_at)
           ? new Date(o.paid_at || o.created_at).toLocaleString() : '';
+          
+        pSub += Number(o.subtotal || 0);
+        pDisc += Number(o.discount_amount || 0);
+        pGst += Number(o.gst_amount || 0);
+        pTax += Number(o.tax_amount || 0);
+        pDine += Number(o.dine_charge || 0);
+        pDel += Number(o.delivery_charge || 0);
+        pCard += Number(o.card_charge || 0);
+        pBank += Number(o.bank_charge || 0);
+        pTotal += Number(o.total_amount || o.total || 0);
+
         table += `<tr>
           <td>#${o.local_number || o.id}</td>
           <td>${orderTypeLabel(o.order_type)}</td>
@@ -2001,6 +2048,21 @@
           <td>${time}</td>
         </tr>`;
       });
+      
+      table += `<tr style="background:#f0f0f0; font-weight:bold;">
+        <td colspan="4" style="text-align:right;">GRAND TOTAL</td>
+        <td>${pSub.toFixed(2)}</td>
+        <td>${pDisc.toFixed(2)}</td>
+        <td>${pGst.toFixed(2)}</td>
+        <td>${pTax.toFixed(2)}</td>
+        <td>${pDine.toFixed(2)}</td>
+        <td>${pDel.toFixed(2)}</td>
+        <td>${pCard.toFixed(2)}</td>
+        <td>${pBank.toFixed(2)}</td>
+        <td>${pTotal.toFixed(2)}</td>
+        <td></td>
+      </tr>`;
+      
       table += '</table>';
       const w = window.open('', '_blank');
       if (!w) { alert('Allow popups to print'); return; }

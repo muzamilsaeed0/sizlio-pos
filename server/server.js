@@ -29,6 +29,8 @@ app.set("trust proxy", "loopback");
 const allowedOrigins = [
   "https://sizlio.com",
   "https://www.sizlio.com",
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
   process.env.NODE_ENV === "development" ? "http://localhost:3000" : null,
   process.env.NODE_ENV === "development" ? "http://localhost:5500" : null,
 ].filter(Boolean);
