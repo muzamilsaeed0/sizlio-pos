@@ -146,33 +146,38 @@ body{
     letter-spacing:-0.02em;
     color:var(--text);
 }
-.top-bar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:16px;
-    margin-bottom:20px;
-    padding-bottom:16px;
-    border-bottom:1px solid var(--border);
+.top-bar {
+    display: flex;
+    justify-content: center; 
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
 }
-.top-bar-left{
-    display:flex;
-    align-items:center;
-    gap:16px;
-    min-width:0;
+.top-bar-left {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px; 
+    min-width: 0;
+    flex-wrap: nowrap; 
 }
-.top-bar-left h2{
-    margin:0;
-    font-size:clamp(20px,2.8vw,42px);
-    font-weight:800;
-    letter-spacing:-0.03em;
+.top-bar-left h2 {
+    margin: 0;
+    font-size: clamp(20px, 2.8vw, 42px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    white-space: nowrap; 
 }
-.top-bar-right{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    flex-shrink:0;
-}
+.top-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    position: absolute; 
+    right: 0; 
 
 /* =====================================================
    RESTAURANT ID
