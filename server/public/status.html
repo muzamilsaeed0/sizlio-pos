@@ -122,6 +122,7 @@ body{
     margin:0 0 3vh;
     font-size: clamp(22px,3vw,55px);
 }
+
 /* =====================================================
    BRAND HEADER (display board)
 ===================================================== */
@@ -146,6 +147,10 @@ body{
     letter-spacing:-0.02em;
     color:var(--text);
 }
+
+/* =====================================================
+   TOP BAR (Fixed Layout)
+===================================================== */
 .top-bar {
     display: flex;
     justify-content: center; 
@@ -155,22 +160,36 @@ body{
     padding-bottom: 16px;
     border-bottom: 1px solid var(--border);
     position: relative;
+    min-height: 60px;
 }
+
+/* LEFT: Logo + Restaurant Name */
 .top-bar-left {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 16px; 
-    min-width: 0;
-    flex-wrap: nowrap; 
+    justify-content: flex-start;
+    gap: 12px; 
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
 }
+
+/* CENTER: Live Order Status */
 .top-bar-left h2 {
     margin: 0;
     font-size: clamp(20px, 2.8vw, 42px);
     font-weight: 800;
     letter-spacing: -0.03em;
-    white-space: nowrap; 
+    white-space: nowrap;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
 }
+
+/* RIGHT: Logout Button */
 .top-bar-right {
     display: flex;
     align-items: center;
@@ -178,6 +197,10 @@ body{
     flex-shrink: 0;
     position: absolute; 
     right: 0; 
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+}
 
 /* =====================================================
    RESTAURANT ID
@@ -381,7 +404,7 @@ body{
 </head>
 <body>
 
-<!-- LOGIN BOX (Yeh missing tha) -->
+<!-- LOGIN BOX -->
 <div id="login-box">
     <h2>Status Board Login</h2>
     <input id="username" placeholder="Username" autocomplete="username" />
