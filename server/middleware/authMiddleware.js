@@ -19,7 +19,7 @@ const authMiddleware = async (req, res, next) => {
 
     // Cookie-authenticated state-changing requests must originate from our
     // own web origin. Bearer clients remain supported during migration.
-    const token = cookieToken || bearerToken;
+    const token = bearerToken || cookieToken;
     if (!token) {
       return res.status(401).json({
         success: false,
