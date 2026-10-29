@@ -122,29 +122,56 @@ body{
     margin:0 0 3vh;
     font-size: clamp(22px,3vw,55px);
 }
-
 /* =====================================================
-   BRAND HEADER
+   BRAND HEADER (display board)
 ===================================================== */
 .brand-header{
-    display:flex;
+    display:none;
     align-items:center;
-    gap:10px;
-    padding:12px 16px;
-    margin:-20px -20px 20px -20px;
-    background:#1F262C;
-    border-bottom:1px solid #2A3138;
+    gap:14px;
+    width:100%;
 }
 .brand-header img{
-    width:42px;
-    height:42px;
-    border-radius:8px;
+    width:52px;
+    height:52px;
+    border-radius:12px;
     object-fit:cover;
     background:#fff;
+    flex-shrink:0;
+    box-shadow:0 2px 8px rgba(0,0,0,.25);
 }
 .brand-header .brand-name{
-    font-weight:700;
-    font-size:15px;
+    font-weight:800;
+    font-size:clamp(16px,2vw,22px);
+    letter-spacing:-0.02em;
+    color:var(--text);
+}
+.top-bar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    margin-bottom:20px;
+    padding-bottom:16px;
+    border-bottom:1px solid var(--border);
+}
+.top-bar-left{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    min-width:0;
+}
+.top-bar-left h2{
+    margin:0;
+    font-size:clamp(20px,2.8vw,42px);
+    font-weight:800;
+    letter-spacing:-0.03em;
+}
+.top-bar-right{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-shrink:0;
 }
 
 /* =====================================================
@@ -322,9 +349,7 @@ body{
         min-height:100vh;
         padding:15px;
     }
-    .brand-header{
-        margin:-15px -15px 15px -15px;
-    }
+   
     #orders-list{
         grid-template-columns:1fr;
     }
@@ -351,18 +376,7 @@ body{
 </head>
 <body>
 
-<div class="brand-header" id="brand-header" style="display:none;"></div>
 
-<div id="login-box">
-    <h2>Status Board Login</h2>
-    <input id="username" placeholder="Username" autocomplete="username" onkeydown="if(event.key==='Enter') login()">
-    <div class="pw-wrap">
-        <input id="password" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter') login()">
-        <span class="pw-eye" onmousedown="showPassword()" onmouseup="hidePassword()" onmouseleave="hidePassword()" ontouchstart="showPassword()" ontouchend="hidePassword()">👁</span>
-    </div>
-    <button id="login-btn" onclick="login()">Login</button>
-    <p id="login-error"></p>
-</div>
 
 <div id="app-box" style="display:none;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -681,29 +695,27 @@ function renderOrders(orders){
 }
 
 async function loadBranding(){
-    if(!token || !isValidRestaurantId()){ return; }
     try{
         const res = await fetch('/api/restaurants/me', {
             headers:{ 'Authorization': 'Bearer ' + token }
         });
-
-        if(res.status === 401){ handleAuthFailure(); return; }
-
-        const data = await getJsonResponse(res);
-        if(!res.ok || !data.success){ return; }
-
-        const restaurant = data.data || {};
+        if(!res.ok) return;
+        const data = await res.json();
+        const restaurant = data.data || data.restaurant || data || {};
         if(restaurant.id !== undefined && String(restaurant.id) !== String(restaurantId)){ return; }
 
         const header = document.getElementById('brand-header');
-        if(!header){ return; }
+        if(!header) return;
 
         const name = restaurant.name || 'Restaurant';
         const logoUrl = restaurant.logo_url || restaurant.logo || '';
-        header.style.display = 'flex';
-        header.innerHTML = (logoUrl ? `<img src="${escapeHtml(logoUrl)}" alt="Restaurant Logo" onerror="this.style.display='none';">` : '') +
-            `<span class="brand-name">${escapeHtml(name)}</span>`;
 
+        header.style.display = 'flex';
+        header.innerHTML =
+            (logoUrl
+                ? `<img src="${escapeHtml(logoUrl)}" alt="" onerror="this.style.display='none'">`
+                : '') +
+            `<span class="brand-name">${escapeHtml(name)}</span>`;
     }catch(error){
         console.error('BRANDING LOAD ERROR:', error);
     }
