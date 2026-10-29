@@ -376,7 +376,17 @@ body{
 </head>
 <body>
 
-
+<!-- LOGIN BOX (Yeh missing tha) -->
+<div id="login-box">
+    <h2>Status Board Login</h2>
+    <input id="username" placeholder="Username" autocomplete="username" />
+    <div class="pw-wrap">
+        <input id="password" type="password" placeholder="Password" autocomplete="current-password" />
+        <span class="pw-eye" onmousedown="showPassword()" onmouseup="hidePassword()" onmouseleave="hidePassword()" ontouchstart="showPassword()" ontouchend="hidePassword()">👁</span>
+    </div>
+    <button id="login-btn" onclick="login()">Login</button>
+    <p id="login-error"></p>
+</div>
 
 <div id="app-box" style="display:none;">
     <div class="top-bar">
