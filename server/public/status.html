@@ -379,13 +379,14 @@ body{
 
 
 <div id="app-box" style="display:none;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <div>
-            <h2 style="margin:0;">Live Order Status</h2>
+    <div class="top-bar">
+        <div class="top-bar-left">
+            <div class="brand-header" id="brand-header"></div>
+            <h2>Live Order Status</h2>
         </div>
-        <div style="display:flex; align-items:center; gap:15px;">
+        <div class="top-bar-right">
             <span id="restaurant-id-label" class="restaurant-id-label"></span>
-            <button onclick="logout()" style="background:#E15A4C; color:white; border:none; padding:8px 14px; border-radius:8px; font-weight:bold; cursor:pointer;">
+            <button onclick="logout()" style="background:#E15A4C;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:bold;cursor:pointer;">
                 Logout
             </button>
         </div>
