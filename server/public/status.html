@@ -130,7 +130,6 @@ body{
     display:none;
     align-items:center;
     gap:14px;
-    width:100%;
 }
 .brand-header img{
     width:52px;
@@ -152,14 +151,13 @@ body{
    TOP BAR (Fixed Layout)
 ===================================================== */
 .top-bar {
-    display: flex;
-    justify-content: center; 
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 16px;
     margin-bottom: 20px;
     padding-bottom: 16px;
     border-bottom: 1px solid var(--border);
-    position: relative;
     min-height: 60px;
 }
 
@@ -168,38 +166,29 @@ body{
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 12px; 
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 2;
+    gap: 12px;
+    min-width: 0;
+    justify-self: start;
 }
 
 /* CENTER: Live Order Status */
-.top-bar-left h2 {
+#app-box .top-bar h2 {
     margin: 0;
     font-size: clamp(20px, 2.8vw, 42px);
     font-weight: 800;
     letter-spacing: -0.03em;
     white-space: nowrap;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1;
+    text-align: center;
+    justify-self: center;
 }
 
-/* RIGHT: Logout Button */
+/* RIGHT: Restaurant ID + Logout */
 .top-bar-right {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 12px;
-    flex-shrink: 0;
-    position: absolute; 
-    right: 0; 
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 2;
+    justify-self: end;
 }
 
 /* =====================================================
@@ -378,6 +367,19 @@ body{
         padding:15px;
     }
    
+    .top-bar{
+        grid-template-columns:1fr auto;
+        row-gap:10px;
+    }
+    #app-box .top-bar h2{
+        grid-column:1 / -1;
+        grid-row:2;
+        font-size:20px;
+    }
+    .brand-header img{
+        width:40px;
+        height:40px;
+    }
     #orders-list{
         grid-template-columns:1fr;
     }
@@ -420,8 +422,8 @@ body{
     <div class="top-bar">
         <div class="top-bar-left">
             <div class="brand-header" id="brand-header"></div>
-            <h2>Live Order Status</h2>
         </div>
+        <h2>Live Order Status</h2>
         <div class="top-bar-right">
             <span id="restaurant-id-label" class="restaurant-id-label"></span>
             <button onclick="logout()" style="background:#E15A4C;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:bold;cursor:pointer;">
