@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Car Status Maker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: form on the left, live 9:16 poster preview on the right; stacked on phones. */
+:root{
+  --bg:#f2f3ef; --panel:#ffffff; --fg:#161a1f; --muted:#5f6873; --line:#d9dcd5;
+  --accent:#1d4fd8; --accent-fg:#ffffff; --field:#f7f8f5; --ok:#1c8a55; --warn:#b36b00;
+  --font-display:'Barlow Condensed','Arial Narrow',sans-serif;
+  --font-body:'Barlow',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101317; --panel:#181c22; --fg:#eef0f2; --muted:#9aa3ae; --line:#2b313a;
+    --accent:#6f95ff; --accent-fg:#0b1020; --field:#0f1216; --ok:#4cc58a; --warn:#e9a23b;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101317; --panel:#181c22; --fg:#eef0f2; --muted:#9aa3ae; --line:#2b313a;
+  --accent:#6f95ff; --accent-fg:#0b1020; --field:#0f1216; --ok:#4cc58a; --warn:#e9a23b;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--fg); font-family:var(--font-body); font-size:16px; line-height:1.45;
+  padding-block:20px 48px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap{max-width:1040px; margin:0 auto}
+h1{font-family:var(--font-display); font-weight:800; font-size:clamp(30px,6vw,44px); letter-spacing:.01em; text-transform:uppercase; margin:0 0 2px; text-wrap:balance}
+.sub{color:var(--muted); margin:0 0 20px}
+.grid{display:grid; grid-template-columns:minmax(0,1fr); gap:20px}
+@media (min-width:860px){ .grid{grid-template-columns:minmax(0,1fr) 400px; align-items:start} .preview{position:sticky; top:16px} }
+.card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px; display:flex; flex-direction:column; gap:14px}
+.card + .card{margin-top:20px}
+h2{font-family:var(--font-display); font-weight:700; font-size:22px; letter-spacing:.04em; text-transform:uppercase; margin:0}
+.hint{color:var(--muted); font-size:14px; margin:-8px 0 0}
+label{display:flex; flex-direction:column; gap:6px; font-weight:600; font-size:14px; min-width:0}
+input[type=text], input[type=tel], select, textarea{
+  width:100%; font:inherit; font-weight:400; font-size:16px; color:var(--fg); background:var(--field);
+  border:1px solid var(--line); border-radius:10px; padding:11px 12px; min-width:0;
+}
+textarea{min-height:96px; resize:vertical}
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible{outline:3px solid var(--accent); outline-offset:2px}
+.row{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px}
+@media (max-width:480px){ .row{grid-template-columns:minmax(0,1fr)} }
+.seg{display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--line); border-radius:12px; overflow:hidden}
+.seg input{position:absolute; opacity:0; pointer-events:none}
+.seg label{flex-direction:row; align-items:center; justify-content:center; padding:13px 8px; cursor:pointer; font-family:var(--font-display); font-weight:800; font-size:22px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); background:var(--field)}
+.seg input:checked + label{color:#fff}
+.seg input#t-sale:checked + label{background:#1f8f58}
+.seg input#t-buy:checked + label{background:#c47a0a}
+.seg input:focus-visible + label{outline:3px solid var(--accent); outline-offset:-3px}
+.range-line{display:flex; align-items:center; gap:12px}
+.range-line input[type=range]{flex:1; min-width:0; accent-color:var(--accent)}
+.badge{min-width:5.5ch; text-align:right; font-family:var(--font-display); font-weight:800; font-size:24px; font-variant-numeric:tabular-nums}
+.cond-word{font-size:14px; color:var(--muted); font-weight:500}
+.preview .card{align-items:stretch}
+canvas{display:block; width:100%; max-width:360px; height:auto; margin:0 auto; border-radius:12px; border:1px solid var(--line); background:#111}
+button, .btn{
+  font:inherit; font-weight:600; border-radius:10px; border:1px solid var(--line); background:var(--field); color:var(--fg);
+  padding:12px 14px; cursor:pointer; text-align:center; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; min-height:46px;
+}
+button.primary{background:var(--accent); color:var(--accent-fg); border-color:transparent; font-size:18px; min-height:54px}
+button:hover, .btn:hover{filter:brightness(1.06)}
+.two{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.apps{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px}
+.small{font-size:13.5px; color:var(--muted); margin:0}
+.toast{min-height:22px; font-size:14px; font-weight:600; color:var(--ok)}
+.toast.err{color:var(--warn)}
+@media (prefers-reduced-motion:no-preference){ button{transition:filter .15s} }
+[hidden]{display:none!important}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <h1>Car Status Maker</h1>
+  <p class="sub">Gari ki details bharo, poster banao, seedha status par share karo.</p>
+
+  <div class="grid">
+    <div>
+      <section class="card" aria-labelledby="h-show">
+        <h2 id="h-show">Showroom</h2>
+        <p class="hint">Ek baar likho, har poster ke upar khud aa jayega.</p>
+        <label for="s-name">Showroom name
+          <input type="text" id="s-name" autocomplete="organization" placeholder="e.g. Al-Madina Motors">
+        </label>
+        <div class="row">
+          <label for="s-owner">Owner name
+            <input type="text" id="s-owner" autocomplete="name" placeholder="e.g. Haji Imran">
+          </label>
+          <label for="s-phone">Contact number
+            <input type="tel" id="s-phone" autocomplete="tel" inputmode="tel" placeholder="0300-1234567">
+          </label>
+        </div>
+        <label for="s-addr">Address
+          <input type="text" id="s-addr" autocomplete="street-address" placeholder="e.g. Main G.T. Road, Gujranwala">
+        </label>
+      </section>
+
+      <section class="card" aria-labelledby="h-car">
+        <h2 id="h-car">Gari</h2>
+        <div class="seg" role="radiogroup" aria-label="Sale or purchase">
+          <input type="radio" name="type" id="t-sale" value="sale" checked>
+          <label for="t-sale">For Sale</label>
+          <input type="radio" name="type" id="t-buy" value="buy">
+          <label for="t-buy">For Purchase</label>
+        </div>
+        <div class="row">
+          <label for="c-make">Company
+            <select id="c-make"></select>
+          </label>
+          <label for="c-model">Model
+            <select id="c-model"></select>
+          </label>
+        </div>
+        <label for="c-custom" id="custom-wrap" hidden>Gari ka naam likho
+          <input type="text" id="c-custom" placeholder="e.g. Toyota Corolla Altis Grande">
+        </label>
+        <div class="row">
+          <label for="c-year">Model year
+            <select id="c-year"></select>
+          </label>
+          <label for="c-cond">Condition <span class="cond-word" id="cond-word"></span>
+            <span class="range-line">
+              <input type="range" id="c-cond" min="1" max="10" step="1" value="8">
+              <span class="badge" id="cond-val">8/10</span>
+            </span>
+          </label>
+        </div>
+        <label for="c-note">Note
+          <textarea id="c-note" placeholder="Price, mileage, color, documents... jo bhi likhna ho. Urdu bhi chalegi."></textarea>
+        </label>
+        <label for="c-size">Note ka font size
+          <span class="range-line">
+            <span aria-hidden="true" style="font-size:13px">A</span>
+            <input type="range" id="c-size" min="24" max="64" step="2" value="42">
+            <span aria-hidden="true" style="font-size:22px">A</span>
+          </span>
+        </label>
+      </section>
+    </div>
+
+    <aside class="preview" aria-label="Poster preview">
+      <section class="card">
+        <h2>Poster</h2>
+        <canvas id="poster" width="1080" height="1920" aria-label="Poster preview"></canvas>
+        <button class="primary" id="btn-share" type="button">Share to Status</button>
+        <div class="two">
+          <button id="btn-save" type="button">Save image</button>
+          <button id="btn-copy" type="button">Copy caption</button>
+        </div>
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+        <p class="small">Share dabao, phir WhatsApp, Facebook, Instagram ya IMO chuno aur Status / Story select karo. Share na khule to Save image karo aur gallery se status par lagao.</p>
+        <div class="apps">
+          <a class="btn" id="a-wa" href="https://wa.me/" target="_blank" rel="noopener">WhatsApp</a>
+          <a class="btn" href="https://www.facebook.com/" target="_blank" rel="noopener">Facebook</a>
+          <a class="btn" href="https://www.instagram.com/" target="_blank" rel="noopener">Instagram</a>
+          <a class="btn" href="https://imo.im/" target="_blank" rel="noopener">IMO</a>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function(){
+  var CARS = {
+    "Suzuki":["Alto","Cultus","Wagon R","Swift","Mehran","Bolan","Every","Ravi","Jimny","Liana","Baleno","Margalla","Khyber"],
+    "Toyota":["Corolla","Yaris","Vitz","Aqua","Prius","Passo","Premio","Allion","Axio","Fielder","Belta","Rush","Raize","Camry","Mark X","Hilux","Revo","Vigo","Fortuner","Prado","Land Cruiser","Surf","Hiace"],
+    "Honda":["Civic","City","BR-V","HR-V","Vezel","Fit","Freed","Grace","Insight","Stream","Accord","CR-V","N-One","N-WGN","N-Box"],
+    "Daihatsu":["Mira","Cuore","Move","Tanto","Boon","Esse","Terios","Hijet","Charade"],
+    "Nissan":["Dayz","Roox","Moco","Note","Juke","Sunny","Sylphy","X-Trail","Clipper"],
+    "Mitsubishi":["Lancer","Pajero","Mirage","Ek Wagon","Minica","Outlander"],
+    "Mazda":["Demio","Axela","CX-5","Carol","Flair"],
+    "KIA":["Sportage","Picanto","Stonic","Sorento","Carnival","Rio"],
+    "Hyundai":["Tucson","Elantra","Sonata","Santa Fe","Porter","Shehzore"],
+    "Changan":["Alsvin","Oshan X7","Karvaan","Bestune"],
+    "MG":["HS","ZS","5"],
+    "Haval":["H6","Jolion"],
+    "DFSK":["Glory 580","Glory 500"],
+    "Proton":["Saga","X70"],
+    "United":["Bravo","Alpha"],
+    "Subaru":["Impreza","Forester","XV","Legacy"],
+    "Isuzu":["D-Max","Elf"],
+    "BMW":["3 Series","5 Series","X1","X5"],
+    "Mercedes-Benz":["C Class","E Class","S Class","GLE"],
+    "Audi":["A3","A4","A6","Q3","Q5"],
+    "Lexus":["RX","NX","LX","IS"],
+    "Land Rover":["Defender","Range Rover","Discovery"]
+  };
+  var OTHER = "Other";
+  var $ = function(id){ return document.getElementById(id); };
+  var els = {
+    sName:$("s-name"), sOwner:$("s-owner"), sPhone:$("s-phone"), sAddr:$("s-addr"),
+    make:$("c-make"), model:$("c-model"), custom:$("c-custom"), customWrap:$("custom-wrap"),
+    year:$("c-year"), cond:$("c-cond"), condVal:$("cond-val"), condWord:$("cond-word"),
+    note:$("c-note"), size:$("c-size"), canvas:$("poster"), toast:$("toast"), wa:$("a-wa")
+  };
+  var DEFAULT_NOTE = "Original paint, first owner, all documents clear. Serious buyers only. Price negotiable.";
+
+  /* ---------- storage (per-device convenience) ---------- */
+  var KEY = "carStatusMaker.showroom";
+  function loadShowroom(){
+    try{
+      var v = JSON.parse(localStorage.getItem(KEY) || "{}");
+      els.sName.value = v.name || ""; els.sOwner.value = v.owner || "";
+      els.sPhone.value = v.phone || ""; els.sAddr.value = v.addr || "";
+    }catch(e){}
+  }
+  function saveShowroom(){
+    try{
+      localStorage.setItem(KEY, JSON.stringify({
+        name:els.sName.value, owner:els.sOwner.value, phone:els.sPhone.value, addr:els.sAddr.value
+      }));
+    }catch(e){}
+  }
+
+  /* ---------- form setup ---------- */
+  function opt(v, t){ var o = document.createElement("option"); o.value = v; o.textContent = t || v; return o; }
+  Object.keys(CARS).forEach(function(m){ els.make.appendChild(opt(m)); });
+  els.make.appendChild(opt(OTHER, "Other / Kuch aur"));
+  function fillModels(){
+    els.model.innerHTML = "";
+    var m = els.make.value;
+    if(m !== OTHER){ CARS[m].forEach(function(x){ els.model.appendChild(opt(x)); }); }
+    els.model.appendChild(opt(OTHER, "Other / Kuch aur"));
+    syncCustom();
+  }
+  function syncCustom(){
+    var needs = els.make.value === OTHER || els.model.value === OTHER;
+    els.customWrap.hidden = !needs;
+  }
+  var thisYear = new Date().getFullYear() + 1;
+  for(var y = thisYear; y >= 1985; y--){ els.year.appendChild(opt(String(y))); }
+  els.year.value = String(thisYear - 8);
+  els.make.value = "Toyota"; fillModels(); els.model.value = "Corolla";
+  els.note.value = DEFAULT_NOTE;
+
+  var WORDS = ["","Poor","Poor","Needs work","Fair","Fair","Good","Good","Very good","Very good","Like new"];
+  function condText(){ var c = +els.cond.value; els.condVal.textContent = c + "/10"; els.condWord.textContent = "(" + WORDS[c] + ")"; }
+
+  function typeVal(){ return document.querySelector('input[name="type"]:checked').value; }
+  function carName(){
+    var mk = els.make.value, md = els.model.value;
+    if(mk === OTHER || md === OTHER){
+      var c = els.custom.value.trim();
+      if(mk !== OTHER && md === OTHER && c){ return { make:mk, model:c }; }
+      return { make:"", model:c || "Gari ka naam" };
+    }
+    return { make:mk, model:md };
+  }
+  function fullCarName(){ var n = carName(); return (n.make ? n.make + " " : "") + n.model; }
+
+  /* ---------- drawing ---------- */
+  var ctx = els.canvas.getContext("2d");
+  var W = 1080, H = 1920;
+  var DISPLAY = '"Barlow Condensed","Arial Narrow",sans-serif';
+  var BODY = '"Barlow",Arial,sans-serif';
+
+  function setFont(weight, size, fam){ ctx.font = weight + " " + size + "px " + fam; }
+  function fit(text, maxW, size, weight, fam, min){
+    while(size > min){ setFont(weight, size, fam); if(ctx.measureText(text).width <= maxW) break; size -= 2; }
+    setFont(weight, size, fam); return size;
+  }
+  function wrap(text, maxW){
+    var out = [];
+    String(text).split(/\r?\n/).forEach(function(par){
+      if(!par.trim()){ out.push(""); return; }
+      var line = "";
+      par.split(/\s+/).forEach(function(w){
+        var t = line ? line + " " + w : w;
+        if(ctx.measureText(t).width > maxW && line){ out.push(line); line = w; } else { line = t; }
+      });
+      if(line) out.push(line);
+    });
+    return out;
+  }
+  function rr(x, y, w, h, r){
+    ctx.beginPath(); ctx.moveTo(x+r, y); ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath();
+  }
+  function drawCar(cx, top, w, color){
+    var s = w / 400; ctx.save(); ctx.translate(cx - w/2, top); ctx.scale(s, s);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(8,95); ctx.lineTo(8,72); ctx.quadraticCurveTo(10,62,38,58); ctx.lineTo(105,50); ctx.lineTo(140,22);
+    ctx.quadraticCurveTo(146,18,158,18); ctx.lineTo(248,18); ctx.quadraticCurveTo(262,18,270,25); ctx.lineTo(306,52);
+    ctx.lineTo(360,58); ctx.quadraticCurveTo(392,62,394,78); ctx.lineTo(394,95); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "rgba(10,12,16,.55)";
+    ctx.beginPath(); ctx.moveTo(150,28); ctx.lineTo(208,28); ctx.lineTo(208,50); ctx.lineTo(120,50); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(218,28); ctx.lineTo(250,28); ctx.quadraticCurveTo(258,28,264,34); ctx.lineTo(286,50); ctx.lineTo(218,50); ctx.closePath(); ctx.fill();
+    [[95],[305]].forEach(function(p){
+      ctx.fillStyle = "#0b0d11"; ctx.beginPath(); ctx.arc(p[0],98,26,0,6.2832); ctx.fill();
+      ctx.fillStyle = "#3a414d"; ctx.beginPath(); ctx.arc(p[0],98,12,0,6.2832); ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  function draw(){
+    var buy = typeVal() === "buy";
+    var C = buy ? { main:"#e59a12", on:"#1b1304", soft:"#f3c768" } : { main:"#26a66a", on:"#ffffff", soft:"#7fdcae" };
+    var name = els.sName.value.trim() || "Your Showroom Name";
+    var owner = els.sOwner.value.trim() || "Owner Name";
+    var phone = els.sPhone.value.trim() || "0300-0000000";
+    var addr = els.sAddr.value.trim() || "Showroom address, City";
+
+    var g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#161a21"); g.addColorStop(1, "#0b0d11");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = "alphabetic"; ctx.textAlign = "center"; ctx.direction = "ltr"; ctx.letterSpacing = "0px";
+
+    /* header */
+    ctx.fillStyle = "#1c222b"; ctx.fillRect(0, 0, W, 372);
+    ctx.fillStyle = C.main; ctx.fillRect(0, 372, W, 8);
+    ctx.fillStyle = "#ffffff"; fit(name.toUpperCase(), 960, 128, 800, DISPLAY, 56);
+    ctx.fillText(name.toUpperCase(), W/2, 150);
+    ctx.fillStyle = "#b4bcc7"; fit("Owner: " + owner, 900, 44, 500, BODY, 26);
+    ctx.fillText("Owner: " + owner, W/2, 222);
+    ctx.fillStyle = C.soft; fit("Contact: " + phone, 900, 58, 600, BODY, 30);
+    ctx.fillText("Contact: " + phone, W/2, 296);
+    ctx.fillStyle = "#b4bcc7"; fit(addr, 940, 34, 400, BODY, 20);
+    ctx.fillText(addr, W/2, 346);
+
+    /* badge */
+    var label = buy ? "FOR PURCHASE" : "FOR SALE";
+    ctx.fillStyle = C.main; rr(W/2 - 330, 440, 660, 120, 60); ctx.fill();
+    ctx.fillStyle = C.on; fit(label, 580, 92, 800, DISPLAY, 50);
+    ctx.letterSpacing = "4px"; ctx.fillText(label, W/2, 524); ctx.letterSpacing = "0px";
+
+    /* car name + year */
+    var n = carName();
+    if(n.make){ ctx.fillStyle = "#b4bcc7"; setFont(700, 64, DISPLAY); ctx.letterSpacing = "8px"; ctx.fillText(n.make.toUpperCase(), W/2, 660); ctx.letterSpacing = "0px"; }
+    ctx.fillStyle = "#ffffff"; fit(n.model.toUpperCase(), 960, 190, 800, DISPLAY, 60);
+    ctx.fillText(n.model.toUpperCase(), W/2, n.make ? 820 : 790);
+    ctx.fillStyle = C.main; setFont(800, 96, DISPLAY); ctx.letterSpacing = "6px";
+    ctx.fillText("MODEL " + els.year.value, W/2, 930); ctx.letterSpacing = "0px";
+    drawCar(W/2, 975, 640, "#2b323d");
+
+    /* condition */
+    var c = +els.cond.value;
+    ctx.textAlign = "left"; ctx.fillStyle = "#b4bcc7"; setFont(700, 40, DISPLAY); ctx.letterSpacing = "5px";
+    ctx.fillText("CONDITION", 90, 1226); ctx.letterSpacing = "0px";
+    ctx.textAlign = "right"; ctx.fillStyle = "#ffffff"; setFont(800, 72, DISPLAY);
+    ctx.fillText(c + " / 10", W - 90, 1232);
+    var segW = 81, gap = 10;
+    for(var i = 0; i < 10; i++){
+      ctx.fillStyle = i < c ? C.main : "#2a303a"; rr(90 + i*(segW+gap), 1258, segW, 40, 10); ctx.fill();
+    }
+
+    /* note */
+    var note = els.note.value.trim();
+    if(note){
+      var px = 90, py = 1346, pw = W - 180, ph = 360;
+      ctx.fillStyle = "#1c222b"; rr(px, py, pw, ph, 28); ctx.fill();
+      var rtl = /[؀-ۿ]/.test(note);
+      var size = +els.size.value, lines, lh;
+      var maxW = pw - 80, maxH = ph - 70;
+      for(;;){
+        setFont(500, size, BODY); ctx.direction = rtl ? "rtl" : "ltr";
+        lines = wrap(note, maxW); lh = size * 1.34;
+        if(lines.length * lh <= maxH || size <= 20) break;
+        size -= 2;
+      }
+      ctx.textAlign = rtl ? "right" : "left"; ctx.fillStyle = "#eef0f2";
+      var x = rtl ? px + pw - 40 : px + 40, y = py + 36 + size;
+      var cut = Math.max(1, Math.floor(maxH / lh));
+      lines.slice(0, cut).forEach(function(l, k){ ctx.fillText(l, x, y + k*lh); });
+      ctx.direction = "ltr";
+    }
+
+    /* footer */
+    ctx.fillStyle = C.main; ctx.fillRect(0, 1760, W, 160);
+    ctx.textAlign = "center"; ctx.fillStyle = C.on;
+    setFont(600, 34, BODY); ctx.fillText("Call / WhatsApp", W/2, 1808);
+    fit(phone, 940, 86, 800, DISPLAY, 40); ctx.fillText(phone, W/2, 1888);
+
+    updateLinks();
+  }
+
+  /* ---------- caption + links ---------- */
+  function caption(){
+    var buy = typeVal() === "buy";
+    var parts = [
+      (buy ? "WANTED / FOR PURCHASE: " : "FOR SALE: ") + fullCarName() + " (" + els.year.value + ")",
+      "Condition: " + els.cond.value + "/10"
+    ];
+    if(els.note.value.trim()) parts.push(els.note.value.trim());
+    parts.push("");
+    parts.push(els.sName.value.trim() || "");
+    if(els.sOwner.value.trim()) parts.push("Owner: " + els.sOwner.value.trim());
+    if(els.sPhone.value.trim()) parts.push("Contact: " + els.sPhone.value.trim());
+    if(els.sAddr.value.trim()) parts.push(els.sAddr.value.trim());
+    return parts.join("\n").trim();
+  }
+  function updateLinks(){ els.wa.href = "https://wa.me/?text=" + encodeURIComponent(caption()); }
+
+  /* ---------- toast ---------- */
+  var tt;
+  function say(msg, err){
+    els.toast.textContent = msg; els.toast.className = "toast" + (err ? " err" : "");
+    clearTimeout(tt); tt = setTimeout(function(){ els.toast.textContent = ""; }, 7000);
+  }
+
+  /* ---------- share / save ---------- */
+  function fileName(){
+    return (fullCarName() + "-" + els.year.value).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".png";
+  }
+  function getBlob(){ return new Promise(function(res){ els.canvas.toBlob(res, "image/png"); }); }
+
+  async function saveImage(blob){
+    blob = blob || await getBlob();
+    var d = null;
+    try{ d = window.claude && window.claude.use ? await window.claude.use("downloads") : null; }catch(e){ d = null; }
+    if(d){
+      try{ await d.save({ filename: fileName(), data: blob }); say("Image save ho gayi. Ab gallery se status par lagao."); }
+      catch(e){ if(e && e.code === "declined"){ return; } say("Save nahi ho saki. Dobara try karo.", true); }
+      return;
+    }
+    var url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = fileName(); document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    say("Image download ho gayi. Gallery se status par lagao.");
+  }
+
+  async function shareImage(){
+    var blob = await getBlob();
+    var file = new File([blob], fileName(), { type: "image/png" });
+    try{
+      if(navigator.canShare && navigator.canShare({ files:[file] })){
+        await navigator.share({ files:[file], text: caption() });
+        return;
+      }
+    }catch(e){
+      if(e && e.name === "AbortError"){ return; }
+    }
+    await saveImage(blob);
+  }
+
+  async function copyCaption(){
+    var t = caption();
+    try{ await navigator.clipboard.writeText(t); say("Caption copy ho gaya."); }
+    catch(e){
+      var ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select();
+      var ok = false; try{ ok = document.execCommand("copy"); }catch(_){}
+      ta.remove(); say(ok ? "Caption copy ho gaya." : "Copy nahi hua. Note se khud copy kar lo.", !ok);
+    }
+  }
+
+  /* ---------- wiring ---------- */
+  var raf = 0;
+  function schedule(){ cancelAnimationFrame(raf); raf = requestAnimationFrame(draw); }
+  [els.sName, els.sOwner, els.sPhone, els.sAddr].forEach(function(e){ e.addEventListener("input", function(){ saveShowroom(); schedule(); }); });
+  [els.custom, els.note, els.size, els.year].forEach(function(e){ e.addEventListener("input", schedule); });
+  els.cond.addEventListener("input", function(){ condText(); schedule(); });
+  els.make.addEventListener("change", function(){ fillModels(); schedule(); });
+  els.model.addEventListener("change", function(){ syncCustom(); schedule(); });
+  document.querySelectorAll('input[name="type"]').forEach(function(r){ r.addEventListener("change", schedule); });
+  $("btn-share").addEventListener("click", shareImage);
+  $("btn-save").addEventListener("click", function(){ saveImage(); });
+  $("btn-copy").addEventListener("click", copyCaption);
+
+  loadShowroom(); condText(); draw();
+  if(document.fonts && document.fonts.load){
+    Promise.all([
+      document.fonts.load('800 100px "Barlow Condensed"'), document.fonts.load('700 100px "Barlow Condensed"'),
+      document.fonts.load('400 30px "Barlow"'), document.fonts.load('500 30px "Barlow"'), document.fonts.load('600 30px "Barlow"')
+    ]).then(draw, draw);
+  }
+})();
+</script>
+
+</body>
+</html>
