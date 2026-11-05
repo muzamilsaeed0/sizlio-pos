@@ -917,7 +917,7 @@ const money = v => (window.SizlioCurrency ? window.SizlioCurrency.money(v) : ('R
     const q = new URLSearchParams(location.search);
     const r = q.get('r') || q.get('restaurant');
     if (!r) return;
-    const res = await fetch('/api/public/pos-settings?restaurant=' + encodeURIComponent(r)).catch(()=>null);
+    const res = await fetch('/api/public/' + encodeURIComponent(r) + '/pos-settings').catch(()=>null);
     if (res && res.ok) {
       const data = await res.json();
       const s = data.data || data;

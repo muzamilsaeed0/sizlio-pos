@@ -1413,9 +1413,9 @@ function isWholesale() {
         const today = result.data.today || {};
         const month = result.data.month || {};
         document.getElementById("today-count").innerText = today.orders_count ?? 0;
-        document.getElementById("today-sales").innerText = "Rs " + Number(today.total_sales || 0).toLocaleString();
+        document.getElementById("today-sales").innerText = (window.SizlioCurrency ? window.SizlioCurrency.money(today.total_sales || 0) : ("Rs " + Number(today.total_sales || 0).toLocaleString()));
         document.getElementById("month-count").innerText = month.orders_count ?? 0;
-        document.getElementById("month-sales").innerText = "Rs " + Number(month.total_sales || 0).toLocaleString();
+        document.getElementById("month-sales").innerText = (window.SizlioCurrency ? window.SizlioCurrency.money(month.total_sales || 0) : ("Rs " + Number(month.total_sales || 0).toLocaleString()));
       } catch (error) { console.error("loadSummary:", error); }
     }
 
@@ -1465,11 +1465,11 @@ function isWholesale() {
                 window._lastProfitReport = d;
         document.getElementById('profit-orders').textContent = d.orders_count ?? 0;
         document.getElementById('profit-revenue').textContent =
-          'Rs ' + Number(d.revenue || 0).toLocaleString();
+          (window.SizlioCurrency ? window.SizlioCurrency.money(d.revenue || 0) : ('Rs ' + Number(d.revenue || 0).toLocaleString()));
         document.getElementById('profit-cogs').textContent =
-          'Rs ' + Number(d.cogs || 0).toLocaleString();
+          (window.SizlioCurrency ? window.SizlioCurrency.money(d.cogs || 0) : ('Rs ' + Number(d.cogs || 0).toLocaleString()));
         document.getElementById('profit-profit').textContent =
-          'Rs ' + Number(d.profit || 0).toLocaleString();
+          (window.SizlioCurrency ? window.SizlioCurrency.money(d.profit || 0) : ('Rs ' + Number(d.profit || 0).toLocaleString()));
         document.getElementById('profit-margin').textContent =
           Number(d.margin_percent || 0).toFixed(1) + '%';
 

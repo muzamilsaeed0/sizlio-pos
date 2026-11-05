@@ -669,12 +669,74 @@ exports.getRestaurantInfo = async (req, res) => {
     }
 
     const result = await pool.query(
-      `SELECT name, logo_url FROM restaurants WHERE id = $1`,
+      `SELECT name, logo_url, pos_settings FROM restaurants WHERE id = $1`,
       [restaurantId]
     );
-    res.json({ success: true, data: result.rows[0] });
+    const row = result.rows[0] || {};
+    const ps = row.pos_settings || {};
+    const COUNTRY_CURRENCY = {
+      PK: { currency_code: 'PKR', currency_symbol: 'Rs' },
+      AE: { currency_code: 'AED', currency_symbol: 'AED' },
+      SA: { currency_code: 'SAR', currency_symbol: 'SAR' },
+      BH: { currency_code: 'BHD', currency_symbol: 'BD' },
+      QA: { currency_code: 'QAR', currency_symbol: 'QR' },
+      GB: { currency_code: 'GBP', currency_symbol: '£' },
+      US: { currency_code: 'USD', currency_symbol: '$' }
+    };
+    let country = String(ps.country_code || 'PK').toUpperCase();
+    if (!COUNTRY_CURRENCY[country]) country = 'PK';
+    const mapped = COUNTRY_CURRENCY[country];
+    res.json({
+      success: true,
+      data: {
+        name: row.name,
+        logo_url: row.logo_url,
+        country_code: country,
+        currency_code: mapped.currency_code,
+        currency_symbol: mapped.currency_symbol
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+/** GET /api/public/:restaurantId/pos-settings — public currency for QR/customer menu */
+exports.getPublicPosSettings = async (req, res) => {
+  try {
+    const restaurantId = Number(req.params.restaurantId);
+    const check = await validateRestaurant(restaurantId);
+    if (!check.success) {
+      return res.status(check.status).json({ success: false, message: check.message });
+    }
+    const result = await pool.query(
+      `SELECT pos_settings FROM restaurants WHERE id = $1`,
+      [restaurantId]
+    );
+    const ps = (result.rows[0] && result.rows[0].pos_settings) || {};
+    const COUNTRY_CURRENCY = {
+      PK: { currency_code: 'PKR', currency_symbol: 'Rs' },
+      AE: { currency_code: 'AED', currency_symbol: 'AED' },
+      SA: { currency_code: 'SAR', currency_symbol: 'SAR' },
+      BH: { currency_code: 'BHD', currency_symbol: 'BD' },
+      QA: { currency_code: 'QAR', currency_symbol: 'QR' },
+      GB: { currency_code: 'GBP', currency_symbol: '£' },
+      US: { currency_code: 'USD', currency_symbol: '$' }
+    };
+    let country = String(ps.country_code || 'PK').toUpperCase();
+    if (!COUNTRY_CURRENCY[country]) country = 'PK';
+    const mapped = COUNTRY_CURRENCY[country];
+    return res.json({
+      success: true,
+      data: {
+        country_code: country,
+        currency_code: mapped.currency_code,
+        currency_symbol: mapped.currency_symbol
+      }
+    });
+  } catch (err) {
+    console.error('getPublicPosSettings:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };

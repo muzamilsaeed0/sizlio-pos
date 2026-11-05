@@ -39,6 +39,7 @@ const {
   callWaiter,
   placePublicOrder,
   getRestaurantInfo,
+  getPublicPosSettings,
   getTableTokens
 } = require('../controllers/publicController');
 
@@ -50,6 +51,7 @@ router.get('/server-info', serverInfo);
 router.get('/:restaurantId/menu', getPublicMenu);
 router.get('/:restaurantId/deals', getPublicDeals);
 router.get('/:restaurantId/info', getRestaurantInfo);
+router.get('/:restaurantId/pos-settings', getPublicPosSettings);
 router.post('/:restaurantId/order', publicOrderLimiter, placePublicOrder);
 router.post('/:restaurantId/call-waiter', callWaiterLimiter, callWaiter);
 
