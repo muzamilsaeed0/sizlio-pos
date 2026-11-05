@@ -1010,6 +1010,7 @@ function money(value){
   const amount = Number(value || 0);
   return 'Rs ' + amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
+
 (async function loadCurrencySettings() {
   try {
     const token = localStorage.getItem('manager_token') || localStorage.getItem('counter_token') || localStorage.getItem('token');
@@ -1021,9 +1022,6 @@ function money(value){
     }
   } catch (e) {}
 })();
-        );
-
-}
 
 
 /* =====================================================
