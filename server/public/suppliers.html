@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Supplier Ledger</title>
+  <script src="/currency.js"></script>
 <style>
   * { box-sizing: border-box; }
   :root {
@@ -559,9 +560,18 @@ const esc = v => String(v ?? "")
   .replaceAll('"', "&quot;")
   .replaceAll("'", "&#039;");
 
-const money = v => "Rs " + Number(v || 0).toLocaleString("en-PK", {
+const money = v => (window.SizlioCurrency ? window.SizlioCurrency.money(v) : ("Rs " + Number(v || 0).toLocaleString("en-PK", {
   minimumFractionDigits: 2, maximumFractionDigits: 2
-});
+})));
+(async function loadCurrencySettings(){
+  try {
+    const token = localStorage.getItem('manager_token') || localStorage.getItem('token');
+    if (!token || !window.SizlioCurrency) return;
+    const res = await fetch('/api/settings/pos', { headers: { Authorization: 'Bearer ' + token } });
+    const data = await res.json();
+    if (data && data.success && data.data) window.SizlioCurrency.applyFromSettings(data.data);
+  } catch(e) {}
+})();
 const escapeHtml = esc;   
 
 const formatMoney = v => Number(v || 0).toLocaleString("en-PK", {
@@ -631,7 +641,7 @@ function buildStatementImageHtml(ledger) {
       <td style="padding:8px;border-bottom:1px solid #e5e7eb;"><strong>Opening Balance</strong></td>
       <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;">—</td>
       <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;">—</td>
-      <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:800;">Rs ${formatMoney(opening_balance)}</td>
+      <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:800;">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${formatMoney(opening_balance)}</td>
     </tr>
   `;
 
@@ -657,7 +667,7 @@ function buildStatementImageHtml(ledger) {
             ${credit > 0 ? 'Rs ' + formatMoney(credit) : '—'}
           </td>
           <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:800;font-size:12px;">
-            Rs ${formatMoney(e.balance)}
+            ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${formatMoney(e.balance)}
           </td>
         </tr>
       `;
@@ -697,7 +707,7 @@ function buildStatementImageHtml(ledger) {
             ${balanceLabel}
           </div>
           <div style="font-size:24px;font-weight:800;color:${balanceColor};margin-top:4px;">
-            Rs ${formatMoney(Math.abs(closing_balance))}
+            ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${formatMoney(Math.abs(closing_balance))}
           </div>
           <div style="font-size:10px;color:#6b7280;margin-top:4px;">
             ${new Date().toLocaleString('en-GB')}
@@ -710,15 +720,15 @@ function buildStatementImageHtml(ledger) {
       <div style="display:flex;gap:10px;margin-bottom:20px;">
         <div style="flex:1;padding:12px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca;">
           <div style="font-size:10px;color:#991b1b;text-transform:uppercase;font-weight:700;">Opening</div>
-          <div style="font-size:15px;font-weight:800;color:#dc2626;margin-top:3px;">Rs ${formatMoney(opening_balance)}</div>
+          <div style="font-size:15px;font-weight:800;color:#dc2626;margin-top:3px;">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${formatMoney(opening_balance)}</div>
         </div>
         <div style="flex:1;padding:12px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca;">
           <div style="font-size:10px;color:#991b1b;text-transform:uppercase;font-weight:700;">Total Purchases</div>
-          <div style="font-size:15px;font-weight:800;color:#dc2626;margin-top:3px;">Rs ${formatMoney(total_debit)}</div>
+          <div style="font-size:15px;font-weight:800;color:#dc2626;margin-top:3px;">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${formatMoney(total_debit)}</div>
         </div>
         <div style="flex:1;padding:12px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;">
           <div style="font-size:10px;color:#166534;text-transform:uppercase;font-weight:700;">Total Paid</div>
-          <div style="font-size:15px;font-weight:800;color:#16a34a;margin-top:3px;">Rs ${formatMoney(total_credit)}</div>
+          <div style="font-size:15px;font-weight:800;color:#16a34a;margin-top:3px;">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${formatMoney(total_credit)}</div>
         </div>
       </div>
 
@@ -856,7 +866,7 @@ async function sendImageToWhatsApp() {
   const message = `📒 *Supplier Statement*\n` +
     `_${supplierName}_\n` +
     `📅 ${new Date().toLocaleDateString()}\n\n` +
-    `*Balance:* Rs ${Number(closing).toFixed(2)}\n\n` +
+    `*Balance:* ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(closing).toFixed(2)}\n\n` +
     `_Please find the detailed statement attached._`;
 
   // Try Web Share API (mobile) — supports files
@@ -1541,11 +1551,11 @@ function shareWhatsApp() {
   let msg = `📒 *Supplier Statement*\n`;
   msg += `_${supplier.name}_\n`;
   msg += `📅 ${new Date().toLocaleDateString()}\n\n`;
-  msg += `Opening: Rs ${Number(opening_balance).toFixed(2)}\n`;
-  msg += `Total Purchases: Rs ${Number(total_debit).toFixed(2)}\n`;
-  msg += `Total Paid: Rs ${Number(total_credit).toFixed(2)}\n`;
+  msg += `Opening: ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(opening_balance).toFixed(2)}\n`;
+  msg += `Total Purchases: ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(total_debit).toFixed(2)}\n`;
+  msg += `Total Paid: ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(total_credit).toFixed(2)}\n`;
   msg += `━━━━━━━━━━━━━━━\n`;
-  msg += `*Closing Balance:* Rs ${Number(closing_balance).toFixed(2)}\n`;
+  msg += `*Closing Balance:* ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(closing_balance).toFixed(2)}\n`;
 
   const encoded = encodeURIComponent(msg);
   const cleanPhone = String(phone || "").replace(/\D/g, "");
@@ -1575,17 +1585,17 @@ function shareEmail() {
   body += `=================\n\n`;
   body += `Supplier: ${supplier.name}\n`;
   body += `Date: ${new Date().toLocaleString()}\n\n`;
-  body += `Opening Balance: Rs ${Number(opening_balance).toFixed(2)}\n`;
-  body += `Total Purchases: Rs ${Number(total_debit).toFixed(2)}\n`;
-  body += `Total Paid: Rs ${Number(total_credit).toFixed(2)}\n`;
-  body += `Closing Balance: Rs ${Number(closing_balance).toFixed(2)}\n\n`;
+  body += `Opening Balance: ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(opening_balance).toFixed(2)}\n`;
+  body += `Total Purchases: ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(total_debit).toFixed(2)}\n`;
+  body += `Total Paid: ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(total_credit).toFixed(2)}\n`;
+  body += `Closing Balance: ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(closing_balance).toFixed(2)}\n\n`;
   body += `--- Recent Entries ---\n\n`;
 
   entries.slice(-20).forEach(e => {
     body += `${new Date(e.txn_date).toLocaleDateString()} | ${e.description}\n`;
-    if (e.debit > 0) body += `  Debit: Rs ${Number(e.debit).toFixed(2)}\n`;
-    if (e.credit > 0) body += `  Credit: Rs ${Number(e.credit).toFixed(2)}\n`;
-    body += `  Balance: Rs ${Number(e.balance).toFixed(2)}\n\n`;
+    if (e.debit > 0) body += `  Debit: ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(e.debit).toFixed(2)}\n`;
+    if (e.credit > 0) body += `  Credit: ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(e.credit).toFixed(2)}\n`;
+    body += `  Balance: ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(e.balance).toFixed(2)}\n\n`;
   });
 
   window.location.href = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -1869,7 +1879,7 @@ function sendAgingReminder(supplierId) {
   let msg = `🙏 *Payment Reminder*\n`;
   msg += `📅 ${new Date().toLocaleDateString()}\n\n`;
   msg += `Dear *${supplier.name}*,\n\n`;
-  msg += `Aap ka balance *Rs ${balance.toFixed(2)}* pending hai.`;
+  msg += `Aap ka balance *${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${balance.toFixed(2)}* pending hai.`;
   if (supplier.days_old > 0) msg += ` (${supplier.days_old} din se)`;
   msg += `\n\nBaraye meharbani jald payment kar dein.\n\nShukriya! 🙏`;
 
@@ -1895,7 +1905,7 @@ function sendBulkWhatsAppReminders() {
       let msg = `🙏 *Payment Reminder*\n`;
       msg += `📅 ${new Date().toLocaleDateString()}\n\n`;
       msg += `Dear *${supplier.name}*,\n\n`;
-      msg += `Aap ka balance *Rs ${supplier.balance.toFixed(2)}* pending hai.`;
+      msg += `Aap ka balance *${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${supplier.balance.toFixed(2)}* pending hai.`;
       if (supplier.bucket && supplier.bucket !== "Settled") msg += ` (${supplier.bucket})`;
       msg += `\n\nBaraye meharbani jald payment kar dein.\n\nShukriya! 🙏`;
 
@@ -1920,7 +1930,7 @@ function printAgingReport() {
         <tr>
           <td>${esc(r.name)}</td>
           <td>${esc(r.phone || "—")}</td>
-          <td style="text-align:right;font-weight:700;color:#dc2626;">Rs ${bal.toFixed(2)}</td>
+          <td style="text-align:right;font-weight:700;color:#dc2626;">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${bal.toFixed(2)}</td>
           <td style="text-align:right;">${r.days_old || 0}</td>
           <td>${esc(r.bucket)}</td>
         </tr>
@@ -1952,7 +1962,7 @@ function printAgingReport() {
         <thead><tr><th>Supplier</th><th>Phone</th><th style="text-align:right">Balance</th><th style="text-align:right">Days Old</th><th>Bucket</th></tr></thead>
         <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:#999;">No pending balances</td></tr>'}</tbody>
       </table>
-      <div class="total">Total Payable: Rs ${totalBalance.toFixed(2)}</div>
+      <div class="total">Total Payable: ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${totalBalance.toFixed(2)}</div>
     </body></html>
   `;
 

@@ -628,11 +628,11 @@
             <input id="pos-tax" type="number" min="0" max="100" step="0.01" value="0">
           </div>
           <div class="field">
-            <label>Default Delivery Charges (Rs)</label>
+            <label>Default Delivery Charges</label>
             <input id="pos-delivery" type="number" min="0" step="0.01" value="0">
           </div>
           <div class="field">
-            <label>Default Dine-in / Service Charges (Rs)</label>
+            <label>Default Dine-in / Service Charges</label>
             <input id="pos-dine" type="number" min="0" step="0.01" value="0">
           </div>
           <div class="field">
@@ -1269,7 +1269,7 @@ function isWholesale() {
     function populateDealItemSelect() {
       const select = document.getElementById("deal-item-select");
       if (!menuItemsFlat.length) { select.innerHTML = '<option value="">No menu items available</option>'; return; }
-      select.innerHTML = menuItemsFlat.map(item => `<option value="${Number(item.id)}">${escapeHtml(item.name)} (Rs ${Number(item.price || 0).toLocaleString()})</option>`).join("");
+      select.innerHTML = menuItemsFlat.map(item => `<option value="${Number(item.id)}">${escapeHtml(item.name)} (${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(item.price || 0).toLocaleString()})</option>`).join("");
       populateDealItemVariantSelect();
     }
     function populateDealItemVariantSelect() {
@@ -1278,9 +1278,9 @@ function isWholesale() {
       const itemId = Number(itemSelect.value);
       const item = menuItemsFlat.find(menuItem => Number(menuItem.id) === itemId);
       const variants = item && Array.isArray(item.variants) ? item.variants : [];
-      const baseLabel = item ? `Base price (Rs ${Number(item.price || 0).toLocaleString()})` : "Base price";
+      const baseLabel = item ? `Base price (${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(item.price || 0).toLocaleString()})` : "Base price";
       if (!variants.length) { variantSelect.innerHTML = `<option value="">${escapeHtml(baseLabel)}</option>`; return; }
-      variantSelect.innerHTML = `<option value="">${escapeHtml(baseLabel)}</option>` + variants.map(variant => `<option value="${Number(variant.id)}">${escapeHtml(variant.label)} (Rs ${Number(variant.price || 0).toLocaleString()})</option>`).join("");
+      variantSelect.innerHTML = `<option value="">${escapeHtml(baseLabel)}</option>` + variants.map(variant => `<option value="${Number(variant.id)}">${escapeHtml(variant.label)} (${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(variant.price || 0).toLocaleString()})</option>`).join("");
     }
     function populateDealCategorySelect() {
       const select = document.getElementById("deal-category");
@@ -1314,7 +1314,7 @@ function isWholesale() {
         <div class="row">
           <div class="row-left">
             <div class="row-title">${escapeHtml(item.name)} ${item.variant_label ? `<span style="color: var(--accent); font-weight: 400;">(${escapeHtml(item.variant_label)})</span>` : ""}</div>
-            <div class="row-sub">Qty: ${Number(item.quantity)} · Rs ${Number(item.price || 0).toLocaleString()} each</div>
+            <div class="row-sub">Qty: ${Number(item.quantity)} · ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(item.price || 0).toLocaleString()} each</div>
           </div>
           <div class="row-actions"><button class="btn-danger" onclick="removeDealItemRow(${index})">Remove</button></div>
         </div>
@@ -1339,7 +1339,7 @@ function isWholesale() {
         <div class="row">
           <div class="row-left">
             <div class="row-title">${escapeHtml(deal.name)} <span style="color: var(--muted); font-weight: 400;">(${escapeHtml(deal.type)})</span></div>
-            <div class="row-sub">Rs ${Number(deal.price || 0).toLocaleString()} · ${Array.isArray(deal.items) ? deal.items.length : 0} item(s)</div>
+            <div class="row-sub">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(deal.price || 0).toLocaleString()} · ${Array.isArray(deal.items) ? deal.items.length : 0} item(s)</div>
           </div>
           <div class="row-actions">
             <button class="btn-edit" onclick="editDeal(${Number(deal.id)})">Edit</button>
@@ -1512,15 +1512,27 @@ function isWholesale() {
         <div class="sub">${range} · printed ${new Date().toLocaleString()}</div>
         <table>
           <tr><th>Orders</th><td>${d.orders_count ?? 0}</td></tr>
-          <tr><th>Revenue</th><td>Rs ${Number(d.revenue || 0).toLocaleString()}</td></tr>
-          <tr><th>COGS (Recipes)</th><td>Rs ${Number(d.cogs || 0).toLocaleString()}</td></tr>
-          <tr><th>Gross Profit</th><td>Rs ${Number(d.profit || 0).toLocaleString()}</td></tr>
+          <tr><th>Revenue</th><td>${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(d.revenue || 0).toLocaleString()}</td></tr>
+          <tr><th>COGS (Recipes)</th><td>${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(d.cogs || 0).toLocaleString()}</td></tr>
+          <tr><th>Gross Profit</th><td>${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(d.profit || 0).toLocaleString()}</td></tr>
           <tr><th>Margin</th><td>${Number(d.margin_percent || 0).toFixed(1)}%</td></tr>
         </table>
                ${d.items_without_recipe > 0
           ? `<p class="warn">Note: ${d.items_without_recipe} sold line(s) have no recipe — COGS may be understated.</p>`
           : ''}
-        </body></html>`);
+        
+<script>
+(async function(){
+  try {
+    const token = localStorage.getItem('manager_token') || localStorage.getItem('token');
+    if (!token || !window.SizlioCurrency) return;
+    const res = await fetch('/api/settings/pos', { headers: { Authorization: 'Bearer ' + token } });
+    const data = await res.json();
+    if (data && data.success && data.data) window.SizlioCurrency.applyFromSettings(data.data);
+  } catch(e) {}
+})();
+</script>
+</body></html>`);
       w.document.close();
       w.focus();
       setTimeout(() => { try { w.print(); } catch (e) {} }, 250);
@@ -1574,7 +1586,7 @@ function isWholesale() {
               <div class="row">
                 <div class="row-left">
                   <div class="row-title">${escapeHtml(item.name)}</div>
-                  <div class="row-sub">Rs ${Number(item.price || 0).toLocaleString()} ${Array.isArray(item.variants) && item.variants.length ? " · " + item.variants.length + " size/pcs option(s): " + item.variants.map(v => escapeHtml(v.label)).join(", ") : ""}</div>
+                  <div class="row-sub">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(item.price || 0).toLocaleString()} ${Array.isArray(item.variants) && item.variants.length ? " · " + item.variants.length + " size/pcs option(s): " + item.variants.map(v => escapeHtml(v.label)).join(", ") : ""}</div>
                 </div>
                 <div class="row-actions">
                   <button class="btn-edit" onclick="openMenuItemForEdit(${Number(item.id)})">Edit</button>
@@ -1607,7 +1619,7 @@ function isWholesale() {
       if (!Array.isArray(variants) || !variants.length) { box.innerHTML = ""; return; }
       box.innerHTML = variants.map(variant => `
         <div class="row">
-          <div class="row-left"><div class="row-title">${escapeHtml(variant.label)}</div><div class="row-sub">Rs ${Number(variant.price || 0).toLocaleString()}</div></div>
+          <div class="row-left"><div class="row-title">${escapeHtml(variant.label)}</div><div class="row-sub">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(variant.price || 0).toLocaleString()}</div></div>
           <div class="row-actions"><button class="btn-danger" onclick="removeMenuItemVariantInline(${Number(variant.id)})">Remove</button></div>
         </div>
       `).join("");
@@ -1917,7 +1929,7 @@ function isWholesale() {
             <div style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;background:var(--bg);">
               <div style="display:flex;justify-content:space-between;gap:8px;">
                 <strong>#${escapeHtml(r.local_number || r.order_id)}</strong>
-                <span>Rs ${Number(r.amount || 0).toLocaleString()}</span>
+                <span>${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(r.amount || 0).toLocaleString()}</span>
               </div>
               <div style="font-size:12px;color:var(--muted);margin-top:4px;">
                 ${escapeHtml(r.customer_name || '—')} · ${escapeHtml(r.order_type || '')}
@@ -2345,7 +2357,7 @@ function isWholesale() {
                 ${escapeHtml(status.toUpperCase())} · Retry: ${Number(inv.retry_count || 0)}/5
               </div>
               <div class="row-sub">
-                Rs ${Number(inv.total_amount || 0).toLocaleString()} · ${escapeHtml(inv.order_type || "")} ${inv.table_no ? "· Table " + Number(inv.table_no) : ""}
+                ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(inv.total_amount || 0).toLocaleString()} · ${escapeHtml(inv.order_type || "")} ${inv.table_no ? "· Table " + Number(inv.table_no) : ""}
               </div>
               ${shortError ? `<div class="row-sub" style="color: var(--danger); font-size: 10px;">${escapeHtml(shortError)}</div>` : ""}
             </div>
@@ -2526,14 +2538,14 @@ function isWholesale() {
         const mainNum = isKitchen ? Number(t.orders_prepared || 0) : Number(t.orders || 0);
         const sub = isKitchen
           ? `${Number(t.shifts || 0)} shifts · ${Number(t.items_prepared || 0)} items · ${Number(t.ingredients_used || 0)} ingredients`
-          : `${Number(t.shifts || 0)} shifts · Rs ${Number(t.sales || 0).toLocaleString()}${Number(t.refunded || 0) > 0 ? ` · <span style="color:#ef4444;">−Rs ${Number(t.refunded).toLocaleString()} refund</span>` : ""}`;
+          : `${Number(t.shifts || 0)} shifts · ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(t.sales || 0).toLocaleString()}${Number(t.refunded || 0) > 0 ? ` · <span style="color:#ef4444;">−${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(t.refunded).toLocaleString()} refund</span>` : ""}`;
         return `
           <div style="padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--bg);">
             <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.3px;">${r.label}</div>
             <div style="font-size:20px;font-weight:800;color:${r.color};margin-top:4px;">${Number(t.orders || 0)}</div>
             <div style="font-size:10px;color:var(--muted);margin-top:2px;">
-              ${Number(t.shifts || 0)} shifts · Rs ${Number(t.sales || 0).toLocaleString()}
-              ${Number(t.refunded || 0) > 0 ? ` · <span style="color:#ef4444;">−Rs ${Number(t.refunded).toLocaleString()} refund</span>` : ""}
+              ${Number(t.shifts || 0)} shifts · ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(t.sales || 0).toLocaleString()}
+              ${Number(t.refunded || 0) > 0 ? ` · <span style="color:#ef4444;">−${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(t.refunded).toLocaleString()} refund</span>` : ""}
             </div>
           </div>
         `;
@@ -2595,9 +2607,9 @@ function isWholesale() {
                       <td style="padding:10px 8px;text-align:right;color:var(--muted);">—</td>
                       <td style="padding:10px 8px;text-align:right;color:var(--muted);">—</td>`;
           } else {
-            cells += `<td style="padding:10px 8px;text-align:right;">Rs ${Number(s.total_sales || 0).toLocaleString()}</td>
-                      <td style="padding:10px 8px;text-align:right;color:#22c55e;">Rs ${Number(s.total_collected || 0).toLocaleString()}</td>
-                      <td style="padding:10px 8px;text-align:right;color:#ef4444;">Rs ${Number(s.total_refunded || 0).toLocaleString()}</td>`;
+            cells += `<td style="padding:10px 8px;text-align:right;">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(s.total_sales || 0).toLocaleString()}</td>
+                      <td style="padding:10px 8px;text-align:right;color:#22c55e;">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(s.total_collected || 0).toLocaleString()}</td>
+                      <td style="padding:10px 8px;text-align:right;color:#ef4444;">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(s.total_refunded || 0).toLocaleString()}</td>`;
           }
         }
         if (hasKitchen) {
@@ -2654,8 +2666,8 @@ function isWholesale() {
             <td>${r.label}</td>
             <td style="text-align:right">${Number(t.shifts || 0)}</td>
             <td style="text-align:right">${Number(t.orders || 0)}</td>
-            <td style="text-align:right">Rs ${Number(t.sales || 0).toLocaleString()}</td>
-            <td style="text-align:right">Rs ${Number(t.collected || 0).toLocaleString()}</td>
+            <td style="text-align:right">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(t.sales || 0).toLocaleString()}</td>
+            <td style="text-align:right">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(t.collected || 0).toLocaleString()}</td>
           </tr>
         `;
       }).join("");
@@ -2673,8 +2685,8 @@ function isWholesale() {
             <td>${end}</td>
             <td>${escapeHtml(s.status || "")}</td>
             <td style="text-align:right">${Number(s.orders_count || 0)}</td>
-            <td style="text-align:right">Rs ${Number(s.total_sales || 0).toLocaleString()}</td>
-            <td style="text-align:right">Rs ${Number(s.total_collected || 0).toLocaleString()}</td>
+            <td style="text-align:right">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(s.total_sales || 0).toLocaleString()}</td>
+            <td style="text-align:right">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(s.total_collected || 0).toLocaleString()}</td>
           </tr>
         `;
       }).join("");

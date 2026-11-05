@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>Counter POS</title>
+  <script src="/currency.js"></script>
     <style>
         /* ── reset ── */
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1022,12 +1023,12 @@
                 </div>
 
                 <div class="field" id="deliveryChargeField" style="display:none; margin-top:10px;">
-                    <label>🛵 Delivery Charges (Rs)</label>
+                    <label>🛵 Delivery Charges</label>
                     <input id="deliveryCharge" type="number" min="0" step="0.01" value="0" oninput="renderCart()" />
                 </div>
 
                 <div class="field" id="dineChargeField" style="display:none; margin-top:10px;">
-                    <label>🍽️ Dine-in / Service Charges (Rs)</label>
+                    <label>🍽️ Dine-in / Service Charges</label>
                     <input id="dineCharge" type="number" min="0" step="0.01" value="0" oninput="renderCart()" />
                 </div>
 
@@ -1388,7 +1389,17 @@
             }
         }
 
-        const money = v => `RS ${Number(v || 0).toFixed(2)}`;
+        const money = v => (window.SizlioCurrency ? window.SizlioCurrency.money(v) : `${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(v || 0).toFixed(2)}`);
+async function loadCurrencySettings() {
+  try {
+    const token = localStorage.getItem('counter_token') || localStorage.getItem('token');
+    if (!token || !window.SizlioCurrency) return;
+    const res = await fetch('/api/settings/pos', { headers: { Authorization: 'Bearer ' + token } });
+    const data = await res.json();
+    if (data && data.success && data.data) window.SizlioCurrency.applyFromSettings(data.data);
+  } catch (e) {}
+}
+
         const esc = v => String(v ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
             .replaceAll('"', '&quot;').replaceAll("'", '&#039;');
         const authHeaders = () => ({

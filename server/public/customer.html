@@ -5,6 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Menu</title>
+  <script src="/currency.js"></script>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; padding: 0; background: #14181C; color: #F6F3EC; font-family: 'Segoe UI', system-ui, sans-serif; }
@@ -401,7 +402,7 @@ function showLocationBlockedScreen(message) {
         </div>
         <div class="deal-items">${itemsSummary}</div>
         <div class="deal-footer">
-          <div class="deal-price">Rs ${deal.price}</div>
+          <div class="deal-price">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${deal.price}</div>
           <div id="deal-controls-${deal.id}"></div>
         </div>
       </div>
@@ -560,7 +561,7 @@ function showLocationBlockedScreen(message) {
         </div>
         <div class="item-body">
           <div class="item-name">${escapeHtml(item.name)}</div>
-          <div class="item-price">Rs ${item.price}</div>
+          <div class="item-price">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${item.price}</div>
           <div class="item-controls" id="controls-${item.id}"></div>
         </div>
       </div>
@@ -670,7 +671,7 @@ function showLocationBlockedScreen(message) {
           <div class="variant-row">
             <div>
               <div class="variant-label">${escapeHtml(variant.label)}</div>
-              <div class="variant-price">Rs ${variant.price}</div>
+              <div class="variant-price">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${variant.price}</div>
             </div>
             ${cartItem
               ? `<div class="qty-stepper">
@@ -722,7 +723,7 @@ function showLocationBlockedScreen(message) {
             <div class="name">
               🎁 ${escapeHtml(deal.name)}
             </div>
-            <div class="sub">Rs ${deal.price} × ${deal.quantity} = Rs ${deal.price * deal.quantity}</div>
+            <div class="sub">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${deal.price} × ${deal.quantity} = ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${deal.price * deal.quantity}</div>
           </div>
           <div class="cart-row-actions">
             <button class="minus" onclick="decreaseDealQuantity(${deal.deal_id})">−</button>
@@ -741,7 +742,7 @@ function showLocationBlockedScreen(message) {
               ${escapeHtml(item.name)}
               ${item.variant_label ? `<span class="variant-tag">(${escapeHtml(item.variant_label)})</span>` : ''}
             </div>
-            <div class="sub">Rs ${item.price} × ${item.quantity} = Rs ${item.price * item.quantity}</div>
+            <div class="sub">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${item.price} × ${item.quantity} = ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${item.price * item.quantity}</div>
           </div>
           <div class="cart-row-actions">
             <button class="minus" onclick="decreaseQuantity(${item.menu_item_id}, ${item.variant_id || 'null'})">−</button>
@@ -906,6 +907,25 @@ function showLocationBlockedScreen(message) {
 
 </script>
 
+
+<script>
+const money = v => (window.SizlioCurrency ? window.SizlioCurrency.money(v) : ('Rs ' + Number(v||0)));
+(async function loadCurrencySettings(){
+  try {
+    if (!window.SizlioCurrency) return;
+    // public menu pages: try restaurant from query
+    const q = new URLSearchParams(location.search);
+    const r = q.get('r') || q.get('restaurant');
+    if (!r) return;
+    const res = await fetch('/api/public/pos-settings?restaurant=' + encodeURIComponent(r)).catch(()=>null);
+    if (res && res.ok) {
+      const data = await res.json();
+      const s = data.data || data;
+      if (s) window.SizlioCurrency.applyFromSettings(s);
+    }
+  } catch(e) {}
+})();
+</script>
 </body>
 </html>
 

@@ -1,3 +1,17 @@
+/* currency-aware money helper */
+function moneyFmt(n) {
+  if (window.SizlioCurrency) return window.SizlioCurrency.money(n);
+  return ((window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol + ' ' : 'Rs ') + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+(async function(){
+  try {
+    const token = localStorage.getItem('manager_token') || localStorage.getItem('token');
+    if (!token || !window.SizlioCurrency) return;
+    const res = await fetch('/api/settings/pos', { headers: { Authorization: 'Bearer ' + token } });
+    const data = await res.json();
+    if (data && data.success && data.data) window.SizlioCurrency.applyFromSettings(data.data);
+  } catch(e) {}
+})();
 "use strict";
 
 /* =====================================================
@@ -1087,7 +1101,7 @@ function renderInventoryCards(items) {
             </span>
 
             <span>
-              Rs ${formatMoney(
+              ${moneyFmt(
                 item.purchase_price
               )}
             </span>
@@ -1102,7 +1116,7 @@ function renderInventoryCards(items) {
             </span>
 
             <span>
-              Rs ${formatMoney(stockValue)}
+              ${moneyFmt(stockValue)}
             </span>
 
           </div>
@@ -1990,7 +2004,7 @@ function applyBulkCalc() {
     priceField.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
-  alert(`✅ Stock quantity set to: ${baseQty}\n✅ Price per unit: Rs ${pricePerUnit.toFixed(2)}`);
+  alert(`✅ Stock quantity set to: ${baseQty}\n✅ Price per unit: ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${pricePerUnit.toFixed(2)}`);
 }
 
 
@@ -3452,7 +3466,7 @@ function printInventoryStockReport() {
           <td>${escapeHtml(item.category || "-")}</td>
           <td>${formatNumber(stock)} ${escapeHtml(item.unit || "")}</td>
           <td>${formatNumber(minimum)} ${escapeHtml(item.unit || "")}</td>
-          <td>Rs ${formatMoney(item.purchase_price)}</td>
+          <td>${moneyFmt(item.purchase_price)}</td>
           <td>${escapeHtml(item.supplier || "-")}</td>
           <td>${escapeHtml(status)}</td>
         </tr>
@@ -3858,7 +3872,7 @@ function renderSupplierSummary() {
               ${supplier.itemCount} items &nbsp;·&nbsp; Stock: ${stockStr || "0"}
             </div>
             <div style="color:var(--success); font-weight:800; font-size:14px; margin-top:4px;">
-              Total Value: Rs ${formatMoney(supplier.totalStockValue)}
+              Total Value: ${moneyFmt(supplier.totalStockValue)}
             </div>
           </div>
 
@@ -3931,10 +3945,10 @@ function renderSupplierSummary() {
                       ${formatNumber(qty)} ${escapeHtml(item.unit || "")}
                     </td>
                     <td style="padding:8px; text-align:right; border-bottom:1px solid var(--border);">
-                      Rs ${formatMoney(price)}
+                      ${moneyFmt(price)}
                     </td>
                     <td style="padding:8px; text-align:right; border-bottom:1px solid var(--border); font-weight:700;">
-                      Rs ${formatMoney(value)}
+                      ${moneyFmt(value)}
                     </td>
                   </tr>
                 `;
@@ -3982,9 +3996,9 @@ function printSingleSupplier(index) {
         <td style="text-align:right;">
           ${formatNumber(qty)} ${escapeHtml(item.unit || "")}
         </td>
-        <td style="text-align:right;">Rs ${formatMoney(price)}</td>
+        <td style="text-align:right;">${moneyFmt(price)}</td>
         <td style="text-align:right; font-weight:700;">
-          Rs ${formatMoney(value)}
+          ${moneyFmt(value)}
         </td>
       </tr>
     `;
@@ -4024,8 +4038,8 @@ function printAllSuppliers() {
           <td style="text-align:right;">
             ${formatNumber(qty)} ${escapeHtml(item.unit || "")}
           </td>
-          <td style="text-align:right;">Rs ${formatMoney(price)}</td>
-          <td style="text-align:right;">Rs ${formatMoney(value)}</td>
+          <td style="text-align:right;">${moneyFmt(price)}</td>
+          <td style="text-align:right;">${moneyFmt(value)}</td>
         </tr>
       `;
     }).join("");
@@ -4035,7 +4049,7 @@ function printAllSuppliers() {
         <h2>🏢 ${escapeHtml(supplier.supplier)}</h2>
         <div class="sub">
           ${supplier.itemCount} items &nbsp;·&nbsp;
-          Total Value: <strong>Rs ${formatMoney(supplier.totalStockValue)}</strong>
+          Total Value: <strong>${moneyFmt(supplier.totalStockValue)}</strong>
         </div>
         <table>
           <thead>
@@ -4102,7 +4116,7 @@ function printAllSuppliers() {
       ${sections}
 
       <div class="grand">
-        Total Inventory Value: Rs ${formatMoney(grandTotal)}
+        Total Inventory Value: ${moneyFmt(grandTotal)}
       </div>
     </body>
     </html>
@@ -4163,7 +4177,7 @@ function buildSupplierPrintHtml(restaurantName, supplier, rows) {
 
       <div class="summary">
         Total Items: ${supplier.itemCount} &nbsp;·&nbsp;
-        Total Value: Rs ${formatMoney(supplier.totalStockValue)}
+        Total Value: ${moneyFmt(supplier.totalStockValue)}
       </div>
     </body>
     </html>
@@ -4206,12 +4220,12 @@ function shareSupplierWhatsApp(index) {
       ? ` [${formatNumber(pkgSize)}${pkgUnit}]`
       : "";
     message += `• ${item.name}${pkgLabel}: ${formatNumber(qty)} ${item.unit || ""} `;
-    message += `(Rs ${formatMoney(value)})\n`;
+    message += `(${moneyFmt(value)})\n`;
   });
 
   message += `\n━━━━━━━━━━━━━━━\n`;
   message += `*Total Items:* ${supplier.itemCount}\n`;
-  message += `*Total Value:* Rs ${formatMoney(supplier.totalStockValue)}\n`;
+  message += `*Total Value:* ${moneyFmt(supplier.totalStockValue)}\n`;
 
   const encoded = encodeURIComponent(message);
 
@@ -4261,13 +4275,13 @@ function shareSupplierEmail(index) {
       : "";
     body += `${item.name}${pkgLabel} (${item.category || "-"})\n`;
     body += `  Qty: ${formatNumber(qty)} ${item.unit || ""}\n`;
-    body += `  Price: Rs ${formatMoney(price)}\n`;
-    body += `  Value: Rs ${formatMoney(value)}\n\n`;
+    body += `  Price: ${moneyFmt(price)}\n`;
+    body += `  Value: ${moneyFmt(value)}\n\n`;
   });
 
   body += `-------------------------------------------\n`;
   body += `Total Items: ${supplier.itemCount}\n`;
-  body += `Total Value: Rs ${formatMoney(supplier.totalStockValue)}\n`;
+  body += `Total Value: ${moneyFmt(supplier.totalStockValue)}\n`;
 
   const url = `mailto:${encodeURIComponent(email)}` +
     `?subject=${encodeURIComponent(subject)}` +

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Restaurant POS - Rider</title>
+  <script src="/currency.js"></script>
 
 <script src="/socket.io/socket.io.js"></script>
 <link rel="manifest" href="/manifest.json">
@@ -1503,8 +1504,19 @@ function esc(value){
 }
 
 function money(value){
-  return `RS ${Number(value || 0).toFixed(2)}`;
+  if (window.SizlioCurrency) return window.SizlioCurrency.money(value);
+  return `${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(value || 0).toFixed(2)}`;
 }
+(async function loadCurrencySettings(){
+  try {
+    const token = localStorage.getItem('rider_token') || localStorage.getItem('token');
+    if (!token || !window.SizlioCurrency) return;
+    const res = await fetch('/api/settings/pos', { headers: { Authorization: 'Bearer ' + token } });
+    const data = await res.json();
+    if (data && data.success && data.data) window.SizlioCurrency.applyFromSettings(data.data);
+  } catch(e) {}
+})();
+
 
 function authHeaders(){
   return {

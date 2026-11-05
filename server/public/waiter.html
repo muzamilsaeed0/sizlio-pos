@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Waiter</title>
+  <script src="/currency.js"></script>
 <link rel="manifest" href="/manifest-waiter.json">
 <meta name="theme-color" content="#E3A23B">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -667,7 +668,7 @@ function renderMenuCard(item) {
     return `
       <div class="menu-card${anyInCart ? ' active' : ''}">
         <div class="name">${escapeHtml(item.name)}</div>
-        <div class="price">Rs ${item.price}</div>
+        <div class="price">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${item.price}</div>
         <div class="controls">
           ${cartItem
             ? `<button class="step-btn" onclick="removeItem(${item.id}, null)">−</button>
@@ -683,7 +684,7 @@ function renderMenuCard(item) {
   return `
     <div class="menu-card${anyInCart ? ' active' : ''}">
       <div class="name">${escapeHtml(item.name)}</div>
-      <div class="price">Rs ${item.price}</div>
+      <div class="price">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${item.price}</div>
       ${item.variants.map(variant => {
         const cartItem = findCartLine(item.id, variant.id);
         const labelEsc = variant.label.replace(/'/g,"\\'");
@@ -691,7 +692,7 @@ function renderMenuCard(item) {
           <div class="variant-row">
             <div>
               <div class="variant-label">${escapeHtml(variant.label)}</div>
-              <div class="variant-price">Rs ${variant.price}</div>
+              <div class="variant-price">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${variant.price}</div>
             </div>
             ${cartItem
               ? `<div style="display:flex; align-items:center; gap:6px;">
@@ -799,7 +800,7 @@ function renderDealCard(deal) {
       </div>
       <div class="deal-items">${itemsSummary}</div>
       <div class="deal-footer">
-        <div class="deal-price">Rs ${deal.price}</div>
+        <div class="deal-price">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${deal.price}</div>
         <div id="deal-controls-${deal.id}"></div>
       </div>
     </div>
@@ -869,7 +870,7 @@ function updateCartBar() {
         <div class="item-info">
           <span class="item-name">${escapeHtml(item.name)}</span>
           <span class="item-variant">${variantLabel}</span>
-          <span class="item-price">Rs ${item.price}</span>
+          <span class="item-price">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${item.price}</span>
         </div>
         <div class="item-controls">
           <button class="step-btn" onclick="removeItem(${item.menu_item_id}, ${item.variant_id || 'null'})">−</button>
@@ -890,7 +891,7 @@ function updateCartBar() {
       <div class="cart-item" style="border-left: 3px solid #E3A23B;">
         <div class="item-info">
           <span class="item-name">🎁 ${escapeHtml(deal.name)}</span>
-          <span class="item-price">Rs ${deal.price}</span>
+          <span class="item-price">${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${deal.price}</span>
         </div>
         <div class="item-controls">
           <button class="step-btn" onclick="decreaseDealQuantity(${deal.deal_id})">−</button>
@@ -980,7 +981,7 @@ async function loadPendingOrders() {
               ${customerName ? `<div style="font-size:12px; color:#E3A23B; margin-top:3px;">👤 ${customerName}</div>` : ''}
             </div>
             <div style="font-weight:800; color:#E3A23B; font-size:14px; white-space:nowrap;">
-              Rs ${total}
+              ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${total}
             </div>
           </div>
 
@@ -1067,7 +1068,7 @@ async function loadReadyOrders() {
               ${customerName ? `<div style="font-size:12px; color:#2FA37D; margin-top:3px;">👤 ${customerName}</div>` : ''}
             </div>
             <div style="font-weight:800; color:#2FA37D; font-size:14px; white-space:nowrap;">
-              Rs ${total}
+              ${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${total}
             </div>
           </div>
 
@@ -1155,7 +1156,7 @@ async function loadCurrentOrder() {
         <span>
           ${escapeHtml(i.name)}
           ${i.variant_label ? `<span class="variant-tag">(${escapeHtml(i.variant_label)})</span>` : ''}
-          (Rs ${i.price})
+          (${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${i.price})
         </span>
         <div class="actions">
           <button class="step-btn" onclick="changeQty(${i.order_item_id}, ${i.quantity - 1})">−</button>
@@ -1323,6 +1324,19 @@ window.onload = async () => {
   document.getElementById('login-box').style.display = 'block';
   document.getElementById('app-box').style.display = 'none';
 };
+</script>
+
+<script>
+const money = v => (window.SizlioCurrency ? window.SizlioCurrency.money(v) : ('Rs ' + Number(v||0)));
+(async function loadCurrencySettings(){
+  try {
+    const token = localStorage.getItem('waiter_token') || localStorage.getItem('token');
+    if (!token || !window.SizlioCurrency) return;
+    const res = await fetch('/api/settings/pos', { headers: { Authorization: 'Bearer ' + token } });
+    const data = await res.json();
+    if (data && data.success && data.data) window.SizlioCurrency.applyFromSettings(data.data);
+  } catch(e) {}
+})();
 </script>
 </body>
 </html>
