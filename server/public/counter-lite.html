@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>Counter Lite · Sizlio</title>
+  <script src="/currency.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
@@ -763,8 +764,23 @@
 
     /* ================= HELPERS ================= */
     function money(n) {
+      if (window.SizlioCurrency) return window.SizlioCurrency.money(n);
       return 'Rs ' + Number(n || 0).toLocaleString('en-PK', { maximumFractionDigits: 2 });
     }
+    async function loadCurrencySettings() {
+      try {
+        const token = localStorage.getItem('counter_token') || localStorage.getItem('token');
+        if (!token) return;
+        const res = await fetch('/api/settings/pos', {
+          headers: { Authorization: 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (data && data.success && data.data && window.SizlioCurrency) {
+          window.SizlioCurrency.applyFromSettings(data.data);
+        }
+      } catch (e) { /* keep default Rs */ }
+    }
+    loadCurrencySettings();
     function esc(s) {
       return String(s ?? '').replace(/[&<>"']/g, c => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;',
@@ -2174,7 +2190,7 @@
   <table>
     <tr><td>Subtotal</td><td style="text-align:right;">${Number(bill.sub).toFixed(2)}</td></tr>
     ${extraLines}
-    <tr class="tot"><td>TOTAL</td><td style="text-align:right;">Rs ${finalTotal.toFixed(2)}</td></tr>
+    <tr class="tot"><td>TOTAL</td><td style="text-align:right;">${money(finalTotal)}</td></tr>
   </table>
   <hr>
   <p class="center">Thank you!</p>

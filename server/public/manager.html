@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Manager</title>
+  <script src="/currency.js"></script>
 
   <style>
     * { box-sizing: border-box; }
@@ -604,6 +605,20 @@
 
         <!-- TAX / CHARGES -->
         <div class="form-grid">
+
+          <div class="field" style="grid-column:1/-1;">
+            <label>🌍 Country / Currency</label>
+            <select id="pos-country">
+              <option value="PK">Pakistan (Rs / PKR)</option>
+              <option value="AE">UAE / Dubai (AED)</option>
+              <option value="SA">Saudi Arabia (SAR)</option>
+              <option value="BH">Bahrain (BD / BHD)</option>
+              <option value="QA">Qatar (QR / QAR)</option>
+              <option value="GB">United Kingdom (£ / GBP)</option>
+              <option value="US">United States ($ / USD)</option>
+            </select>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">Bills, sales, counter screens is currency symbol use karenge. Amounts same numbers rehte hain — auto exchange rate nahi.</div>
+          </div>
           <div class="field">
             <label>Default GST %</label>
             <input id="pos-gst" type="number" min="0" max="100" step="0.01" value="0">
@@ -2038,6 +2053,9 @@ function isWholesale() {
         }
         const s = data.data || {};
 
+        document.getElementById("pos-country").value = s.country_code || "PK";
+        if (window.SizlioCurrency) window.SizlioCurrency.applyFromSettings(s);
+
         document.getElementById("pos-gst").value      = s.gst_percent      ?? 0;
         document.getElementById("pos-tax").value      = s.tax_percent      ?? 0;
         document.getElementById("pos-delivery").value = s.delivery_charge  ?? 0;
@@ -2071,6 +2089,7 @@ function isWholesale() {
       msg.innerText = "Saving...";
 
       const body = {
+        country_code:     document.getElementById("pos-country").value || "PK",
         gst_percent:      Number(document.getElementById("pos-gst").value      || 0),
         tax_percent:      Number(document.getElementById("pos-tax").value      || 0),
         delivery_charge:  Number(document.getElementById("pos-delivery").value || 0),
@@ -2111,6 +2130,9 @@ function isWholesale() {
           body: JSON.stringify({ raast_qr_string: raastQr })
         }).catch(() => {});
 
+        if (window.SizlioCurrency && data.data) {
+          window.SizlioCurrency.applyFromSettings(data.data);
+        }
         msg.style.color = "var(--success)";
         msg.innerText = "✓ Settings saved";
         setTimeout(closePosSettings, 900);

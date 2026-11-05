@@ -9,6 +9,7 @@
       content="width=device-width, initial-scale=1.0">
 
 <title>Restaurant Bill</title>
+  <script src="/currency.js"></script>
 
 
 <style>
@@ -1003,7 +1004,7 @@ function money(value){
         Number(value || 0);
 
 
-    return "Rs " +
+    return (window.SizlioCurrency ? window.SizlioCurrency.symbol + " " : "Rs ") +
         amount.toLocaleString(
             "en-PK",
             {
@@ -3388,6 +3389,20 @@ startBill();
 </script>
 
 
+
+<script>
+(function(){
+  window.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const token = localStorage.getItem('manager_token') || localStorage.getItem('counter_token') || localStorage.getItem('token');
+      if (!token || !window.SizlioCurrency) return;
+      const res = await fetch('/api/settings/pos', { headers: { Authorization: 'Bearer ' + token } });
+      const data = await res.json();
+      if (data && data.success && data.data) window.SizlioCurrency.applyFromSettings(data.data);
+    } catch(e) {}
+  });
+})();
+</script>
 </body>
 
 </html>

@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>Wholesale · Sizlio</title>
+  <script src="/currency.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -376,8 +377,20 @@
   let restaurantBrand = { name: '', logo: '', address: '', phone: '' };
 
   function money(n) {
+    if (window.SizlioCurrency) return window.SizlioCurrency.money(n);
     return 'Rs ' + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
   }
+  (async function loadCurrencySettings() {
+    try {
+      const token = localStorage.getItem('wholesale_token') || localStorage.getItem('token');
+      if (!token) return;
+      const res = await fetch('/api/settings/pos', { headers: { Authorization: 'Bearer ' + token } });
+      const data = await res.json();
+      if (data && data.success && data.data && window.SizlioCurrency) {
+        window.SizlioCurrency.applyFromSettings(data.data);
+      }
+    } catch (e) {}
+  })();
   function esc(s) {
     return String(s ?? '').replace(/[&<>"']/g, c => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
