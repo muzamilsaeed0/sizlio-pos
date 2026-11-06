@@ -1392,7 +1392,8 @@
         const money = v => (window.SizlioCurrency ? window.SizlioCurrency.money(v) : `${(window.SizlioCurrency && window.SizlioCurrency.symbol) ? window.SizlioCurrency.symbol : 'Rs'} ${Number(v || 0).toFixed(2)}`);
 async function loadCurrencySettings() {
   try {
-    const token = localStorage.getItem('counter_token') || localStorage.getItem('token');
+    // Only this counter's token — never manager/waiter token
+    const token = localStorage.getItem('counter_token');
     if (!token || !window.SizlioCurrency) return;
     const res = await fetch('/api/settings/pos', { headers: { Authorization: 'Bearer ' + token } });
     const data = await res.json();
@@ -1467,6 +1468,7 @@ async function loadCurrencySettings() {
                 token = data.token;
                 currentUser = data.user;
                localStorage.setItem('counter_token', token);
+        loadCurrencySettings();
 localStorage.setItem('counter_restaurant_id', String(currentUser.restaurant_id));
 localStorage.setItem('counter_user', JSON.stringify(currentUser));
                 showApp();

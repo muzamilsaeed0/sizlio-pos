@@ -6,10 +6,2057 @@
   <script src="/currency.js"></script>
 </head>
 <body>
+<<<<<<< HEAD
   <p>File restore in progress — if you see this, redeploy failed. Replace with full counter-lite.html from currency-fix.</p>
   <script>
     // Emergency: reload from last known good if available
     console.error('counter-lite was temporarily corrupted; full file must be pushed');
+=======
+
+  <div id="login-box">
+    <div class="login-card">
+      <h2>Counter Lite</h2>
+      <p class="sub">Sign in with your counter account</p>
+      <div class="field">
+        <label>Username</label>
+        <input id="username" placeholder="Username" autocomplete="username"
+               onkeydown="if (event.key === 'Enter') login()" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <div class="pw-wrap">
+          <input id="password" type="password" placeholder="Password"
+                 autocomplete="current-password"
+                 onkeydown="if (event.key === 'Enter') login()" />
+          <span class="pw-eye"
+                onmousedown="showPassword()" onmouseup="hidePassword()"
+                onmouseleave="hidePassword()" ontouchstart="showPassword()"
+                ontouchend="hidePassword()" title="Show password">👁</span>
+        </div>
+      </div>
+      <button class="btn btn-accent" onclick="login()">Login</button>
+      <p id="login-error"></p>
+    </div>
+  </div>
+
+  <div id="app-box">
+    <div class="topbar">
+      <div class="brand-wrap">
+        <img id="brandLogo" class="brand-logo" style="display:none;" alt="Logo" />
+        <span class="brand" id="brandName">Cafe</span>
+      </div>
+      <span class="pill" id="planPill">Cafe Lite</span>
+      <span class="spacer"></span>
+      <span class="sales-chip" id="todaySales">Today: Rs 0</span>
+      <button class="btn btn-ghost" onclick="openSalesReport()">Sales Report</button>
+      <button class="btn btn-ghost sales-hide-on-report" onclick="openMenuAdmin()">Menu</button>
+      <button class="btn btn-ghost sales-hide-on-report" onclick="openSettings()">Settings</button>
+      <button class="btn btn-ghost" onclick="toggleTheme()">Theme</button>
+      <button class="btn btn-danger" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="main">
+      <section class="panel">
+        <h2>Menu</h2>
+        <div class="type-row">
+          <button class="type-btn active" id="t-dine" onclick="setOrderType('dine_in')">Dine-in</button>
+          <button class="type-btn" id="t-take" onclick="setOrderType('walk_in')">Takeaway</button>
+          <button class="type-btn" id="t-del" onclick="setOrderType('delivery')">Delivery</button>
+        </div>
+        <input class="search" id="menuSearch" placeholder="Search menu…" oninput="renderMenu()" />
+        <div class="cats" id="cats"></div>
+        <div id="dealsSection" style="display:none;margin-bottom:14px;">
+          <div style="font-size:12px;font-weight:700;color:var(--accent);margin:0 0 8px;">🎁 Deals</div>
+          <div class="menu-grid" id="dealsGrid"></div>
+        </div>
+        <div class="menu-grid" id="menuGrid"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Current order</h2>
+        <div class="field-row" id="dineFields">
+          <input id="tableNo" type="number" min="1" placeholder="Table no" />
+        </div>
+        <div class="field-row hidden" id="deliveryFields">
+          <input id="custPhone" placeholder="Phone *" />
+          <input id="custAddress" placeholder="Address *" />
+        </div>
+        <div class="field-row">
+          <input id="custName" placeholder="Customer name (optional)" />
+        </div>
+        <div class="cart-list" id="cartList"></div>
+        <div class="totals" id="totals"></div>
+        <div class="field-row">
+          <select id="payMethod" onchange="renderCart()">
+            <option value="Cash">Cash</option>
+            <option value="Card">Card</option>
+            <option value="Bank">Bank</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="pay-row">
+          <button class="btn btn-ghost" onclick="placeOrder(false)">Pay later</button>
+          <button class="btn btn-ok" onclick="placeOrder(true)">Pay now</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Today's orders</h2>
+        <div class="orders-list" id="ordersList"></div>
+      </section>
+    </div>
+
+    <div id="salesPage">
+      <div class="sales-page-header">
+        <h2>Sales report</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" class="btn btn-ghost" onclick="exportSalesCSV()">Export CSV</button>
+          <button type="button" class="btn btn-ghost" onclick="printSalesReport()">Print</button>
+          <button type="button" class="btn btn-accent" onclick="closeSalesReport()">← Back to counter</button>
+        </div>
+      </div>
+      <div class="sales-filters">
+        <button type="button" class="chip-btn active" id="sf-today" onclick="setSalesRange('today')">Today</button>
+        <button type="button" class="chip-btn" id="sf-week" onclick="setSalesRange('week')">This week</button>
+        <button type="button" class="chip-btn" id="sf-month" onclick="setSalesRange('month')">This month</button>
+        <input type="date" id="salesFrom" />
+        <input type="date" id="salesTo" />
+        <button type="button" class="btn btn-accent" style="width:auto;padding:8px 14px;" onclick="loadSalesReport()">Apply</button>
+      </div>
+      <div class="sales-stats">
+        <div class="sales-stat"><div class="lbl">Orders</div><div class="val" id="stOrders">0</div></div>
+        <div class="sales-stat"><div class="lbl">Sales</div><div class="val" id="stSales">Rs 0</div></div>
+        <div class="sales-stat"><div class="lbl">Avg bill</div><div class="val" id="stAvg">Rs 0</div></div>
+        <div class="sales-stat"><div class="lbl">Items sold</div><div class="val" id="stItems">0</div></div>
+      </div>
+      <div class="sales-section-title">Payment summary</div>
+      <div id="salesPayments" class="empty">—</div>
+      <div class="sales-section-title">Top items</div>
+      <div id="salesTop" class="empty">—</div>
+      <div class="sales-section-title">Orders</div>
+      <div class="sales-table-wrap">
+        <table class="sales-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Type</th><th>Pay</th><th>Items</th>
+              <th>Subtotal</th><th>Disc</th><th>GST</th><th>Tax</th>
+              <th>Dine</th><th>Del</th><th>Card</th><th>Bank</th>
+              <th>Total</th><th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="salesOrdersBody"></tbody>
+          <tfoot id="salesOrdersFooter" style="background:var(--panel2); font-weight:800; border-top:2px solid var(--border);"></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MENU ADMIN MODAL ================= -->
+  <div id="menuModal" class="modal-bg hidden">
+    <div class="modal" style="max-height:90vh;overflow:auto;">
+      <button class="modal-close-x" onclick="closeMenuAdmin()" title="Close">×</button>
+      <h3>Menu items</h3>
+      <div id="menuAdminList"></div>
+      <hr style="border-color:var(--border);margin:14px 0;" />
+      <h3 id="menuFormTitle">Add item</h3>
+      <input type="hidden" id="editMenuId" value="" />
+      <label>Name *</label>
+      <input id="mName" />
+      <label>Price *</label>
+      <input id="mPrice" type="number" min="1" step="0.01" />
+      <label>Category</label>
+      <input id="mCategory" placeholder="e.g. Drinks" />
+      <label>Package size</label>
+      <input id="mPkgSize" type="number" min="0" step="0.01" placeholder="e.g. 250" />
+      <label>Package unit</label>
+      <select id="mPkgUnit">
+        <option value="">— none —</option>
+        <option value="S">S</option>
+        <option value="M">M</option>
+        <option value="L">L</option>
+        <option value="ml">ml</option>
+        <option value="g">g</option>
+        <option value="kg">kg</option>
+        <option value="Ltr">Ltr</option>
+        <option value="pcs">pcs</option>
+      </select>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+        <button type="button" class="btn btn-accent" onclick="saveMenuItem()" style="width:auto;padding:10px 16px;">Save item</button>
+        <button type="button" class="btn btn-ghost" onclick="resetMenuForm()">Clear</button>
+      </div>
+
+      <hr style="border-color:var(--border);margin:16px 0;" />
+      <h3 style="margin:0 0 10px;">🎁 Deals</h3>
+      <div id="dealsAdminList" style="margin-bottom:12px;font-size:12px;"></div>
+
+      <h3 style="margin:0 0 10px;font-size:15px;">Add / Edit deal</h3>
+      <input type="hidden" id="editDealId" value="" />
+      <label>Deal name *</label>
+      <input id="dName" placeholder="e.g. Lunch combo" />
+      <label>Deal price *</label>
+      <input id="dPrice" type="number" min="1" step="0.01" placeholder="0" />
+      <label>Items in this deal</label>
+      <div id="dItemPicks" style="max-height:140px;overflow:auto;font-size:12px;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <button type="button" class="btn btn-accent" onclick="saveDeal()" id="dealSaveBtn" style="width:auto;padding:10px 16px;">Save deal</button>
+        <button type="button" class="btn btn-ghost" onclick="resetDealForm()">Clear</button>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeMenuAdmin()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= BILL PREVIEW MODAL ================= -->
+  <div id="billPreviewModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:440px;max-height:92vh;overflow:auto;">
+      <button class="modal-close-x" onclick="closeBillPreview()" title="Close">×</button>
+      <h3>Bill preview</h3>
+      <label>Customer name</label>
+      <input id="bpName" placeholder="Optional" />
+      <label>Phone</label>
+      <input id="bpPhone" placeholder="Optional" />
+      <label>Note on bill</label>
+      <input id="bpNote" placeholder="e.g. less spicy / thank you" />
+      <div id="bpPreview" style="
+        margin:12px 0;padding:0;background:#fff;color:#000;
+        border-radius:10px;overflow:hidden;border:1px solid var(--border);
+        height:360px;
+      "></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeBillPreview()">Close</button>
+        <button class="btn btn-accent" onclick="confirmPrintBill()">Print</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= EDIT BILL MODAL ================= -->
+  <div id="editBillModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:400px;">
+      <button class="modal-close-x" onclick="closeEditBill()" title="Close">×</button>
+      <h3>Edit bill</h3>
+      <input type="hidden" id="ebOrderId" value="" />
+      <p id="ebInfo" style="color:var(--muted);font-size:13px;margin:0 0 10px;"></p>
+      <label>Discount type</label>
+      <select id="ebDiscType">
+        <option value="none">None</option>
+        <option value="percent">Percent %</option>
+        <option value="fixed">Fixed Rs</option>
+      </select>
+      <label>Discount value</label>
+      <input id="ebDiscVal" type="number" min="0" step="0.01" value="0" />
+      <label>GST %</label>
+      <input id="ebGst" type="number" min="0" max="100" step="0.01" value="0" />
+      <label>Tax %</label>
+      <input id="ebTax" type="number" min="0" max="100" step="0.01" value="0" />
+      <label>Dine charge (Rs)</label>
+      <input id="ebDine" type="number" min="0" step="1" value="0" />
+      <label>Delivery charge (Rs)</label>
+      <input id="ebDel" type="number" min="0" step="1" value="0" />
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeEditBill()">Close</button>
+        <button class="btn btn-accent" onclick="saveEditBill()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= SETTINGS MODAL ================= -->
+  <div id="settingsModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:460px;max-height:90vh;overflow:auto;">
+      <button class="modal-close-x" onclick="closeSettings()" title="Close">×</button>
+      <h3>Settings</h3>
+
+      <!-- ============ APPEARANCE ============ -->
+      <h4>🎨 Appearance</h4>
+      <div class="theme-switch">
+        <button type="button" class="theme-opt" id="theme-dark" onclick="setTheme('dark')">🌙 Dark</button>
+        <button type="button" class="theme-opt" id="theme-light" onclick="setTheme('light')">☀️ Light</button>
+      </div>
+
+      <!-- ============ BILLING / POS ============ -->
+      <h4>💰 Billing / POS</h4>
+      <label>🌍 Country / Currency</label>
+      <select id="setCountry">
+        <option value="PK">Pakistan (Rs / PKR)</option>
+        <option value="AE">UAE / Dubai (AED)</option>
+        <option value="SA">Saudi Arabia (SAR)</option>
+        <option value="BH">Bahrain (BD / BHD)</option>
+        <option value="QA">Qatar (QR / QAR)</option>
+        <option value="GB">United Kingdom (£ / GBP)</option>
+        <option value="US">United States ($ / USD)</option>
+      </select>
+      <div style="font-size:11px;color:var(--muted);margin:4px 0 10px;">Is restaurant ki currency. Doosri restaurant (R3 etc) alag rehti hai.</div>
+      <label>GST %</label>
+      <input id="setGst" type="number" min="0" max="100" step="0.01" value="0" />
+      <label>Tax % (other)</label>
+      <input id="setTax" type="number" min="0" max="100" step="0.01" value="0" />
+      <label>Delivery charge (Rs)</label>
+      <input id="setDelCharge" type="number" min="0" step="1" value="0" />
+      <label>Dine-in charge (Rs)</label>
+      <input id="setDineCharge" type="number" min="0" step="1" value="0" />
+      <label>Card surcharge %</label>
+      <input id="setCardCharge" type="number" min="0" max="100" step="0.01" value="0" />
+      <label>Bank surcharge %</label>
+      <input id="setBankCharge" type="number" min="0" max="100" step="0.01" value="0" />
+      <label>Discount type</label>
+      <select id="setDiscType">
+        <option value="none">None</option>
+        <option value="percent">Percent %</option>
+        <option value="fixed">Fixed Rs</option>
+      </select>
+      <label>Discount value</label>
+      <input id="setDiscValue" type="number" min="0" step="0.01" value="0" />
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:12px;text-transform:none;letter-spacing:0;">
+        <input type="checkbox" id="setAutoPrint" style="width:auto;" />
+        Auto-print bill after order
+      </label>
+      <label>Rider assign mode</label>
+      <select id="assignMode">
+        <option value="manual">Manual</option>
+        <option value="auto">Auto (least load)</option>
+      </select>
+
+      <!-- ============ MY ACCOUNT ============ -->
+      <h4>👤 My Account (Counter Lite)</h4>
+      <label>Username</label>
+      <input id="accUsername" placeholder="Your username" />
+      <label>Current password</label>
+      <div class="pw-wrap" style="margin-bottom:0;">
+        <input id="accCurrentPw" type="password" placeholder="Current password" />
+        <span class="pw-eye"
+              onmousedown="peek('accCurrentPw','text')"
+              onmouseup="peek('accCurrentPw','password')"
+              onmouseleave="peek('accCurrentPw','password')"
+              ontouchstart="peek('accCurrentPw','text')"
+              ontouchend="peek('accCurrentPw','password')">👁</span>
+      </div>
+      <label>New password</label>
+      <div class="pw-wrap" style="margin-bottom:0;">
+        <input id="accNewPw" type="password" minlength="4" maxlength="8" placeholder="Leave blank to keep same" />
+        <span class="pw-eye"
+              onmousedown="peek('accNewPw','text')"
+              onmouseup="peek('accNewPw','password')"
+              onmouseleave="peek('accNewPw','password')"
+              ontouchstart="peek('accNewPw','text')"
+              ontouchend="peek('accNewPw','password')">👁</span>
+      </div>
+      <label>Confirm new password</label>
+      <div class="pw-wrap" style="margin-bottom:0;">
+        <input id="accConfirmPw" type="password" minlength="4" maxlength="8" placeholder="Confirm new password" />
+      </div>
+      <button type="button" class="btn btn-ok" style="width:100%;margin-top:12px;" onclick="updateMyAccount()">
+        Update account
+      </button>
+
+      <!-- ============ RIDERS PASSWORD RESET ============ -->
+      <h4>🚴 Riders — Password Reset</h4>
+      <div id="ridersListBox">
+        <div class="empty" style="padding:12px;">Loading riders…</div>
+      </div>
+
+      <div class="modal-actions" style="margin-top:20px;">
+        <button class="btn btn-ghost" onclick="closeSettings()">Close</button>
+        <button class="btn btn-accent" onclick="saveSettings()">Save POS settings</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+
+  <script>
+    /* ================= GLOBAL STATE ================= */
+    const API = '/api';
+    const params = new URLSearchParams(location.search);
+
+    let restaurantId = Number(params.get('restaurant')) || null;
+    let token = localStorage.getItem('cafe_token') || '';
+    let user = null;
+    let orderType = 'dine_in';
+    let menu = [];
+    let activeCat = 'All';
+    let cart = [];
+    let dealsList = [];
+    let dealCart = [];
+    let deliveryRiders = [];
+    let staffList = [];        // for rider password reset section
+    let posSettings = {
+      gst_percent: 0, tax_percent: 0, delivery_charge: 0, dine_charge: 0,
+      card_charge: 0, bank_charge: 0,
+      discount_enabled: false, discount_type: 'none', discount_value: 0
+    };
+
+    let pendingBillOpts = null;
+    let salesCache = { orders: [], from: '', to: '', range: 'today' };
+    let cafeBrand = { name: 'Cafe', logo: '', address: '', phone: '' };
+    const fullOrderCache = new Map();
+
+    /* ================= HELPERS ================= */
+    function money(n) {
+      if (window.SizlioCurrency) return window.SizlioCurrency.money(n);
+      return 'Rs ' + Number(n || 0).toLocaleString('en-PK', { maximumFractionDigits: 2 });
+    }
+    async function loadCurrencySettings() {
+      try {
+        // Cafe Lite uses cafe_token; never fall back to another screen's token
+        // (that would load the wrong restaurant's currency).
+        const token = localStorage.getItem('cafe_token');
+        if (!token || !window.SizlioCurrency) return;
+        const res = await fetch('/api/settings/pos', {
+          headers: { Authorization: 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (data && data.success && data.data) {
+          window.SizlioCurrency.applyFromSettings(data.data);
+        }
+      } catch (e) { /* keep default Rs */ }
+    }
+    // Do NOT call before login — token not ready / wrong restaurant risk
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;',
+        '"': '&quot;', "'": '&#39;'
+      })[c]);
+    }
+    function pkgLabel(item) {
+      if (!item) return '';
+      const u = item.package_unit || '';
+      const s = item.package_size;
+      if (!u && (s === null || s === undefined || s === '')) return '';
+      if (['S', 'M', 'L'].includes(String(u)) && (s === null || s === '' || Number(s) === 0)) return String(u);
+      if (s !== null && s !== undefined && s !== '' && u) return `${s} ${u}`;
+      if (u) return String(u);
+      return s != null && s !== '' ? String(s) : '';
+    }
+    function showPassword() { document.getElementById('password').type = 'text'; }
+    function hidePassword() { document.getElementById('password').type = 'password'; }
+    function peek(id, type) {
+      const el = document.getElementById(id);
+      if (el) el.type = type;
+    }
+    function normalizeLogoUrl(value) {
+      if (!value) return '';
+      const url = String(value).trim();
+      if (/^https?:\/\//i.test(url) || url.startsWith('//') || url.startsWith('/')) return url;
+      return '/' + url;
+    }
+    function normPayMethod(v) {
+      const s = String(v || '').trim();
+      if (!s) return 'Unspecified';
+      const l = s.toLowerCase();
+      if (l === 'cash') return 'Cash';
+      if (l === 'card') return 'Card';
+      if (l === 'bank') return 'Bank';
+      if (l === 'cod') return 'Cash';
+      if (l === 'online' || l === 'other') return 'Other';
+      return s.charAt(0).toUpperCase() + s.slice(1);
+    }
+
+    /* ================= API ================= */
+    async function api(path, opts = {}) {
+      const res = await fetch(API + path, {
+        ...opts,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token,
+          ...(opts.headers || {})
+        }
+      });
+      if (res.status === 401) { logout(); throw new Error('Session expired'); }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Request failed');
+      return data;
+    }
+
+    /* ================= LOGIN ================= */
+    async function login() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const err = document.getElementById('login-error');
+      err.textContent = '';
+      if (!username || !password) { err.textContent = 'Username and password required'; return; }
+      if (!restaurantId) {
+        const saved = localStorage.getItem('cafe_restaurant_id');
+        if (saved) restaurantId = Number(saved);
+      }
+      try {
+        const res = await fetch(API + '/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username, password,
+            restaurant_id: restaurantId || undefined,
+            role: 'counter'
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { err.textContent = data.message || 'Login failed'; return; }
+        if (!data.token || data.user?.role !== 'counter') {
+          err.textContent = 'Counter login required for Cafe Lite'; return;
+        }
+        if (data.user.must_change_password) {
+          sessionStorage.setItem('sizlio_first_login_token', data.token);
+          sessionStorage.setItem('sizlio_first_login_user', JSON.stringify(data.user));
+          location.href = '/change-password.html';
+          return;
+        }
+        token = data.token;
+        user = data.user;
+        restaurantId = data.user.restaurant_id || restaurantId;
+        localStorage.setItem('cafe_token', token);
+        localStorage.setItem('cafe_restaurant_id', String(restaurantId));
+        await bootApp();
+      } catch (e) { console.error('login:', e); err.textContent = 'Server connection failed'; }
+    }
+
+    /* ================= SOCKET ================= */
+    let socket = null;
+    function connectSocket() {
+      if (typeof io === 'undefined') return;
+      if (socket) { try { socket.disconnect(); } catch (_) {} socket = null; }
+      try {
+        socket = io({ auth: { token } });
+        socket.on('connect', () => console.log('✅ socket connected'));
+        socket.on('connect_error', (e) => console.warn('socket:', e.message));
+        ['order_created','order_updated','order_ready','order_out_for_delivery',
+         'order_delivered','order_completed','order_paid',
+         'delivery_rider_assigned','orders_refresh'].forEach(evt => {
+          socket.on(evt, () => { loadOrders(); loadTodaySales(); });
+        });
+      } catch (err) { console.error('Socket connect failed:', err); }
+    }
+
+    /* ================= LOGOUT ================= */
+    function logout() {
+      if (socket) { try { socket.disconnect(); } catch (_) {} socket = null; }
+      token = ''; user = null;
+      localStorage.removeItem('cafe_token');
+      location.reload();
+    }
+
+    /* ================= BOOT ================= */
+    async function bootApp() {
+      document.getElementById('login-box').style.display = 'none';
+      document.getElementById('app-box').classList.add('show');
+      await loadCafeBrand();
+      document.title = `${cafeBrand.name} — Counter Lite`;
+
+      try {
+        const posRes = await api('/settings/pos');
+        if (posRes && (posRes.data || posRes.success) && window.SizlioCurrency) {
+          const ps = posRes.data || posRes;
+          window.SizlioCurrency.applyFromSettings(ps.data || ps);
+        }
+        if (posRes?.data) posSettings = { ...posSettings, ...posRes.data };
+      } catch (e) { console.warn('POS settings:', e.message); }
+
+      setInterval(() => { loadCafeBrand().catch(() => {}); }, 120000);
+
+      await Promise.all([
+        loadMenu(), loadDeals(), loadOrders(),
+        loadTodaySales(), loadDeliveryRiders()
+      ]);
+
+      connectSocket();
+      renderCart();
+      bindBillPreviewEditors();
+    }
+
+    async function loadCafeBrand() {
+      try {
+        const info = await api('/restaurants/me');
+        if (!info?.data) return cafeBrand;
+        cafeBrand = {
+          name: info.data.name || cafeBrand.name || 'Cafe',
+          logo: info.data.logo_url ? normalizeLogoUrl(info.data.logo_url) : '',
+          address: info.data.address || '',
+          phone: info.data.phone || ''
+        };
+        document.getElementById('brandName').textContent = cafeBrand.name;
+        document.title = `${cafeBrand.name} — Counter Lite`;
+        const brandLogoEl = document.getElementById('brandLogo');
+        if (brandLogoEl) {
+          if (cafeBrand.logo) {
+            brandLogoEl.src = cafeBrand.logo;
+            brandLogoEl.style.display = 'block';
+            brandLogoEl.onerror = () => { brandLogoEl.style.display = 'none'; };
+          } else {
+            brandLogoEl.style.display = 'none';
+            brandLogoEl.removeAttribute('src');
+          }
+        }
+        const plan = info.data.plan || 'Cafe Lite';
+        const planEl = document.getElementById('planPill');
+        if (planEl) planEl.textContent = plan;
+        return cafeBrand;
+      } catch (e) { console.warn('loadCafeBrand:', e.message); return cafeBrand; }
+    }
+
+    async function loadDeliveryRiders() {
+      try {
+        const data = await api('/orders/delivery-riders');
+        deliveryRiders = Array.isArray(data.riders) ? data.riders : [];
+      } catch (e) { deliveryRiders = []; }
+    }
+
+    /* ================= MENU ================= */
+    async function loadMenu() {
+      try {
+        const data = await api('/menu');
+        menu = data.items || data.data || [];
+        renderCats();
+        renderMenu();
+      } catch (e) {
+        document.getElementById('menuGrid').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+      }
+    }
+    async function loadDeals() {
+      try {
+        const data = await api('/deals');
+        dealsList = Array.isArray(data.data) ? data.data : (data.deals || []);
+      } catch (e) {
+        console.warn('loadDeals:', e.message);
+        dealsList = [];
+      }
+      renderMenu();
+    }
+    function renderCats() {
+      const cats = ['All', ...new Set(menu.map(m => m.category || 'Other'))];
+      document.getElementById('cats').innerHTML = cats.map(c =>
+        `<button class="cat-chip ${c === activeCat ? 'active' : ''}"
+                 data-cat="${esc(c)}"
+                 onclick="selectCat(this.dataset.cat)">${esc(c)}</button>`).join('');
+    }
+    function selectCat(c) { activeCat = c; renderCats(); renderMenu(); }
+
+    function renderDealsGrid() {
+      const section = document.getElementById('dealsSection');
+      const grid = document.getElementById('dealsGrid');
+      if (!section || !grid) return;
+      if (!dealsList.length) { section.style.display = 'none'; return; }
+      section.style.display = 'block';
+      grid.innerHTML = dealsList.map(d => {
+        const sub = (d.items || [])
+          .map(i => `${i.quantity || i.qty || 1}× ${esc(i.name || '')}`)
+          .join(', ');
+        return `
+          <button class="menu-card" onclick="addDealToCart(${Number(d.id)})" style="border-color:var(--accent);">
+            <div class="n">🎁 ${esc(d.name)}</div>
+            <div class="u">${sub || 'Combo'}</div>
+            <div class="p">${money(d.price)}</div>
+          </button>`;
+      }).join('');
+    }
+    function addDealToCart(dealId) {
+      const d = dealsList.find(x => Number(x.id) === Number(dealId));
+      if (!d) return;
+      const row = dealCart.find(c => c.deal_id === Number(dealId));
+      if (row) row.qty += 1;
+      else {
+        dealCart.push({
+          deal_id: Number(d.id),
+          name: d.name,
+          price: Number(d.price),
+          qty: 1,
+          items: d.items || []
+        });
+      }
+      renderCart();
+    }
+    function changeDealQty(dealId, delta) {
+      const row = dealCart.find(c => c.deal_id === Number(dealId));
+      if (!row) return;
+      row.qty += delta;
+      if (row.qty <= 0) dealCart = dealCart.filter(c => c.deal_id !== Number(dealId));
+      renderCart();
+    }
+    function renderMenu() {
+      const q = (document.getElementById('menuSearch').value || '').toLowerCase();
+      const list = menu.filter(m => {
+        if (activeCat !== 'All' && (m.category || 'Other') !== activeCat) return false;
+        if (q && !String(m.name).toLowerCase().includes(q)) return false;
+        return true;
+      });
+      const grid = document.getElementById('menuGrid');
+      if (!list.length) { grid.innerHTML = '<div class="empty">No items. Add from Menu button.</div>'; }
+      else {
+        grid.innerHTML = list.map((m, idx) => `
+          <button class="menu-card" data-idx="${idx}" onclick="addFromGrid(this)">
+            <div class="n">${esc(m.name)}</div>
+            <div class="u">${esc(pkgLabel(m))}</div>
+            <div class="p">${money(m.price)}</div>
+          </button>
+        `).join('');
+        window._filteredMenu = list;
+      }
+      renderDealsGrid();
+    }
+    function addFromGrid(btn) {
+      const idx = Number(btn.dataset.idx);
+      const item = (window._filteredMenu || [])[idx];
+      if (item) addToCart(item);
+    }
+
+    /* ================= ORDER TYPE ================= */
+    function setOrderType(t) {
+      orderType = t;
+      document.getElementById('t-dine').classList.toggle('active', t === 'dine_in');
+      document.getElementById('t-take').classList.toggle('active', t === 'walk_in');
+      document.getElementById('t-del').classList.toggle('active', t === 'delivery');
+      document.getElementById('dineFields').classList.toggle('hidden', t !== 'dine_in');
+      document.getElementById('deliveryFields').classList.toggle('hidden', t !== 'delivery');
+    }
+
+    /* ================= CART ================= */
+    function addToCart(item) {
+      const existing = cart.find(c => c.id === item.id);
+      if (existing) existing.qty += 1;
+      else cart.push({
+        id: item.id, name: item.name, price: Number(item.price), qty: 1,
+        package_size: item.package_size, package_unit: item.package_unit
+      });
+      renderCart();
+    }
+    function changeQty(id, d) {
+      const row = cart.find(c => c.id === id);
+      if (!row) return;
+      row.qty += d;
+      if (row.qty <= 0) cart = cart.filter(c => c.id !== id);
+      renderCart();
+    }
+    function cartTotal() {
+      const items = cart.reduce((s, c) => s + c.price * c.qty, 0);
+      const deals = dealCart.reduce((s, c) => s + c.price * c.qty, 0);
+      return items + deals;
+    }
+    function calcBill(subtotal) {
+      const sub = Number(subtotal) || 0;
+      const discType = posSettings.discount_type || 'none';
+      const discVal = Number(posSettings.discount_value || 0);
+      let discountAmount = 0;
+      if (posSettings.discount_enabled !== false) {
+        if (discType === 'percent') discountAmount = sub * (discVal / 100);
+        else if (discType === 'fixed') discountAmount = discVal;
+      }
+      discountAmount = Math.min(Math.max(discountAmount, 0), sub);
+      const afterDiscount = sub - discountAmount;
+      const gstPercent = Number(posSettings.gst_percent || 0);
+      const taxPercent = Number(posSettings.tax_percent || 0);
+      const gstAmount = afterDiscount * (gstPercent / 100);
+      const taxAmount = afterDiscount * (taxPercent / 100);
+      let extra = 0;
+      if (orderType === 'delivery') extra += Number(posSettings.delivery_charge || 0);
+      if (orderType === 'dine_in') extra += Number(posSettings.dine_charge || 0);
+      const total = afterDiscount + gstAmount + taxAmount + extra;
+      return { sub, discountAmount, gstAmount, taxAmount, extra, total };
+    }
+    function renderCart() {
+      const el = document.getElementById('cartList');
+      const itemRows = cart.map(c => `
+        <div class="cart-row">
+          <div class="nm">${esc(c.name)}${pkgLabel(c) ? ` <span style="color:var(--muted)">(${esc(pkgLabel(c))})</span>` : ''}</div>
+          <button class="qty-btn" onclick="changeQty(${c.id},-1)">−</button>
+          <span>${c.qty}</span>
+          <button class="qty-btn" onclick="changeQty(${c.id},1)">+</button>
+          <strong>${money(c.price * c.qty)}</strong>
+        </div>`).join('');
+      const dealRows = dealCart.map(c => `
+        <div class="cart-row">
+          <div class="nm">🎁 ${esc(c.name)}</div>
+          <button class="qty-btn" onclick="changeDealQty(${c.deal_id},-1)">−</button>
+          <span>${c.qty}</span>
+          <button class="qty-btn" onclick="changeDealQty(${c.deal_id},1)">+</button>
+          <strong>${money(c.price * c.qty)}</strong>
+        </div>`).join('');
+      if (!cart.length && !dealCart.length) el.innerHTML = '<div class="empty">Tap menu or deals to add</div>';
+      else el.innerHTML = itemRows + dealRows;
+
+      const sub = cartTotal();
+      const bill = calcBill(sub);
+      let lines = `<div class="line"><span>Subtotal</span><span>${money(bill.sub)}</span></div>`;
+      if (bill.discountAmount > 0)
+        lines += `<div class="line"><span>Discount</span><span>-${money(bill.discountAmount)}</span></div>`;
+      if (bill.gstAmount > 0)
+        lines += `<div class="line"><span>GST (${posSettings.gst_percent}%)</span><span>${money(bill.gstAmount)}</span></div>`;
+      if (bill.taxAmount > 0)
+        lines += `<div class="line"><span>Tax</span><span>${money(bill.taxAmount)}</span></div>`;
+      if (bill.extra > 0)
+        lines += `<div class="line"><span>${orderType === 'delivery' ? 'Delivery' : 'Dine'} charge</span><span>${money(bill.extra)}</span></div>`;
+      const method = document.getElementById('payMethod')?.value || 'Cash';
+      let surcharge = 0;
+      if (method === 'Card' && Number(posSettings.card_charge) > 0) {
+        surcharge = bill.total * (Number(posSettings.card_charge) / 100);
+        lines += `<div class="line"><span>Card (${posSettings.card_charge}%)</span><span>${money(surcharge)}</span></div>`;
+      } else if (method === 'Bank' && Number(posSettings.bank_charge) > 0) {
+        surcharge = bill.total * (Number(posSettings.bank_charge) / 100);
+        lines += `<div class="line"><span>Bank (${posSettings.bank_charge}%)</span><span>${money(surcharge)}</span></div>`;
+      }
+      lines += `<div class="line grand"><span>Total</span><span>${money(bill.total + surcharge)}</span></div>`;
+      document.getElementById('totals').innerHTML = lines;
+    }
+
+    /* ================= PLACE ORDER ================= */
+    async function placeOrder(payNow) {
+      if (!cart.length && !dealCart.length) { alert('Add at least one item or deal'); return; }
+      if (orderType === 'delivery') {
+        const phone = document.getElementById('custPhone').value.trim();
+        const address = document.getElementById('custAddress').value.trim();
+        if (!phone || !address) { alert('Delivery needs phone and address'); return; }
+      }
+      let tableNo = 0;
+      if (orderType === 'dine_in') {
+        const t = Number(document.getElementById('tableNo').value);
+        tableNo = Number.isInteger(t) && t > 0 ? t : 0;
+      }
+      const bill = calcBill(cartTotal());
+      const payMethod = document.getElementById('payMethod').value || 'Cash';
+      let cardCharge = 0, bankCharge = 0;
+      if (payNow) {
+        if (payMethod === 'Card') cardCharge = bill.total * (Number(posSettings.card_charge || 0) / 100);
+        else if (payMethod === 'Bank') bankCharge = bill.total * (Number(posSettings.bank_charge || 0) / 100);
+      }
+      const finalTotal = Number((bill.total + cardCharge + bankCharge).toFixed(2));
+      const items = cart.map(c => ({ menu_item_id: Number(c.id), quantity: Number(c.qty) }));
+
+      const body = {
+        items,
+        deals: dealCart.map(d => ({ deal_id: Number(d.deal_id), quantity: Number(d.qty) })),
+        order_type: orderType, order_source: 'COUNTER',
+        table_no: tableNo,
+        customer_name: document.getElementById('custName').value.trim() || null,
+        delivery_phone: orderType === 'delivery' ? document.getElementById('custPhone').value.trim() : null,
+        delivery_address: orderType === 'delivery' ? document.getElementById('custAddress').value.trim() : null,
+        payment_timing: payNow ? 'PAID_AT_ORDER' : (orderType === 'delivery' ? 'COD' : 'PAY_LATER'),
+        payment_method: payNow ? payMethod : null,
+        paid_amount: payNow ? finalTotal : 0,
+        card_charge: cardCharge, bank_charge: bankCharge,
+        delivery_charge: orderType === 'delivery' ? Number(posSettings.delivery_charge || 0) : 0,
+        dine_charge: orderType === 'dine_in' ? Number(posSettings.dine_charge || 0) : 0,
+        pricing: {
+          discount_type: posSettings.discount_type || 'none',
+          discount_value: Number(posSettings.discount_value || 0),
+          gst_percent: Number(posSettings.gst_percent || 0),
+          tax_percent: Number(posSettings.tax_percent || 0)
+        }
+      };
+
+      try {
+        const data = await api('/orders', { method: 'POST', body: JSON.stringify(body) });
+        const receiptItems = [
+          ...cart.map(c => ({
+            name: c.name, qty: c.qty, price: c.price,
+            package_size: c.package_size, package_unit: c.package_unit
+          })),
+          ...dealCart.map(d => ({ name: '🎁 ' + d.name, qty: d.qty, price: d.price }))
+        ];
+        const receiptBill = bill;
+        const receiptType = orderType;
+        const receiptTable = tableNo;
+        const receiptName = document.getElementById('custName').value.trim() || '';
+        const receiptPhone = document.getElementById('custPhone').value.trim() || '';
+        const receiptAddr = document.getElementById('custAddress').value.trim() || '';
+        const receiptPayNow = payNow;
+        const receiptMethod = payMethod;
+        const receiptCard = cardCharge;
+        const receiptBank = bankCharge;
+
+        cart = [];
+        dealCart = [];
+        renderCart();
+        document.getElementById('tableNo').value = '';
+        document.getElementById('custName').value = '';
+        document.getElementById('custPhone').value = '';
+        document.getElementById('custAddress').value = '';
+
+        if (orderType === 'delivery' && data.order?.id) {
+          const mode = localStorage.getItem('cafe_assign_mode') || 'manual';
+          if (mode === 'auto') {
+            try { await api('/orders/' + data.order.id + '/auto-assign-rider', { method: 'PUT' }); }
+            catch (err) { console.warn('Auto-assign failed:', err.message); }
+          }
+        }
+
+        await loadOrders();
+        await loadTodaySales();
+
+        const id = data.order?.local_number || data.order?.id || '';
+        const autoPrint = localStorage.getItem('cafe_auto_print') !== '0';
+        if (autoPrint) {
+          try {
+            printBill({
+              orderNo: id, orderType: receiptType, tableNo: receiptTable || null,
+              customerName: receiptName, phone: receiptPhone, address: receiptAddr,
+              items: receiptItems, bill: receiptBill,
+              payNow: receiptPayNow, paymentMethod: receiptMethod,
+              cardCharge: receiptCard, bankCharge: receiptBank
+            });
+          } catch (err) { console.warn('printBill:', err); }
+        }
+        alert(payNow ? `Order #${id} placed & paid` : `Order #${id} placed`);
+      } catch (e) { console.error('placeOrder:', e); alert(e.message || 'Place order failed'); }
+    }
+
+    /* ================= ORDERS LIST ================= */
+    async function loadOrders() {
+      try {
+        const data = await api('/orders');
+        const allOrders = data.orders || data.data || [];
+        const orders = allOrders.filter(o => {
+          const st = String(o.status || '').toLowerCase();
+          return !['completed', 'cancelled'].includes(st);
+        });
+        const el = document.getElementById('ordersList');
+        if (!orders.length) { el.innerHTML = '<div class="empty">No active orders</div>'; return; }
+
+        el.innerHTML = orders.slice(0, 50).map(o => {
+          const paid = String(o.payment_status || '').toLowerCase() === 'paid';
+          const st = String(o.status || '').toLowerCase();
+          const type = o.order_type === 'walk_in' ? 'Takeaway'
+            : o.order_type === 'delivery' ? 'Delivery' : 'Dine-in';
+          const isDelivery = o.order_type === 'delivery';
+          const hasRider = !!o.delivery_rider_id;
+          let actions = '';
+
+          if (!isDelivery) {
+            if (!paid) {
+              actions += `<button class="btn btn-ghost" onclick="openEditBill(${o.id})">Edit bill</button>`;
+              actions += `<button class="btn btn-ok" onclick="payOrder(${o.id},${Number(o.total_amount) || 0})">Mark paid</button>`;
+            }
+            if (paid && st !== 'completed') {
+              actions += `<button class="btn btn-accent" onclick="completeOrder(${o.id})">Mark complete</button>`;
+            }
+          }
+          if (isDelivery) {
+            const riderName = o.delivery_rider_name || o.delivery_rider_username || '';
+            const riderInfo = hasRider
+              ? `<div style="margin:6px 0;padding:6px 10px;border-radius:8px;background:rgba(47,163,125,.1);font-size:11px;color:var(--ok);">🚴 <strong>Rider: ${esc(riderName || 'Assigned')}</strong></div>`
+              : `<div style="margin:6px 0;font-size:11px;color:var(--muted);">⚠️ No rider assigned</div>`;
+            actions += `
+              <div style="font-size:11px;color:var(--muted);margin:4px 0;">
+                ${esc(o.delivery_phone || '')} · ${esc(o.delivery_address || '')}
+              </div>${riderInfo}`;
+            if (!hasRider && ['placed', 'preparing', 'ready', 'ready_to_deliver'].includes(st)) {
+              const availableRiders = deliveryRiders.filter(r => r.is_active !== false && r.shift_active === true);
+              if (!availableRiders.length) {
+                actions += `<div style="font-size:11px;color:var(--danger);margin:6px 0;padding:6px 10px;background:rgba(225,90,76,.1);border-radius:8px;">⚠️ Koi rider shift pe nahi hai.</div>`;
+              } else {
+                const opts = availableRiders.map(r =>
+                  `<option value="${r.id}">${esc(r.full_name || r.username || ('Rider ' + r.id))}</option>`).join('');
+                actions += `
+                  <select id="rider-sel-${o.id}" style="width:100%;margin:4px 0;padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);">
+                    <option value="">Select rider…</option>${opts}
+                  </select>
+                  <button class="btn btn-ok" onclick="assignRider(${o.id})">📤 Send to rider</button>
+                  <button class="btn btn-ghost" onclick="autoAssignRider(${o.id})">🤖 Auto assign</button>`;
+              }
+            }
+            if (hasRider) {
+              if (['placed', 'preparing', 'ready', 'ready_to_deliver'].includes(st))
+                actions += `<button class="btn btn-ghost" style="color:var(--danger);border-color:var(--danger);" onclick="unassignRider(${o.id})">❌ Unassign rider</button>`;
+              if (st === 'ready_to_deliver')
+                actions += `<button class="btn btn-ok" onclick="outForDelivery(${o.id})">🚴 Out for delivery</button>`;
+              if (st === 'out_for_delivery')
+                actions += `<button class="btn btn-ok" onclick="markDelivered(${o.id})">✓ Mark delivered</button>`;
+              if (!paid && st === 'delivered') {
+                actions += `<button class="btn btn-ghost" onclick="openEditBill(${o.id})">Edit bill</button>`;
+                actions += `<button class="btn btn-ok" onclick="payOrder(${o.id},${Number(o.total_amount) || 0})">💰 Mark paid (COD)</button>`;
+              }
+              if (paid && st === 'delivered')
+                actions += `<button class="btn btn-accent" onclick="completeOrder(${o.id})">✓ Mark complete</button>`;
+            }
+          }
+          actions += `<button class="btn btn-ghost" onclick="reprintOrder(${o.id})">🖨️ Print</button>`;
+
+          return `
+            <div class="order-card">
+              <div class="hd">
+                <span>#${esc(o.local_number || o.id)} · ${esc(type)}${o.table_no ? ' · T' + esc(o.table_no) : ''}</span>
+                <span class="${paid ? 'paid' : 'st'}">${paid ? 'PAID' : esc(o.status || '—')}</span>
+              </div>
+              <div>${money(o.total_amount)} · ${esc(o.customer_name || '—')}</div>
+              ${actions ? `<div class="actions">${actions}</div>` : ''}
+            </div>`;
+        }).join('');
+      } catch (e) {
+        document.getElementById('ordersList').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+      }
+    }
+
+    async function fetchFullOrder(orderId) {
+      const id = Number(orderId);
+      if (fullOrderCache.has(id)) return fullOrderCache.get(id);
+      try {
+        const full = await api('/orders/' + id);
+        const ord = full.order || full.data || full;
+        if (ord && ord.id) { fullOrderCache.set(id, ord); return ord; }
+      } catch (e) { console.warn('GET /orders/:id failed, fallback list', e.message); }
+      try {
+        const data = await api('/orders');
+        const all = data.orders || data.data || [];
+        const ord = all.find(x => Number(x.id) === id);
+        if (ord) { fullOrderCache.set(id, ord); return ord; }
+      } catch (e) {}
+      const fromSales = (salesCache.orders || []).find(x => Number(x.id) === id);
+      if (fromSales) { fullOrderCache.set(id, fromSales); return fromSales; }
+      throw new Error('Order not found');
+    }
+
+    async function reprintOrder(orderId) {
+      try {
+        const o = await fetchFullOrder(orderId);
+        if (!o) { alert('Order not found'); return; }
+        const items = (o.items || []).map(it => ({
+          name: it.name || it.item_name || 'Item',
+          qty: Number(it.qty || it.quantity || 1),
+          price: Number(it.price || 0),
+          package_size: it.package_size,
+          package_unit: it.package_unit
+        }));
+        const sub = Number(o.subtotal || items.reduce((s, i) => s + i.price * i.qty, 0));
+        const bill = {
+          sub,
+          discountAmount: Number(o.discount_amount || 0),
+          gstAmount: Number(o.gst_amount || 0),
+          taxAmount: Number(o.tax_amount || 0),
+          extra: Number(o.delivery_charge || 0) + Number(o.dine_charge || 0),
+          total: Number(o.total_amount || o.total || sub)
+        };
+        showBillPreview({
+          orderNo: o.local_number || o.id,
+          orderType: o.order_type,
+          tableNo: o.table_no,
+          customerName: o.customer_name || '',
+          phone: o.delivery_phone || '',
+          address: o.delivery_address || '',
+          items, bill,
+          payNow: String(o.payment_status).toLowerCase() === 'paid',
+          paymentMethod: o.payment_method || 'Cash',
+          cardCharge: Number(o.card_charge || 0),
+          bankCharge: Number(o.bank_charge || 0)
+        });
+      } catch (e) { console.error('reprintOrder:', e); alert(e.message || 'Print failed'); }
+    }
+
+    async function openEditBill(orderId) {
+      try {
+        const o = await fetchFullOrder(orderId);
+        if (!o) throw new Error('Order not found');
+        if (String(o.payment_status).toLowerCase() === 'paid') {
+          alert('Paid order bill edit nahi ho sakti'); return;
+        }
+        document.getElementById('ebOrderId').value = orderId;
+        document.getElementById('ebInfo').textContent =
+          `#${o.local_number || o.id} · ${money(o.total_amount || o.total || 0)} · ${o.payment_status || 'unpaid'}`;
+        document.getElementById('ebDiscType').value = o.discount_type || 'none';
+        document.getElementById('ebDiscVal').value = o.discount_value || 0;
+        document.getElementById('ebGst').value = o.gst_percent || 0;
+        document.getElementById('ebTax').value = o.tax_percent || 0;
+        document.getElementById('ebDine').value = o.dine_charge || 0;
+        document.getElementById('ebDel').value = o.delivery_charge || 0;
+        document.getElementById('editBillModal').classList.remove('hidden');
+      } catch (e) { alert(e.message || 'Load failed'); }
+    }
+    function closeEditBill() { document.getElementById('editBillModal').classList.add('hidden'); }
+
+    async function saveEditBill() {
+      const id = document.getElementById('ebOrderId').value;
+      if (!id) return;
+      const body = {
+        discount_type: document.getElementById('ebDiscType').value || 'none',
+        discount_value: Number(document.getElementById('ebDiscVal').value || 0),
+        gst_percent: Number(document.getElementById('ebGst').value || 0),
+        tax_percent: Number(document.getElementById('ebTax').value || 0),
+        dine_charge: Number(document.getElementById('ebDine').value || 0),
+        delivery_charge: Number(document.getElementById('ebDel').value || 0)
+      };
+      try {
+        await api('/orders/' + id + '/pricing', { method: 'PUT', body: JSON.stringify(body) });
+        fullOrderCache.delete(Number(id));
+        closeEditBill();
+        await loadOrders();
+        alert('Bill updated');
+      } catch (e) { alert(e.message || 'Save failed'); }
+    }
+
+    async function payOrder(id, amount) {
+      try {
+        const method = document.getElementById('payMethod')?.value || 'Cash';
+        let cardCharge = 0, bankCharge = 0;
+        if (method === 'Card') cardCharge = Number((Number(amount) * (Number(posSettings.card_charge || 0) / 100)).toFixed(2));
+        else if (method === 'Bank') bankCharge = Number((Number(amount) * (Number(posSettings.bank_charge || 0) / 100)).toFixed(2));
+        await api(`/orders/${id}/pay`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            payment_method: method,
+            paid_amount: Number((Number(amount) + cardCharge + bankCharge).toFixed(2)),
+            card_charge: cardCharge,
+            bank_charge: bankCharge
+          })
+        });
+        fullOrderCache.delete(Number(id));
+        await loadOrders();
+        await loadTodaySales();
+      } catch (e) { alert(e.message || 'Payment failed'); }
+    }
+
+    async function completeOrder(id) {
+      try {
+        await api('/orders/' + id + '/completed', { method: 'PUT' });
+        fullOrderCache.delete(Number(id));
+        await loadOrders();
+        await loadTodaySales();
+      } catch (e) { alert(e.message || 'Complete failed'); }
+    }
+
+    async function assignRider(orderId) {
+      const sel = document.getElementById('rider-sel-' + orderId);
+      const riderId = Number(sel && sel.value);
+      if (!riderId) { alert('Select a rider'); return; }
+      try {
+        await api('/orders/' + orderId + '/assign-rider', {
+          method: 'PUT', body: JSON.stringify({ rider_id: riderId })
+        });
+        await Promise.all([loadOrders(), loadDeliveryRiders()]);
+      } catch (e) { alert(e.message || 'Assign failed'); }
+    }
+    async function autoAssignRider(orderId) {
+      try {
+        await api('/orders/' + orderId + '/auto-assign-rider', { method: 'PUT' });
+        await Promise.all([loadOrders(), loadDeliveryRiders()]);
+      } catch (e) { alert(e.message || 'Auto assign failed'); }
+    }
+    async function unassignRider(orderId) {
+      if (!confirm('Remove rider from this order?')) return;
+      try {
+        await api('/orders/' + orderId + '/unassign-rider', { method: 'PUT' });
+        await Promise.all([loadOrders(), loadDeliveryRiders()]);
+      } catch (e) { alert(e.message || 'Unassign failed'); }
+    }
+    async function outForDelivery(id) {
+      try {
+        await api('/orders/' + id + '/out-for-delivery', { method: 'PUT' });
+        await Promise.all([loadOrders(), loadDeliveryRiders()]);
+      } catch (e) { alert(e.message || 'Failed'); }
+    }
+    async function markDelivered(id) {
+      try {
+        await api('/orders/' + id + '/delivered', { method: 'PUT' });
+        await Promise.all([loadOrders(), loadDeliveryRiders()]);
+      } catch (e) { alert(e.message || 'Failed'); }
+    }
+
+    /* ================= TODAY SALES ================= */
+    async function loadTodaySales() {
+      try {
+        const from = todayISO();
+        const salesRes = await api(`/reports/sales?from=${from}&to=${from}`);
+        const orders = salesRes.data || [];
+        let total = 0;
+        orders.forEach(o => {
+          if (String(o.payment_status || '').toLowerCase() === 'paid') {
+            total += Number(o.total_amount || o.total || 0);
+          }
+        });
+        document.getElementById('todaySales').textContent =
+          `Today: ${money(total)} (${orders.length} orders)`;
+      } catch { document.getElementById('todaySales').textContent = 'Today: —'; }
+    }
+
+    /* ================= MENU ADMIN ================= */
+    function openMenuAdmin() {
+      document.getElementById('menuModal').classList.remove('hidden');
+      renderMenuAdmin();
+      renderDealItemPicks();
+      renderDealsAdminList();
+      resetDealForm();
+    }
+    function closeMenuAdmin() { document.getElementById('menuModal').classList.add('hidden'); }
+    function resetMenuForm() {
+      document.getElementById('editMenuId').value = '';
+      document.getElementById('menuFormTitle').textContent = 'Add item';
+      document.getElementById('mName').value = '';
+      document.getElementById('mPrice').value = '';
+      document.getElementById('mCategory').value = '';
+      document.getElementById('mPkgSize').value = '';
+      document.getElementById('mPkgUnit').value = '';
+    }
+    function renderMenuAdmin() {
+      const el = document.getElementById('menuAdminList');
+      if (!menu.length) { el.innerHTML = '<div class="empty">No items yet</div>'; return; }
+      el.innerHTML = menu.map((m, idx) => `
+        <div class="menu-admin-row">
+          <div>
+            <strong>${esc(m.name)}</strong>
+            ${pkgLabel(m) ? `<span style="color:var(--muted)"> · ${esc(pkgLabel(m))}</span>` : ''}
+            <div style="color:var(--muted);font-size:12px;">${money(m.price)} · ${esc(m.category || 'Other')}</div>
+          </div>
+          <button class="btn btn-ghost" data-idx="${idx}" onclick="editMenuByIdx(this)">Edit</button>
+        </div>`).join('');
+    }
+    function editMenuByIdx(btn) {
+      const idx = Number(btn.dataset.idx);
+      const m = menu[idx];
+      if (!m) return;
+      document.getElementById('editMenuId').value = m.id;
+      document.getElementById('menuFormTitle').textContent = 'Edit item';
+      document.getElementById('mName').value = m.name || '';
+      document.getElementById('mPrice').value = m.price || '';
+      document.getElementById('mCategory').value = m.category || '';
+      document.getElementById('mPkgSize').value = m.package_size || '';
+      document.getElementById('mPkgUnit').value = m.package_unit || '';
+    }
+    async function saveMenuItem() {
+      const id = document.getElementById('editMenuId').value;
+      const body = {
+        name: document.getElementById('mName').value.trim(),
+        price: Number(document.getElementById('mPrice').value),
+        category: document.getElementById('mCategory').value.trim() || 'Other',
+        package_size: document.getElementById('mPkgSize').value || null,
+        package_unit: document.getElementById('mPkgUnit').value || null
+      };
+      if (!body.name || !body.price) { alert('Name and price required'); return; }
+      try {
+        if (id) await api('/menu/' + id, { method: 'PUT', body: JSON.stringify(body) });
+        else await api('/menu', { method: 'POST', body: JSON.stringify(body) });
+        await loadMenu(); renderMenuAdmin(); resetMenuForm();
+      } catch (e) { alert(e.message || 'Save failed'); }
+    }
+
+    function renderDealItemPicks() {
+      const box = document.getElementById('dItemPicks');
+      if (!box) return;
+      if (!menu.length) { box.innerHTML = '<div class="empty">Pehle menu item add karo</div>'; return; }
+      box.innerHTML = menu.map(m => `
+        <label style="display:flex;gap:8px;align-items:center;margin:4px 0;flex-wrap:wrap;">
+          <input type="checkbox" class="d-pick" value="${m.id}" />
+          <span style="flex:1;">${esc(m.name)} (${money(m.price)})</span>
+          <input type="number" class="d-qty" data-id="${m.id}" min="1" value="1"
+            style="width:56px;padding:4px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);" />
+        </label>
+      `).join('');
+    }
+
+    function renderDealsAdminList() {
+      const el = document.getElementById('dealsAdminList');
+      if (!el) return;
+      if (!dealsList.length) { el.innerHTML = '<div class="empty">No deals yet</div>'; return; }
+      el.innerHTML = '<div style="font-weight:600;margin-bottom:6px;">Active deals</div>' +
+        dealsList.map(d => {
+          const sub = (d.items || []).map(i =>
+            `${i.quantity || 1}× ${esc(i.name || '')}`).join(', ');
+          return `<div class="menu-admin-row">
+            <div style="flex:1;min-width:0;">
+              <strong>🎁 ${esc(d.name)}</strong>
+              <div style="color:var(--muted);font-size:12px;">${money(d.price)} · ${esc(sub)}</div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="btn btn-ghost" data-id="${d.id}" onclick="editDealById(this)">Edit</button>
+              <button class="btn btn-ghost" style="color:var(--danger);border-color:var(--danger);"
+                      data-id="${d.id}" onclick="deleteDealById(this)">Delete</button>
+            </div>
+          </div>`;
+        }).join('');
+    }
+
+    function editDealById(btn) {
+      const id = Number(btn.dataset.id);
+      const d = dealsList.find(x => Number(x.id) === id);
+      if (!d) return;
+      document.getElementById('editDealId').value = id;
+      document.getElementById('dName').value = d.name || '';
+      document.getElementById('dPrice').value = d.price || '';
+      const btn2 = document.getElementById('dealSaveBtn');
+      if (btn2) btn2.textContent = 'Update deal';
+      document.querySelectorAll('.d-pick').forEach(cb => { cb.checked = false; });
+      document.querySelectorAll('.d-qty').forEach(q => { q.value = 1; });
+      const items = d.items || [];
+      items.forEach(it => {
+        const mid = Number(it.menu_item_id || it.id || it.menu_id);
+        const cb = document.querySelector('.d-pick[value="' + mid + '"]');
+        if (cb) cb.checked = true;
+        const qtyEl = document.querySelector('.d-qty[data-id="' + mid + '"]');
+        if (qtyEl) qtyEl.value = Math.max(1, Number(it.quantity || it.qty || 1));
+      });
+      const form = document.getElementById('dName');
+      if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (form) form.focus();
+    }
+
+    async function deleteDealById(btn) {
+      const id = Number(btn.dataset.id);
+      const d = dealsList.find(x => Number(x.id) === id);
+      if (!d) return;
+      if (!confirm(`Delete deal "${d.name}"?`)) return;
+      try {
+        await api('/deals/' + id, { method: 'DELETE' });
+        if (Number(document.getElementById('editDealId').value) === id) resetDealForm();
+        await loadDeals();
+        renderDealItemPicks();
+        renderDealsAdminList();
+        alert('Deal deleted');
+      } catch (e) { alert(e.message || 'Delete failed'); }
+    }
+
+    function resetDealForm() {
+      const eid = document.getElementById('editDealId');
+      const name = document.getElementById('dName');
+      const price = document.getElementById('dPrice');
+      if (eid) eid.value = '';
+      if (name) name.value = '';
+      if (price) price.value = '';
+      const btn2 = document.getElementById('dealSaveBtn');
+      if (btn2) btn2.textContent = 'Save deal';
+      document.querySelectorAll('.d-pick').forEach(cb => { cb.checked = false; });
+      document.querySelectorAll('.d-qty').forEach(q => { q.value = 1; });
+    }
+
+    async function saveDeal() {
+      const editId = Number(document.getElementById('editDealId').value || 0);
+      const name = (document.getElementById('dName').value || '').trim();
+      const price = Number(document.getElementById('dPrice').value);
+      if (!name || !(price > 0)) { alert('Deal name and price required'); return; }
+      const items = [];
+      document.querySelectorAll('.d-pick:checked').forEach(cb => {
+        const id = Number(cb.value);
+        const qtyEl = document.querySelector('.d-qty[data-id="' + id + '"]');
+        const quantity = Math.max(1, Number(qtyEl?.value || 1));
+        items.push({ menu_item_id: id, variant_id: null, quantity });
+      });
+      if (!items.length) { alert('Select at least one menu item for the deal'); return; }
+      const payload = { name, price, type: 'deal', category: null, image: null, items };
+      try {
+        if (editId) await api('/deals/' + editId, { method: 'PUT', body: JSON.stringify(payload) });
+        else await api('/deals', { method: 'POST', body: JSON.stringify(payload) });
+        resetDealForm();
+        await loadDeals();
+        renderDealItemPicks();
+        renderDealsAdminList();
+        alert(editId ? 'Deal updated' : 'Deal saved');
+      } catch (e) { alert(e.message || 'Save deal failed'); }
+    }
+
+    /* ================= SALES REPORT ================= */
+    function todayISO() { return new Date().toISOString().slice(0, 10); }
+    function startOfWeekISO() {
+      const d = new Date();
+      const day = d.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      d.setDate(d.getDate() + diff);
+      return d.toISOString().slice(0, 10);
+    }
+    function startOfMonthISO() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+    }
+    function setSalesRange(range) {
+      salesCache.range = range;
+      ['today', 'week', 'month'].forEach(r => {
+        const el = document.getElementById('sf-' + r);
+        if (el) el.classList.toggle('active', r === range);
+      });
+      let from = todayISO(), to = todayISO();
+      if (range === 'week') from = startOfWeekISO();
+      if (range === 'month') from = startOfMonthISO();
+      document.getElementById('salesFrom').value = from;
+      document.getElementById('salesTo').value = to;
+      loadSalesReport();
+    }
+    function openSalesReport() {
+      const app = document.getElementById('app-box');
+      const page = document.getElementById('salesPage');
+      if (app) app.classList.add('sales-open');
+      if (page) page.classList.add('open');
+      if (!document.getElementById('salesFrom').value) setSalesRange('today');
+      else loadSalesReport();
+    }
+    function closeSalesReport() {
+      const app = document.getElementById('app-box');
+      const page = document.getElementById('salesPage');
+      if (app) app.classList.remove('sales-open');
+      if (page) page.classList.remove('open');
+    }
+    function orderTypeLabel(t) {
+      const x = String(t || '').toLowerCase();
+      if (x === 'walk_in') return 'Takeaway';
+      if (x === 'delivery') return 'Delivery';
+      return 'Dine-in';
+    }
+    function orderItemsOf(o) {
+      const arr = o.items || o.order_items || o.orderItems || [];
+      if (!Array.isArray(arr)) return [];
+      return arr.map(it => ({
+        name: it.name || it.item_name || it.menu_item_name || 'Item',
+        qty: Number(it.quantity || it.qty || 1),
+        price: Number(it.price || it.unit_price || 0),
+        package_size: it.package_size,
+        package_unit: it.package_unit
+      }));
+    }
+    function orderDealsOf(o) {
+      const arr = o.deals || [];
+      if (!Array.isArray(arr)) return [];
+      return arr.map(d => ({
+        name: d.name || d.deal_name || 'Deal',
+        qty: Number(d.quantity || d.qty || 1),
+        price: Number(d.price || 0)
+      }));
+    }
+
+    async function loadSalesReport() {
+      const from = document.getElementById('salesFrom').value || todayISO();
+      const to = document.getElementById('salesTo').value || todayISO();
+      salesCache.from = from;
+      salesCache.to = to;
+      const q = `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+
+      try {
+        const [salesRes, topRes, payRes] = await Promise.all([
+          api('/reports/sales' + q),
+          api('/reports/top-items' + q).catch(() => ({ data: [] })),
+          api('/reports/payment-summary' + q).catch(() => ({ data: [] }))
+        ]);
+
+        const orders = salesRes.data || salesRes.orders || [];
+        salesCache.orders = (Array.isArray(orders) ? orders : []).filter(o => {
+          const st = String(o.status || '').toLowerCase();
+          const ps = String(o.payment_status || '').toLowerCase();
+          return st === 'completed' && ps === 'paid';
+        });
+
+        let totalSales = 0, paidCount = 0, itemsSold = 0;
+        salesCache.orders.forEach(o => {
+          const paid = String(o.payment_status || '').toLowerCase() === 'paid';
+          const amt = Number(o.total_amount || o.total || 0);
+          if (paid) { totalSales += amt; paidCount += 1; }
+          orderItemsOf(o).forEach(it => { itemsSold += Number(it.qty || 0); });
+        });
+        const orderCount = salesCache.orders.length;
+        const avg = orderCount ? totalSales / (paidCount || orderCount) : 0;
+
+        document.getElementById('stOrders').textContent = String(orderCount);
+        document.getElementById('stSales').textContent = money(totalSales);
+        document.getElementById('stAvg').textContent = money(avg);
+        document.getElementById('stItems').textContent = String(itemsSold || '—');
+
+        const payData = payRes.data || [];
+        const payEl = document.getElementById('salesPayments');
+        const payMap = {};
+
+        if (Array.isArray(payData) && payData.length) {
+          payData.forEach(p => {
+            const m = normPayMethod(p.payment_method || p.method);
+            let t = Number(p.total || p.amount || p.sum || p.sales || 0);
+            const c = Number(p.count || p.orders || 0);
+            if (!t && c) {
+              t = salesCache.orders
+                .filter(o => String(o.payment_status || '').toLowerCase() === 'paid' &&
+                             normPayMethod(o.payment_method) === m)
+                .reduce((s, o) => s + Number(o.total_amount || o.total || 0), 0);
+            }
+            if (!payMap[m]) payMap[m] = { total: 0, count: 0 };
+            payMap[m].total += t;
+            payMap[m].count += c || 0;
+          });
+        } else {
+          salesCache.orders.forEach(o => {
+            if (String(o.payment_status || '').toLowerCase() !== 'paid') return;
+            const m = normPayMethod(o.payment_method);
+            if (!payMap[m]) payMap[m] = { total: 0, count: 0 };
+            payMap[m].total += Number(o.total_amount || o.total || 0);
+            payMap[m].count += 1;
+          });
+        }
+
+        const payKeys = Object.keys(payMap);
+        if (!payKeys.length) {
+          payEl.className = 'empty';
+          payEl.textContent = 'No payments in range';
+        } else {
+          payEl.classList.remove('empty');
+          payEl.innerHTML = payKeys.map(k =>
+            `<div class="pay-bar-row"><span>${esc(k)} (${payMap[k].count})</span><strong>${money(payMap[k].total)}</strong></div>`
+          ).join('');
+        }
+
+        const topData = topRes.data || [];
+        const topEl = document.getElementById('salesTop');
+        if (Array.isArray(topData) && topData.length) {
+          topEl.classList.remove('empty');
+          topEl.innerHTML = `<table class="sales-table"><thead><tr><th>Item</th><th>Qty</th><th>Sales</th></tr></thead><tbody>${
+            topData.slice(0, 10).map(t => `
+              <tr>
+                <td>${esc(t.name || t.item_name || 'Item')}</td>
+                <td>${esc(t.quantity || t.qty || t.total_qty || 0)}</td>
+                <td>${money(t.total || t.sales || t.revenue || 0)}</td>
+              </tr>`).join('')
+          }</tbody></table>`;
+        } else {
+          topEl.className = 'empty';
+          topEl.textContent = 'No item data';
+        }
+
+        const body = document.getElementById('salesOrdersBody');
+        const footer = document.getElementById('salesOrdersFooter');
+        
+        if (!salesCache.orders.length) {
+          body.innerHTML = '<tr><td colspan="14" style="color:var(--muted);text-align:center;">No orders</td></tr>';
+          if (footer) footer.innerHTML = '';
+        } else {
+          // Grand Totals Calculate
+          let totalSub = 0, totalDisc = 0, totalGst = 0, totalTax = 0;
+          let totalDine = 0, totalDel = 0, totalCard = 0, totalBank = 0, totalAmount = 0;
+
+          body.innerHTML = salesCache.orders.map(o => {
+            const t = o.created_at || o.paid_at || '';
+            const time = t ? new Date(t).toLocaleString() : '—';
+            const payLabel = String(o.payment_status || '—') +
+              (o.payment_method ? ' / ' + normPayMethod(o.payment_method) : '');
+
+            const items = orderItemsOf(o);
+            const deals = orderDealsOf(o);
+            const itemsHtml = [
+              ...items.map(it => {
+                const pkg = (it.package_size && it.package_unit)
+                  ? ` (${esc(String(it.package_size))}${esc(it.package_unit)})` : '';
+                return `${esc(it.name)}${pkg} × ${it.qty}`;
+              }),
+              ...deals.map(d => `🎁 ${esc(d.name)} × ${d.qty}`)
+            ].join('<br>') || '<span style="color:var(--muted)">—</span>';
+
+            const sub = Number(o.subtotal || 0);
+            const disc = Number(o.discount_amount || 0);
+            const gst = Number(o.gst_amount || 0);
+            const tax = Number(o.tax_amount || 0);
+            const dine = Number(o.dine_charge || 0);
+            const del = Number(o.delivery_charge || 0);
+            const card = Number(o.card_charge || 0);
+            const bank = Number(o.bank_charge || 0);
+            const total = Number(o.total_amount || o.total || 0);
+
+            // Add to Grand Total
+            totalSub += sub;
+            totalDisc += disc;
+            totalGst += gst;
+            totalTax += tax;
+            totalDine += dine;
+            totalDel += del;
+            totalCard += card;
+            totalBank += bank;
+            totalAmount += total;
+
+            return `<tr class="sales-order-row">
+              <td>#${esc(o.local_number || o.id)}</td>
+              <td>${esc(orderTypeLabel(o.order_type))}</td>
+              <td>${esc(payLabel)}</td>
+              <td style="font-size:11px;white-space:normal;max-width:180px;">${itemsHtml}</td>
+              <td>${sub ? money(sub) : '—'}</td>
+              <td>${disc ? money(disc) : '—'}</td>
+              <td>${gst ? money(gst) : '—'}</td>
+              <td>${tax ? money(tax) : '—'}</td>
+              <td>${dine ? money(dine) : '—'}</td>
+              <td>${del ? money(del) : '—'}</td>
+              <td>${card ? money(card) : '—'}</td>
+              <td>${bank ? money(bank) : '—'}</td>
+              <td><strong>${money(total)}</strong></td>
+              <td>${esc(time)}</td>
+            </tr>`;
+          }).join('');
+
+          // Footer (Grand Total) Render
+          if (footer) {
+            footer.innerHTML = `
+              <tr>
+                <td colspan="4" style="text-align:right; padding-right:10px;">Grand Total:</td>
+                <td>${totalSub ? money(totalSub) : '—'}</td>
+                <td>${totalDisc ? money(totalDisc) : '—'}</td>
+                <td>${totalGst ? money(totalGst) : '—'}</td>
+                <td>${totalTax ? money(totalTax) : '—'}</td>
+                <td>${totalDine ? money(totalDine) : '—'}</td>
+                <td>${totalDel ? money(totalDel) : '—'}</td>
+                <td>${totalCard ? money(totalCard) : '—'}</td>
+                <td>${totalBank ? money(totalBank) : '—'}</td>
+                <td style="color:var(--accent);">${money(totalAmount)}</td>
+                <td></td>
+              </tr>
+            `;
+          }
+        }
+      } catch (e) {
+        alert(e.message || 'Failed to load sales report');
+      }
+    }
+
+    function exportSalesCSV() {
+      const rows = [[
+        'Local #', 'Order ID', 'Type', 'Status', 'Payment', 'Method',
+        'Items',
+        'Subtotal', 'Discount', 'GST', 'Tax',
+        'Dine charge', 'Delivery charge', 'Card fee', 'Bank fee',
+        'Total', 'Customer', 'Created'
+      ]];
+      salesCache.orders.forEach(o => {
+        const items = orderItemsOf(o);
+        const itemsStr = items.map(i => {
+          const pkg = (i.package_size && i.package_unit)
+            ? ` (${i.package_size}${i.package_unit})` : '';
+          return `${i.name}${pkg} x${i.qty} @${i.price}`;
+        }).join(' | ');
+        rows.push([
+          o.local_number || '', o.id,
+          orderTypeLabel(o.order_type),
+          o.status || '', o.payment_status || '', o.payment_method || '',
+          itemsStr,
+          o.subtotal || 0, o.discount_amount || 0,
+          o.gst_amount || 0, o.tax_amount || 0,
+          o.dine_charge || 0, o.delivery_charge || 0,
+          o.card_charge || 0, o.bank_charge || 0,
+          o.total_amount || o.total || 0,
+          o.customer_name || '',
+          o.created_at || o.paid_at || ''
+        ]);
+      });
+      
+      // Add Total Row in CSV
+      let csvSub = 0, csvDisc = 0, csvGst = 0, csvTax = 0, csvDine = 0, csvDel = 0, csvCard = 0, csvBank = 0, csvTotal = 0;
+      salesCache.orders.forEach(o => {
+        csvSub += Number(o.subtotal || 0);
+        csvDisc += Number(o.discount_amount || 0);
+        csvGst += Number(o.gst_amount || 0);
+        csvTax += Number(o.tax_amount || 0);
+        csvDine += Number(o.dine_charge || 0);
+        csvDel += Number(o.delivery_charge || 0);
+        csvCard += Number(o.card_charge || 0);
+        csvBank += Number(o.bank_charge || 0);
+        csvTotal += Number(o.total_amount || o.total || 0);
+      });
+      rows.push([
+        'GRAND TOTAL', '', '', '', '', '', '',
+        csvSub, csvDisc, csvGst, csvTax,
+        csvDine, csvDel, csvCard, csvBank,
+        csvTotal, '', ''
+      ]);
+
+      const csv = rows.map(r =>
+        r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')
+      ).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `sales_${salesCache.from}_${salesCache.to}.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function printSalesReport() {
+      const from = salesCache.from, to = salesCache.to;
+      const brandName = document.getElementById('brandName')?.textContent || 'Cafe';
+      const stats = `Orders: ${document.getElementById('stOrders').textContent} | Sales: ${document.getElementById('stSales').textContent} | Avg: ${document.getElementById('stAvg').textContent}`;
+      let table = `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:10px;">
+        <tr>
+          <th>#</th><th>Type</th><th>Pay</th><th>Items</th>
+          <th>Sub</th><th>Disc</th><th>GST</th><th>Tax</th>
+          <th>Dine</th><th>Del</th><th>Card</th><th>Bank</th>
+          <th>Total</th><th>Time</th>
+        </tr>`;
+        
+      let pSub = 0, pDisc = 0, pGst = 0, pTax = 0, pDine = 0, pDel = 0, pCard = 0, pBank = 0, pTotal = 0;
+
+      salesCache.orders.forEach(o => {
+        const items = orderItemsOf(o);
+        const itemsStr = items.map(i => {
+          const pkg = (i.package_size && i.package_unit)
+            ? ` (${i.package_size}${i.package_unit})` : '';
+          return `${i.name}${pkg}×${i.qty}`;
+        }).join('; ') || '—';
+        const pay = (o.payment_status || '') + (o.payment_method ? '/' + o.payment_method : '');
+        const time = (o.paid_at || o.created_at)
+          ? new Date(o.paid_at || o.created_at).toLocaleString() : '';
+          
+        pSub += Number(o.subtotal || 0);
+        pDisc += Number(o.discount_amount || 0);
+        pGst += Number(o.gst_amount || 0);
+        pTax += Number(o.tax_amount || 0);
+        pDine += Number(o.dine_charge || 0);
+        pDel += Number(o.delivery_charge || 0);
+        pCard += Number(o.card_charge || 0);
+        pBank += Number(o.bank_charge || 0);
+        pTotal += Number(o.total_amount || o.total || 0);
+
+        table += `<tr>
+          <td>#${o.local_number || o.id}</td>
+          <td>${orderTypeLabel(o.order_type)}</td>
+          <td>${pay}</td>
+          <td>${itemsStr}</td>
+          <td>${o.subtotal || 0}</td>
+          <td>${o.discount_amount || 0}</td>
+          <td>${o.gst_amount || 0}</td>
+          <td>${o.tax_amount || 0}</td>
+          <td>${o.dine_charge || 0}</td>
+          <td>${o.delivery_charge || 0}</td>
+          <td>${o.card_charge || 0}</td>
+          <td>${o.bank_charge || 0}</td>
+          <td><b>${o.total_amount || o.total || 0}</b></td>
+          <td>${time}</td>
+        </tr>`;
+      });
+      
+      table += `<tr style="background:#f0f0f0; font-weight:bold;">
+        <td colspan="4" style="text-align:right;">GRAND TOTAL</td>
+        <td>${pSub.toFixed(2)}</td>
+        <td>${pDisc.toFixed(2)}</td>
+        <td>${pGst.toFixed(2)}</td>
+        <td>${pTax.toFixed(2)}</td>
+        <td>${pDine.toFixed(2)}</td>
+        <td>${pDel.toFixed(2)}</td>
+        <td>${pCard.toFixed(2)}</td>
+        <td>${pBank.toFixed(2)}</td>
+        <td>${pTotal.toFixed(2)}</td>
+        <td></td>
+      </tr>`;
+      
+      table += '</table>';
+      const w = window.open('', '_blank');
+      if (!w) { alert('Allow popups to print'); return; }
+      const S1 = '<' + 'script>', S2 = '</' + 'script>';
+      w.document.write(`<!DOCTYPE html><html><head><title>Sales ${from}–${to}</title>
+        <style>body{font-family:Arial,sans-serif;padding:12px} td,th{vertical-align:top;padding:4px}</style>
+        </head><body>
+        <h2>${brandName} — Sales Report</h2>
+        <p>${from} → ${to}</p><p>${stats}</p>${table}
+        ${S1}window.onload=function(){window.print();};${S2}
+        </body></html>`);
+      w.document.close();
+    }
+
+    function orderTypeLabelPrint(t) {
+      const x = String(t || '').toLowerCase();
+      if (x === 'walk_in') return 'Takeaway';
+      if (x === 'delivery') return 'Delivery';
+      return 'Dine-in';
+    }
+
+    /* ================= BILL / PRINT ================= */
+    function printBill(opts) {
+      const html = buildBillHtml(opts);
+      const w = window.open('', '_blank', 'width=420,height=640');
+      if (!w) { alert('Allow popups to print bill'); return; }
+      w.document.open();
+      w.document.write(html + '<script>window.onload=function(){window.focus();window.print();setTimeout(function(){window.close();},600);};<\/script>');
+      w.document.close();
+    }
+
+    function buildBillHtml(opts) {
+      const {
+        orderNo, orderType: ot, tableNo, customerName, phone, address,
+        items, bill, payNow, paymentMethod, cardCharge = 0, bankCharge = 0,
+        note = ''
+      } = opts;
+
+      const brand = cafeBrand.name || document.getElementById('brandName')?.textContent || 'Cafe';
+      const logo = cafeBrand.logo || '';
+      const logoHtml = logo
+        ? `<div style="text-align:center;margin-bottom:6px;">
+             <img src="${esc(logo)}" style="max-width:64px;max-height:64px;object-fit:contain;"
+               onerror="this.style.display='none'" />
+           </div>` : '';
+      const addrLine = cafeBrand.address ? `<div class="muted">${esc(cafeBrand.address)}</div>` : '';
+      const phoneLine = cafeBrand.phone ? `<div class="muted">${esc(cafeBrand.phone)}</div>` : '';
+      const now = new Date().toLocaleString();
+      const finalTotal = Number(bill.total || 0) + Number(cardCharge || 0) + Number(bankCharge || 0);
+
+      const itemRows = (items || []).map(it => {
+        const pkg = (it.package_size && it.package_unit) ? ` (${it.package_size}${it.package_unit})` : '';
+        const line = Number(it.price) * Number(it.qty);
+        return `<tr>
+          <td style="text-align:left;">${esc(it.name)}${esc(pkg)}
+            <br><span style="color:#555;">x${it.qty} @ ${Number(it.price).toFixed(2)}</span></td>
+          <td style="text-align:right;vertical-align:top;">${line.toFixed(2)}</td>
+        </tr>`;
+      }).join('');
+
+      let extraLines = '';
+      if (bill.discountAmount > 0)
+        extraLines += `<tr><td>Discount</td><td style="text-align:right;">-${Number(bill.discountAmount).toFixed(2)}</td></tr>`;
+      if (bill.gstAmount > 0)
+        extraLines += `<tr><td>GST (${posSettings.gst_percent || 0}%)</td><td style="text-align:right;">${Number(bill.gstAmount).toFixed(2)}</td></tr>`;
+      if (bill.taxAmount > 0)
+        extraLines += `<tr><td>Tax</td><td style="text-align:right;">${Number(bill.taxAmount).toFixed(2)}</td></tr>`;
+      if (bill.extra > 0) {
+        const lbl = String(ot).toLowerCase() === 'delivery' ? 'Delivery charge' : 'Dine charge';
+        extraLines += `<tr><td>${lbl}</td><td style="text-align:right;">${Number(bill.extra).toFixed(2)}</td></tr>`;
+      }
+      if (cardCharge > 0)
+        extraLines += `<tr><td>Card fee</td><td style="text-align:right;">${Number(cardCharge).toFixed(2)}</td></tr>`;
+      if (bankCharge > 0)
+        extraLines += `<tr><td>Bank fee</td><td style="text-align:right;">${Number(bankCharge).toFixed(2)}</td></tr>`;
+
+      const typeLabel = orderTypeLabelPrint(ot);
+      const meta = [
+        `Type: ${typeLabel}`,
+        tableNo ? `Table: ${tableNo}` : '',
+        customerName ? `Customer: ${customerName}` : '',
+        phone ? `Phone: ${phone}` : '',
+        address ? `Address: ${address}` : '',
+        note ? `Note: ${note}` : '',
+        payNow ? `Paid: ${paymentMethod || 'Cash'}` : 'Payment: Later / COD'
+      ].filter(Boolean).join('<br>');
+
+      return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Bill #${esc(String(orderNo))}</title>
+<style>
+  @page{margin:4mm;size:80mm auto;}
+  html,body{background:#fff;color:#000;}
+  body{font-family:'Courier New',monospace;font-size:12px;width:72mm;margin:0 auto;padding:6px;}
+  h1{font-size:16px;text-align:center;margin:0 0 4px;}
+  .muted{text-align:center;color:#333;font-size:11px;margin-bottom:6px;}
+  hr{border:none;border-top:1px dashed #000;margin:8px 0;}
+  table{width:100%;border-collapse:collapse;}
+  td{padding:2px 0;vertical-align:top;}
+  .tot{font-weight:bold;font-size:14px;}
+  .center{text-align:center;}
+</style></head><body>
+  ${logoHtml}
+  <h1>${esc(brand)}</h1>
+  ${addrLine}${phoneLine}
+  <div class="muted">Order #${esc(String(orderNo))}<br>${esc(now)}</div>
+  <div>${meta}</div>
+  <hr>
+  <table>${itemRows}</table>
+  <hr>
+  <table>
+    <tr><td>Subtotal</td><td style="text-align:right;">${Number(bill.sub).toFixed(2)}</td></tr>
+    ${extraLines}
+    <tr class="tot"><td>TOTAL</td><td style="text-align:right;">${money(finalTotal)}</td></tr>
+  </table>
+  <hr>
+  <p class="center">Thank you!</p>
+</body></html>`;
+    }
+
+    function showBillPreview(opts) {
+      pendingBillOpts = { ...opts };
+      document.getElementById('bpName').value = opts.customerName || '';
+      document.getElementById('bpPhone').value = opts.phone || '';
+      document.getElementById('bpNote').value = opts.note || '';
+      refreshBillPreview();
+      document.getElementById('billPreviewModal').classList.remove('hidden');
+    }
+
+    function refreshBillPreview() {
+      if (!pendingBillOpts) return;
+      const opts = {
+        ...pendingBillOpts,
+        customerName: document.getElementById('bpName').value.trim(),
+        phone: document.getElementById('bpPhone').value.trim(),
+        note: document.getElementById('bpNote').value.trim()
+      };
+      const html = buildBillHtml(opts);
+      const box = document.getElementById('bpPreview');
+      box.innerHTML = '';
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = 'width:100%;height:100%;border:0;background:#fff;display:block;';
+      const blob = new Blob([html], { type: 'text/html' });
+      iframe.src = URL.createObjectURL(blob);
+      box.appendChild(iframe);
+    }
+
+    function closeBillPreview() {
+      document.getElementById('billPreviewModal').classList.add('hidden');
+      pendingBillOpts = null;
+    }
+
+    function confirmPrintBill() {
+      if (!pendingBillOpts) return;
+      const opts = {
+        ...pendingBillOpts,
+        customerName: document.getElementById('bpName').value.trim(),
+        phone: document.getElementById('bpPhone').value.trim(),
+        note: document.getElementById('bpNote').value.trim()
+      };
+      const html = buildBillHtml(opts);
+      const w = window.open('', '_blank', 'width=420,height=640');
+      if (!w) { alert('Allow popups to print'); return; }
+      w.document.open();
+      w.document.write(html + '<script>window.onload=function(){window.focus();window.print();setTimeout(function(){window.close();},600);};<\/script>');
+      w.document.close();
+      closeBillPreview();
+    }
+
+    function bindBillPreviewEditors() {
+      ['bpName', 'bpPhone', 'bpNote'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', refreshBillPreview);
+      });
+    }
+
+    /* ================= SETTINGS ================= */
+    function applyThemeUI() {
+      const isLight = document.body.classList.contains('light');
+      const dk = document.getElementById('theme-dark');
+      const lt = document.getElementById('theme-light');
+      if (dk) dk.classList.toggle('active', !isLight);
+      if (lt) lt.classList.toggle('active', isLight);
+    }
+
+    function setTheme(mode) {
+      if (mode === 'light') document.body.classList.add('light');
+      else document.body.classList.remove('light');
+      localStorage.setItem('cafe_theme', mode);
+      applyThemeUI();
+    }
+
+    async function openSettings() {
+      // theme
+      applyThemeUI();
+      // pos
+      document.getElementById('setCountry').value = posSettings.country_code || 'PK';
+      document.getElementById('setGst').value = posSettings.gst_percent || 0;
+      document.getElementById('setTax').value = posSettings.tax_percent || 0;
+      document.getElementById('setDelCharge').value = posSettings.delivery_charge || 0;
+      document.getElementById('setDineCharge').value = posSettings.dine_charge || 0;
+      document.getElementById('setCardCharge').value = posSettings.card_charge || 0;
+      document.getElementById('setBankCharge').value = posSettings.bank_charge || 0;
+      document.getElementById('setDiscType').value = posSettings.discount_type || 'none';
+      document.getElementById('setDiscValue').value = posSettings.discount_value || 0;
+      document.getElementById('setAutoPrint').checked = localStorage.getItem('cafe_auto_print') !== '0';
+      document.getElementById('assignMode').value = localStorage.getItem('cafe_assign_mode') || 'manual';
+      // account
+      document.getElementById('accUsername').value = user?.username || user?.name || '';
+      document.getElementById('accCurrentPw').value = '';
+      document.getElementById('accNewPw').value = '';
+      document.getElementById('accConfirmPw').value = '';
+      // riders
+      await loadStaffForSettings();
+      document.getElementById('settingsModal').classList.remove('hidden');
+    }
+
+    function closeSettings() { document.getElementById('settingsModal').classList.add('hidden'); }
+
+    async function loadStaffForSettings() {
+      const box = document.getElementById('ridersListBox');
+      box.innerHTML = '<div class="empty" style="padding:12px;">Loading riders…</div>';
+      try {
+        const data = await api('/users');
+        staffList = data.data || data.staff || data.users || [];
+      } catch (e) {
+        staffList = [];
+        console.warn('loadStaffForSettings:', e.message);
+      }
+      const riders = staffList.filter(u => u.role === 'delivery');
+      if (!riders.length) {
+        box.innerHTML = '<div class="empty" style="padding:12px;">No riders found. Add riders from Manager panel.</div>';
+        return;
+      }
+      box.innerHTML = riders.map(r => `
+        <div class="rider-row" data-rid="${r.id}">
+          <div class="rinfo">
+            <div class="rname">${esc(r.full_name || r.username || 'Rider')}</div>
+            <div class="rsub">@${esc(r.username || '')} · ${r.is_active ? 'Active' : 'Inactive'}</div>
+          </div>
+          <button class="btn btn-ghost" onclick="toggleResetBox(${r.id})">Reset password</button>
+          <div class="reset-pw-box hidden" id="reset-box-${r.id}">
+            <input type="password" id="reset-pw-${r.id}" minlength="4" maxlength="8" placeholder="New password" />
+            <button class="btn btn-ok" onclick="doResetRiderPassword(${r.id})">Save</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleResetBox(id) {
+      const box = document.getElementById('reset-box-' + id);
+      if (!box) return;
+      box.classList.toggle('hidden');
+      const inp = document.getElementById('reset-pw-' + id);
+      if (inp && !box.classList.contains('hidden')) inp.focus();
+    }
+
+    async function doResetRiderPassword(id) {
+      const inp = document.getElementById('reset-pw-' + id);
+      const pw = (inp?.value || '').trim();
+      if (pw.length < 4 || pw.length > 8) { alert('Password must be between 4 and 8 characters'); return; }
+      try {
+        await api('/users/' + id, {
+          method: 'PUT',
+          body: JSON.stringify({ password: pw })
+        });
+        inp.value = '';
+        document.getElementById('reset-box-' + id).classList.add('hidden');
+        alert('Password reset ✓');
+      } catch (e) { alert(e.message || 'Reset failed'); }
+    }
+
+    async function updateMyAccount() {
+      const username = document.getElementById('accUsername').value.trim();
+      const currentPw = document.getElementById('accCurrentPw').value;
+      const newPw = document.getElementById('accNewPw').value;
+      const confirmPw = document.getElementById('accConfirmPw').value;
+
+      if (!currentPw) { alert('Current password required'); return; }
+      if (newPw && newPw !== confirmPw) { alert('New passwords do not match'); return; }
+      if (newPw && (newPw.length < 4 || newPw.length > 8)) { alert('New password must be between 4 and 8 characters'); return; }
+
+      const body = { current_password: currentPw };
+      if (username) body.username = username;
+      if (newPw) body.new_password = newPw;
+
+      try {
+        await api('/auth/settings', { method: 'PUT', body: JSON.stringify(body) });
+        alert('Account updated ✓');
+        if (user) user.username = username || user.username;
+        document.getElementById('accCurrentPw').value = '';
+        document.getElementById('accNewPw').value = '';
+        document.getElementById('accConfirmPw').value = '';
+      } catch (e) { alert(e.message || 'Update failed'); }
+    }
+
+    async function saveSettings() {
+      const payload = {
+        country_code: document.getElementById('setCountry').value || 'PK',
+        gst_percent: Number(document.getElementById('setGst').value || 0),
+        tax_percent: Number(document.getElementById('setTax').value || 0),
+        delivery_charge: Number(document.getElementById('setDelCharge').value || 0),
+        dine_charge: Number(document.getElementById('setDineCharge').value || 0),
+        card_charge: Number(document.getElementById('setCardCharge').value || 0),
+        bank_charge: Number(document.getElementById('setBankCharge').value || 0),
+        discount_enabled: document.getElementById('setDiscType').value !== 'none',
+        discount_type: document.getElementById('setDiscType').value || 'none',
+        discount_value: Number(document.getElementById('setDiscValue').value || 0)
+      };
+      try {
+        const res = await api('/settings/pos', { method: 'PUT', body: JSON.stringify(payload) });
+        posSettings = { ...posSettings, ...(res.data || payload) };
+        if (window.SizlioCurrency) window.SizlioCurrency.applyFromSettings(posSettings);
+        localStorage.setItem('cafe_auto_print', document.getElementById('setAutoPrint').checked ? '1' : '0');
+        localStorage.setItem('cafe_assign_mode', document.getElementById('assignMode').value);
+        renderCart();
+        closeSettings();
+        alert('POS settings saved ✓');
+      } catch (e) { alert(e.message || 'Save failed'); }
+    }
+
+    /* ================= THEME (topbar) ================= */
+    function toggleTheme() {
+      const isLight = document.body.classList.contains('light');
+      setTheme(isLight ? 'dark' : 'light');
+    }
+
+    /* ================= PAGE LOAD ================= */
+    window.addEventListener('load', async () => {
+      const savedTheme = localStorage.getItem('cafe_theme');
+      if (savedTheme === 'light') document.body.classList.add('light');
+      applyThemeUI();
+
+      if (!restaurantId) {
+        const saved = localStorage.getItem('cafe_restaurant_id');
+        if (saved) restaurantId = Number(saved);
+      }
+      if (token) {
+        try {
+          user = { restaurant_name: 'Cafe', plan: 'Cafe Lite', restaurant_id: restaurantId };
+          await bootApp();
+        } catch (err) { console.warn('Session restore failed:', err); logout(); }
+      }
+    });
+>>>>>>> a060e49 (currency files token resolvved)
   </script>
 </body>
 </html>
